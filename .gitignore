@@ -13,3 +13,4 @@ secrets/*
 jars/*
 *.iml
 *.swp
+.idea/*
