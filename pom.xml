@@ -162,6 +162,12 @@
                     <artifactId>kafka-avro-serializer</artifactId>
                     <version>${confluent.version}</version>
                 </dependency>
+                <!-- https://mvnrepository.com/artifact/io.confluent/common-config -->
+                <dependency>
+                    <groupId>io.confluent</groupId>
+                    <artifactId>common-config</artifactId>
+                    <version>${confluent.version}</version>
+                </dependency>
 
             </dependencies>
         </profile>

@@ -2,13 +2,14 @@
 import java.util.UUID
 
 import org.apache.spark.SparkConf
-import org.apache.spark.sql.types._
 import com.databricks.spark.avro.SchemaConverters
 import io.confluent.kafka.schemaregistry.client.{CachedSchemaRegistryClient, SchemaRegistryClient}
 import io.confluent.kafka.serializers.AbstractKafkaAvroDeserializer
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
 import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.functions._
+import com.pharbers.StreamEngine.AvroDeserializer.AvroDeserializer
 
 object main extends App {
     val yarnJars: String = "hdfs://spark.master:9000/jars/sparkJars"
@@ -30,19 +31,20 @@ object main extends App {
     spark.sparkContext.addFile("./kafka.broker1.keystore.jks")
     spark.sparkContext.addFile("./kafka.broker1.truststore.jks")
     spark.sparkContext.addJar("./target/BP-Stream-Engine-1.0-SNAPSHOT.jar")
+    spark.sparkContext.addJar("./jars/kafka-schema-registry-client-5.2.1.jar")
+    spark.sparkContext.addJar("./jars/kafka-avro-serializer-5.2.1.jar")
+    spark.sparkContext.addJar("./jars/common-config-5.2.1.jar")
+    spark.sparkContext.addJar("./jars/common-utils-5.2.1.jar")
 
-    private val topic = "oss_source_1"
+    import spark.implicits._
 
-    private val schemaRegistryUrl = "http://123.56.179.133:8081"
+    lazy val topic = "oss_source_1"
+    lazy val kafkaUrl = "http://123.56.179.133:9092"
+    lazy val schemaRegistryUrl = "http://123.56.179.133:8081"
 
-    private val schemaRegistryClient = new CachedSchemaRegistryClient(schemaRegistryUrl, 128)
+    lazy val sparkSchema = AvroDeserializer.getSchema(topic)
 
-    private val avroSchema = schemaRegistryClient.getLatestSchemaMetadata(topic + "-value").getSchema
-    private val sparkSchema = SchemaConverters.toSqlType(new Schema.Parser().parse(avroSchema))
-
-    spark.udf.register("deserialize", (bytes: Array[Byte]) =>
-        DeserializerWrapper.deserializer.deserialize(bytes)
-    )
+    spark.udf.register("deserialize", (bytes: Array[Byte]) => AvroDeserializer(bytes))
 
     val logsDf = spark.readStream
         .format("kafka")
@@ -56,14 +58,13 @@ object main extends App {
         .option("subscribe", topic)
         .option("startingOffsets", "earliest")
         .load()
-    import org.apache.spark.sql.functions._
+
     val selectDf = logsDf
-            .selectExpr("""deserialize(value) AS value""")
-//            .selectExpr(
-//        "CAST(key AS STRING)",
-//        "CAST(value AS STRING)",
-//        "timestamp").as[(String, String, String)].toDF()
-//        .withWatermark("timestamp", "24 hours")
+            .selectExpr(
+                """deserialize(value) AS value""",
+                "timestamp"
+            ).toDF()
+        .withWatermark("timestamp", "24 hours")
         .select(
             from_json($"value", sparkSchema.dataType).as("data")
         ).select("data.*")
@@ -81,26 +82,4 @@ object main extends App {
         .start()
 
     query.awaitTermination()
-
-}
-
-object DeserializerWrapper {
-    private val kafkaUrl = "http://123.56.179.133:9092"
-    private val schemaRegistryUrl = "http://123.56.179.133:8081"
-
-    private val schemaRegistryClient = new CachedSchemaRegistryClient(schemaRegistryUrl, 128)
-    private val kafkaAvroDeserializer = new AvroDeserializer(schemaRegistryClient)
-    val deserializer = kafkaAvroDeserializer
-}
-
-class AvroDeserializer extends AbstractKafkaAvroDeserializer {
-    def this(client: SchemaRegistryClient) {
-        this()
-        this.schemaRegistry = client
-    }
-
-    override def deserialize(bytes: Array[Byte]): String = {
-        val genericRecord = super.deserialize(bytes).asInstanceOf[GenericRecord]
-        genericRecord.toString
-    }
 }
