@@ -2,11 +2,6 @@
 import java.util.UUID
 
 import org.apache.spark.SparkConf
-import com.databricks.spark.avro.SchemaConverters
-import io.confluent.kafka.schemaregistry.client.{CachedSchemaRegistryClient, SchemaRegistryClient}
-import io.confluent.kafka.serializers.AbstractKafkaAvroDeserializer
-import org.apache.avro.Schema
-import org.apache.avro.generic.GenericRecord
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions._
 import com.pharbers.StreamEngine.AvroDeserializer.AvroDeserializer
@@ -35,8 +30,6 @@ object main extends App {
     spark.sparkContext.addJar("./jars/kafka-avro-serializer-5.2.1.jar")
     spark.sparkContext.addJar("./jars/common-config-5.2.1.jar")
     spark.sparkContext.addJar("./jars/common-utils-5.2.1.jar")
-
-    import spark.implicits._
 
     lazy val topic = "oss_source_1"
     lazy val kafkaUrl = "http://123.56.179.133:9092"
