@@ -25,12 +25,11 @@ object main extends App {
 
     val spark = SparkSession.builder()
         .config(conf).getOrCreate()
+    import spark.implicits._
 
     spark.sparkContext.addFile("./kafka.broker1.keystore.jks")
     spark.sparkContext.addFile("./kafka.broker1.truststore.jks")
     spark.sparkContext.addJar("./target/BP-Stream-Engine-1.0-SNAPSHOT.jar")
-
-    import spark.implicits._
 
     private val topic = "oss_source_1"
 
@@ -40,10 +39,6 @@ object main extends App {
 
     private val avroSchema = schemaRegistryClient.getLatestSchemaMetadata(topic + "-value").getSchema
     private val sparkSchema = SchemaConverters.toSqlType(new Schema.Parser().parse(avroSchema))
-
-    spark.sparkContext.addFile("kafka.broker1.keystore.jks")
-    spark.sparkContext.addFile("kafka.broker1.truststore.jks")
-//    spark.sparkContext.addJar("target/jar-all.jar")
 
     spark.udf.register("deserialize", (bytes: Array[Byte]) =>
         DeserializerWrapper.deserializer.deserialize(bytes)
@@ -76,7 +71,7 @@ object main extends App {
     val jobId = UUID.randomUUID()
     val path = "hdfs://192.168.100.137:9000/test/streaming/" + jobId + "/files"
 
-    val query = decodeDf.writeStream
+    val query = selectDf.writeStream
          .outputMode("append")
 //        .outputMode("complete")
 //         .format("console")
