@@ -5,7 +5,6 @@ import org.apache.spark.SparkConf
 import org.apache.spark.sql.{ForeachWriter, Row, SparkSession}
 import org.apache.spark.sql.functions._
 import com.pharbers.StreamEngine.AvroDeserializer.AvroDeserializer
-import com.pharbers.StreamEngine.schemaReg.SchemaReg
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
 
@@ -97,14 +96,6 @@ object main extends App {
                     bufferedWriter.write(value.getAs[String]("data"))
                     bufferedWriter.newLine()
                     bufferedWriter.close()
-
-//                    println(spark)
-//                    println(spark.sqlContext)
-//                    println(value)
-//                    val t = new java.util.LinkedList[Row]()
-//                    t.add(Row.apply("abcde"))
-//                    val tmp = spark.sqlContext.createDataFrame(t, SchemaReg.tmpSche)
-//                    tmp.write.mode("append").csv("hdfs://192.168.100.137:9000/test/streaming/" + jobId + "/tmp")
                 }
 
                 def close(errorOrNull: scala.Throwable): Unit = {
