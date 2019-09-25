@@ -26,21 +26,4 @@ object SchemaReg {
     val tmpSche: StructType = StructType(Seq(
         StructField("value", StringType)
     ))
-
-    val SchemaRegisterAddr = "59.110.31.50:8081"
-    
-    val tmp =
-        """
-          | {
-          |     "type": "record",
-          |     "name": "ConnectDefault",
-          |     "namespace":"io.confluent.connect.avro",
-          |     "fields": [
-          |         { "name": "jobId", "type": "string" },
-          |         { "name": "traceId","type":"string" },
-          |         { "name": "type", "type": "string" },
-          |         { "name": "data", "type":"string" }
-          |     ]
-          |}
-        """.stripMargin
 }
