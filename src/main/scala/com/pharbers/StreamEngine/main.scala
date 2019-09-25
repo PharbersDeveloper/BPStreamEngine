@@ -23,21 +23,12 @@ object main extends App {
         .set("spark.executor.cores", "1")
         .set("spark.executor.instances", "1")
 
-    val schema: StructType = StructType(Seq(
-        StructField("Time", StringType),
-        StructField("Hostname", StringType),
-        StructField("ProjectName",StringType),
-        StructField("File", StringType),
-        StructField("Func", StringType),
-        StructField("JobId", StringType),
-        StructField("TraceId", StringType),
-        StructField("UserId", StringType),
-        StructField("Message", StringType),
-        StructField("Level", StringType)
-    ))
-
     val spark = SparkSession.builder()
         .config(conf).getOrCreate()
+
+    spark.sparkContext.addFile("./kafka.broker1.keystore.jks")
+    spark.sparkContext.addFile("./kafka.broker1.truststore.jks")
+    spark.sparkContext.addJar("./target/BP-Stream-Engine-1.0-SNAPSHOT.jar")
 
     import spark.implicits._
 
@@ -83,8 +74,11 @@ object main extends App {
         ).select("data.*")
 
     val jobId = UUID.randomUUID()
-    val query = selectDf.writeStream
+    val path = "hdfs://192.168.100.137:9000/test/streaming/" + jobId + "/files"
+
+    val query = decodeDf.writeStream
          .outputMode("append")
+//        .outputMode("complete")
 //         .format("console")
         .format("csv")
         .option("checkpointLocation", "/test/streaming/" + jobId + "/checkpoint")
