@@ -82,5 +82,3 @@ object main extends App {
 
     query.awaitTermination()
 }
-
-
