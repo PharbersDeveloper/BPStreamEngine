@@ -2,9 +2,12 @@
 import java.util.UUID
 
 import org.apache.spark.SparkConf
-import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.{ForeachWriter, Row, SparkSession}
 import org.apache.spark.sql.functions._
 import com.pharbers.StreamEngine.AvroDeserializer.AvroDeserializer
+import com.pharbers.StreamEngine.schemaReg.SchemaReg
+import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.fs.Path
 
 object main extends App {
     val yarnJars: String = "hdfs://spark.master:9000/jars/sparkJars"
@@ -62,14 +65,61 @@ object main extends App {
             from_json($"value", sparkSchema.dataType).as("data")
         ).select("data.*")
 
+    val dataDf = selectDf.filter($"jobId" === "test09241724")
+
+    val dataSchemaDf = dataDf.filter($"type" === "SandBox-Schema").writeStream
+        .foreach(
+            new ForeachWriter[Row] {
+                def open(partitionId: Long, version: Long): Boolean = true
+
+                def process(value: Row) : Unit = {
+                    import org.apache.hadoop.fs.FSDataOutputStream
+                    import org.apache.hadoop.fs.FileSystem
+                    import java.io.BufferedWriter
+                    import java.io.OutputStreamWriter
+                    import java.nio.charset.StandardCharsets
+                    val configuration: Configuration = new Configuration
+                    configuration.set("fs.defaultFS", "hdfs://192.168.100.137:9000")
+                    val fileSystem: FileSystem = FileSystem.get(configuration)
+                    //Create a path
+                    val fileName: String = "tmp.txt"
+                    val hdfsWritePath: Path = new Path("/test/streaming/" + fileName)
+                    val fsDataOutputStream: FSDataOutputStream =
+                        if (fileSystem.exists(hdfsWritePath))
+                            fileSystem.append(hdfsWritePath)
+                        else
+                            fileSystem.create(hdfsWritePath)
+
+                    val bufferedWriter: BufferedWriter = new BufferedWriter(new OutputStreamWriter(fsDataOutputStream, StandardCharsets.UTF_8))
+                    bufferedWriter.write("Java API to append data in HDFS file")
+                    bufferedWriter.newLine()
+                    bufferedWriter.write(value.getAs[String]("data"))
+                    bufferedWriter.newLine()
+                    bufferedWriter.close()
+
+//                    println(spark)
+//                    println(spark.sqlContext)
+//                    println(value)
+//                    val t = new java.util.LinkedList[Row]()
+//                    t.add(Row.apply("abcde"))
+//                    val tmp = spark.sqlContext.createDataFrame(t, SchemaReg.tmpSche)
+//                    tmp.write.mode("append").csv("hdfs://192.168.100.137:9000/test/streaming/" + jobId + "/tmp")
+                }
+
+                def close(errorOrNull: scala.Throwable): Unit = {
+
+                }
+            }
+        ).start()
+
     val jobId = UUID.randomUUID()
     val path = "hdfs://192.168.100.137:9000/test/streaming/" + jobId + "/files"
 
     val query = selectDf.writeStream
          .outputMode("append")
 //        .outputMode("complete")
-//         .format("console")
-        .format("csv")
+         .format("console")
+//        .format("csv")
         .option("checkpointLocation", "/test/streaming/" + jobId + "/checkpoint")
         .option("path", "/test/streaming/" + jobId + "/files")
         .start()
