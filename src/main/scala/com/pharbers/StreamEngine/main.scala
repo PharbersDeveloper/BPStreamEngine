@@ -7,6 +7,13 @@ import org.apache.spark.sql.functions._
 import com.pharbers.StreamEngine.AvroDeserializer.AvroDeserializer
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
+import com.pharbers.StreamEngine.DriverChannel.DriverChannel
+import com.pharbers.StreamEngine.WorkerChannel.WorkerChannel
+import org.apache.hadoop.fs.FSDataOutputStream
+import org.apache.hadoop.fs.FileSystem
+import java.io.BufferedWriter
+import java.io.OutputStreamWriter
+import java.nio.charset.StandardCharsets
 
 object main extends App {
     val yarnJars: String = "hdfs://spark.master:9000/jars/sparkJars"
@@ -33,6 +40,8 @@ object main extends App {
     spark.sparkContext.addJar("./jars/common-utils-5.2.1.jar")
 
     import spark.implicits._
+
+    DriverChannel()
 
     lazy val topic = "oss_source_1"
     lazy val kafkaUrl = "http://123.56.179.133:9092"
@@ -65,19 +74,20 @@ object main extends App {
             from_json($"value", sparkSchema.dataType).as("data")
         ).select("data.*")
 
-    val dataDf = selectDf.filter($"jobId" === "test09241724")
+    val dataDf = selectDf.filter($"jobId" === "test09251043")
 
-    val dataSchemaDf = dataDf.filter($"type" === "SandBox-Schema").writeStream
+    val dataSchemaDf = dataDf.filter($"type" === "SandBox-Length").writeStream
         .foreach(
             new ForeachWriter[Row] {
-                def open(partitionId: Long, version: Long): Boolean = true
+
+                var channel: Option[WorkerChannel] = None
+
+                def open(partitionId: Long, version: Long): Boolean = {
+                    if (channel.isEmpty) channel = Some(WorkerChannel())
+                    true
+                }
 
                 def process(value: Row) : Unit = {
-                    import org.apache.hadoop.fs.FSDataOutputStream
-                    import org.apache.hadoop.fs.FileSystem
-                    import java.io.BufferedWriter
-                    import java.io.OutputStreamWriter
-                    import java.nio.charset.StandardCharsets
                     val configuration: Configuration = new Configuration
                     configuration.set("fs.defaultFS", "hdfs://192.168.100.137:9000")
                     val fileSystem: FileSystem = FileSystem.get(configuration)
@@ -96,11 +106,11 @@ object main extends App {
                     bufferedWriter.write(value.getAs[String]("data"))
                     bufferedWriter.newLine()
                     bufferedWriter.close()
+
+                    channel.get.pushMessage(value.getAs[String]("data"))
                 }
 
-                def close(errorOrNull: scala.Throwable): Unit = {
-
-                }
+                def close(errorOrNull: scala.Throwable): Unit = {}//channel.get.close()
             }
         ).start()
 
