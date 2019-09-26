@@ -22,8 +22,4 @@ object SchemaReg {
         StructField("type", StringType),
         StructField("data", StringType)
     ))
-
-    val tmpSche: StructType = StructType(Seq(
-        StructField("value", StringType)
-    ))
 }
