@@ -1,6 +1,7 @@
 package com.pharbers.StreamEngine.BPStreamJob.FileJobs
 
 import com.pharbers.StreamEngine.BPStreamJob.BPStreamJob
+import com.pharbers.StreamEngine.BPStreamJob.FileJobs.OssListener.BPSOssListener
 import com.pharbers.StreamEngine.BPStreamJob.JobStrategy.KfkJobStrategy
 import org.apache.spark.sql
 import org.apache.spark.sql.SparkSession
@@ -13,6 +14,7 @@ object BPSOssJob {
 class BPSOssJob(val strategy: KfkJobStrategy, val spark: SparkSession) extends BPStreamJob[KfkJobStrategy] {
     import spark.implicits._
     var inputStream: Option[sql.DataFrame] = None
+    val listener = new BPSOssListener(spark)
 
     override def open(): Unit = {
         val reading = spark.readStream
@@ -39,12 +41,13 @@ class BPSOssJob(val strategy: KfkJobStrategy, val spark: SparkSession) extends B
             ).select("data.*"))
     }
 
-    override def close(): Unit = ???
+    override def close(): Unit = inputStream match {
+        case Some(is) => listener.deActive(is)
+        case None => ???
+    }
 
     override def exec(): Unit = inputStream match {
-        case Some(is) => {
-
-        }
+        case Some(is) => listener.active(is)
         case None => ???
     }
 }

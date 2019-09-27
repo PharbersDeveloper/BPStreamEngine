@@ -1,4 +1,4 @@
-package com.pharbers.StreamEngine.WorkerChannel
+package com.pharbers.StreamEngine.BPJobChannels.WorkerChannel
 
 import java.net.InetSocketAddress
 import java.nio.ByteBuffer
