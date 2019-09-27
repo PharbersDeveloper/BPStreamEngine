@@ -1,11 +1,15 @@
 package com.pharbers.StreamEngine.DriverChannel
 
-import java.net.{Inet4Address, InetAddress, InetSocketAddress}
+import java.net.{InetSocketAddress}
 import java.nio.ByteBuffer
 import java.nio.channels.SelectionKey
 import java.nio.channels.Selector
 import java.nio.channels.ServerSocketChannel
 import java.nio.channels.SocketChannel
+
+import com.pharbers.StreamEngine.Common.Events
+import org.json4s._
+import org.json4s.jackson.Serialization.read
 
 object DriverChannel {
     def apply(): Unit = new Thread(new DriverChannel).start()
@@ -49,10 +53,13 @@ class DriverChannel extends Runnable {
 
                 } else if (item.isReadable()) {
                     val client =  item.channel().asInstanceOf[SocketChannel]
-                    val Buffer = ByteBuffer.allocate(256)
+                    val Buffer = ByteBuffer.allocate(2048)
                     if (client.read(Buffer) > 0) {
                         val result = new String(Buffer.array()).trim()
                         println("Message received: " + result)
+
+                        implicit val formats = DefaultFormats
+                        val event = read[Events](result)
 
                         if (result.equals("alfred end")) {
                             client.close()
