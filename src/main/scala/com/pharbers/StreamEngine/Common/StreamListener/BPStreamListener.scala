@@ -10,5 +10,5 @@ trait BPStreamListener {
     def trigger(e: Events): Unit
     def hit(e: Events): Boolean = true
     def active(s: sql.DataFrame): Unit
-    def deActive(s: sql.DataFrame): Unit
+    def deActive(): Unit
 }

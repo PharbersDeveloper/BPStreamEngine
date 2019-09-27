@@ -14,10 +14,13 @@ case class BPSOssEndListener(
                             ) extends BPStreamListener {
     import spark.implicits._
     override def trigger(e: Events): Unit = {
-        println("End Trigger")
+        val tmp = spark.sql("select * from " + queryName).collect()
+        if (tmp.length > 0 && tmp.head.getAs[Long]("count") == length) {
+            job.close()
+        }
     }
 
     override def active(s: DataFrame): Unit = LocalChannel.registerListener(this)
 
-    override def deActive(s: DataFrame): Unit = LocalChannel.unRegisterListener(this)
+    override def deActive(): Unit = LocalChannel.unRegisterListener(this)
 }

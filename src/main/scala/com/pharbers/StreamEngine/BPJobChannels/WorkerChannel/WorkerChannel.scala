@@ -34,6 +34,7 @@ class WorkerChannel extends Serializable {
         }
 
         buffer.clear()
+        Thread.sleep(1000)
     }
 
     def close(): Unit = client.get.close()

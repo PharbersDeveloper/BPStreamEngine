@@ -9,19 +9,22 @@ import org.json4s.jackson.Serialization.read
 
 case class BPSEndLengthHandler() extends EventHandler {
     override def exec(job: BPStreamJob)(e: Events): Unit = {
-        // 收到Schema 开始执行分流
+        // 收到End Length 开始执行结束逻辑
+        val qn = "view_" + event2JobId(e)
         val spark = job.spark
         import spark.implicits._
         job.inputStream match {
             case Some(input) => {
-                job.outputStream = input.filter($"type" === "SandBox" && $"jobId" == event2JobId(e))
+                job.outputStream = input.filter($"type" === "SandBox" && $"jobId" === event2JobId(e))
+                    .groupBy($"jobId").count()
                     .writeStream
-                    .outputMode("complete")
+                    .outputMode("update")
                     .format("memory")
-                    .queryName(event2JobId(e))
+                    .queryName(qn)
                     .start() :: job.outputStream
 
-                new BPSOssEndListener(spark, job, event2JobId(e), event2Length(e)).active(null)
+                val el = new BPSOssEndListener(spark, job, qn, event2Length(e))
+                job.listeners = el :: job.listeners
             }
             case None => ???
         }
@@ -32,6 +35,8 @@ case class BPSEndLengthHandler() extends EventHandler {
         implicit val formats = DefaultFormats
         read[BPEndLengthElement](e.data).length
     }
+
+    override def close(): Unit = {}
 }
 
 case class BPEndLengthElement(length: Int)

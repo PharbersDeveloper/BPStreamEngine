@@ -13,7 +13,7 @@ object BPSOssJob {
 class BPSOssJob(val strategy: KfkJobStrategy, val spark: SparkSession) extends BPStreamJob {
     type T = KfkJobStrategy
     import spark.implicits._
-    val listener = new BPSOssListener(spark, this)
+//    val listener = new BPSOssListener(spark, this)
 
     override def open(): Unit = {
         val reading = spark.readStream
@@ -40,13 +40,23 @@ class BPSOssJob(val strategy: KfkJobStrategy, val spark: SparkSession) extends B
             ).select("data.*"))
     }
 
-    override def close(): Unit = inputStream match {
-        case Some(is) => listener.deActive(is)
-        case None => ???
+    override def close(): Unit = {
+        println("alfred clean all the job ========>")
+        handlers.foreach(_.close())
+        listeners.foreach(_.deActive())
+        outputStream.foreach(_.stop())
+        inputStream match {
+            case Some(is) =>
+            case None => ???
+        }
     }
 
     override def exec(): Unit = inputStream match {
-        case Some(is) => listener.active(is)
+        case Some(is) => {
+            val listener = new BPSOssListener(spark, this)
+            listener.active(is)
+            listeners = listener :: listeners
+        }
         case None => ???
     }
 }

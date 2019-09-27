@@ -5,4 +5,5 @@ import com.pharbers.StreamEngine.Common.Events
 
 trait EventHandler {
     def exec(job: BPStreamJob)(e: Events): Unit
+    def close(): Unit
 }

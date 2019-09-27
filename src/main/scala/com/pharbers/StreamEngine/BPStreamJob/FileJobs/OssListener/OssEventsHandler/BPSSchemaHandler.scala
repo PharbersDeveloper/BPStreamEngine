@@ -52,6 +52,8 @@ case class BPSSchemaHandler() extends EventHandler {
             }))
         )
     }
+
+    override def close(): Unit = {}
 }
 
 case class BPSchemaParseElement(key: String, `type`: String)
