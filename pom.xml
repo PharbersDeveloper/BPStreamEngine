@@ -168,7 +168,6 @@
                     <artifactId>common-config</artifactId>
                     <version>${confluent.version}</version>
                 </dependency>
-
             </dependencies>
         </profile>
     </profiles>
