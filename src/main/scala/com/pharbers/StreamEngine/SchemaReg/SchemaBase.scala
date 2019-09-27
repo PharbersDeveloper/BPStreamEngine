@@ -1,7 +1,8 @@
-package com.pharbers.StreamEngine.schemaReg
+package com.pharbers.StreamEngine.SchemaReg
 
 import org.apache.spark.sql.types.{StringType, StructField, StructType}
 
+@deprecated
 object SchemaReg {
     val logSchema: StructType = StructType(Seq(
         StructField("Time", StringType),
