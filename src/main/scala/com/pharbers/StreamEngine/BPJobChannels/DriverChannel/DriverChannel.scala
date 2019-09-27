@@ -14,10 +14,12 @@ import org.json4s.jackson.Serialization.read
 
 object DriverChannel {
     var channel: Option[DriverChannel] = None
+    var thread: Option[Thread] = None
 
     def apply(): Unit = {
         channel = Some(new DriverChannel)
-        new Thread(channel.get).start()
+        thread = Some(new Thread(channel.get))
+        thread.get.start()
     }
 
     def registerListener(listener: BPStreamRemoteListener): Unit = channel match {
@@ -29,6 +31,13 @@ object DriverChannel {
             case Some(c) => c.lst = c.lst.filterNot(_ == listener)
             case None => ???
         }
+
+    def waitForDriverDead() = {
+        thread match {
+            case Some(t) => t.join()
+            case None => ???
+        }
+    }
 }
 
 class DriverChannel extends Runnable {

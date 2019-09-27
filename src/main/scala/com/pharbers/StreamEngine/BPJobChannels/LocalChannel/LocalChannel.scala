@@ -30,7 +30,6 @@ class LocalChannel extends Runnable {
 
     override def run(): Unit = {
         while(true) {
-            println("LocalChanel ====> " + lst)
             trigger()
             Thread.sleep(1000)
         }

@@ -2,7 +2,9 @@ package com.pharbers.StreamEngine.BPStreamJob.FileJobs.OssListener
 
 import com.pharbers.StreamEngine.BPJobChannels.DriverChannel.DriverChannel
 import com.pharbers.StreamEngine.BPJobChannels.WorkerChannel.WorkerChannel
+import com.pharbers.StreamEngine.BPStreamJob.BPSJobContainer.BPSJobContainer
 import com.pharbers.StreamEngine.BPStreamJob.BPStreamJob
+import com.pharbers.StreamEngine.BPStreamJob.FileJobs.BPSOssJob
 import com.pharbers.StreamEngine.BPStreamJob.FileJobs.OssListener.OssEventsHandler.{BPSEndLengthHandler, BPSSchemaHandler}
 import com.pharbers.StreamEngine.Common.Events
 import com.pharbers.StreamEngine.Common.StreamListener.BPStreamRemoteListener
@@ -15,8 +17,14 @@ case class BPSOssListener(val spark: SparkSession, val job: BPStreamJob) extends
     import spark.implicits._
     override def trigger(e: Events): Unit = {
         e.`type` match {
-            case "SandBox-Schema" => BPSSchemaHandler().exec(job)(e)
-            case "SandBox-Length" => BPSEndLengthHandler().exec(job)(e)
+            case "SandBox-Schema" => {
+                val new_job = job.asInstanceOf[BPSJobContainer].getJobWithId(e.jobId)
+                BPSSchemaHandler().exec(new_job)(e)
+            }
+            case "SandBox-Length" => {
+                val new_job = job.asInstanceOf[BPSJobContainer].getJobWithId(e.jobId)
+                BPSEndLengthHandler().exec(new_job)(e)
+            }
         }
     }
 

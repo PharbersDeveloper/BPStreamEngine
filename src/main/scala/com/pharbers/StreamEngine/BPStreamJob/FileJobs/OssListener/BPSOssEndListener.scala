@@ -12,7 +12,7 @@ case class BPSOssEndListener(
                                 val queryName: String,
                                 val length: Int
                             ) extends BPStreamListener {
-    import spark.implicits._
+
     override def trigger(e: Events): Unit = {
         val tmp = spark.sql("select * from " + queryName).collect()
         if (tmp.length > 0 && tmp.head.getAs[Long]("count") == length) {

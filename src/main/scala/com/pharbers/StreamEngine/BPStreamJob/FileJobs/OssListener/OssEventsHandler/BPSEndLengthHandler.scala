@@ -24,6 +24,7 @@ case class BPSEndLengthHandler() extends EventHandler {
                     .start() :: job.outputStream
 
                 val el = new BPSOssEndListener(spark, job, qn, event2Length(e))
+                el.active(null)
                 job.listeners = el :: job.listeners
             }
             case None => ???
