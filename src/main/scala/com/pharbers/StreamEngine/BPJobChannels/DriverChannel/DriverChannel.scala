@@ -71,6 +71,7 @@ class DriverChannel extends Runnable {
 
                 } else if (item.isReadable()) {
                     val client =  item.channel().asInstanceOf[SocketChannel]
+                    // TODO: 分包读取的机制
                     val Buffer = ByteBuffer.allocate(2048)
                     if (client.read(Buffer) > 0) {
                         val result = new String(Buffer.array()).trim()
