@@ -1,10 +1,8 @@
 package com.pharbers.StreamEngine.BPStreamJob.FileJobs.OssListener.OssEventsHandler
 
-import com.databricks.spark.avro.SchemaConverters
 import com.pharbers.StreamEngine.BPStreamJob.BPStreamJob
 import com.pharbers.StreamEngine.Common.EventHandler.EventHandler
 import com.pharbers.StreamEngine.Common.Events
-import org.apache.avro.Schema
 import org.apache.spark.sql.types._
 import org.json4s.DefaultFormats
 import org.json4s.jackson.Serialization.read
@@ -17,8 +15,8 @@ case class BPSSchemaHandler() extends EventHandler {
         val spark = job.spark
         import spark.implicits._
         job.inputStream match {
-            case Some(input) =>
-                input.filter($"type" === "SandBox")
+            case Some(input) => {
+                job.outputStream = input.filter($"type" === "SandBox" && $"jobId" === jobId)
                     .select(
                         from_json($"data", event2SqlType(e)).as("data")
                     ).select("data.*")
@@ -27,8 +25,10 @@ case class BPSSchemaHandler() extends EventHandler {
                     .format("csv")
                     .option("checkpointLocation", "/test/streaming/" + jobId + "/checkpoint")
                     .option("path", "/test/streaming/" + jobId + "/files")
-                    .start()
-            case None =>
+                    .start() :: job.outputStream
+            }
+
+            case None => ???
         }
     }
 
@@ -53,6 +53,5 @@ case class BPSSchemaHandler() extends EventHandler {
         )
     }
 }
-
 
 case class BPSchemaParseElement(key: String, `type`: String)

@@ -25,8 +25,10 @@ object DriverChannel {
             case None => ???
         }
 
-    // TODO:
-    def unRegisterListener(listener: BPStreamRemoteListener): Unit = ???
+    def unRegisterListener(listener: BPStreamRemoteListener): Unit = channel match {
+            case Some(c) => c.lst = c.lst.filterNot(_ == listener)
+            case None => ???
+        }
 }
 
 class DriverChannel extends Runnable {

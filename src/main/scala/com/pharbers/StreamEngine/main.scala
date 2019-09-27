@@ -6,11 +6,13 @@ import com.pharbers.StreamEngine.BPSparkSession.BPSparkSession
 import com.pharbers.StreamEngine.BPStreamJob.FileJobs.BPSOssJob
 import com.pharbers.StreamEngine.BPStreamJob.JobStrategy.KfkJobStrategy
 import com.pharbers.StreamEngine.BPJobChannels.DriverChannel.DriverChannel
+import com.pharbers.StreamEngine.BPJobChannels.LocalChannel.LocalChannel
 
 object main extends App {
     val spark = BPSparkSession()
 
     DriverChannel()
+    LocalChannel()
     val kfk = BPKafkaSession(spark)
 
     val job = BPSOssJob(KfkJobStrategy(kfk), spark)
