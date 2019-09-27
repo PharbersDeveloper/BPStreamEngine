@@ -1,4 +1,4 @@
-package com.pharbers.StreamEngine.AvroDeserializer
+package com.pharbers.StreamEngine.BPKafkaSession.Avro
 
 import com.databricks.spark.avro.SchemaConverters
 import io.confluent.kafka.schemaregistry.client.{CachedSchemaRegistryClient, SchemaRegistryClient}
@@ -18,7 +18,9 @@ object AvroDeserializer {
     }
 
     def getSchema(topic: String) =
-        SchemaConverters.toSqlType(new Schema.Parser().parse(schemaRegistryClient.getLatestSchemaMetadata(topic + "-value").getSchema))
+        SchemaConverters.toSqlType(
+            new Schema.Parser().parse(schemaRegistryClient.getLatestSchemaMetadata(topic + "-value").getSchema)
+        ).dataType
 }
 
 class AvroDeserializer extends AbstractKafkaAvroDeserializer {

@@ -7,9 +7,6 @@ import java.nio.channels.SocketChannel
 object WorkerChannel {
     def apply(): WorkerChannel = {
         val tmp = new WorkerChannel()
-        println(tmp.host)
-        println(tmp.port)
-        println(tmp.addr)
         tmp.connect()
         tmp
     }
@@ -36,7 +33,6 @@ class WorkerChannel extends Serializable {
             case None => ???
         }
 
-        println("sending: " + msg)
         buffer.clear()
     }
 
