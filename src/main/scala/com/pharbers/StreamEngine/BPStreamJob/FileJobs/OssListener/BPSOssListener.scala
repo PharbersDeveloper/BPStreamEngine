@@ -2,22 +2,29 @@ package com.pharbers.StreamEngine.BPStreamJob.FileJobs.OssListener
 
 import com.pharbers.StreamEngine.BPJobChannels.DriverChannel.DriverChannel
 import com.pharbers.StreamEngine.BPJobChannels.WorkerChannel.WorkerChannel
+import com.pharbers.StreamEngine.BPStreamJob.BPSJobContainer.BPSJobContainer
 import com.pharbers.StreamEngine.BPStreamJob.BPStreamJob
-import com.pharbers.StreamEngine.BPStreamJob.FileJobs.OssListener.OssEventsHandler.BPSSchemaHandler
+import com.pharbers.StreamEngine.BPStreamJob.FileJobs.BPSOssJob
+import com.pharbers.StreamEngine.BPStreamJob.FileJobs.OssListener.OssEventsHandler.{BPSEndLengthHandler, BPSSchemaHandler}
 import com.pharbers.StreamEngine.Common.Events
 import com.pharbers.StreamEngine.Common.StreamListener.BPStreamRemoteListener
-import org.apache.spark.sql.streaming.StreamingQuery
 import org.apache.spark.sql.{DataFrame, ForeachWriter, Row, SparkSession}
 import org.json4s.DefaultFormats
 import org.json4s.jackson.Serialization.write
 
 case class BPSOssListener(val spark: SparkSession, val job: BPStreamJob) extends BPStreamRemoteListener {
-    var ins: Option[StreamingQuery] = None
+//    var ins: Option[StreamingQuery] = None
     import spark.implicits._
     override def trigger(e: Events): Unit = {
         e.`type` match {
-            case "SandBox-Schema" => BPSSchemaHandler().exec(job)(e)
-            case "SandBox-Length" => println(e)
+            case "SandBox-Schema" => {
+                val new_job = job.asInstanceOf[BPSJobContainer].getJobWithId(e.jobId)
+                BPSSchemaHandler().exec(new_job)(e)
+            }
+            case "SandBox-Length" => {
+                val new_job = job.asInstanceOf[BPSJobContainer].getJobWithId(e.jobId)
+                BPSEndLengthHandler().exec(new_job)(e)
+            }
         }
     }
 
@@ -25,7 +32,7 @@ case class BPSOssListener(val spark: SparkSession, val job: BPStreamJob) extends
 
     override def active(s: DataFrame): Unit = {
         DriverChannel.registerListener(this)
-        ins = Some(s.filter($"type" === "SandBox-Schema").writeStream
+        job.outputStream = s.filter($"type" === "SandBox-Schema" || $"type" === "SandBox-Length").writeStream
             .foreach(
                 new ForeachWriter[Row] {
 
@@ -52,10 +59,10 @@ case class BPSOssListener(val spark: SparkSession, val job: BPStreamJob) extends
 
                     def close(errorOrNull: scala.Throwable): Unit = {}//channel.get.close()
                 }
-            ).start())
+            ).start() :: job.outputStream
     }
 
-    override def deActive(s: DataFrame): Unit = ins match {
-            case Some(query) => query.stop()
-        }
+    override def deActive(): Unit = {
+        DriverChannel.unRegisterListener(this)
+    }
 }

@@ -15,10 +15,12 @@ class BPSparkSession {
         .set("spark.yarn.archive", yarnJars)
         .setAppName("bp-stream-engine")
         .setMaster("yarn")
+        .set("spark.driver.memory", "2g")
+        .set("spark.driver.cores", "2")
         .set("spark.scheduler.mode", "FAIR")
         .set("spark.executor.memory", "1g")
         .set("spark.executor.cores", "1")
-        .set("spark.executor.instances", "1")
+        .set("spark.executor.instances", "2")
 
     val spark = SparkSession.builder()
         .config(conf).getOrCreate()
@@ -30,6 +32,4 @@ class BPSparkSession {
     spark.sparkContext.addJar("./jars/kafka-avro-serializer-5.2.1.jar")
     spark.sparkContext.addJar("./jars/common-config-5.2.1.jar")
     spark.sparkContext.addJar("./jars/common-utils-5.2.1.jar")
-
-    import spark.implicits._
 }
