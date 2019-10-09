@@ -18,6 +18,7 @@ trait BPStreamJob {
     var handlers: List[EventHandler] = Nil
     def open(): Unit = {}
     def close(): Unit = {
+        //todo: log
         println("alfred clean job with id ========>" + id)
         handlers.foreach(_.close())
         listeners.foreach(_.deActive())

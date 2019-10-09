@@ -9,6 +9,7 @@ import java.nio.channels.SocketChannel
 
 import com.pharbers.StreamEngine.Common.Events
 import com.pharbers.StreamEngine.Common.StreamListener.BPStreamRemoteListener
+import org.apache.logging.log4j.LogManager
 import org.json4s._
 import org.json4s.jackson.Serialization.read
 
@@ -45,6 +46,8 @@ class DriverChannel extends Runnable {
     lazy val host: String = InetAddress.getLocalHost.getHostAddress
     lazy val port: Int = 56789
     var lst: List[BPStreamRemoteListener] = Nil
+    //todo: log
+    println(s"driver~~~~host:$host")
 
     def registerListener(listener: BPStreamRemoteListener): Unit = lst = listener :: lst
     def trigger(e: Events): Unit = lst.filter(_.hit(e)).foreach(_.trigger(e))
@@ -60,7 +63,7 @@ class DriverChannel extends Runnable {
 
         val ops: Int = driverSocket.validOps
         val selectKy: SelectionKey = driverSocket.register(selector, ops, null)
-
+        //todo： log
         println("Driver Channel Server")
         while (true) {
             // Selects a set of keys whose corresponding channels are ready for I/O operations
@@ -76,6 +79,7 @@ class DriverChannel extends Runnable {
                 // Tests whether this key's channel is ready to accept a new socket connection
                 if (item.isAcceptable()) {
                     val client = driverSocket.accept()
+                    //todo: log
                     println("Connection Accepted: " + client.getLocalAddress())
                     client.configureBlocking(false)
                     client.register(selector, SelectionKey.OP_READ)
@@ -86,10 +90,12 @@ class DriverChannel extends Runnable {
                     val Buffer = ByteBuffer.allocate(2048)
                     if (client.read(Buffer) > 0) {
                         val result = new String(Buffer.array()).trim()
+                        //todo: log
                         println("Message received: " + result)
 
                         if (result.equals("alfred end")) {
                             client.close()
+                            //todo: log
                             println("It's time to close connection")
                             println("Server will keep running. Try running client again to establish new connection")
                         }

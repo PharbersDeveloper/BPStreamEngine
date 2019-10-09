@@ -13,15 +13,20 @@ object WorkerChannel {
 }
 
 class WorkerChannel extends Serializable {
-
     lazy val host: String = InetAddress.getLocalHost.getHostAddress
     lazy val port: Int = 56789
-
-    lazy val addr = new InetSocketAddress(host, port)
+    //todo: log
+    println(s"worker~~~~host:$host")
+    lazy val addr = try {
+        new InetSocketAddress(host, port)
+    }catch {
+        case e: Exception => throw new Exception(s"error~~~worker~~~~host:$host", e)
+    }
     var client: Option[SocketChannel] = None
 
     def connect(): Unit = {
         client = Some(SocketChannel.open(addr))
+        //todo: log
         println("Connecting to Server on port 55555 ...")
     }
 
