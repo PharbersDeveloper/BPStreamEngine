@@ -1,6 +1,6 @@
 package com.pharbers.StreamEngine.BPJobChannels.WorkerChannel
 
-import java.net.InetSocketAddress
+import java.net.{InetAddress, InetSocketAddress}
 import java.nio.ByteBuffer
 import java.nio.channels.SocketChannel
 
@@ -14,7 +14,7 @@ object WorkerChannel {
 
 class WorkerChannel extends Serializable {
 
-    lazy val host: String = "192.168.100.195"
+    lazy val host: String = InetAddress.getLocalHost.getHostAddress
     lazy val port: Int = 56789
 
     lazy val addr = new InetSocketAddress(host, port)

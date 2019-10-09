@@ -1,6 +1,6 @@
 package com.pharbers.StreamEngine.BPJobChannels.DriverChannel
 
-import java.net.InetSocketAddress
+import java.net.{InetAddress, InetSocketAddress}
 import java.nio.ByteBuffer
 import java.nio.channels.SelectionKey
 import java.nio.channels.Selector
@@ -42,7 +42,7 @@ object DriverChannel {
 
 class DriverChannel extends Runnable {
 
-    lazy val host: String = "192.168.100.195"
+    lazy val host: String = InetAddress.getLocalHost.getHostAddress
     lazy val port: Int = 56789
     var lst: List[BPStreamRemoteListener] = Nil
 
