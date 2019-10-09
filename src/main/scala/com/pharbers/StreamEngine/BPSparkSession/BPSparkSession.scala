@@ -18,8 +18,8 @@ class BPSparkSession {
         .set("spark.driver.memory", "2g")
         .set("spark.driver.cores", "2")
         .set("spark.scheduler.mode", "FAIR")
-        .set("spark.executor.memory", "1g")
-        .set("spark.executor.cores", "1")
+        .set("spark.executor.memory", "2g")
+        .set("spark.executor.cores", "2")
         .set("spark.executor.instances", "2")
 
     val spark = SparkSession.builder()

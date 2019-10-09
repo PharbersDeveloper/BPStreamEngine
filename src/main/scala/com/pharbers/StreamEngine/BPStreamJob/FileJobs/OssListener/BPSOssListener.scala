@@ -1,5 +1,7 @@
 package com.pharbers.StreamEngine.BPStreamJob.FileJobs.OssListener
 
+import java.util.UUID
+
 import com.pharbers.StreamEngine.BPJobChannels.DriverChannel.DriverChannel
 import com.pharbers.StreamEngine.BPJobChannels.WorkerChannel.WorkerChannel
 import com.pharbers.StreamEngine.BPStreamJob.BPSJobContainer.BPSJobContainer
@@ -53,13 +55,14 @@ case class BPSOssListener(val spark: SparkSession, val job: BPStreamJob) extends
                             value.getAs[String]("type"),
                             value.getAs[String]("data")
                         )
-
                         channel.get.pushMessage(write(event))
                     }
 
                     def close(errorOrNull: scala.Throwable): Unit = {}//channel.get.close()
                 }
-            ).start() :: job.outputStream
+            )
+                .option("checkpointLocation", "/test/streaming/" + UUID.randomUUID().toString + "/checkpoint")
+                .start() :: job.outputStream
     }
 
     override def deActive(): Unit = {

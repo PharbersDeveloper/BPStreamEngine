@@ -1,5 +1,7 @@
 package com.pharbers.StreamEngine.BPStreamJob.FileJobs.OssListener.OssEventsHandler
 
+import java.util.UUID
+
 import com.pharbers.StreamEngine.BPStreamJob.BPStreamJob
 import com.pharbers.StreamEngine.BPStreamJob.FileJobs.OssListener.BPSOssEndListener
 import com.pharbers.StreamEngine.Common.EventHandler.EventHandler
@@ -21,6 +23,7 @@ case class BPSEndLengthHandler() extends EventHandler {
                     .outputMode("update")
                     .format("memory")
                     .queryName(qn)
+                    .option("checkpointLocation", "/test/streaming/" + UUID.randomUUID().toString + "/checkpoint")
                     .start() :: job.outputStream
 
                 val el = new BPSOssEndListener(spark, job, qn, event2Length(e))

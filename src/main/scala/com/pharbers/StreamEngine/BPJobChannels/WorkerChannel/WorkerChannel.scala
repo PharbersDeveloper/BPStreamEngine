@@ -14,7 +14,7 @@ object WorkerChannel {
 
 class WorkerChannel extends Serializable {
 
-    lazy val host: String = "192.168.100.115"
+    lazy val host: String = "192.168.100.195"
     lazy val port: Int = 56789
 
     lazy val addr = new InetSocketAddress(host, port)
