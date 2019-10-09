@@ -10,6 +10,7 @@ import com.pharbers.StreamEngine.BPStreamJob.FileJobs.BPSOssJob
 import com.pharbers.StreamEngine.BPStreamJob.FileJobs.OssListener.OssEventsHandler.{BPSEndLengthHandler, BPSSchemaHandler}
 import com.pharbers.StreamEngine.Common.Events
 import com.pharbers.StreamEngine.Common.StreamListener.BPStreamRemoteListener
+import org.apache.spark.TaskContext
 import org.apache.spark.sql.{DataFrame, ForeachWriter, Row, SparkSession}
 import org.json4s.DefaultFormats
 import org.json4s.jackson.Serialization.write
@@ -34,6 +35,7 @@ case class BPSOssListener(val spark: SparkSession, val job: BPStreamJob) extends
 
     override def active(s: DataFrame): Unit = {
         DriverChannel.registerListener(this)
+
         job.outputStream = s.filter($"type" === "SandBox-Schema" || $"type" === "SandBox-Length").writeStream
             .foreach(
                 new ForeachWriter[Row] {
@@ -41,7 +43,7 @@ case class BPSOssListener(val spark: SparkSession, val job: BPStreamJob) extends
                     var channel: Option[WorkerChannel] = None
 
                     def open(partitionId: Long, version: Long): Boolean = {
-                        if (channel.isEmpty) channel = Some(WorkerChannel())
+                        if (channel.isEmpty) channel = Some(WorkerChannel(TaskContext.get().getLocalProperty("host")))
                         true
                     }
 

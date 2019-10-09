@@ -4,28 +4,33 @@ import java.net.{InetAddress, InetSocketAddress}
 import java.nio.ByteBuffer
 import java.nio.channels.SocketChannel
 
+
 object WorkerChannel {
-    def apply(): WorkerChannel = {
-        val tmp = new WorkerChannel()
+//    var host: Broadcast[String] = _
+    val port: Int = 56789
+
+    def apply(host: String): WorkerChannel = {
+        val tmp = new WorkerChannel(host, port)
         tmp.connect()
         tmp
     }
+//    def init(hostBroadcast: Broadcast[String]): Unit ={
+//        host = hostBroadcast
+//    }
 }
 
-class WorkerChannel extends Serializable {
-    lazy val host: String = InetAddress.getLocalHost.getHostAddress
-    lazy val port: Int = 56789
-    //todo: log
-    println(s"worker~~~~host:$host")
-    lazy val addr = try {
-        new InetSocketAddress(host, port)
-    }catch {
-        case e: Exception => throw new Exception(s"error~~~worker~~~~host:$host", e)
-    }
+class WorkerChannel(host: String, port: Int) extends Serializable {
+
+    lazy val addr = new InetSocketAddress(host, port)
+
     var client: Option[SocketChannel] = None
 
     def connect(): Unit = {
-        client = Some(SocketChannel.open(addr))
+        try {
+            client = Some(SocketChannel.open(addr))
+        }catch {
+            case e: Exception => throw new Exception(s"error~~~worker~~~~host:${addr.getHostString} $host, name: ${addr.getPort}", e)
+        }
         //todo: log
         println("Connecting to Server on port 55555 ...")
     }
