@@ -1,6 +1,7 @@
 package com.pharbers.StreamEngine.BPStreamJob.FileJobs.OssListenerV2.OssEventsHandler
 
 import com.pharbers.StreamEngine.BPStreamJob.BPStreamJob
+import com.pharbers.StreamEngine.BPStreamJob.FileJobs.OssListenerV2.BPSOssEndListenerV2
 import com.pharbers.StreamEngine.Common.EventHandler.EventHandler
 import com.pharbers.StreamEngine.Common.Events
 import org.apache.spark.sql.functions.from_json
@@ -17,24 +18,28 @@ import org.json4s.jackson.Serialization.read
   * @since 2019/10/11 13:40
   * @note 一些值得注意的地方
   */
-case class BPSSchemaHandler(schemaEvent: Events) extends EventHandler {
+case class BPSSchemaHandlerV2(schemaEvent: Events) extends EventHandler {
     override def exec(job: BPStreamJob)(e: Events): Unit = {
         // 收到Schema 开始执行分流
-        val jobId = event2JobId(e)
+        val jobId = event2JobId(schemaEvent)
         val spark = job.spark
         import spark.implicits._
         job.inputStream match {
             case Some(input) => {
-                job.outputStream = input.filter($"type" === "SandBox" && $"jobId" === jobId)
+                val query = input.filter($"type" === "SandBox" && $"jobId" === jobId)
                         .select(
-                            from_json($"data", event2SqlType(e)).as("data")
+                            from_json($"data", event2SqlType(schemaEvent)).as("data")
                         ).select("data.*")
                         .writeStream
                         .outputMode("append")
                         .format("parquet")
                         .option("checkpointLocation", "/test/streaming/" + jobId + "/checkpoint")
                         .option("path", "/test/streaming/" + jobId + "/files")
-                        .start() :: job.outputStream
+                        .start()
+                job.outputStream = query :: job.outputStream
+                val endListenerV2 = new BPSOssEndListenerV2(spark, job, jobId, e.timestamp, query)
+                endListenerV2.active(null)
+                job.listeners = endListenerV2 :: job.listeners
             }
 
             case None => ???

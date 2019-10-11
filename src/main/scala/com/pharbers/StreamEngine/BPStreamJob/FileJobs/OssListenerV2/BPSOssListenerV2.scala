@@ -6,7 +6,7 @@ import com.pharbers.StreamEngine.BPJobChannels.DriverChannel.DriverChannel
 import com.pharbers.StreamEngine.BPJobChannels.WorkerChannel.WorkerChannel
 import com.pharbers.StreamEngine.BPStreamJob.BPSJobContainer.BPSJobContainer
 import com.pharbers.StreamEngine.BPStreamJob.BPStreamJob
-import com.pharbers.StreamEngine.BPStreamJob.FileJobs.OssListenerV2.OssEventsHandler.BPSSchemaHandler
+import com.pharbers.StreamEngine.BPStreamJob.FileJobs.OssListenerV2.OssEventsHandler.BPSSchemaHandlerV2
 import com.pharbers.StreamEngine.Common.Events
 import com.pharbers.StreamEngine.Common.StreamListener.BPStreamRemoteListener
 import org.apache.spark.TaskContext
@@ -33,7 +33,7 @@ case class BPSOssListenerV2(spark: SparkSession, job: BPStreamJob) extends BPStr
             case "SandBox-Schema" => jobTimestamp.put(e.jobId, e)
             case "SandBox-Length" => {
                 val new_job = job.asInstanceOf[BPSJobContainer].getJobWithId(e.jobId)
-                BPSSchemaHandler(jobTimestamp(e.jobId)).exec(new_job)(e)
+                BPSSchemaHandlerV2(jobTimestamp(e.jobId)).exec(new_job)(e)
                 jobTimestamp.remove(e.jobId)
             }
         }
