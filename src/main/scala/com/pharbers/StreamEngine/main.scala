@@ -1,21 +1,21 @@
 
-import com.pharbers.StreamEngine.BPKafkaSession.BPKafkaSession
-import com.pharbers.StreamEngine.BPSparkSession.BPSparkSession
-import com.pharbers.StreamEngine.BPStreamJob.JobStrategy.KfkJobStrategy
-import com.pharbers.StreamEngine.BPJobChannels.DriverChannel.DriverChannel
-import com.pharbers.StreamEngine.BPJobChannels.LocalChannel.LocalChannel
-import com.pharbers.StreamEngine.BPStreamJob.BPSJobContainer.BPSOssJobContainer
+import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSKfkJobStrategy
+import com.pharbers.StreamEngine.Utils.Channel.Driver.BPSDriverChannel
+import com.pharbers.StreamEngine.Utils.Channel.Local.BPSLocalChannel
+import com.pharbers.StreamEngine.Jobs.OssJob.OssJobContainer.BPSOssJobContainer
+import com.pharbers.StreamEngine.Utils.Session.Kafka.BPKafkaSession
+import com.pharbers.StreamEngine.Utils.Session.Spark.BPSparkSession
 
 object main extends App {
 
     val spark = BPSparkSession()
 
-    DriverChannel()
-    LocalChannel()
+    BPSDriverChannel()
+    BPSLocalChannel()
 
     val job =
         BPSOssJobContainer(
-            KfkJobStrategy(
+            BPSKfkJobStrategy(
                 BPKafkaSession(spark)
             ),
             spark
@@ -23,5 +23,5 @@ object main extends App {
     job.open()
     job.exec()
 
-    DriverChannel.waitForDriverDead()
+    BPSDriverChannel.waitForDriverDead()
 }
