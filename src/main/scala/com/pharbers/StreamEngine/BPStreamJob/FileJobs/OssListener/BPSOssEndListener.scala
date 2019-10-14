@@ -5,7 +5,6 @@ import com.pharbers.StreamEngine.BPStreamJob.BPStreamJob
 import com.pharbers.StreamEngine.Common.Events
 import com.pharbers.StreamEngine.Common.StreamListener.BPStreamListener
 import org.apache.spark.sql.{DataFrame, SparkSession}
-import org.apache.spark.util.AccumulatorV2
 
 case class BPSOssEndListener(
                                 val spark: SparkSession,
@@ -28,45 +27,3 @@ case class BPSOssEndListener(
 
     override def deActive(): Unit = LocalChannel.unRegisterListener(this)
 }
-
-//object JobCountAccumulator extends AccumulatorV2[String, Map[String, Int]]{
-//    private val jobCountVector = Map[String, Int]()
-//
-//    def isZero: Boolean = {
-//        jobCountVector.isEmpty
-//    }
-//
-//    override def copy(): AccumulatorV2[String, Map[Int, Int]] = {
-//        jobCountVector
-//    }
-//
-//    /**
-//      * Resets this accumulator, which is zero value. i.e. call `isZero` must
-//      * return true.
-//      */
-//    def reset(): Unit = {
-//
-//    }
-//
-//    /**
-//      * Takes the inputs and accumulates.
-//      */
-//    def add(v: String): Unit = {
-//
-//    }
-//
-//    /**
-//      * Merges another same-type accumulator into this one and update its state, i.e. this should be
-//      * merge-in-place.
-//      */
-//    override def merge(other: AccumulatorV2[String, Map[Int, Int]]): Unit = {
-//
-//    }
-//
-//    /**
-//      * Defines the current value of this accumulator
-//      */
-//    override def value: Map[Int, Int] = {
-//
-//    }
-//}
