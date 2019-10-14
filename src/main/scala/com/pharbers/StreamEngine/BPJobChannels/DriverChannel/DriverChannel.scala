@@ -46,8 +46,6 @@ class DriverChannel extends Runnable {
     lazy val host: String = InetAddress.getLocalHost.getHostAddress
     lazy val port: Int = 56789
     var lst: List[BPStreamRemoteListener] = Nil
-    //todo: log
-    println(s"driver~~~~host:$host")
 
     def registerListener(listener: BPStreamRemoteListener): Unit = lst = listener :: lst
     def trigger(e: Events): Unit = lst.filter(_.hit(e)).foreach(_.trigger(e))

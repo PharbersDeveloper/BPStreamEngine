@@ -5,6 +5,7 @@ import java.util.UUID
 import com.pharbers.StreamEngine.BPStreamJob.BPStreamJob
 import com.pharbers.StreamEngine.BPStreamJob.FileJobs.BPSOssJob
 import com.pharbers.StreamEngine.BPStreamJob.FileJobs.OssListener.BPSOssListener
+import com.pharbers.StreamEngine.BPStreamJob.FileJobs.OssListenerV2.BPSOssListenerV2
 import com.pharbers.StreamEngine.BPStreamJob.JobStrategy.KfkJobStrategy
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions._
@@ -40,8 +41,8 @@ class BPSOssJobContainer(override val strategy: KfkJobStrategy, val spark: Spark
             ).toDF()
             .withWatermark("timestamp", "24 hours")
             .select(
-                from_json($"value", strategy.getSchema).as("data")
-            ).select("data.*"))
+                from_json($"value", strategy.getSchema).as("data"), col("timestamp")
+            ).select("data.*", "timestamp"))
     }
 
 //    override def close(): Unit = {
@@ -57,7 +58,7 @@ class BPSOssJobContainer(override val strategy: KfkJobStrategy, val spark: Spark
 
     override def exec(): Unit = inputStream match {
         case Some(is) => {
-            val listener = new BPSOssListener(spark, this)
+            val listener = new BPSOssListenerV2(spark, this)
             listener.active(is)
             listeners = listener :: listeners
         }
