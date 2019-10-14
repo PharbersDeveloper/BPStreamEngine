@@ -1,6 +1,6 @@
-package com.pharbers.StreamEngine.BPStreamJob.FileJobs
+package com.pharbers.StreamEngine.OssJobs.FileJobs
 
-import com.pharbers.StreamEngine.BPStreamJob.BPSJobContainer.BPSJobContainer
+import com.pharbers.StreamEngine.OssJobs.BPSJobContainer.BPSJobContainer
 import com.pharbers.StreamEngine.BPStreamJob.BPStreamJob
 import com.pharbers.StreamEngine.BPStreamJob.JobStrategy.JobStrategy
 import org.apache.spark.sql

@@ -1,11 +1,11 @@
-package com.pharbers.StreamEngine.BPStreamJob.BPSJobContainer
+package com.pharbers.StreamEngine.OssJobs.BPSJobContainer
 
 import java.util.UUID
 
 import com.pharbers.StreamEngine.BPStreamJob.BPStreamJob
-import com.pharbers.StreamEngine.BPStreamJob.FileJobs.BPSOssJob
-import com.pharbers.StreamEngine.BPStreamJob.FileJobs.OssListener.BPSOssListener
-import com.pharbers.StreamEngine.BPStreamJob.FileJobs.OssListenerV2.BPSOssListenerV2
+import com.pharbers.StreamEngine.OssJobs.FileJobs.BPSOssJob
+import com.pharbers.StreamEngine.OssJobs.FileJobs.OssListener.BPSOssListener
+import com.pharbers.StreamEngine.OssJobs.FileJobs.OssListenerV2.BPSOssListenerV2
 import com.pharbers.StreamEngine.BPStreamJob.JobStrategy.KfkJobStrategy
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions._

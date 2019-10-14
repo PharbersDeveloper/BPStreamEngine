@@ -1,9 +1,9 @@
-package com.pharbers.StreamEngine.BPStreamJob.FileJobs.OssListener
+package com.pharbers.StreamEngine.OssJobs.FileJobs.OssListener
 
 import com.pharbers.StreamEngine.BPJobChannels.LocalChannel.LocalChannel
 import com.pharbers.StreamEngine.BPStreamJob.BPStreamJob
-import com.pharbers.StreamEngine.Common.Events
-import com.pharbers.StreamEngine.Common.StreamListener.BPStreamListener
+import com.pharbers.StreamEngine.Common.Event.BPSEvents
+import com.pharbers.StreamEngine.Common.Event.StreamListener.BPStreamListener
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
 case class BPSOssEndListener(
@@ -12,7 +12,7 @@ case class BPSOssEndListener(
                                 val queryName: String,
                                 val length: Int
                             ) extends BPStreamListener {
-    override def trigger(e: Events): Unit = {
+    override def trigger(e: BPSEvents): Unit = {
         val tmp = spark.sql("select * from " + queryName).collect()
         //todo: log
         println(s"queryName:$queryName")

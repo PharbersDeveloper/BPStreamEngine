@@ -1,4 +1,4 @@
-package com.pharbers.StreamEngine.BPStreamJob.FileJobs.OssListenerV2
+package com.pharbers.StreamEngine.OssJobs.FileJobs.OssListenerV2
 
 import java.sql.Timestamp
 import java.text.SimpleDateFormat
@@ -6,8 +6,8 @@ import java.time.LocalDate
 
 import com.pharbers.StreamEngine.BPJobChannels.LocalChannel.LocalChannel
 import com.pharbers.StreamEngine.BPStreamJob.BPStreamJob
-import com.pharbers.StreamEngine.Common.Events
-import com.pharbers.StreamEngine.Common.StreamListener.BPStreamListener
+import com.pharbers.StreamEngine.Common.Event.BPSEvents
+import com.pharbers.StreamEngine.Common.Event.StreamListener.BPStreamListener
 import org.apache.spark.sql.streaming.StreamingQuery
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
@@ -27,7 +27,7 @@ class BPSOssEndListenerV2(
                                 val endTimestamp: Timestamp,
                                 val query: StreamingQuery
                         ) extends BPStreamListener {
-    override def trigger(e: Events): Unit = {
+    override def trigger(e: BPSEvents): Unit = {
         val progress = query.recentProgress.filter(x => x.eventTime.containsKey("max"))
         //todo: log
         println(s"queryName:$queryName")

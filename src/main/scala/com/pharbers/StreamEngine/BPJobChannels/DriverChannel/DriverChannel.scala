@@ -7,8 +7,8 @@ import java.nio.channels.Selector
 import java.nio.channels.ServerSocketChannel
 import java.nio.channels.SocketChannel
 
-import com.pharbers.StreamEngine.Common.Events
-import com.pharbers.StreamEngine.Common.StreamListener.BPStreamRemoteListener
+import com.pharbers.StreamEngine.Common.Event.BPSEvents
+import com.pharbers.StreamEngine.Common.Event.StreamListener.BPStreamRemoteListener
 import org.apache.logging.log4j.LogManager
 import org.json4s._
 import org.json4s.jackson.Serialization.read
@@ -48,7 +48,7 @@ class DriverChannel extends Runnable {
     var lst: List[BPStreamRemoteListener] = Nil
 
     def registerListener(listener: BPStreamRemoteListener): Unit = lst = listener :: lst
-    def trigger(e: Events): Unit = lst.filter(_.hit(e)).foreach(_.trigger(e))
+    def trigger(e: BPSEvents): Unit = lst.filter(_.hit(e)).foreach(_.trigger(e))
 
     override def run(): Unit = {
         val selector: Selector = Selector.open // selector is open here
@@ -99,7 +99,7 @@ class DriverChannel extends Runnable {
                         }
 
                         implicit val formats = DefaultFormats
-                        val event = read[Events](result)
+                        val event = read[BPSEvents](result)
                         trigger(event)
                     }
                 }

@@ -4,7 +4,7 @@ import com.pharbers.StreamEngine.BPSparkSession.BPSparkSession
 import com.pharbers.StreamEngine.BPStreamJob.JobStrategy.KfkJobStrategy
 import com.pharbers.StreamEngine.BPJobChannels.DriverChannel.DriverChannel
 import com.pharbers.StreamEngine.BPJobChannels.LocalChannel.LocalChannel
-import com.pharbers.StreamEngine.BPStreamJob.BPSJobContainer.BPSOssJobContainer
+import com.pharbers.StreamEngine.OssJobs.BPSJobContainer.BPSOssJobContainer
 
 object main extends App {
 

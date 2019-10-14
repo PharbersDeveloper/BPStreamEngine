@@ -1,6 +1,6 @@
 package com.pharbers.StreamEngine.BPJobChannels.LocalChannel
 
-import com.pharbers.StreamEngine.Common.StreamListener.BPStreamListener
+import com.pharbers.StreamEngine.Common.Event.StreamListener.BPStreamListener
 
 object LocalChannel {
     var channel: Option[LocalChannel] = None

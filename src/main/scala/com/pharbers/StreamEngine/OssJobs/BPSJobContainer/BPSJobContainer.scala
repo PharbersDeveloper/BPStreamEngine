@@ -1,4 +1,4 @@
-package com.pharbers.StreamEngine.BPStreamJob.BPSJobContainer
+package com.pharbers.StreamEngine.OssJobs.BPSJobContainer
 
 import com.pharbers.StreamEngine.BPStreamJob.BPStreamJob
 

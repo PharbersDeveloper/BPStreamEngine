@@ -1,16 +1,16 @@
-package com.pharbers.StreamEngine.BPStreamJob.FileJobs.OssListener.OssEventsHandler
+package com.pharbers.StreamEngine.OssJobs.FileJobs.OssListener.OssEventsHandler
 
 import java.util.UUID
 
 import com.pharbers.StreamEngine.BPStreamJob.BPStreamJob
-import com.pharbers.StreamEngine.BPStreamJob.FileJobs.OssListener.BPSOssEndListener
-import com.pharbers.StreamEngine.Common.EventHandler.EventHandler
-import com.pharbers.StreamEngine.Common.Events
+import com.pharbers.StreamEngine.OssJobs.FileJobs.OssListener.BPSOssEndListener
+import com.pharbers.StreamEngine.Common.Event.EventHandler.BPSEventHandler
+import com.pharbers.StreamEngine.Common.Event.BPSEvents
 import org.json4s.DefaultFormats
 import org.json4s.jackson.Serialization.read
 
-case class BPSEndLengthHandler() extends EventHandler {
-    override def exec(job: BPStreamJob)(e: Events): Unit = {
+case class BPSEndLengthHandlerBPS() extends BPSEventHandler {
+    override def exec(job: BPStreamJob)(e: BPSEvents): Unit = {
         // 收到End Length 开始执行结束逻辑
         val qn = "view_" + event2JobId(e)
         val spark = job.spark
@@ -34,8 +34,8 @@ case class BPSEndLengthHandler() extends EventHandler {
         }
     }
 
-    def event2JobId(e: Events): String = e.jobId
-    def event2Length(e: Events): Int = {
+    def event2JobId(e: BPSEvents): String = e.jobId
+    def event2Length(e: BPSEvents): Int = {
         implicit val formats = DefaultFormats
         read[BPEndLengthElement](e.data).length
     }

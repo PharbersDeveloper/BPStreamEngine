@@ -1,14 +1,14 @@
-package com.pharbers.StreamEngine.BPStreamJob.FileJobs.OssListenerV2
+package com.pharbers.StreamEngine.OssJobs.FileJobs.OssListenerV2
 
 import java.util.UUID
 
 import com.pharbers.StreamEngine.BPJobChannels.DriverChannel.DriverChannel
 import com.pharbers.StreamEngine.BPJobChannels.WorkerChannel.WorkerChannel
-import com.pharbers.StreamEngine.BPStreamJob.BPSJobContainer.BPSJobContainer
+import com.pharbers.StreamEngine.OssJobs.BPSJobContainer.BPSJobContainer
 import com.pharbers.StreamEngine.BPStreamJob.BPStreamJob
-import com.pharbers.StreamEngine.BPStreamJob.FileJobs.OssListenerV2.OssEventsHandler.BPSSchemaHandlerV2
-import com.pharbers.StreamEngine.Common.Events
-import com.pharbers.StreamEngine.Common.StreamListener.BPStreamRemoteListener
+import com.pharbers.StreamEngine.Common.Event.BPSEvents
+import com.pharbers.StreamEngine.OssJobs.FileJobs.OssListenerV2.OssEventsHandler.BPSSchemaHandlerV2BPS
+import com.pharbers.StreamEngine.Common.Event.StreamListener.BPStreamRemoteListener
 import org.apache.spark.TaskContext
 import org.apache.spark.sql.{DataFrame, ForeachWriter, Row, SparkSession}
 import org.json4s.DefaultFormats
@@ -27,19 +27,19 @@ import scala.collection.mutable
   */
 case class BPSOssListenerV2(spark: SparkSession, job: BPStreamJob) extends BPStreamRemoteListener {
     import spark.implicits._
-    val jobTimestamp: mutable.Map[String, Events] = mutable.Map()
-    override def trigger(e: Events): Unit = {
+    val jobTimestamp: mutable.Map[String, BPSEvents] = mutable.Map()
+    override def trigger(e: BPSEvents): Unit = {
         e.`type` match {
             case "SandBox-Schema" => jobTimestamp.put(e.jobId, e)
             case "SandBox-Length" => {
                 val new_job = job.asInstanceOf[BPSJobContainer].getJobWithId(e.jobId)
-                BPSSchemaHandlerV2(jobTimestamp(e.jobId)).exec(new_job)(e)
+                BPSSchemaHandlerV2BPS(jobTimestamp(e.jobId)).exec(new_job)(e)
                 jobTimestamp.remove(e.jobId)
             }
         }
     }
 
-    override def hit(e: Events): Boolean = e.`type` == "SandBox-Schema" || e.`type` == "SandBox-Length"
+    override def hit(e: BPSEvents): Boolean = e.`type` == "SandBox-Schema" || e.`type` == "SandBox-Length"
 
     override def active(s: DataFrame): Unit = {
         DriverChannel.registerListener(this)
@@ -59,7 +59,7 @@ case class BPSOssListenerV2(spark: SparkSession, job: BPStreamJob) extends BPStr
 
                             implicit val formats = DefaultFormats
 
-                            val event = Events(
+                            val event = BPSEvents(
                                 value.getAs[String]("jobId"),
                                 value.getAs[String]("traceId"),
                                 value.getAs[String]("type"),

@@ -1,9 +1,9 @@
-package com.pharbers.StreamEngine.BPStreamJob.FileJobs.OssListenerV2.OssEventsHandler
+package com.pharbers.StreamEngine.OssJobs.FileJobs.OssListenerV2.OssEventsHandler
 
 import com.pharbers.StreamEngine.BPStreamJob.BPStreamJob
-import com.pharbers.StreamEngine.BPStreamJob.FileJobs.OssListenerV2.BPSOssEndListenerV2
-import com.pharbers.StreamEngine.Common.EventHandler.EventHandler
-import com.pharbers.StreamEngine.Common.Events
+import com.pharbers.StreamEngine.OssJobs.FileJobs.OssListenerV2.BPSOssEndListenerV2
+import com.pharbers.StreamEngine.Common.Event.EventHandler.BPSEventHandler
+import com.pharbers.StreamEngine.Common.Event.BPSEvents
 import org.apache.spark.sql.functions.from_json
 import org.apache.spark.sql.types._
 import org.json4s.DefaultFormats
@@ -18,8 +18,8 @@ import org.json4s.jackson.Serialization.read
   * @since 2019/10/11 13:40
   * @note 一些值得注意的地方
   */
-case class BPSSchemaHandlerV2(schemaEvent: Events) extends EventHandler {
-    override def exec(job: BPStreamJob)(e: Events): Unit = {
+case class BPSSchemaHandlerV2BPS(schemaEvent: BPSEvents) extends BPSEventHandler {
+    override def exec(job: BPStreamJob)(e: BPSEvents): Unit = {
         // 收到Schema 开始执行分流
         val jobId = event2JobId(schemaEvent)
         val spark = job.spark
@@ -46,9 +46,9 @@ case class BPSSchemaHandlerV2(schemaEvent: Events) extends EventHandler {
         }
     }
 
-    def event2JobId(e: Events): String = e.jobId
+    def event2JobId(e: BPSEvents): String = e.jobId
 
-    def event2SqlType(e: Events): org.apache.spark.sql.types.DataType = {
+    def event2SqlType(e: BPSEvents): org.apache.spark.sql.types.DataType = {
         // TODO: 以后全变为AVRO的Schema形式
         //        SchemaConverters.toSqlType(new Schema.Parser().parse(e.data)).dataType
         implicit val formats = DefaultFormats
