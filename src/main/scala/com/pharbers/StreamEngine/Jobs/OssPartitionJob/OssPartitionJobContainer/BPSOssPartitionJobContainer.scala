@@ -29,7 +29,6 @@ class BPSOssPartitionJobContainer(override val strategy: BPSKfkJobStrategy, val 
             .option("kafka.ssl.truststore.location", "./kafka.broker1.truststore.jks")
             .option("kafka.ssl.truststore.password", "pharbers")
             .option("kafka.ssl.endpoint.identification.algorithm", " ")
-//            .option("subscribe", "oss_topic_1")
             .option("subscribe", strategy.getTopic)
             .option("startingOffsets", "earliest")
             .load()
@@ -47,18 +46,16 @@ class BPSOssPartitionJobContainer(override val strategy: BPSKfkJobStrategy, val 
 
     override def exec(): Unit = inputStream match {
         case Some(is) => {
-//            val listener = new BPSOssListenerV2(spark, this)
-//            listener.active(is)
-//            listeners = listener :: listeners
+            val listener = new BPSOssListenerV2(spark, this)
+            listener.active(is)
+            listeners = listener :: listeners
 
-            val runId = UUID.randomUUID().toString
-
-            is.writeStream
+            is.filter($"type" === "SandBox").writeStream
                 .partitionBy("jobId")
+                .format("csv")
                 .outputMode("append")
-//                .format("console")
-                .option("checkpointLocation", "/test/streamingV2/" + runId + "/checkpoint")
-                .option("path", "/test/streamingV2/" + runId + "/files")
+                .option("checkpointLocation", "/test/streamingV2/" + this.id + "/checkpoint")
+                .option("path", "/test/streamingV2/" + this.id + "/files")
                 .start()
         }
         case None => ???

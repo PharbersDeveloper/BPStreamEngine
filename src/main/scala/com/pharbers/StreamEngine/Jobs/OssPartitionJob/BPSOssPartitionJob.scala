@@ -30,5 +30,4 @@ class BPSOssPartitionJob(
         super.close()
         container.finishJobWithId(id)
     }
-
 }
