@@ -1,19 +1,19 @@
-package com.pharbers.StreamEngine.Jobs.OssJob.OssJobContainer
+package com.pharbers.StreamEngine.Jobs.OssPartitionJob.OssJobContainer
 
 import java.util.UUID
 
 import com.pharbers.StreamEngine.Jobs.OssPartitionJob.BPSOssPartitionJob
 import com.pharbers.StreamEngine.Utils.StreamJob.{BPSJobContainer, BPStreamJob}
-import com.pharbers.StreamEngine.Jobs.OssJob.OssListenerV2.BPSOssListenerV2
+import com.pharbers.StreamEngine.Jobs.OssPartitionJob.OssListener.BPSOssListener
 import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSKfkJobStrategy
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions._
 
-object BPSOssJobContainer {
-    def apply(strategy: BPSKfkJobStrategy, spark: SparkSession): BPSOssJobContainer = new BPSOssJobContainer(strategy, spark)
+object BPSOssPartitionJobContainer {
+    def apply(strategy: BPSKfkJobStrategy, spark: SparkSession): BPSOssPartitionJobContainer = new BPSOssPartitionJobContainer(strategy, spark)
 }
 
-class BPSOssJobContainer(override val strategy: BPSKfkJobStrategy, val spark: SparkSession) extends BPSJobContainer {
+class BPSOssPartitionJobContainer(override val strategy: BPSKfkJobStrategy, val spark: SparkSession) extends BPSJobContainer {
     val id = UUID.randomUUID().toString
     type T = BPSKfkJobStrategy
     import spark.implicits._
@@ -29,7 +29,7 @@ class BPSOssJobContainer(override val strategy: BPSKfkJobStrategy, val spark: Sp
             .option("kafka.ssl.truststore.location", "./kafka.broker1.truststore.jks")
             .option("kafka.ssl.truststore.password", "pharbers")
             .option("kafka.ssl.endpoint.identification.algorithm", " ")
-            .option("subscribe", "oss_topic_1")
+            .option("subscribe", strategy.getTopic)
             .option("startingOffsets", "earliest")
             .load()
 
@@ -46,9 +46,17 @@ class BPSOssJobContainer(override val strategy: BPSKfkJobStrategy, val spark: Sp
 
     override def exec(): Unit = inputStream match {
         case Some(is) => {
-            val listener = new BPSOssListenerV2(spark, this)
+            val listener = new BPSOssListener(spark, this)
             listener.active(is)
             listeners = listener :: listeners
+
+            is.filter($"type" === "SandBox").writeStream
+                .partitionBy("jobId")
+                .format("csv")
+                .outputMode("append")
+                .option("checkpointLocation", "/test/streamingV2/" + this.id + "/checkpoint")
+                .option("path", "/test/streamingV2/" + this.id + "/files")
+                .start()
         }
         case None => ???
     }

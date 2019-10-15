@@ -21,7 +21,7 @@ object BPSWorkerChannel {
 
 class BPSWorkerChannel(host: String, port: Int) extends Serializable {
 
-    lazy val addr = new InetSocketAddress(host, port)
+    lazy val addr = new InetSocketAddress("192.168.100.115", port)
 
     var client: Option[SocketChannel] = None
 
