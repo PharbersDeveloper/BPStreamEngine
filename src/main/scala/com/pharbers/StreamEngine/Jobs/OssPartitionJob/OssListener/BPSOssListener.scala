@@ -1,8 +1,8 @@
-package com.pharbers.StreamEngine.Jobs.OssJob.OssListener
+package com.pharbers.StreamEngine.Jobs.OssPartitionJob.OssListener
 
 import java.util.UUID
 
-import com.pharbers.StreamEngine.Jobs.OssJob.BPSOssPartitionJob
+import com.pharbers.StreamEngine.Jobs.OssPartitionJob.BPSOssPartitionJob
 import com.pharbers.StreamEngine.Utils.Channel.Driver.BPSDriverChannel
 import com.pharbers.StreamEngine.Utils.Channel.Worker.BPSWorkerChannel
 import com.pharbers.StreamEngine.Utils.StreamJob.{BPSJobContainer, BPStreamJob}

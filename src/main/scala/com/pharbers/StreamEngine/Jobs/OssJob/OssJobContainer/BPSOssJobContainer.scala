@@ -2,7 +2,7 @@ package com.pharbers.StreamEngine.Jobs.OssJob.OssJobContainer
 
 import java.util.UUID
 
-import com.pharbers.StreamEngine.Jobs.OssJob.BPSOssPartitionJob
+import com.pharbers.StreamEngine.Jobs.OssPartitionJob.BPSOssPartitionJob
 import com.pharbers.StreamEngine.Utils.StreamJob.{BPSJobContainer, BPStreamJob}
 import com.pharbers.StreamEngine.Jobs.OssJob.OssListenerV2.BPSOssListenerV2
 import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSKfkJobStrategy
@@ -10,7 +10,7 @@ import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions._
 
 object BPSOssJobContainer {
-    def apply(strategy: BPSKfkJobStrategy, spark: SparkSession): BPSOssPartitionJobContainer = new BPSOssPartitionJobContainer(strategy, spark)
+    def apply(strategy: BPSKfkJobStrategy, spark: SparkSession): BPSOssJobContainer = new BPSOssJobContainer(strategy, spark)
 }
 
 class BPSOssJobContainer(override val strategy: BPSKfkJobStrategy, val spark: SparkSession) extends BPSJobContainer {
@@ -43,17 +43,6 @@ class BPSOssJobContainer(override val strategy: BPSKfkJobStrategy, val spark: Sp
                 from_json($"value", strategy.getSchema).as("data"), col("timestamp")
             ).select("data.*", "timestamp"))
     }
-
-//    override def close(): Unit = {
-//        println("alfred clean all the job ========>")
-//        handlers.foreach(_.close())
-//        listeners.foreach(_.deActive())
-//        outputStream.foreach(_.stop())
-//        inputStream match {
-//            case Some(is) =>
-//            case None => ???
-//        }
-//    }
 
     override def exec(): Unit = inputStream match {
         case Some(is) => {

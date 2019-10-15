@@ -1,4 +1,4 @@
-package com.pharbers.StreamEngine.Jobs.OssJob.OssListenerV2
+package com.pharbers.StreamEngine.Jobs.OssPartitionJob.OssListenerV2
 
 import java.sql.Timestamp
 import java.text.SimpleDateFormat

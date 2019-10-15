@@ -2,7 +2,7 @@
 import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSKfkJobStrategy
 import com.pharbers.StreamEngine.Utils.Channel.Driver.BPSDriverChannel
 import com.pharbers.StreamEngine.Utils.Channel.Local.BPSLocalChannel
-import com.pharbers.StreamEngine.Jobs.OssJob.OssJobContainer.BPSOssPartitionJobContainer
+import com.pharbers.StreamEngine.Jobs.OssPartitionJob.OssJobContainer.BPSOssPartitionJobContainer
 import com.pharbers.StreamEngine.Utils.Session.Kafka.BPKafkaSession
 import com.pharbers.StreamEngine.Utils.Session.Spark.BPSparkSession
 

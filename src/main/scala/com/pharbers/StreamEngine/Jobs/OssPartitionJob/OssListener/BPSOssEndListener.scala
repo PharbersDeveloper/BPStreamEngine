@@ -1,4 +1,4 @@
-package com.pharbers.StreamEngine.Jobs.OssJob.OssListener
+package com.pharbers.StreamEngine.Jobs.OssPartitionJob.OssListener
 
 import com.pharbers.StreamEngine.Utils.Channel.Local.BPSLocalChannel
 import com.pharbers.StreamEngine.Utils.StreamJob.BPStreamJob

@@ -10,8 +10,8 @@ object BPSOssJob {
                  id: String,
                  spark: SparkSession,
                  inputStream: Option[sql.DataFrame],
-                 container: BPSJobContainer): BPSOssPartitionJob =
-        new BPSOssPartitionJob(id, spark, inputStream, container)
+                 container: BPSJobContainer): BPSOssJob =
+        new BPSOssJob(id, spark, inputStream, container)
 }
 
 class BPSOssJob(

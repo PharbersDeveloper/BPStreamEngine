@@ -1,4 +1,4 @@
-package com.pharbers.StreamEngine.Jobs.OssJob.OssListener.OssEventsHandler
+package com.pharbers.StreamEngine.Jobs.OssPartitionJob.OssListener.OssEventsHandler
 
 import java.util.UUID
 

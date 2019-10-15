@@ -1,4 +1,4 @@
-package com.pharbers.StreamEngine.Jobs.OssJob.OssListener.OssEventsHandler
+package com.pharbers.StreamEngine.Jobs.OssPartitionJob.OssListener.OssEventsHandler
 
 import com.pharbers.StreamEngine.Utils.StreamJob.BPStreamJob
 import com.pharbers.StreamEngine.Utils.Event.EventHandler.BPSEventHandler

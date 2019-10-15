@@ -1,8 +1,8 @@
-package com.pharbers.StreamEngine.Jobs.OssJob.OssJobContainer
+package com.pharbers.StreamEngine.Jobs.OssPartitionJob.OssJobContainer
 
 import java.util.UUID
 
-import com.pharbers.StreamEngine.Jobs.OssJob.BPSOssPartitionJob
+import com.pharbers.StreamEngine.Jobs.OssPartitionJob.BPSOssPartitionJob
 import com.pharbers.StreamEngine.Utils.StreamJob.{BPSJobContainer, BPStreamJob}
 import com.pharbers.StreamEngine.Jobs.OssJob.OssListenerV2.BPSOssListenerV2
 import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSKfkJobStrategy
@@ -36,24 +36,30 @@ class BPSOssPartitionJobContainer(override val strategy: BPSKfkJobStrategy, val 
 
         inputStream = Some(reading
             .selectExpr(
-                "key",
                 """deserialize(value) AS value""",
                 "timestamp"
             ).toDF()
             .withWatermark("timestamp", "24 hours")
             .select(
                 from_json($"value", strategy.getSchema).as("data"), col("timestamp")
-            ).select("key","data.*", "timestamp"))
+            ).select("data.*", "timestamp"))
     }
 
     override def exec(): Unit = inputStream match {
         case Some(is) => {
-            val listener = new BPSOssListenerV2(spark, this)
-            listener.active(is)
-            listeners = listener :: listeners
+//            val listener = new BPSOssListenerV2(spark, this)
+//            listener.active(is)
+//            listeners = listener :: listeners
+
+            val runId = UUID.randomUUID().toString
 
             is.writeStream
-                .
+                .partitionBy("jobId")
+                .outputMode("append")
+//                .format("console")
+                .option("checkpointLocation", "/test/streamingV2/" + runId + "/checkpoint")
+                .option("path", "/test/streamingV2/" + runId + "/files")
+                .start()
         }
         case None => ???
     }

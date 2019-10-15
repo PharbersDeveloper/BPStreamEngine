@@ -1,4 +1,4 @@
-package com.pharbers.StreamEngine.Jobs.OssJob
+package com.pharbers.StreamEngine.Jobs.OssPartitionJob
 
 import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSJobStrategy
 import com.pharbers.StreamEngine.Utils.StreamJob.{BPSJobContainer, BPStreamJob}

@@ -1,4 +1,4 @@
-package com.pharbers.StreamEngine.Jobs.OssJob.OssListenerV2.OssEventsHandler
+package com.pharbers.StreamEngine.Jobs.OssPartitionJob.OssListenerV2.OssEventsHandler
 
 import com.pharbers.StreamEngine.Utils.StreamJob.BPStreamJob
 import com.pharbers.StreamEngine.Jobs.OssJob.OssListenerV2.BPSOssEndListenerV2
@@ -18,7 +18,7 @@ import org.json4s.jackson.Serialization.read
   * @since 2019/10/11 13:40
   * @note 一些值得注意的地方
   */
-case class BPSSchemaHandlerV2BPS(schemaEvent: BPSEvents) extends BPSEventHandler {
+case class BPSSchemaHandlerV2(schemaEvent: BPSEvents) extends BPSEventHandler {
     override def exec(job: BPStreamJob)(e: BPSEvents): Unit = {
         // 收到Schema 开始执行分流
         val jobId = event2JobId(schemaEvent)
