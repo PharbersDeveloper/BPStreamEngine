@@ -9,11 +9,11 @@ import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSKfkJobStrategy
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions._
 
-object BPSOssJobContainer {
+object BPSOssPartitionJobContainer {
     def apply(strategy: BPSKfkJobStrategy, spark: SparkSession): BPSOssPartitionJobContainer = new BPSOssPartitionJobContainer(strategy, spark)
 }
 
-class BPSOssJobContainer(override val strategy: BPSKfkJobStrategy, val spark: SparkSession) extends BPSJobContainer {
+class BPSOssPartitionJobContainer(override val strategy: BPSKfkJobStrategy, val spark: SparkSession) extends BPSJobContainer {
     val id = UUID.randomUUID().toString
     type T = BPSKfkJobStrategy
     import spark.implicits._
@@ -29,37 +29,31 @@ class BPSOssJobContainer(override val strategy: BPSKfkJobStrategy, val spark: Sp
             .option("kafka.ssl.truststore.location", "./kafka.broker1.truststore.jks")
             .option("kafka.ssl.truststore.password", "pharbers")
             .option("kafka.ssl.endpoint.identification.algorithm", " ")
-            .option("subscribe", "oss_topic_1")
+//            .option("subscribe", "oss_topic_1")
+            .option("subscribe", strategy.getTopic)
             .option("startingOffsets", "earliest")
             .load()
 
         inputStream = Some(reading
             .selectExpr(
+                "key",
                 """deserialize(value) AS value""",
                 "timestamp"
             ).toDF()
             .withWatermark("timestamp", "24 hours")
             .select(
                 from_json($"value", strategy.getSchema).as("data"), col("timestamp")
-            ).select("data.*", "timestamp"))
+            ).select("key","data.*", "timestamp"))
     }
-
-//    override def close(): Unit = {
-//        println("alfred clean all the job ========>")
-//        handlers.foreach(_.close())
-//        listeners.foreach(_.deActive())
-//        outputStream.foreach(_.stop())
-//        inputStream match {
-//            case Some(is) =>
-//            case None => ???
-//        }
-//    }
 
     override def exec(): Unit = inputStream match {
         case Some(is) => {
             val listener = new BPSOssListenerV2(spark, this)
             listener.active(is)
             listeners = listener :: listeners
+
+            is.writeStream
+                .
         }
         case None => ???
     }

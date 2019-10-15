@@ -5,7 +5,7 @@ import com.pharbers.StreamEngine.Utils.StreamJob.{BPSJobContainer, BPStreamJob}
 import org.apache.spark.sql
 import org.apache.spark.sql.SparkSession
 
-object BPSOssJob {
+object BPSOssPartitionJob {
     def apply(
                  id: String,
                  spark: SparkSession,
@@ -14,7 +14,7 @@ object BPSOssJob {
         new BPSOssPartitionJob(id, spark, inputStream, container)
 }
 
-class BPSOssJob(
+class BPSOssPartitionJob(
                    val id: String,
                    val spark: SparkSession,
                    val is: Option[sql.DataFrame],
