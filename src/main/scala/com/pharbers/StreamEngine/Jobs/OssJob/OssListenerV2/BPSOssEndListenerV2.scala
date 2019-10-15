@@ -1,8 +1,9 @@
 package com.pharbers.StreamEngine.Jobs.OssJob.OssListenerV2
 
+import java.net.{HttpURLConnection, URL}
+import java.nio.charset.StandardCharsets
 import java.sql.Timestamp
 import java.text.SimpleDateFormat
-import java.time.LocalDate
 
 import com.pharbers.StreamEngine.Utils.Channel.Local.BPSLocalChannel
 import com.pharbers.StreamEngine.Utils.StreamJob.BPStreamJob
@@ -38,6 +39,8 @@ class BPSOssEndListenerV2(
             println(s"watermark: ${date.toString}")
             if (date.getTime >= endTimestamp.getTime) {
                 job.close()
+                //压测用
+//                post("{\"ossKey\": \"9f92a-280a-4235-8808-f2d69/1571039919073\",\n\"fileType\": \"xlsx\"}", "application/json")
             }
         }
     }
@@ -45,4 +48,17 @@ class BPSOssEndListenerV2(
     override def active(s: DataFrame): Unit = BPSLocalChannel.registerListener(this)
 
     override def deActive(): Unit = BPSLocalChannel.unRegisterListener(this)
+
+    def post(body: String, contentType: String): Unit = {
+        val conn = new URL("http://192.168.100.116:36416/v0/StreamOss2HDFS").openConnection.asInstanceOf[HttpURLConnection]
+        val postDataBytes = body.getBytes(StandardCharsets.UTF_8)
+        conn.setRequestMethod("POST")
+        conn.setRequestProperty("Content-Type", contentType)
+        conn.setRequestProperty("Content-Length", String.valueOf(postDataBytes.length))
+        conn.setConnectTimeout(60000)
+        conn.setReadTimeout(60000)
+        conn.setDoOutput(true)
+        conn.getOutputStream.write(postDataBytes)
+        conn.getResponseCode
+    }
 }
