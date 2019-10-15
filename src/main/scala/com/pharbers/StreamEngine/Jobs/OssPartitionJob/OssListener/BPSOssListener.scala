@@ -2,18 +2,16 @@ package com.pharbers.StreamEngine.Jobs.OssPartitionJob.OssListener
 
 import java.util.UUID
 
+import com.pharbers.StreamEngine.Jobs.OssPartitionJob.OssPartitionMeta.BPSOssPartitionMeta
 import com.pharbers.StreamEngine.Utils.Channel.Driver.BPSDriverChannel
 import com.pharbers.StreamEngine.Utils.Channel.Worker.BPSWorkerChannel
 import com.pharbers.StreamEngine.Utils.StreamJob.{BPSJobContainer, BPStreamJob}
 import com.pharbers.StreamEngine.Utils.Event.BPSEvents
-import com.pharbers.StreamEngine.Jobs.OssJob.OssListenerV2.OssEventsHandler.BPSSchemaHandlerV2BPS
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamRemoteListener
 import org.apache.spark.TaskContext
 import org.apache.spark.sql.{DataFrame, ForeachWriter, Row, SparkSession}
 import org.json4s.DefaultFormats
 import org.json4s.jackson.Serialization.write
-
-import scala.collection.mutable
 
 /** 功能描述
   *
@@ -26,15 +24,18 @@ import scala.collection.mutable
   */
 case class BPSOssListener(spark: SparkSession, job: BPStreamJob) extends BPStreamRemoteListener {
     import spark.implicits._
-    val jobTimestamp: mutable.Map[String, BPSEvents] = mutable.Map()
+//    val jobTimestamp: mutable.Map[String, BPSEvents] = mutable.Map()
+    def event2JobId(e: BPSEvents): String = e.jobId
+
     override def trigger(e: BPSEvents): Unit = {
+        val jid = job.asInstanceOf[BPSJobContainer]
         e.`type` match {
             case "SandBox-Schema" => {
                 val jid = job.asInstanceOf[BPSJobContainer]
-
+                BPSOssPartitionMeta.pushLineToHDFS(jid.id, event2JobId(e), e.data)
             }
             case "SandBox-Length" => {
-                // TODO: push file metadata, and run code Engine code
+                BPSOssPartitionMeta.pushLineToHDFS(jid.id, event2JobId(e), e.data)
             }
         }
     }
