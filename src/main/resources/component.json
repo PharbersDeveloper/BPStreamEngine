@@ -4,8 +4,6 @@
     "name": "BPSparkSession",
     "args": [],
     "config": {
-      "topic": "oss_source",
-      "url": "http://123.56.179.133:9092"
     }
   },
   {
@@ -13,7 +11,8 @@
     "name": "BPKafkaSession",
     "args": ["$BPSparkSession"],
     "config": {
-      "": ""
+      "topic": "oss_source",
+      "url": "http://123.56.179.133:9092"
     }
   },
   {
