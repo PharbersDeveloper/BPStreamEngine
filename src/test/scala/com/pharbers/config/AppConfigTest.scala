@@ -5,6 +5,7 @@ import java.util
 
 import com.pharbers.StreamEngine.Utils.Component.ComponentContext
 import com.pharbers.StreamEngine.Utils.Config.AppConfig
+import com.pharbers.StreamEngine.Utils.StreamJob.BPStreamJob
 import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSKfkJobStrategy
 import io.confluent.common.config.ConfigDef
 import io.confluent.common.config.ConfigDef.Type
@@ -43,8 +44,13 @@ class AppConfigTest extends FunSuite {
     }
 
     test("test component build from config"){
-        val a = ComponentContext()
-        println(a)
+        import collection.JavaConverters._
+        val context = ComponentContext()
+        val jobs = AppConfig().getList(AppConfig.JOBS)
+        jobs.asScala.foreach(x => {
+            val job = context.getComponent[BPStreamJob](x)
+            job.open()
+            job.exec()
+        })
     }
-
 }
