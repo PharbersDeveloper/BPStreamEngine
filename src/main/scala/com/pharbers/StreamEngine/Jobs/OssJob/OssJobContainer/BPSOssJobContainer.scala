@@ -5,7 +5,7 @@ import java.util.UUID
 import com.pharbers.StreamEngine.Jobs.OssPartitionJob.BPSOssPartitionJob
 import com.pharbers.StreamEngine.Utils.StreamJob.{BPSJobContainer, BPStreamJob}
 import com.pharbers.StreamEngine.Jobs.OssJob.OssListenerV2.BPSOssListenerV2
-import com.pharbers.StreamEngine.Utils.Component.{Component, Factory}
+import com.pharbers.StreamEngine.Utils.Annotation.Component
 import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSKfkJobStrategy
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions._
