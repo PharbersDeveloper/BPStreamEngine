@@ -21,7 +21,14 @@ object AppConfig  {
     final val HOSTNAME_KEY = "hostname"
     final private val HOSTNAME_DOC = "The hostname is the host'name."
 
-    def apply(): AppConfig = new AppConfig(CD, PROP)
+    final val COMPONENT_CONFIG_PATH = "component.config.path"
+    final private val COMPONENT_CONFIG_PATH_DOC = "组件配置文件路径"
+
+    final val COMPONENT_PACKAGES = "component.packages"
+    final private val COMPONENT_PACKAGES_DOC = "组件包目录"
+
+    private val ac = new AppConfig(CD, PROP)
+    def apply(): AppConfig = ac
 
     def apply(props: Map[_, _]): AppConfig = new AppConfig(CD, props)
 
@@ -37,6 +44,18 @@ object AppConfig  {
                 Type.STRING,
                 Importance.HIGH,
                 HOSTNAME_DOC
+            )
+            .define(
+                COMPONENT_CONFIG_PATH,
+                Type.STRING,
+                Importance.HIGH,
+                COMPONENT_CONFIG_PATH_DOC
+            )
+            .define(
+                COMPONENT_PACKAGES,
+                Type.LIST,
+                Importance.HIGH,
+                COMPONENT_PACKAGES_DOC
             )
     }
 

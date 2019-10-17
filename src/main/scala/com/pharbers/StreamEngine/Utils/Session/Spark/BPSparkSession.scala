@@ -2,13 +2,17 @@ package com.pharbers.StreamEngine.Utils.Session.Spark
 
 import java.net.InetAddress
 
+import com.pharbers.StreamEngine.Utils.Component.Component
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.SparkSession
 
 object BPSparkSession {
     def apply(): SparkSession = new BPSparkSession().spark
+
+    def apply(config: Map[String, String]): SparkSession = new BPSparkSession().spark
 }
 
+@Component(name = "BPSparkSession", `type` = "session")
 class BPSparkSession {
     val yarnJars: String = "hdfs://spark.master:9000/jars/sparkJars"
 
@@ -27,11 +31,11 @@ class BPSparkSession {
     val spark = SparkSession.builder()
         .config(conf).getOrCreate()
     spark.sparkContext.setLocalProperty("host", InetAddress.getLocalHost.getHostAddress)
-    spark.sparkContext.addFile("./kafka.broker1.keystore.jks")
-    spark.sparkContext.addFile("./kafka.broker1.truststore.jks")
-    spark.sparkContext.addJar("./target/BP-Stream-Engine-1.0-SNAPSHOT.jar")
-    spark.sparkContext.addJar("./jars/kafka-schema-registry-client-5.2.1.jar")
-    spark.sparkContext.addJar("./jars/kafka-avro-serializer-5.2.1.jar")
-    spark.sparkContext.addJar("./jars/common-config-5.2.1.jar")
-    spark.sparkContext.addJar("./jars/common-utils-5.2.1.jar")
+//    spark.sparkContext.addFile("./kafka.broker1.keystore.jks")
+//    spark.sparkContext.addFile("./kafka.broker1.truststore.jks")
+//    spark.sparkContext.addJar("./target/BP-Stream-Engine-1.0-SNAPSHOT.jar")
+//    spark.sparkContext.addJar("./jars/kafka-schema-registry-client-5.2.1.jar")
+//    spark.sparkContext.addJar("./jars/kafka-avro-serializer-5.2.1.jar")
+//    spark.sparkContext.addJar("./jars/common-config-5.2.1.jar")
+//    spark.sparkContext.addJar("./jars/common-utils-5.2.1.jar")
 }
