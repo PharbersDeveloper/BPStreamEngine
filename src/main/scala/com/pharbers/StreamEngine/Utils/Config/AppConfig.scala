@@ -1,0 +1,54 @@
+package com.pharbers.StreamEngine.Utils.Config
+
+import java.io.FileInputStream
+import java.util
+import java.util.{Map, Properties}
+
+import org.apache.kafka.common.config.ConfigDef.{Importance, Type}
+import org.apache.kafka.common.config.{AbstractConfig, ConfigDef}
+
+object AppConfig  {
+
+    final private  val CD: ConfigDef = baseConfigDef
+    final private  val PROP: Map[_, _] = baseProps
+
+    final private val APP_CONFIG_PATH_KEY = "app.config.path"
+    final private val DEFAULT_APP_CONFIG_PATH = "resources/test.properties"
+
+    final val PROJECT_NAME_KEY = "project.name"
+    final private val PROJECT_NAME_DOC = "The name is project name."
+
+    final val HOSTNAME_KEY = "hostname"
+    final private val HOSTNAME_DOC = "The hostname is the host'name."
+
+    def apply(): AppConfig = new AppConfig(CD, PROP)
+
+    def apply(props: Map[_, _]): AppConfig = new AppConfig(CD, props)
+
+    private def baseConfigDef: ConfigDef = {
+        new ConfigDef()
+            .define(
+                PROJECT_NAME_KEY,
+                Type.STRING,
+                Importance.HIGH,
+                PROJECT_NAME_DOC)
+            .define(
+                HOSTNAME_KEY,
+                Type.STRING,
+                Importance.HIGH,
+                HOSTNAME_DOC
+            )
+    }
+
+    private def baseProps: Map[_, _] = {
+        val appConfigPath: String = sys.env.getOrElse(APP_CONFIG_PATH_KEY, DEFAULT_APP_CONFIG_PATH)
+        val props = new Properties()
+        props.load(new FileInputStream(appConfigPath))
+        props
+    }
+
+}
+
+class AppConfig(definition: ConfigDef, originals: util.Map[_, _]) extends AbstractConfig(definition, originals) {
+
+}
