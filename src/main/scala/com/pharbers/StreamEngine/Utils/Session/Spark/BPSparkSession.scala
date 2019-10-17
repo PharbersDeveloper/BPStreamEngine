@@ -2,7 +2,7 @@ package com.pharbers.StreamEngine.Utils.Session.Spark
 
 import java.net.InetAddress
 
-import com.pharbers.StreamEngine.Utils.Component.Component
+import com.pharbers.StreamEngine.Utils.Annotation.Component
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.SparkSession
 
