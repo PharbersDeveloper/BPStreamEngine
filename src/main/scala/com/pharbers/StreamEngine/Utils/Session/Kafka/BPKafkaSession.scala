@@ -12,7 +12,7 @@ object BPKafkaSession {
 }
 
 class BPKafkaSession() {
-    lazy val topic = "oss_source_1"
+    lazy val topic = "oss_source"
     lazy val kafkaUrl = "http://123.56.179.133:9092"
     lazy val schemaRegistryUrl = "http://123.56.179.133:8081"
     lazy val sparkSchema = BPSAvroDeserializer.getSchema(topic)
