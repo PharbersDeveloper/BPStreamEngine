@@ -52,7 +52,7 @@ class BPSOssPartitionJobContainer(override val strategy: BPSKfkJobStrategy, val 
 
             is.filter($"type" === "SandBox").writeStream
                 .partitionBy("jobId")
-                .format("csv")
+                .format("parquet")
                 .outputMode("append")
                 .option("checkpointLocation", "/test/streamingV2/" + this.id + "/checkpoint")
                 .option("path", "/test/streamingV2/" + this.id + "/files")
