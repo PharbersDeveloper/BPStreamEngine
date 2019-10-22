@@ -1,8 +1,5 @@
 package com.pharbers.StreamEngine.Utils.Component
 
-
-import java.io.FileReader
-
 import com.pharbers.StreamEngine.Utils.Config.AppConfig
 import org.json4s._
 import org.json4s.jackson.Serialization.read

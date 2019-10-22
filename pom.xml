@@ -178,6 +178,12 @@
                     <version>3.2.11</version>
                 </dependency>
 
+                <!-- Kafka_client-->
+                <dependency>
+                    <groupId>com.pharbers</groupId>
+                    <artifactId>pharbers-kafka</artifactId>
+                    <version>1.0</version>
+                </dependency>
             </dependencies>
         </profile>
     </profiles>
