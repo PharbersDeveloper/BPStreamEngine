@@ -33,7 +33,7 @@ class BPKafkaSession(config: Map[String, String]) extends KafkaConfig{
 
     lazy val topic: String = kafkaConfig match {
         case Some(c) => c.getString(TOPIC)
-        case _ => "oss_source"
+        case _ => "oss_source_1"
     }
     lazy val kafkaUrl = "http://123.56.179.133:9092"
     lazy val schemaRegistryUrl = "http://123.56.179.133:8081"
@@ -43,5 +43,5 @@ class BPKafkaSession(config: Map[String, String]) extends KafkaConfig{
 trait KafkaConfig{
     final val TOPIC = "topic"
     final val TOPIC_DOC = "kafka topic config"
-    val configDef: ConfigDef = new ConfigDef().define(TOPIC, Type.STRING, "oss_source", Importance.HIGH, TOPIC_DOC)
+    val configDef: ConfigDef = new ConfigDef().define(TOPIC, Type.STRING, "oss_source_1", Importance.HIGH, TOPIC_DOC)
 }
