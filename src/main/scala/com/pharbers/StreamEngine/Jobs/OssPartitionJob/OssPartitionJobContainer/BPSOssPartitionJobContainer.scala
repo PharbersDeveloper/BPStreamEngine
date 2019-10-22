@@ -16,7 +16,7 @@ object BPSOssPartitionJobContainer {
 
 class BPSOssPartitionJobContainer(override val strategy: BPSKfkJobStrategy, val spark: SparkSession) extends BPSJobContainer {
 //    val id = UUID.randomUUID().toString
-    val id = "0829b025-48ac-450c-843c-6d4ee91765ca"
+    val id = "test000"
     type T = BPSKfkJobStrategy
     import spark.implicits._
     //    val listener = new BPSOssListener(spark, this)
@@ -51,17 +51,18 @@ class BPSOssPartitionJobContainer(override val strategy: BPSKfkJobStrategy, val 
             val listener = new BPSOssListener(spark, this)
             listener.active(is)
 
-            val outputJob = new KafkaOutputJob
-            outputJob.sink(is.selectExpr("""data AS value""", "jobId", "traceId", "type"))
+//            val outputJob = new KafkaOutputJob
+//            outputJob.sink(is.selectExpr("""data AS value""", "jobId", "traceId", "type"))
 
             listeners = listener :: listeners
+            
 
             is.filter($"type" === "SandBox").writeStream
                 .partitionBy("jobId")
                 .format("parquet")
                 .outputMode("append")
-                .option("checkpointLocation", "/workData/streamingV2/" + this.id + "/checkpoint")
-                .option("path", "/workData/streamingV2/" + this.id + "/files")
+                .option("checkpointLocation", "/test/alex/" + this.id + "/checkpoint")
+                .option("path", "/test/alex/" + this.id + "/files")
                 .start()
         }
         case None => ???

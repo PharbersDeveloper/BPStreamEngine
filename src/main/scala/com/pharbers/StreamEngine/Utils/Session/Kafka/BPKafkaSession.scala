@@ -31,8 +31,10 @@ class BPKafkaSession(config: Map[String, String]) extends KafkaConfig{
     configDef.define(KAFKA_URL, Type.STRING, "http://123.56.179.133:9092", Importance.HIGH, KAFKA_URL_DOC)
     val kafkaConfig: Option[AppConfig] = Some(new AppConfig(configDef,  config.asJava))
 
-class BPKafkaSession() {
-    lazy val topic = "oss_source"
+    lazy val topic: String = kafkaConfig match {
+        case Some(c) => c.getString(TOPIC)
+        case _ => "oss_source_1"
+    }
     lazy val kafkaUrl = "http://123.56.179.133:9092"
     lazy val schemaRegistryUrl = "http://123.56.179.133:8081"
     lazy val sparkSchema: DataType = BPSAvroDeserializer.getSchema(topic)
@@ -41,5 +43,5 @@ class BPKafkaSession() {
 trait KafkaConfig{
     final val TOPIC = "topic"
     final val TOPIC_DOC = "kafka topic config"
-    val configDef: ConfigDef = new ConfigDef().define(TOPIC, Type.STRING, "oss_source", Importance.HIGH, TOPIC_DOC)
+    val configDef: ConfigDef = new ConfigDef().define(TOPIC, Type.STRING, "oss_source_1", Importance.HIGH, TOPIC_DOC)
 }
