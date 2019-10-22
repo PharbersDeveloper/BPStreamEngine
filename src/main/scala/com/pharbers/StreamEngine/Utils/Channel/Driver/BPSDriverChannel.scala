@@ -9,7 +9,6 @@ import java.nio.channels.SocketChannel
 
 import com.pharbers.StreamEngine.Utils.Event.BPSEvents
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamRemoteListener
-import org.apache.logging.log4j.LogManager
 import org.json4s._
 import org.json4s.jackson.Serialization.read
 

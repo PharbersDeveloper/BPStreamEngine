@@ -15,7 +15,7 @@ import collection.JavaConverters._
   * @since 2019/10/16 16:01
   * @note 一些值得注意的地方
   */
-class BaseComponentContext(var configs: List[ComponentConfig]) extends ComponentContext{
+private[Component] class BaseComponentContext(var configs: List[ComponentConfig]) extends ComponentContext{
     private var container = Map[String, AnyRef]()
     val componentAnnotations: Map[String, (String, Component)] = AppConfig().getList(AppConfig.COMPONENT_PACKAGES).asScala
             .flatMap(x => AnnotationSelector.getAnnotationClass(x, classOf[Component], true))
@@ -39,8 +39,8 @@ class BaseComponentContext(var configs: List[ComponentConfig]) extends Component
         }
 //        val component = Class.forName(factory).getDeclaredMethod("apply", args.map(x => x.getClass): _*).invoke(null, args: _*)
         val classMirror = universe.runtimeMirror(getClass.getClassLoader)
-        val classTest = classMirror.staticModule(factory)
-        val methods = classMirror.reflectModule(classTest)
+        val factoryClass = classMirror.staticModule(factory)
+        val methods = classMirror.reflectModule(factoryClass)
         val objMirror = classMirror.reflect(methods.instance)
         val method = methods.symbol.typeSignature.member(universe.TermName("apply")).asTerm.alternatives
                 //todo: 根据type来确定方法，而不是参数数量
