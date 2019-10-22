@@ -6,9 +6,12 @@ import com.pharbers.StreamEngine.Jobs.OssPartitionJob.BPSOssPartitionJob
 import com.pharbers.StreamEngine.Utils.StreamJob.{BPSJobContainer, BPStreamJob}
 import com.pharbers.StreamEngine.Jobs.OssPartitionJob.OssListener.BPSOssListener
 import com.pharbers.StreamEngine.Jobs.OutputJob.KafkaOutputJob
+import com.pharbers.StreamEngine.Utils.Config.KafkaConfig
 import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSKfkJobStrategy
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions._
+
+import scala.collection.JavaConversions.mapAsScalaMap
 
 object BPSOssPartitionJobContainer {
     def apply(strategy: BPSKfkJobStrategy, spark: SparkSession): BPSOssPartitionJobContainer = new BPSOssPartitionJobContainer(strategy, spark)
@@ -23,15 +26,16 @@ class BPSOssPartitionJobContainer(override val strategy: BPSKfkJobStrategy, val 
     override def open(): Unit = {
         val reading = spark.readStream
             .format("kafka")
-            .option("kafka.bootstrap.servers", "123.56.179.133:9092")
-            .option("kafka.security.protocol", "SSL")
-            .option("kafka.ssl.keystore.location", "./kafka.broker1.keystore.jks")
-            .option("kafka.ssl.keystore.password", "pharbers")
-            .option("kafka.ssl.truststore.location", "./kafka.broker1.truststore.jks")
-            .option("kafka.ssl.truststore.password", "pharbers")
-            .option("kafka.ssl.endpoint.identification.algorithm", " ")
+            .options(mapAsScalaMap(KafkaConfig.PROPS).map(x => (x._1.toString, x._2.toString)))
+//            .option("kafka.bootstrap.servers", "123.56.179.133:9092")
+//            .option("kafka.security.protocol", "SSL")
+//            .option("kafka.ssl.keystore.location", "./kafka.broker1.keystore.jks")
+//            .option("kafka.ssl.keystore.password", "pharbers")
+//            .option("kafka.ssl.truststore.location", "./kafka.broker1.truststore.jks")
+//            .option("kafka.ssl.truststore.password", "pharbers")
+//            .option("kafka.ssl.endpoint.identification.algorithm", " ")
+//            .option("startingOffsets", "earliest")
             .option("subscribe", strategy.getTopic)
-            .option("startingOffsets", "earliest")
             .load()
 
         inputStream = Some(reading
