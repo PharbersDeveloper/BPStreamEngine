@@ -58,7 +58,7 @@ object AnnotationSelector {
         val file = new File(filePath)
         val childFiles = file.listFiles
         childFiles.filter(x => !x.isDirectory && x.getPath.endsWith(".class"))
-                .map(x => x.getPath.substring(x.getPath.indexOf("\\classes") + 9, x.getPath.lastIndexOf(".")).replace("\\", ".")) ++
+                .map(x => x.getPath.substring(x.getPath.indexOf("/classes") + 9, x.getPath.lastIndexOf(".")).replace("/", ".")) ++
                 childFiles.filter(x => x.isDirectory && childPackage).flatMap(x => getClassNameByFile(x.getPath, childPackage))
     }
 

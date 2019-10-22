@@ -13,7 +13,7 @@ object AppConfig  {
     final private  val PROP: Map[_, _] = baseProps
 
     final private val APP_CONFIG_PATH_KEY = "app.config.path"
-    final private val DEFAULT_APP_CONFIG_PATH = "src/main/resources/test.properties"
+    final private val DEFAULT_APP_CONFIG_PATH = "src/main/resources/app.config.properties"
 
     final val PROJECT_NAME_KEY = "project.name"
     final private val PROJECT_NAME_DOC = "The name is project name."

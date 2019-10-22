@@ -5,6 +5,7 @@ import java.util.UUID
 import com.pharbers.StreamEngine.Jobs.OssPartitionJob.BPSOssPartitionJob
 import com.pharbers.StreamEngine.Utils.StreamJob.{BPSJobContainer, BPStreamJob}
 import com.pharbers.StreamEngine.Jobs.OssPartitionJob.OssListener.BPSOssListener
+import com.pharbers.StreamEngine.Jobs.OutputJob.KafkaOutputJob
 import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSKfkJobStrategy
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions._
@@ -48,6 +49,10 @@ class BPSOssPartitionJobContainer(override val strategy: BPSKfkJobStrategy, val 
         case Some(is) => {
             val listener = new BPSOssListener(spark, this)
             listener.active(is)
+
+            val outputJob = new KafkaOutputJob
+            outputJob.sink(is.selectExpr("""data AS value""", "jobId", "traceId", "type"))
+
             listeners = listener :: listeners
 
             is.filter($"type" === "SandBox").writeStream
