@@ -1,0 +1,5 @@
+<pharbers-modules>
+    <mongodb-connect-nodes>
+        <connect-config-path name="sandbox" value="pharbers_config/sandbox_connect.xml" />
+    </mongodb-connect-nodes>
+</pharbers-modules>
