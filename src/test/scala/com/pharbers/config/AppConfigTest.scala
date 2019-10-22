@@ -3,7 +3,12 @@ package com.pharbers.config
 import java.io.FileInputStream
 import java.util
 
+import com.pharbers.StreamEngine.Utils.Channel.Driver.BPSDriverChannel
+import com.pharbers.StreamEngine.Utils.Channel.Local.BPSLocalChannel
+import com.pharbers.StreamEngine.Utils.Component.ComponentContext
 import com.pharbers.StreamEngine.Utils.Config.AppConfig
+import com.pharbers.StreamEngine.Utils.StreamJob.BPStreamJob
+import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSKfkJobStrategy
 import io.confluent.common.config.ConfigDef
 import io.confluent.common.config.ConfigDef.Type
 import io.confluent.common.config.ConfigDef.Importance
@@ -40,4 +45,16 @@ class AppConfigTest extends FunSuite {
 
     }
 
+    test("test component build from config"){
+        import collection.JavaConverters._
+        val context = ComponentContext()
+        val jobs = AppConfig().getList(AppConfig.JOBS)
+        BPSDriverChannel()
+        BPSLocalChannel()
+        jobs.asScala.foreach(x => {
+            val job = context.getComponent[BPStreamJob](x)
+            job.open()
+            job.exec()
+        })
+    }
 }

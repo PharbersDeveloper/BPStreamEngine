@@ -1,5 +1,7 @@
 package com.pharbers.StreamEngine.Jobs.OssPartitionJob.OssListener
 
+import java.net.{HttpURLConnection, URL}
+import java.nio.charset.StandardCharsets
 import java.util.UUID
 
 import com.pharbers.StreamEngine.Jobs.OssPartitionJob.OssPartitionMeta.BPSOssPartitionMeta
@@ -36,6 +38,8 @@ case class BPSOssListener(spark: SparkSession, job: BPStreamJob) extends BPStrea
             }
             case "SandBox-Length" => {
                 BPSOssPartitionMeta.pushLineToHDFS(jid.id, event2JobId(e), e.data)
+                //压测用
+//                post("{\"ossKey\": \"9f92a-280a-4235-8808-f2d69/1571039919073\",\n\"fileType\": \"xlsx\"}", "application/json")
             }
         }
     }
@@ -79,5 +83,18 @@ case class BPSOssListener(spark: SparkSession, job: BPStreamJob) extends BPStrea
 
     override def deActive(): Unit = {
         BPSDriverChannel.unRegisterListener(this)
+    }
+
+    def post(body: String, contentType: String): Unit = {
+        val conn = new URL("http://192.168.100.116:36416/v0/StreamOss2HDFS").openConnection.asInstanceOf[HttpURLConnection]
+        val postDataBytes = body.getBytes(StandardCharsets.UTF_8)
+        conn.setRequestMethod("POST")
+        conn.setRequestProperty("Content-Type", contentType)
+        conn.setRequestProperty("Content-Length", String.valueOf(postDataBytes.length))
+        conn.setConnectTimeout(60000)
+        conn.setReadTimeout(60000)
+        conn.setDoOutput(true)
+        conn.getOutputStream.write(postDataBytes)
+        conn.getResponseCode
     }
 }

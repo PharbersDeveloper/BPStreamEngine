@@ -2,13 +2,17 @@ package com.pharbers.StreamEngine.Utils.Session.Spark
 
 import java.net.InetAddress
 
+import com.pharbers.StreamEngine.Utils.Annotation.Component
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.SparkSession
 
 object BPSparkSession {
     def apply(): SparkSession = new BPSparkSession().spark
+
+    def apply(config: Map[String, String]): SparkSession = new BPSparkSession().spark
 }
 
+@Component(name = "BPSparkSession", `type` = "session")
 class BPSparkSession {
     val yarnJars: String = "hdfs://spark.master:9000/jars/sparkJars"
 
