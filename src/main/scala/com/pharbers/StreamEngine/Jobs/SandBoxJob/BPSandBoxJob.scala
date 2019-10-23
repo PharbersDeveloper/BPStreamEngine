@@ -1,5 +1,6 @@
 package com.pharbers.StreamEngine.Jobs.SandBoxJob
 
+import com.pharbers.StreamEngine.Jobs.SandBoxJob.FileMeta2Mongo.BPSMongo.BPFileMeta2Mongo
 import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSJobStrategy
 import com.pharbers.StreamEngine.Utils.StreamJob.{BPSJobContainer, BPStreamJob}
 import org.apache.spark.sql
@@ -60,11 +61,17 @@ class BPSandBoxJob (val id: String,
 		inputStream = is
 		inputStream match {
 			case None =>
-			case Some(is) => is.show()
-//			case Some(is) if is.filter($"type" === "SandBox").count() > 0 =>
-//			//				is.take(5).foreach(r => println(r))
-//			case Some(is) if is.filter($"type" === "SandBox-Schema").count() > 0 =>
-//			case Some(is) if is.filter($"type" === "SandBox-Length").count() > 0 =>
+			case Some(is) if is.filter($"type" === "SandBox").count() > 0 =>
+//				is.take(5).foreach(r => println(r))
+				// 2种过滤掉其他字段只保留traceId和SandBox 明天测试
+//				is.selectExpr()
+//				is.drop("")
+				val traceId = is.first().getAs[String]("traceId")
+				val sampleData = is.toJSON.take(5).toList
+				BPFileMeta2Mongo(traceId, sampleData, "", 0).MetaData()
+				
+			case Some(is) =>
+				is.show() // metadata是个text具体结构测试的时候打印出来看看
 
 		}
 	}

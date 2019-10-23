@@ -4,7 +4,7 @@ import com.mongodb.casbah.Imports._
 
 import scala.xml.{Elem, XML}
 
-trait MongoInstance {
+sealed trait MongoInstance {
 	lazy val mongoXml: Elem = XML.load("src/main/resources/sandbox_mongo_connect.xml")
 	lazy val url: String = (mongoXml \ "server_host" \ "@value").toString()
 	lazy val port: Int = (mongoXml \ "server_port" \ "@value").toString().toInt
