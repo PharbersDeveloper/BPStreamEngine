@@ -18,7 +18,8 @@ object BPSOssPartitionJobContainer {
 }
 
 class BPSOssPartitionJobContainer(override val strategy: BPSKfkJobStrategy, val spark: SparkSession) extends BPSJobContainer {
-    val id = UUID.randomUUID().toString
+//    val id = UUID.randomUUID().toString
+    val id = "0829b025-48ac-450c-843c-6d4ee91765ca"
     type T = BPSKfkJobStrategy
     import spark.implicits._
     //    val listener = new BPSOssListener(spark, this)

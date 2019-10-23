@@ -38,8 +38,10 @@ case class BPSOssListener(spark: SparkSession, job: BPStreamJob) extends BPStrea
             }
             case "SandBox-Length" => {
                 BPSOssPartitionMeta.pushLineToHDFS(jid.id, event2JobId(e), e.data)
+
                 //压测用
 //                post("{\"ossKey\": \"9f92a-280a-4235-8808-f2d69/1571039919073\",\n\"fileType\": \"xlsx\"}", "application/json")
+                post(s"""{"traceId": "${e.traceId}","jobId": "${e.jobId}"}""", "application/json")
             }
         }
     }
@@ -86,7 +88,8 @@ case class BPSOssListener(spark: SparkSession, job: BPStreamJob) extends BPStrea
     }
 
     def post(body: String, contentType: String): Unit = {
-        val conn = new URL("http://192.168.100.116:36416/v0/StreamOss2HDFS").openConnection.asInstanceOf[HttpURLConnection]
+        //val conn = new URL("http://192.168.100.116:36416/v0/StreamOss2HDFS").openConnection.asInstanceOf[HttpURLConnection]
+        val conn = new URL("http://192.168.100.116:36416/v0/UpdateJobIDWithTraceID").openConnection.asInstanceOf[HttpURLConnection]
         val postDataBytes = body.getBytes(StandardCharsets.UTF_8)
         conn.setRequestMethod("POST")
         conn.setRequestProperty("Content-Type", contentType)
