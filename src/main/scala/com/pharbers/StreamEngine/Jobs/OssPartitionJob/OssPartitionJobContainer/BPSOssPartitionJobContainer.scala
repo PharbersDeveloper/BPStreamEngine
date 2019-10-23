@@ -5,7 +5,6 @@ import java.util.UUID
 import com.pharbers.StreamEngine.Jobs.OssPartitionJob.BPSOssPartitionJob
 import com.pharbers.StreamEngine.Utils.StreamJob.{BPSJobContainer, BPStreamJob}
 import com.pharbers.StreamEngine.Jobs.OssPartitionJob.OssListener.BPSOssListener
-import com.pharbers.StreamEngine.Jobs.KfkSinkJob.KafkaOutputJob
 import com.pharbers.StreamEngine.Utils.Config.KafkaConfig
 import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSKfkJobStrategy
 import org.apache.spark.sql.SparkSession
