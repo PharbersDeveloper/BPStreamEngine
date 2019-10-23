@@ -30,5 +30,4 @@ class BPSOssJob(
         super.close()
         container.finishJobWithId(id)
     }
-
 }
