@@ -6,11 +6,10 @@ import org.apache.spark.sql
 import org.apache.spark.sql.SparkSession
 
 object BPSOssPartitionJob {
-    def apply(
-                 id: String,
-                 spark: SparkSession,
-                 inputStream: Option[sql.DataFrame],
-                 container: BPSJobContainer): BPSOssPartitionJob =
+    def apply(id: String,
+              spark: SparkSession,
+              inputStream: Option[sql.DataFrame],
+              container: BPSJobContainer): BPSOssPartitionJob =
         new BPSOssPartitionJob(id, spark, inputStream, container)
 }
 

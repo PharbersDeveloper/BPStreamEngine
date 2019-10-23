@@ -1,6 +1,6 @@
 package com.pharbers.mongo
 
-import com.pharbers.StreamEngine.Jobs.SandBoxFileMetaJob.BPSFileMeta2Mongo.BPSMongo.MongoTrait
+import com.pharbers.StreamEngine.Jobs.SandBoxJob.FileMeta2Mongo.BPSMongo.MongoTrait
 import org.scalatest.FunSuite
 import com.mongodb.casbah.Imports._
 

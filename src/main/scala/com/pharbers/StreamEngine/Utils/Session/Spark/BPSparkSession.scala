@@ -27,6 +27,7 @@ class BPSparkSession {
         .set("spark.executor.memory", "2g")
         .set("spark.executor.cores", "2")
         .set("spark.executor.instances", "2")
+    
 
     val spark = SparkSession.builder()
         .config(conf).getOrCreate()
@@ -38,4 +39,5 @@ class BPSparkSession {
     spark.sparkContext.addJar("./jars/kafka-avro-serializer-5.2.1.jar")
     spark.sparkContext.addJar("./jars/common-config-5.2.1.jar")
     spark.sparkContext.addJar("./jars/common-utils-5.2.1.jar")
+    spark.sparkContext.setLogLevel("warn")
 }

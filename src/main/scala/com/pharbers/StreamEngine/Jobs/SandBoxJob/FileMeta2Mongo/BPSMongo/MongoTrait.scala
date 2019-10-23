@@ -1,4 +1,4 @@
-package com.pharbers.StreamEngine.Jobs.SandBoxFileMetaJob.BPSFileMeta2Mongo.BPSMongo
+package com.pharbers.StreamEngine.Jobs.SandBoxJob.FileMeta2Mongo.BPSMongo
 
 import com.mongodb.casbah.Imports._
 
