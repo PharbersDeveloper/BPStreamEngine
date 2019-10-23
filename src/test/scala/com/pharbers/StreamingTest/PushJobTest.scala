@@ -26,8 +26,12 @@ class PushJobTest extends FunSuite{
         val jobId = "201910231514"
         val traceId = "201910231514"
         val `type` = "add"
-        val jobMsg = write(JobMsg("testJob", "job", "com.pharbers.StreamEngine.Jobs.OssJob.OssJobContainer.BPSOssJobContainer",
-            List("$BPSKfkJobStrategy", "$BPSparkSession"), Nil, Nil, Map.empty, "", "test job"))
+//        val jobMsg = write(JobMsg("testJob", "job", "com.pharbers.StreamEngine.Jobs.OssJob.DynamicJobDemo",
+//            List("$BPSparkSession", "$BPSKfkJobStrategy", "demo"), Nil, Nil, Map.empty, "", "test job"))
+//        val jobMsg = write(JobMsg("testListener", "listener", "com.pharbers.StreamEngine.Jobs.OssJob.DynamicListenerDemo",
+//            Nil, List("testJob"), List("id", "this"), Map.empty, "", "test listener"))
+        val jobMsg = write(JobMsg("testListener2", "listener", "com.pharbers.StreamEngine.Jobs.OssJob.DynamicListenerDemo",
+            List("another listener"), List("testJob"), List("this"), Map.empty, "", "test listener"))
         val topic = "stream_job_submit"
 
 //        val sche: Schema = new Schema.Parser().parse(new File("src/main/avro/OssTask.avsc"))

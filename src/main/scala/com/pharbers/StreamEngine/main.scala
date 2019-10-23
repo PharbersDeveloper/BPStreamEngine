@@ -8,6 +8,7 @@ import com.pharbers.StreamEngine.Utils.Config.AppConfig
 import com.pharbers.StreamEngine.Utils.Session.Kafka.BPKafkaSession
 import com.pharbers.StreamEngine.Utils.Session.Spark.BPSparkSession
 import com.pharbers.StreamEngine.Utils.StreamJob.BPStreamJob
+import collection.JavaConverters._
 
 object main extends App {
 
@@ -31,12 +32,10 @@ object main extends App {
 
 object test extends App {
 
-    import collection.JavaConverters._
-
     val context = ComponentContext()
 //    val jobs = AppConfig().getList(AppConfig.JOBS)
-    BPSDriverChannel()
-    BPSLocalChannel()
+//    BPSDriverChannel()
+//    BPSLocalChannel()
 //    jobs.asScala.foreach(x => {
 //        val job = context.getComponent[BPStreamJob](x)
 //        job.open()

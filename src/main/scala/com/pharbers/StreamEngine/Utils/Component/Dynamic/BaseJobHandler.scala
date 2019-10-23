@@ -2,6 +2,7 @@ package com.pharbers.StreamEngine.Utils.Component.Dynamic
 
 import java.time.Duration
 
+import com.pharbers.StreamEngine.Jobs.OssJob.DynamicJobDemo
 import com.pharbers.StreamEngine.Utils.Annotation.Component
 import com.pharbers.StreamEngine.Utils.Component.ComponentContext
 import com.pharbers.StreamEngine.Utils.Component.Node.NodeMsgHandler
@@ -14,6 +15,7 @@ import com.pharbers.kafka.schema.BPJob
 import org.apache.kafka.common.config.ConfigDef.{Importance, Type}
 import org.json4s._
 import org.json4s.jackson.Serialization.read
+
 import collection.JavaConverters._
 import scala.reflect.runtime.universe._
 
@@ -38,6 +40,7 @@ private[Component] class BaseJobHandler(nodeHandler: NodeMsgHandler, jobBuilder:
         if(!check(jobMsg)){
             return
         }
+        //todo: args的顺序还需要能控制
         val args = jobMsg.args.map(x => {
             if(x.startsWith("$")){
                 ComponentContext().getComponent[AnyRef](x.replace("$", ""))
@@ -78,14 +81,19 @@ private[Component] class BaseJobHandler(nodeHandler: NodeMsgHandler, jobBuilder:
         val consumer = new PharbersKafkaConsumer[String, BPJob](List(handlerConfig.getString(TOPIC_CONFIG_KEY))).getConsumer
         consumer.subscribe(List(handlerConfig.getString(TOPIC_CONFIG_KEY)).asJava)
         while (true){
-            consumer.poll(Duration.ofSeconds(1)).asScala.foreach(x => {
-                implicit val formats: DefaultFormats.type = DefaultFormats
-                x.value().getType.toString match {
-                    case "add" => add(read[JobMsg](x.value().getJob.toString))
-                    case "stop" => finish(x.value().getJob.toString)
-                    case _ =>
-                }
-            })
+            try{
+                consumer.poll(Duration.ofSeconds(1)).asScala.foreach(x => {
+                    implicit val formats: DefaultFormats.type = DefaultFormats
+                    x.value().getType.toString match {
+                        case "add" => add(read[JobMsg](x.value().getJob.toString))
+                        case "stop" => finish(x.value().getJob.toString)
+                        case _ =>
+                    }
+                })
+            }catch {
+                //todo: log
+                case e: Exception => e.printStackTrace()
+            }
         }
     }
 
@@ -126,6 +134,7 @@ private[Component] class BaseJobHandler(nodeHandler: NodeMsgHandler, jobBuilder:
     }
 
     private def getFieldMirror(obj: AnyRef, fieldName: String): Any = {
+        if(fieldName == "this") return obj
         val m = runtimeMirror(getClass.getClassLoader)
         val im = m.reflect(obj)
         val field = im.symbol.typeSignature.members.find(x => x.name.toString == fieldName) match {

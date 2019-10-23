@@ -55,14 +55,18 @@ private[Component] class BaseComponentContext(var configs: List[ComponentConfig]
     override def getComponent[T <: AnyRef](id: String): T = {
         val component = container.getOrElse(id, createComponent(id, true))
         component match {
-            case t: T =>
-                t
-            case _ => ??? //todo: 错误日志，及异常
+            case t: T => t
+            //todo: 错误日志，及异常
+            case _ => ???
         }
     }
 
     override def createComponent[T](id: String, needAppend: Boolean = false): T = {
-        buildComponent(configs.find(x => x.id == id).getOrElse(throw new Exception(s"试图创建未配置的组件, $id")))
+        buildComponent(configs.find(x => x.id == id) match {
+            case Some(c) => c
+            //todo: 原始配置文件中组件配置不存在时，从上传的新配置文件中添加
+            case None => ???
+        })
     }
 
     override def buildComponent[T <: AnyRef](id: String, name: String, args: List[AnyRef], config: Map[String, String]): T = ???

@@ -17,7 +17,7 @@ object BPSOssJobContainer {
     def apply(strategy: BPSKfkJobStrategy, spark: SparkSession, config: Map[String, String]): BPSOssJobContainer = new BPSOssJobContainer(strategy, spark, config)
 }
 
-class BPSOssJobContainer(override val strategy: BPSKfkJobStrategy, val spark: SparkSession, config: Map[String, String]) extends BPSJobContainer with BPDynamicStreamJob{
+class BPSOssJobContainer(override val strategy: BPSKfkJobStrategy, val spark: SparkSession, config: Map[String, String]) extends BPSJobContainer{
     val id = UUID.randomUUID().toString
     type T = BPSKfkJobStrategy
     import spark.implicits._
@@ -68,8 +68,4 @@ class BPSOssJobContainer(override val strategy: BPSKfkJobStrategy, val spark: Sp
             }
         }
     }
-
-    override def registerListeners(listener: BPStreamListener): Unit = ???
-
-    override def handlerExec(handler: BPSEventHandler): Unit = ???
 }
