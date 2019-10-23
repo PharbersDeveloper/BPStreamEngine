@@ -44,17 +44,4 @@ class AppConfigTest extends FunSuite {
         println("h=" + h)
 
     }
-
-    test("test component build from config"){
-        import collection.JavaConverters._
-        val context = ComponentContext()
-        val jobs = AppConfig().getList(AppConfig.JOBS)
-        BPSDriverChannel()
-        BPSLocalChannel()
-        jobs.asScala.foreach(x => {
-            val job = context.getComponent[BPStreamJob](x)
-            job.open()
-            job.exec()
-        })
-    }
 }

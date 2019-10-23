@@ -14,7 +14,7 @@ import com.pharbers.StreamEngine.Utils.StreamJob.BPDynamicStreamJob
   * @note 一些值得注意的地方
   */
 trait BPDynamicStreamJobBuilder {
-    def buildJob(id: String, job: BPDynamicStreamJob): BPDynamicStreamJob
-    def buildListener(id: String, job: BPStreamListener): BPStreamListener
-    def buildHandler(id: String, job: BPSEventHandler): BPSEventHandler
+    def buildJob(jobMsg: JobMsg, job: BPDynamicStreamJob): BPDynamicStreamJob
+    def buildListener(jobMsg: JobMsg, listener: BPStreamListener): BPStreamListener
+    def buildHandler(jobMsg: JobMsg, handler: BPSEventHandler): BPSEventHandler
 }

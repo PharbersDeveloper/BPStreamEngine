@@ -25,6 +25,8 @@ private[Component] class BaseComponentContext(var configs: List[ComponentConfig]
 
     override def buildComponent[T](config: ComponentConfig): T = {
         if(!configs.exists(x => x.id == config.id)) configs = config +: configs
+        //暂时不做组件替换
+        if(container.contains(config.id)) return getComponent(config.id)
         val args = config.args.map(x => {
             if(x.startsWith("$")){
                 getComponent[AnyRef](x.replace("$", ""))

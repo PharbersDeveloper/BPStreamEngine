@@ -15,7 +15,7 @@ import org.apache.kafka.common.config.ConfigDef.{Importance, Type}
 import org.json4s._
 import org.json4s.jackson.Serialization.read
 import collection.JavaConverters._
-import scala.reflect.runtime.universe
+import scala.reflect.runtime.universe._
 
 /** 功能描述
   *
@@ -27,7 +27,7 @@ import scala.reflect.runtime.universe
   * @note
   */
 @Component(name = "BaseJobHandler", `type` = "JobHandler")
-private class BaseJobHandler(config: Map[String, String], nodeHandler: NodeMsgHandler, jobBuilder: BPDynamicStreamJobBuilder) extends JobHandler{
+private[Component] class BaseJobHandler(nodeHandler: NodeMsgHandler, jobBuilder: BPDynamicStreamJobBuilder, config: Map[String, String]) extends JobHandler{
     final val TOPIC_CONFIG_KEY = "topic"
     final val TOPIC_CONFIG_DOC = "kafka topic"
     configDef.define(TOPIC_CONFIG_KEY, Type.STRING, "stream_job_submit", Importance.HIGH, TOPIC_CONFIG_DOC)
@@ -40,17 +40,18 @@ private class BaseJobHandler(config: Map[String, String], nodeHandler: NodeMsgHa
         }
         val args = jobMsg.args.map(x => {
             if(x.startsWith("$")){
-                ComponentContext().getComponent[AnyRef](args)
+                ComponentContext().getComponent[AnyRef](x.replace("$", ""))
             } else {
                 x
             }
-        }) :: jobMsg.dependencyArgs.map(x => {
+        }) ::: jobMsg.dependencyArgs.map(x => {
+            //todo：异常捕获
             if(x.contains('.')){
                 getFieldMirror(jobs(x.split('.').head), x.split('.').tail.head)
             } else {
                 getFieldMirror(jobs(jobMsg.dependencies.head), x)
             }
-        })
+        }) ::: List(jobMsg.config)
         jobMsg.`type` match {
             case "job" => addJob(jobMsg, args)
             case "listener" => addListener(jobMsg, args)
@@ -75,6 +76,7 @@ private class BaseJobHandler(config: Map[String, String], nodeHandler: NodeMsgHa
 
     override def run(): Unit = {
         val consumer = new PharbersKafkaConsumer[String, BPJob](List(handlerConfig.getString(TOPIC_CONFIG_KEY))).getConsumer
+        consumer.subscribe(List(handlerConfig.getString(TOPIC_CONFIG_KEY)).asJava)
         while (true){
             consumer.poll(Duration.ofSeconds(1)).asScala.foreach(x => {
                 implicit val formats: DefaultFormats.type = DefaultFormats
@@ -88,16 +90,14 @@ private class BaseJobHandler(config: Map[String, String], nodeHandler: NodeMsgHa
     }
 
     private def addJob(jobMsg: JobMsg, args: Seq[Any]): Unit ={
-        val job = jobBuilder.buildJob(jobMsg.id, getMethodMirror(jobMsg.classPath)(args: _*).asInstanceOf[BPDynamicStreamJob])
-        synchronized(this){
-            jobs = jobs ++ Map(jobMsg.id -> job)
-        }
+        val job = jobBuilder.buildJob(jobMsg, getMethodMirror(jobMsg.classPath)(args: _*).asInstanceOf[BPDynamicStreamJob])
+        jobs = jobs ++ Map(jobMsg.id -> job)
         job.open()
         job.exec()
     }
 
     private def addListener(jobMsg: JobMsg, args: Seq[Any]): Unit ={
-        val listener = jobBuilder.buildListener(jobMsg.id, getMethodMirror(jobMsg.classPath)(args: _*).asInstanceOf[BPStreamListener])
+        val listener = jobBuilder.buildListener(jobMsg, getMethodMirror(jobMsg.classPath)(args: _*).asInstanceOf[BPStreamListener])
         jobMsg.dependencies.foreach(x => {
             jobs(x).listeners = jobs(x).listeners :+ listener
             jobs(x).registerListeners(listener)
@@ -105,7 +105,7 @@ private class BaseJobHandler(config: Map[String, String], nodeHandler: NodeMsgHa
     }
 
     private def addHandler(jobMsg: JobMsg, args: Seq[Any]): Unit ={
-        val handler = jobBuilder.buildHandler(jobMsg.id, getMethodMirror(jobMsg.classPath)(args: _*).asInstanceOf[BPSEventHandler])
+        val handler = jobBuilder.buildHandler(jobMsg, getMethodMirror(jobMsg.classPath)(args: _*).asInstanceOf[BPSEventHandler])
         jobMsg.dependencies.foreach(x => {
             jobs(x).handlers = jobs(x).handlers :+ handler
             jobs(x).handlerExec(handler)
@@ -117,18 +117,30 @@ private class BaseJobHandler(config: Map[String, String], nodeHandler: NodeMsgHa
         true
     }
 
-    private def getMethodMirror(reference: String): universe.MethodMirror = {
-        val m = universe.runtimeMirror(getClass.getClassLoader)
+    private def getMethodMirror(reference: String): MethodMirror = {
+        val m = runtimeMirror(getClass.getClassLoader)
         val classSy = m.classSymbol(Class.forName(reference))
         val cm = m.reflectClass(classSy)
-        val ctor = classSy.toType.decl(universe.termNames.CONSTRUCTOR).asMethod
+        val ctor = classSy.toType.decl(termNames.CONSTRUCTOR).asMethod
         cm.reflectConstructor(ctor)
     }
 
-    private def getFieldMirror[T](obj: T, fieldName: String): Any = {
-        val m = universe.runtimeMirror(getClass.getClassLoader)
+    private def getFieldMirror(obj: AnyRef, fieldName: String): Any = {
+        val m = runtimeMirror(getClass.getClassLoader)
         val im = m.reflect(obj)
-        val field = universe.typeOf[T].decl(universe.TermName(fieldName)).asTerm.accessed.asTerm
+        val field = im.symbol.typeSignature.members.find(x => x.name.toString == fieldName) match {
+            case Some(symbol) => symbol.asTerm
+            case _ => throw new Exception("参数不存在")
+        }
         im.reflectField(field).get
+    }
+}
+
+object BaseJobHandler {
+    private[Component] def apply(nodeHandler: NodeMsgHandler, jobBuilder: BPDynamicStreamJobBuilder, config: Map[String, String]): BaseJobHandler ={
+        val jobHandler = new BaseJobHandler(nodeHandler, jobBuilder, config)
+        //todo: 线程池， 和chanel一起弄
+        new Thread(jobHandler).start()
+        jobHandler
     }
 }

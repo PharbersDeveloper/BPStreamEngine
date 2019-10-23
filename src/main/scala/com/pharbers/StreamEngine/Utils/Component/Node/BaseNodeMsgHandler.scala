@@ -14,7 +14,7 @@ import collection.JavaConverters._
   * @note 一些值得注意的地方
   */
 @Component(name = "BaseNodeMsgHandler", `type` = "NodeMsgHandler")
-private class BaseNodeMsgHandler(config: Map[String, String]) extends NodeMsgHandler{
+private[Component] class BaseNodeMsgHandler(config: Map[String, String]) extends NodeMsgHandler{
     val handlerConfig: AppConfig = new AppConfig(configDef,  config.asJava)
     private var nodes: Map[String, NodeMsg] = Map.empty
 

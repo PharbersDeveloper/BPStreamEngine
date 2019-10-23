@@ -24,11 +24,27 @@
     }
   },
   {
-    "id": "BPSOssJobContainer",
-    "name": "BPSOssJobContainer",
-    "args": ["$BPSKfkJobStrategy", "$BPSparkSession"],
+    "id": "NodeMsgHandler",
+    "name": "BaseNodeMsgHandler",
+    "args": [],
+    "config": {
+      "path": "/test/dcs/nodeMsg/"
+    }
+  },
+  {
+    "id": "BPDynamicStreamJobBuilder",
+    "name": "BaseDynamicStreamJobBuilder",
+    "args": ["$NodeMsgHandler"],
     "config": {
       "": ""
+    }
+  },
+  {
+    "id": "JobHandler",
+    "name": "BaseJobHandler",
+    "args": ["$NodeMsgHandler", "$BPDynamicStreamJobBuilder"],
+    "config": {
+      "topic": "stream_job_submit"
     }
   }
 ]

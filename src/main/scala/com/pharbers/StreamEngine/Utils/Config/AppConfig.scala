@@ -26,8 +26,8 @@ object AppConfig  {
 
     final val COMPONENT_PACKAGES = "component.packages"
     final private val COMPONENT_PACKAGES_DOC = "组件包目录"
-    final val JOBS = "jobs"
-    final private val JOBS_DOC = "需要运行的job"
+//    final val JOBS = "jobs"
+//    final private val JOBS_DOC = "随项目一起启动的job"
 
     private val ac = new AppConfig(CD, PROP)
     def apply(): AppConfig = ac
@@ -59,12 +59,12 @@ object AppConfig  {
                 Importance.HIGH,
                 COMPONENT_PACKAGES_DOC
             )
-            .define(
-                JOBS,
-                Type.LIST,
-                Importance.HIGH,
-                JOBS_DOC
-            )
+//            .define(
+//                JOBS,
+//                Type.LIST,
+//                Importance.HIGH,
+//                JOBS_DOC
+//            )
     }
 
     private def baseProps: Map[_, _] = {
