@@ -1,9 +1,8 @@
 package com.pharbers.StreamEngine.Utils.Config
 
-import java.io.FileInputStream
 import java.util
+import java.io.FileInputStream
 import java.util.{Map, Properties}
-
 import org.apache.kafka.common.config.ConfigDef.{Importance, Type}
 import org.apache.kafka.common.config.{AbstractConfig, ConfigDef}
 
@@ -26,6 +25,7 @@ object AppConfig  {
 
     final val COMPONENT_PACKAGES = "component.packages"
     final private val COMPONENT_PACKAGES_DOC = "组件包目录"
+
     final val JOBS = "jobs"
     final private val JOBS_DOC = "需要运行的job"
 
@@ -76,6 +76,4 @@ object AppConfig  {
 
 }
 
-class AppConfig(definition: ConfigDef, originals: util.Map[_, _]) extends AbstractConfig(definition, originals) {
-
-}
+class AppConfig(definition: ConfigDef, originals: util.Map[_, _]) extends AbstractConfig(definition, originals)
