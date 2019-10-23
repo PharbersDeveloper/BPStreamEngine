@@ -1,0 +1,34 @@
+[
+  {
+    "id": "BPSparkSession",
+    "name": "BPSparkSession",
+    "args": [],
+    "config": {
+    }
+  },
+  {
+    "id": "BPKafkaSession",
+    "name": "BPKafkaSession",
+    "args": ["$BPSparkSession"],
+    "config": {
+      "topic": "oss_source",
+      "url": "http://123.56.179.133:9092"
+    }
+  },
+  {
+    "id": "BPSKfkJobStrategy",
+    "name": "BPSKfkJobStrategy",
+    "args": ["$BPKafkaSession"],
+    "config": {
+      "": ""
+    }
+  },
+  {
+    "id": "BPSOssJobContainer",
+    "name": "BPSOssJobContainer",
+    "args": ["$BPSKfkJobStrategy", "$BPSparkSession"],
+    "config": {
+      "": ""
+    }
+  }
+]
