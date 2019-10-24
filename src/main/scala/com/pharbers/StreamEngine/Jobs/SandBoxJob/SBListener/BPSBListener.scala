@@ -1,4 +1,4 @@
-package com.pharbers.StreamEngine.Jobs.SandBoxJob.FileMeta2Mongo.SBListener
+package com.pharbers.StreamEngine.Jobs.SandBoxJob.SBListener
 
 import java.util.UUID
 

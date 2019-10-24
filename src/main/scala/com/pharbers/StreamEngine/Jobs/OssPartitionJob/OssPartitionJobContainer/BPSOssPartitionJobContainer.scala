@@ -6,7 +6,7 @@ import com.pharbers.StreamEngine.Jobs.OssPartitionJob.BPSOssPartitionJob
 import com.pharbers.StreamEngine.Utils.StreamJob.{BPSJobContainer, BPStreamJob}
 import com.pharbers.StreamEngine.Jobs.OssPartitionJob.OssListener.BPSOssListener
 import com.pharbers.StreamEngine.Jobs.SandBoxJob.BPSandBoxJob
-import com.pharbers.StreamEngine.Jobs.SandBoxJob.FileMeta2Mongo.SBListener.BPSBListener
+import com.pharbers.StreamEngine.Jobs.SandBoxJob.SBListener.BPSBListener
 import com.pharbers.StreamEngine.Utils.Config.KafkaConfig
 import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSKfkJobStrategy
 import org.apache.spark.sql.SparkSession
@@ -20,7 +20,7 @@ object BPSOssPartitionJobContainer {
 
 class BPSOssPartitionJobContainer(override val strategy: BPSKfkJobStrategy, val spark: SparkSession) extends BPSJobContainer {
 //    val id = UUID.randomUUID().toString
-    val id = "test000"
+    val id = "test001"
     type T = BPSKfkJobStrategy
     import spark.implicits._
     //    val listener = new BPSOssListener(spark, this)
@@ -37,6 +37,7 @@ class BPSOssPartitionJobContainer(override val strategy: BPSKfkJobStrategy, val 
 //            .option("kafka.ssl.truststore.password", "pharbers")
 //            .option("kafka.ssl.endpoint.identification.algorithm", " ")
 //            .option("startingOffsets", "earliest")
+            .option("startingOffsets", "latest")
             .option("subscribe", strategy.getTopic)
             .load()
 

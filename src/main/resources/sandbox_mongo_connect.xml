@@ -1,5 +1,5 @@
 <mongodb-connect>
-    <server_host value="127.0.0.1"/>
+    <server_host value="192.168.100.116"/>
     <server_port value="27017" />
     <connect_name value="" />
     <connect_pwd value="" />
