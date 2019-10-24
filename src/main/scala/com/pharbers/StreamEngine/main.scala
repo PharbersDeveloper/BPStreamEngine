@@ -3,7 +3,7 @@ import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSKfkJobStrategy
 import com.pharbers.StreamEngine.Utils.Channel.Driver.BPSDriverChannel
 import com.pharbers.StreamEngine.Utils.Channel.Local.BPSLocalChannel
 import com.pharbers.StreamEngine.Jobs.OssPartitionJob.OssJobContainer.BPSOssPartitionJobContainer
-import com.pharbers.StreamEngine.Jobs.StreamReaderJob.StreamReaderJobContainer.BPStreamReaderJobContainer
+import com.pharbers.StreamEngine.Jobs.PyJob.PythonJobContainer.BPSPythonJobContainer
 import com.pharbers.StreamEngine.Utils.Component.ComponentContext
 import com.pharbers.StreamEngine.Utils.Config.AppConfig
 import com.pharbers.StreamEngine.Utils.Session.Kafka.BPKafkaSession
@@ -18,7 +18,7 @@ object main extends App {
     BPSLocalChannel()
 
     val job =
-        BPSOssPartitionJobContainer(
+        BPSPythonJobContainer(
             BPSKfkJobStrategy(
                 BPKafkaSession(spark)
             ),

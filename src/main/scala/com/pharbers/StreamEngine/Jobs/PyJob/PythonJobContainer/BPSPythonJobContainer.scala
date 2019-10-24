@@ -17,8 +17,9 @@ class BPSPythonJobContainer(override val strategy: BPSKfkJobStrategy,
     type T = BPSKfkJobStrategy
 
     override def open(): Unit = {
-        val reading = spark.read
-                .parquet("hdfs:///test/alex/test000/files/jobId=1aed8-53d5-48f3-b7dd-780be0")
+        val reading = spark.readStream.format("socket").option("host", "localhost").option("port", 9999).load
+            //spark.read.parquet("hdfs:///test/alex/test000/files/jobId=1aed8-53d5-48f3-b7dd-780be0")
+
 
         inputStream = Some(reading)
 //                .selectExpr(
@@ -34,6 +35,7 @@ class BPSPythonJobContainer(override val strategy: BPSKfkJobStrategy,
     override def exec(): Unit = inputStream match {
         case Some(_) =>
             val job = BPSPythonJob(id, spark, inputStream, this)
+            job.open()
             job.exec()
         case None => ???
     }
