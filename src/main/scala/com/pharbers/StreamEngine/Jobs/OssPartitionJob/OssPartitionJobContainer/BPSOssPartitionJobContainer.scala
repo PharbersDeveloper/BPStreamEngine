@@ -5,6 +5,8 @@ import java.util.UUID
 import com.pharbers.StreamEngine.Jobs.OssPartitionJob.BPSOssPartitionJob
 import com.pharbers.StreamEngine.Utils.StreamJob.{BPSJobContainer, BPStreamJob}
 import com.pharbers.StreamEngine.Jobs.OssPartitionJob.OssListener.BPSOssListener
+import com.pharbers.StreamEngine.Jobs.SandBoxJob.BPSandBoxJob
+import com.pharbers.StreamEngine.Jobs.SandBoxJob.SBListener.BPSBListener
 import com.pharbers.StreamEngine.Utils.Config.KafkaConfig
 import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSKfkJobStrategy
 import org.apache.spark.sql.SparkSession
@@ -18,7 +20,7 @@ object BPSOssPartitionJobContainer {
 
 class BPSOssPartitionJobContainer(override val strategy: BPSKfkJobStrategy, val spark: SparkSession) extends BPSJobContainer {
 //    val id = UUID.randomUUID().toString
-    val id = "test000"
+    val id = "test001"
     type T = BPSKfkJobStrategy
     import spark.implicits._
     //    val listener = new BPSOssListener(spark, this)
@@ -35,6 +37,7 @@ class BPSOssPartitionJobContainer(override val strategy: BPSKfkJobStrategy, val 
 //            .option("kafka.ssl.truststore.password", "pharbers")
 //            .option("kafka.ssl.endpoint.identification.algorithm", " ")
 //            .option("startingOffsets", "earliest")
+            .option("startingOffsets", "latest")
             .option("subscribe", strategy.getTopic)
             .load()
 
@@ -51,15 +54,16 @@ class BPSOssPartitionJobContainer(override val strategy: BPSKfkJobStrategy, val 
 
     override def exec(): Unit = inputStream match {
         case Some(is) => {
-            val listener = new BPSOssListener(spark, this)
+            val listener = BPSOssListener(spark, this)
             listener.active(is)
+//	        val sbListener = BPSBListener(spark, this)
+//            sbListener.active(is)
 
 //            val outputJob = new KafkaOutputJob
 //            outputJob.sink(is.selectExpr("""data AS value""", "jobId", "traceId", "type"))
-
+    
             listeners = listener :: listeners
             
-
             is.filter($"type" === "SandBox").writeStream
                 .partitionBy("jobId")
                 .format("parquet")

@@ -13,7 +13,7 @@ object KafkaConfig  {
     final val PROPS: Map[_, _] = baseProps
 
     final private val CONFIG_PATH_KEY = "kafka.config.path"
-    final private val DEFAULT_CONFIG_PATH = "resources/kafka.properties"
+    final private val DEFAULT_CONFIG_PATH = "src/main/resources/kafka.properties"
 
     final val KAFKA_BOOTSTRAP_SERVERS_KEY = "kafka.bootstrap.servers"
     final private val KAFKA_BOOTSTRAP_SERVERS_DOC = "kafka bootstrap servers."

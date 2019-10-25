@@ -5,6 +5,7 @@ import java.nio.charset.StandardCharsets
 import java.util.UUID
 
 import com.pharbers.StreamEngine.Jobs.OssPartitionJob.OssPartitionMeta.BPSOssPartitionMeta
+import com.pharbers.StreamEngine.Jobs.SandBoxJob.BPSandBoxJob
 import com.pharbers.StreamEngine.Utils.Channel.Driver.BPSDriverChannel
 import com.pharbers.StreamEngine.Utils.Channel.Worker.BPSWorkerChannel
 import com.pharbers.StreamEngine.Utils.StreamJob.{BPSJobContainer, BPStreamJob}
@@ -34,9 +35,12 @@ case class BPSOssListener(spark: SparkSession, job: BPStreamJob) extends BPStrea
         e.`type` match {
             case "SandBox-Schema" => {
                 val jid = job.asInstanceOf[BPSJobContainer]
+//                BPSandBoxJob(jid.id, null, e.traceId, e.jobId, e.data, e.`type`).exec()
                 BPSOssPartitionMeta.pushLineToHDFS(jid.id, event2JobId(e), e.data)
+                
             }
             case "SandBox-Length" => {
+//                BPSandBoxJob(jid.id, null, e.traceId, e.jobId, e.data, e.`type`).exec()
                 BPSOssPartitionMeta.pushLineToHDFS(jid.id, event2JobId(e), e.data)
                 post(s"""{"traceId": "${e.traceId}","jobId": "${e.jobId}"}""", "application/json")
             }
