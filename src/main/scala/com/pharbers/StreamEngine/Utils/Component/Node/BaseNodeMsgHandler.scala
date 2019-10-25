@@ -44,12 +44,10 @@ private[Component] class BaseNodeMsgHandler(config: Map[String, String]) extends
 
     override def save(path: String): Unit = {
         //todo：save to hdfs
-        println("save还没有")
     }
 
     override def load(path: String): Unit = {
         //todo： load from hdfs
-        println("load还没有")
     }
 }
 

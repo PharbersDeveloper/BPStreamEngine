@@ -12,7 +12,8 @@
     "args": ["$BPSparkSession"],
     "config": {
       "topic": "oss_source",
-      "url": "http://123.56.179.133:9092"
+      "url": "http://123.56.179.133:9092",
+      "schema": "http://123.56.179.133:8081"
     }
   },
   {

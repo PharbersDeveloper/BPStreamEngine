@@ -24,8 +24,10 @@ class DynamicJobDemo(override val spark: SparkSession, override val strategy: BP
         if(!listeners.contains(listener)){
             listeners = listeners :+ listener
         }
-        listener.active(null)
         println(s"注册listener:$listener")
+        listener.active(null)
+        println(s"触发listener:$listener")
+        listener.trigger(null)
     }
 
     override def handlerExec(handler: BPSEventHandler): Unit = {
@@ -62,5 +64,7 @@ class DynamicListenerDemo(id: String, override val job: BPStreamJob, config: Map
         println(s"$id:active")
     }
 
-    override def deActive(): Unit = ???
+    override def deActive(): Unit = {
+        println(s"$id:deActive")
+    }
 }

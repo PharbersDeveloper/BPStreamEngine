@@ -10,35 +10,26 @@ import com.pharbers.StreamEngine.Utils.Session.Spark.BPSparkSession
 import com.pharbers.StreamEngine.Utils.StreamJob.BPStreamJob
 import collection.JavaConverters._
 
-object main extends App {
-
-    val spark = BPSparkSession()
-
-    BPSDriverChannel()
-    BPSLocalChannel()
-
-    val job =
-        BPSOssPartitionJobContainer(
-            BPSKfkJobStrategy(
-                BPKafkaSession(spark)
-            ),
-            spark
-        )
-    job.open()
-    job.exec()
-
-    BPSDriverChannel.waitForDriverDead()
-}
-
-object test extends App {
-
-    val context = ComponentContext()
-//    val jobs = AppConfig().getList(AppConfig.JOBS)
+//object main extends App {
+//
+//    val spark = BPSparkSession()
+//
 //    BPSDriverChannel()
 //    BPSLocalChannel()
-//    jobs.asScala.foreach(x => {
-//        val job = context.getComponent[BPStreamJob](x)
-//        job.open()
-//        job.exec()
-//    })
+//
+//    val job =
+//        BPSOssPartitionJobContainer(
+//            BPSKfkJobStrategy(
+//                BPKafkaSession(spark)
+//            ),
+//            spark
+//        )
+//    job.open()
+//    job.exec()
+//
+//    BPSDriverChannel.waitForDriverDead()
+//}
+
+object test extends App {
+    val context = ComponentContext()
 }

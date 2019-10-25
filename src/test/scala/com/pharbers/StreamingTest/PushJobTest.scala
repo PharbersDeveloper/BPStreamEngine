@@ -19,29 +19,37 @@ import org.scalatest.FunSuite
   * @note 一些值得注意的地方
   */
 class PushJobTest extends FunSuite{
-    test("PharbersKafkaProducer with avro use GenericRecord") {
+    test("push job") {
         import org.json4s._
         import org.json4s.jackson.Serialization.write
         implicit val formats: DefaultFormats.type = DefaultFormats
         val jobId = "201910231514"
         val traceId = "201910231514"
         val `type` = "add"
-//        val jobMsg = write(JobMsg("testJob", "job", "com.pharbers.StreamEngine.Jobs.OssJob.DynamicJobDemo",
-//            List("$BPSparkSession", "$BPSKfkJobStrategy", "demo"), Nil, Nil, Map.empty, "", "test job"))
-//        val jobMsg = write(JobMsg("testListener", "listener", "com.pharbers.StreamEngine.Jobs.OssJob.DynamicListenerDemo",
-//            Nil, List("testJob"), List("id", "this"), Map.empty, "", "test listener"))
-        val jobMsg = write(JobMsg("testListener2", "listener", "com.pharbers.StreamEngine.Jobs.OssJob.DynamicListenerDemo",
-            List("another listener"), List("testJob"), List("this"), Map.empty, "", "test listener"))
+       // val jobMsg = write(JobMsg("testJob", "jobtegy", "demo"), Nil, Nil, Map.empty, "", "test job"))
+       val jobMsg = write(JobMsg("testListener", "listener", "com.pharbers.StreamEngine.Jobs.OssJob.DynamicListenerDemo",
+           Nil, List("testJob"), List("id", "this"), Map.empty, "", "test listener"))
+//        val jobMsg = write(JobMsg("testListener2", "listener", "com.pharbers.StreamEngine.Jobs.OssJob.DynamicListenerDemo",
+//            List("another listener"), List("testJob"), List("this"), Map.empty, "", "test listener"))
         val topic = "stream_job_submit"
 
-//        val sche: Schema = new Schema.Parser().parse(new File("src/main/avro/OssTask.avsc"))
-//        val gr: GenericRecord = new GenericData.Record(sche)
+        val pkp = new PharbersKafkaProducer[String, BPJob]
+        val bpJob = new BPJob(jobId, traceId, `type`, jobMsg)
+        val fu = pkp.produce(topic, jobId, bpJob)
+        println(fu.get(10, TimeUnit.SECONDS))
+    }
+
+    test("stop job"){
+        import org.json4s._
+        implicit val formats: DefaultFormats.type = DefaultFormats
+        val jobId = "201910231514"
+        val traceId = "201910231514"
+        val `type` = "stop"
+        val jobMsg = "testJob"
+
+        val topic = "stream_job_submit"
 
         val pkp = new PharbersKafkaProducer[String, BPJob]
-//        gr.put("jobId", jobId)
-//        gr.put("traceId", traceId)
-//        gr.put("ossKey", ossKey)
-//        gr.put("fileType", fileType)
         val bpJob = new BPJob(jobId, traceId, `type`, jobMsg)
         val fu = pkp.produce(topic, jobId, bpJob)
         println(fu.get(10, TimeUnit.SECONDS))
