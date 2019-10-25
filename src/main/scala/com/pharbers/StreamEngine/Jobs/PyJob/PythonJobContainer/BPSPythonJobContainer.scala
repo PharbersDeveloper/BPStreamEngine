@@ -14,7 +14,7 @@ object BPSPythonJobContainer {
 
 class BPSPythonJobContainer(override val strategy: BPSKfkJobStrategy,
                             override val spark: SparkSession) extends BPSJobContainer  with Serializable {
-    val id: String = "abc006" //UUID.randomUUID().toString
+    val id: String = "abc054" //UUID.randomUUID().toString
     type T = BPSKfkJobStrategy
 
     override def open(): Unit = {

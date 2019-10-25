@@ -2,12 +2,17 @@ package com.pharbers.StreamEngine.Jobs.PyJob
 
 import org.apache.spark.sql
 import java.nio.charset.StandardCharsets
+
 import org.apache.hadoop.conf.Configuration
 import org.apache.spark.sql.{ForeachWriter, Row, SparkSession}
 import org.apache.hadoop.fs.{FSDataOutputStream, FileSystem, Path}
 import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSJobStrategy
 import com.pharbers.StreamEngine.Utils.StreamJob.{BPSJobContainer, BPStreamJob}
 import java.io.{BufferedReader, BufferedWriter, InputStreamReader, OutputStreamWriter}
+
+import com.pharbers.StreamEngine.Utils.Event.BPSEvents
+import org.json4s.DefaultFormats
+import org.json4s.jackson.Serialization.write
 
 object BPSPythonJob {
     def apply(id: String,
@@ -55,22 +60,29 @@ class BPSPythonJob(val id: String,
                             }
 
                             override def process(value: Row): Unit = {
-                                val args1 = Array[String]("/usr/bin/python", "./hello_world.py", value.toSeq.mkString(","))
-                                val pr = Runtime.getRuntime.exec(args1)
+                                val argv = Array[String]("/usr/bin/python", "./hello_world.py", value.getAs[String]("data"))
+                                val pr = Runtime.getRuntime.exec(argv)
                                 val in = new BufferedReader(new InputStreamReader(pr.getInputStream))
+
+                                implicit val formats: DefaultFormats.type = DefaultFormats
 
                                 var line: String = in.readLine()
                                 while (line != null) {
-                                    bufferedWriter.write(line)
+
+                                    val event = BPSEvents(
+                                        value.getAs[String]("jobId"),
+                                        value.getAs[String]("traceId"),
+                                        value.getAs[String]("type"),
+                                        line,
+                                        value.getAs[java.sql.Timestamp]("timestamp")
+                                    )
+                                    bufferedWriter.write(write(event))
                                     bufferedWriter.newLine()
                                     line = in.readLine()
-//                                fileWriter.append(value.toSeq.mkString(","))
                                 }
 
                                 in.close()
                                 pr.waitFor()
-//                                fileWriter.append("abc")
-//                                fileWriter.append(value.toSeq.mkString(","))
                             }
 
                             override def close(errorOrNull: Throwable): Unit = {
