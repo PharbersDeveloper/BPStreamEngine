@@ -1,5 +1,7 @@
 package com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxJobContainer
 
+import java.util.UUID
+
 import com.pharbers.StreamEngine.Jobs.SandBoxJob.BPSandBoxJob
 import com.pharbers.StreamEngine.Jobs.SandBoxJob.SBListener.BPSBListener
 import com.pharbers.StreamEngine.Utils.StreamJob.{BPSJobContainer, BPStreamJob}
@@ -8,16 +10,15 @@ import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions.{col, from_json}
 
 object BPSSandBoxJobContainer {
-	def apply(spark: SparkSession): BPSSandBoxJobContainer =
-		new BPSSandBoxJobContainer(spark)
+	def apply(strategy: BPSKfkJobStrategy, spark: SparkSession): BPSSandBoxJobContainer =
+		new BPSSandBoxJobContainer(strategy, spark)
 }
 
-class BPSSandBoxJobContainer(val spark: SparkSession) extends BPSJobContainer {
+class BPSSandBoxJobContainer(override val strategy: BPSKfkJobStrategy, val spark: SparkSession) extends BPSJobContainer {
 	// TODO 整体SandBoxJob的初始化
-	val id = "1aed8-53d5-48f3-b7dd-780be0"
+	val id =  UUID.randomUUID().toString //"1aed8-53d5-48f3-b7dd-780be0"
 	type T = BPSKfkJobStrategy
-	val strategy: BPSKfkJobStrategy = null
-//	import spark.implicits._
+	import spark.implicits._
 //	override def open(): Unit = {
 ////		val reading = spark
 ////			.read
@@ -44,6 +45,7 @@ class BPSSandBoxJobContainer(val spark: SparkSession) extends BPSJobContainer {
 	
 	override def open(): Unit = {
 		// TODO 初始化Kafka策略
+		
 	}
 	
 	override def exec(): Unit = inputStream match {

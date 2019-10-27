@@ -23,20 +23,20 @@ class BPSSandBoxSampleDataJobContainer(jobId: String, override val spark: SparkS
 	override def open(): Unit = {
 		// TODO 先写死，后续策略读取返回流
 		
-//		val loadSchema =
-//			StructType(
-//				StructField("jobId", StringType) ::
-//					StructField("traceId", StringType) ::
-//					StructField("type", StringType) ::
-//					StructField("data", StringType) ::
-//					StructField("timestamp", TimestampType) :: Nil
-//			)
-//
-//		this.inputStream = Some(spark.readStream
-//			.schema(loadSchema)
-//			.parquet(s"/test/alex/test000/files/jobId=$jobId"))
+		val loadSchema =
+			StructType(
+				StructField("jobId", StringType) ::
+					StructField("traceId", StringType) ::
+					StructField("type", StringType) ::
+					StructField("data", StringType) ::
+					StructField("timestamp", TimestampType) :: Nil
+			)
+
+		this.inputStream = Some(spark.readStream
+			.schema(loadSchema)
+			.parquet(s"/test/alex/test000/files/jobId=$jobId"))
 		
-		this.inputStream = Some(spark.read.parquet(s"/test/alex/test001/files/jobId=$jobId"))
+//		this.inputStream = Some(spark.read.parquet(s"/test/alex/test001/files/jobId=$jobId"))
 	}
 	
 	override def exec(): Unit = inputStream match {
