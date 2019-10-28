@@ -1,6 +1,6 @@
 package com.pharbers.StreamEngine.Jobs.SandBoxJob.Listener
 
-import com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxMetaDataContainer.BPSSandBoxMetaDataJobContainer
+import com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxMetaData.BPSSandBoxMetaDataJob
 import com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxSampleDataContainer.BPSSandBoxSampleDataJobContainer
 import com.pharbers.kafka.consumer.PharbersKafkaConsumer
 import com.pharbers.kafka.schema.FileMetaData
@@ -17,15 +17,14 @@ case class FileMetaListener(spark: SparkSession, job: BPStreamJob) extends BPStr
 		println(record.value().getJobId)
 		println(record.value().getMetaDataPath)
 		println(record.value().getSampleDataPath)
-		val mdJob = BPSSandBoxMetaDataJobContainer(record.value().getMetaDataPath.toString,
-			                                       record.value().getJobId.toString, spark)
-//		val sdJob = BPSSandBoxSampleDataJobContainer(record.value().getSampleDataPath.toString,
-//			                                       record.value().getJobId.toString, spark)
+		BPSSandBoxMetaDataJob(record.value().getMetaDataPath.toString,
+			                  record.value().getJobId.toString, spark).exec()
 		
-		mdJob.open()
-		mdJob.exec()
-//		sdJob.open()
-//		sdJob.exec()
+		val sdJob = BPSSandBoxSampleDataJobContainer(record.value().getSampleDataPath.toString,
+			                                       record.value().getJobId.toString, spark)
+		
+		sdJob.open()
+		sdJob.exec()
 	}
 	override def trigger(e: BPSEvents): Unit = {}
 

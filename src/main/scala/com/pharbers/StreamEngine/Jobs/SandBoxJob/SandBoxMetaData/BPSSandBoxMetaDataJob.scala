@@ -12,55 +12,38 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 import scala.util.parsing.json._
 
 object BPSSandBoxMetaDataJob {
-	def apply(id: String,
-	          spark: SparkSession,
-	          is: Option[DataFrame],
-	          container: BPSJobContainer): BPSSandBoxMetaDataJob =
-		new BPSSandBoxMetaDataJob(id, spark, is, container)
+	def apply(path: String,
+	          jobId: String,
+	          spark: SparkSession): BPSSandBoxMetaDataJob =
+		new BPSSandBoxMetaDataJob(path, jobId, spark)
 }
 
-class BPSSandBoxMetaDataJob(val id: String,
-                            val spark: SparkSession,
-                            val is: Option[sql.DataFrame],
-                            val container: BPSJobContainer) extends BPStreamJob {
-	type T = BPSJobStrategy
-	override val strategy = null
-	
-	override def exec(): Unit = {
-		def regJson(json:Option[Any]) = json match {
-			case Some(map: Map[String, Any]) => map
-		}
-		inputStream = is
-		inputStream match {
-			case None =>
-			case Some(is) =>
-				println("MetaData =>>>>>>>>>>>>>>>>>>>>>>")
-				val traceId = "da0fb-c055-4d27-9d1a-fc989"
-				val tmp = is.collect().map(x =>
-					x.getAs[String]("value").replaceAll("""\\"""", "")).toList
-				val schema = tmp.head
-				val length = regJson(JSON.parseFull(tmp.last)).getOrElse("length", 0).toString.toDouble.toInt
-				BPFileMeta2Mongo(traceId, Nil, schema, length).SchemaData()
-//				post(s"""{"traceId": "$traceId"}""", "application/json")
-		
-		}
+class BPSSandBoxMetaDataJob(path: String, jobId: String, spark: SparkSession) {
+	def regJson(json: Option[Any]): Map[String, Any] = json match {
+		case Some(map: Map[String, Any]) => map
 	}
 	
-	override def close(): Unit = {
-		super.close()
-		container.finishJobWithId(id)
+	def exec(): Unit = {
+		val metaData: List[String] = spark.sparkContext.textFile(s"$path$jobId").collect().toList.map(x =>
+			x.replaceAll("""\\"""", ""))
+		val schema: String = metaData.head
+		val length: Int = regJson(JSON.parseFull(metaData.last)).getOrElse("length", 0).toString.toDouble.toInt
+		println(schema)
+		println(length)
+//		BPFileMeta2Mongo(jobId, Nil, schema, length).SchemaData()
 	}
 	
-	def post(body: String, contentType: String): Unit = {
-		val conn = new URL("http://192.168.100.116:36416/v0/Stream2HDFSFinish").openConnection.asInstanceOf[HttpURLConnection]
-		val postDataBytes = body.getBytes(StandardCharsets.UTF_8)
-		conn.setRequestMethod("POST")
-		conn.setRequestProperty("Content-Type", contentType)
-		conn.setRequestProperty("Content-Length", String.valueOf(postDataBytes.length))
-		conn.setConnectTimeout(60000)
-		conn.setReadTimeout(60000)
-		conn.setDoOutput(true)
-		conn.getOutputStream.write(postDataBytes)
-		conn.getResponseCode
-	}
+	
+//	def post(body: String, contentType: String): Unit = {
+//		val conn = new URL("http://192.168.100.116:36416/v0/Stream2HDFSFinish").openConnection.asInstanceOf[HttpURLConnection]
+//		val postDataBytes = body.getBytes(StandardCharsets.UTF_8)
+//		conn.setRequestMethod("POST")
+//		conn.setRequestProperty("Content-Type", contentType)
+//		conn.setRequestProperty("Content-Length", String.valueOf(postDataBytes.length))
+//		conn.setConnectTimeout(60000)
+//		conn.setReadTimeout(60000)
+//		conn.setDoOutput(true)
+//		conn.getOutputStream.write(postDataBytes)
+//		conn.getResponseCode
+//	}
 }
