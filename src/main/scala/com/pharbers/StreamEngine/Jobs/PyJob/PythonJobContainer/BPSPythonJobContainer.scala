@@ -13,9 +13,10 @@ object BPSPythonJobContainer {
 }
 
 class BPSPythonJobContainer(override val strategy: BPSKfkJobStrategy,
-                            override val spark: SparkSession) extends BPSJobContainer  with Serializable {
-    val id: String = "abc054" //UUID.randomUUID().toString
+                            override val spark: SparkSession) extends BPSJobContainer with Serializable {
     type T = BPSKfkJobStrategy
+
+    val id: String = "abc059" //UUID.randomUUID().toString
 
     override def open(): Unit = {
         lazy val loadSchema: StructType = new StructType()
@@ -25,7 +26,7 @@ class BPSPythonJobContainer(override val strategy: BPSKfkJobStrategy,
                 .add("data", StringType)
                 .add("timestamp", TimestampType)
 
-//        val reading = spark.readStream.format("socket").option("host", "localhost").option("port", 9999).load
+//        val reading = spark.readStream.format("socket").option("host", "192.168.100.118").option("port", 9999).load
 
         val reading = spark.readStream
                 .schema(loadSchema)
@@ -33,14 +34,6 @@ class BPSPythonJobContainer(override val strategy: BPSKfkJobStrategy,
                 .parquet("hdfs:///test/alex/test000/files/jobId=1aed8-53d5-48f3-b7dd-780be0")
 
         inputStream = Some(reading)
-//                .selectExpr(
-//                    """deserialize(value) AS value""",
-//                    "timestamp"
-//                ).toDF()
-//                .withWatermark("timestamp", "24 hours")
-//                .select(
-//                    from_json($"value", strategy.getSchema).as("data"), col("timestamp")
-//                ).select("data.*", "timestamp"))
     }
 
     override def exec(): Unit = inputStream match {

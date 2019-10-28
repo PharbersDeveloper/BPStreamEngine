@@ -1,18 +1,17 @@
 package com.pharbers.StreamEngine.Jobs.PyJob
 
 import org.apache.spark.sql
+import org.json4s.DefaultFormats
 import java.nio.charset.StandardCharsets
 
 import org.apache.hadoop.conf.Configuration
-import org.apache.spark.sql.{ForeachWriter, Row, SparkSession}
+import org.json4s.jackson.Serialization.write
+import com.pharbers.StreamEngine.Utils.Event.BPSEvents
+import org.apache.spark.sql.{Row, ForeachWriter, SparkSession}
 import org.apache.hadoop.fs.{FSDataOutputStream, FileSystem, Path}
 import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSJobStrategy
 import com.pharbers.StreamEngine.Utils.StreamJob.{BPSJobContainer, BPStreamJob}
 import java.io.{BufferedReader, BufferedWriter, InputStreamReader, OutputStreamWriter}
-
-import com.pharbers.StreamEngine.Utils.Event.BPSEvents
-import org.json4s.DefaultFormats
-import org.json4s.jackson.Serialization.write
 
 object BPSPythonJob {
     def apply(id: String,
@@ -42,12 +41,15 @@ class BPSPythonJob(val id: String,
                             var bufferedWriter: BufferedWriter = _
 
                             override def open(partitionId: Long, version: Long): Boolean = {
-                                val configuration: Configuration = new Configuration()
-                                configuration.set("fs.defaultFS", "hdfs://192.168.100.137:9000")
-                                val fileSystem: FileSystem = FileSystem.get(configuration)
-
-                                //Create a path
                                 val hdfsWritePath: Path = new Path("/test/qi/" + id)
+
+                                val configuration: Configuration = new Configuration()
+                                configuration.set("fs.defaultFS", "hdfs://spark.master:9000")
+//                                configuration.setBoolean("dfs.support.append", true)
+//                                configuration.set("dfs.client.block.write.replace-datanode-on-failure.enable", "true")
+//                                configuration.set("dfs.client.block.write.replace-datanode-on-failure.policy", "NEVER")
+
+                                val fileSystem: FileSystem = FileSystem.get(configuration)
                                 val fsDataOutputStream: FSDataOutputStream =
                                     if (fileSystem.exists(hdfsWritePath))
                                         fileSystem.append(hdfsWritePath)
@@ -60,36 +62,58 @@ class BPSPythonJob(val id: String,
                             }
 
                             override def process(value: Row): Unit = {
-                                val argv = Array[String]("/usr/bin/python", "./hello_world.py", value.getAs[String]("data"))
+//                                {"\"Market\"":"\"策略市场\"","\"Province\"":"\"福建省\"",
+//                                    "\"City\"":"\"泉州市\"","\"Year\"":"2017","\"Quarter\"":"1",
+//                                    "\"Month\"":"1","\"Code\"":"3505004","\"Hospital\"":"NA",
+//                                    "\"Level\"":"NA","\"ATC\"":"NA","\"Molecule\"":"NA",
+//                                    "\"Product\"":"NA","\"Specificat\"":"NA","\"Size\"":"NA",
+//                                    "\"Pack\"":"NA","\"Form\"":"NA","\"Adminst\"":"NA",
+//                                    "\"Quantity\"":"3310","\"Value\"":"3846","\"Corporatio\"":"NA",
+//                                    "\"TA I\"":"\"WH\"","\"TA II\"":"\"WH\""}
+                                val oldStr = value.getAs[String]("data")
+                                val newStr = oldStr.replace("\\\"", "")
+
+                                val argv = Array[String]("/usr/bin/python", "./hello_world.py", newStr)
                                 val pr = Runtime.getRuntime.exec(argv)
                                 val in = new BufferedReader(new InputStreamReader(pr.getInputStream))
 
-                                implicit val formats: DefaultFormats.type = DefaultFormats
-
-                                var line: String = in.readLine()
-                                while (line != null) {
-
-                                    val event = BPSEvents(
-                                        value.getAs[String]("jobId"),
-                                        value.getAs[String]("traceId"),
-                                        value.getAs[String]("type"),
-                                        line,
-                                        value.getAs[java.sql.Timestamp]("timestamp")
-                                    )
-                                    bufferedWriter.write(write(event))
-                                    bufferedWriter.newLine()
-                                    line = in.readLine()
-                                }
-
-                                in.close()
-                                pr.waitFor()
+                                bufferedWriter.write(in.readLine())
+                                bufferedWriter.write("\n")
                             }
 
                             override def close(errorOrNull: Throwable): Unit = {
+                                bufferedWriter.flush()
                                 bufferedWriter.close()
                             }
 
+//                            override def process(value: Row): Unit = {
+//                                val argv = Array[String]("/usr/bin/python", "./hello_world.py") //, )
+//                                val pr = Runtime.getRuntime.exec(argv)
+//                                val in = new BufferedReader(new InputStreamReader(pr.getInputStream))
+//
+//                                implicit val formats: DefaultFormats.type = DefaultFormats
+//
+//                                var line: String = in.readLine()
+//                                while (line != null) {
+//                                    val event = BPSEvents(
+//                                        value.getAs[String]("jobId"),
+//                                        value.getAs[String]("traceId"),
+//                                        value.getAs[String]("type"),
+//                                        line,
+//                                        value.getAs[java.sql.Timestamp]("timestamp")
+//                                    )
+//                                    bufferedWriter.write(write(event))
+//                                    bufferedWriter.newLine()
+//                                    line = in.readLine()
+//                                }
+//
+//                                in.close()
+//                                pr.waitFor()
+//                            }
+
+//
                         })
+//                        .trigger(Trigger.Continuous("1 second"))
                         .start()
                         .awaitTermination()
             case None => ???
