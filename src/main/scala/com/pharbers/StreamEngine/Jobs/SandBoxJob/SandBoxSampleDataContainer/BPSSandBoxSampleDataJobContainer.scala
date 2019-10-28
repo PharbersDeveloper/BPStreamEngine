@@ -2,30 +2,29 @@ package com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxSampleDataContainer
 
 import java.util.UUID
 
-import com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxSampleData.BPSSandBoxSampleDataJob
+import com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxSampleDataContainer.Listener.BPSSampleDataListener
 import com.pharbers.StreamEngine.Utils.StreamJob.BPSJobContainer
 import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSKfkJobStrategy
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.types.{StringType, StructField, StructType, TimestampType}
 
 object BPSSandBoxSampleDataJobContainer {
-	def apply(jobId: String, spark: SparkSession): BPSSandBoxSampleDataJobContainer =
-		new BPSSandBoxSampleDataJobContainer(jobId, spark)
+	def apply(path: String,
+	          jobId: String,
+	          spark: SparkSession): BPSSandBoxSampleDataJobContainer =
+		new BPSSandBoxSampleDataJobContainer(path, jobId, spark)
 }
 
-class BPSSandBoxSampleDataJobContainer(jobId: String, override val spark: SparkSession) extends BPSJobContainer {
-	//TODO 由调度器调度创建任务
+class BPSSandBoxSampleDataJobContainer(path: String,
+                                       jobId: String,
+                                       override val spark: SparkSession) extends BPSJobContainer {
 	val id = UUID.randomUUID().toString
 	type T = BPSKfkJobStrategy
-	override val strategy = null
+	val strategy = null
 	
-//	import spark.implicits._
 	override def open(): Unit = {
-		// TODO 先写死，后续策略读取返回流
-		
 		val loadSchema =
 			StructType(
-				StructField("jobId", StringType) ::
 					StructField("traceId", StringType) ::
 					StructField("type", StringType) ::
 					StructField("data", StringType) ::
@@ -34,16 +33,14 @@ class BPSSandBoxSampleDataJobContainer(jobId: String, override val spark: SparkS
 
 		this.inputStream = Some(spark.readStream
 			.schema(loadSchema)
-			.parquet(s"/test/alex/test000/files/jobId=$jobId"))
-		
-//		this.inputStream = Some(spark.read.parquet(s"/test/alex/test001/files/jobId=$jobId"))
+			.parquet(s"$path$jobId"))
 	}
 	
 	override def exec(): Unit = inputStream match {
-		case Some(_) =>
-			val job = BPSSandBoxSampleDataJob(id, spark, this.inputStream, this)
-			job.exec()
-			jobs += id -> job
+		case Some(is) =>
+			val listener = BPSSampleDataListener(spark, this)
+			listener.active(is)
+			listeners = listener :: listeners
 			
 		case None => ???
 	}

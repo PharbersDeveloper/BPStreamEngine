@@ -2,8 +2,6 @@ package com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxSampleDataContainer.Lis
 
 import java.util.UUID
 
-import com.pharbers.StreamEngine.Jobs.OssPartitionJob.OssPartitionMeta.BPSOssPartitionMeta
-import com.pharbers.StreamEngine.Jobs.SandBoxJob.BPSandBoxJob
 import com.pharbers.StreamEngine.Utils.Channel.Driver.BPSDriverChannel
 import com.pharbers.StreamEngine.Utils.Channel.Worker.BPSWorkerChannel
 import com.pharbers.StreamEngine.Utils.Event.BPSEvents
@@ -22,8 +20,10 @@ case class BPSSampleDataListener(spark: SparkSession, job: BPStreamJob) extends 
 		e.`type` match {
 			case "SandBox" =>
 				val jid = job.asInstanceOf[BPSJobContainer]
-			// TODO: 调用入库接口
-			//				BPSandBoxJob(jid.id, null, e.traceId, e.jobId, e.data, e.`type`).exec()
+				println(e.data)
+				println(e.jobId)
+				println(jid.id)
+				// TODO 调用入库
 			case _ =>
 		}
 	}
@@ -41,8 +41,7 @@ case class BPSSampleDataListener(spark: SparkSession, job: BPStreamJob) extends 
 					def process(value: Row) : Unit = {
 						implicit val formats = DefaultFormats
 						val event = BPSEvents(
-//							value.getAs[String]("jobId"),
-							"", // TODO: 文件解析出来后可能没有JobID 测试一下
+							"",
 							value.getAs[String]("traceId"),
 							value.getAs[String]("type"),
 							value.getAs[String]("data"),

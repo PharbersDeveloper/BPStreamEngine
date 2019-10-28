@@ -41,7 +41,7 @@ class BPSSandBoxMetaDataJob(val id: String,
 				val schema = tmp.head
 				val length = regJson(JSON.parseFull(tmp.last)).getOrElse("length", 0).toString.toDouble.toInt
 				BPFileMeta2Mongo(traceId, Nil, schema, length).SchemaData()
-				post(s"""{"traceId": "$traceId"}""", "application/json")
+//				post(s"""{"traceId": "$traceId"}""", "application/json")
 		
 		}
 	}

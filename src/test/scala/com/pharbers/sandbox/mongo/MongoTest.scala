@@ -1,4 +1,4 @@
-package com.pharbers.mongo
+package com.pharbers.sandbox.mongo
 
 import com.pharbers.StreamEngine.Jobs.SandBoxJob.FileMeta2Mongo.BPSMongo.MongoTrait
 import org.scalatest.FunSuite

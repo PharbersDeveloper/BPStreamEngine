@@ -31,17 +31,10 @@ object main extends App {
 //    job.exec()
 
 // TODO 整体SandBox初始化
-//    val SandBoxJob = BPSSandBoxJobContainer(spark)
-//    SandBoxJob.open()
-//    SandBoxJob.exec()
-	
-    val SampleDataJob = BPSSandBoxSampleDataJobContainer("da0fb-c055-4d27-9d1a-fc9890", spark)
-    SampleDataJob.open()
-    SampleDataJob.exec()
+    val SandBoxJob = BPSSandBoxJobContainer(spark)
+    SandBoxJob.open()
+    SandBoxJob.exec()
 
-    val MetaDataJob = BPSSandBoxMetaDataJobContainer("da0fb-c055-4d27-9d1a-fc9890", spark)
-    MetaDataJob.open()
-    MetaDataJob.exec()
     
     BPSDriverChannel.waitForDriverDead()
 }
