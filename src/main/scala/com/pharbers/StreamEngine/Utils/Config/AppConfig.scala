@@ -12,8 +12,8 @@ object AppConfig  {
     final private  val CD: ConfigDef = baseConfigDef
     final private  val PROP: Map[_, _] = baseProps
 
-    final private val APP_CONFIG_PATH_KEY = "app.config.path"
-    final private val DEFAULT_APP_CONFIG_PATH = "src/main/resources/test.properties"
+    final private val APP_CONFIG_PATH_KEY = "path"
+    final private val DEFAULT_APP_CONFIG_PATH = "src/main/resources/appConfig.properties"
 
     final val PROJECT_NAME_KEY = "project.name"
     final private val PROJECT_NAME_DOC = "The name is project name."
@@ -26,6 +26,9 @@ object AppConfig  {
 
     final val COMPONENT_PACKAGES = "component.packages"
     final private val COMPONENT_PACKAGES_DOC = "组件包目录"
+
+    final val THREAD_MAX_KEY = "thread.max"
+    final private val THREAD_MAX_DOC = "线程池最大线程数"
 //    final val JOBS = "jobs"
 //    final private val JOBS_DOC = "随项目一起启动的job"
 
@@ -59,12 +62,12 @@ object AppConfig  {
                 Importance.HIGH,
                 COMPONENT_PACKAGES_DOC
             )
-//            .define(
-//                JOBS,
-//                Type.LIST,
-//                Importance.HIGH,
-//                JOBS_DOC
-//            )
+            .define(
+                THREAD_MAX_KEY,
+                Type.INT,
+                Importance.HIGH,
+                THREAD_MAX_DOC
+            )
     }
 
     private def baseProps: Map[_, _] = {

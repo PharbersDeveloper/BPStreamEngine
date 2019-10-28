@@ -7,19 +7,23 @@ import java.nio.channels.Selector
 import java.nio.channels.ServerSocketChannel
 import java.nio.channels.SocketChannel
 
+import com.pharbers.StreamEngine.Utils.Annotation.Component
 import com.pharbers.StreamEngine.Utils.Event.BPSEvents
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamRemoteListener
+import com.pharbers.StreamEngine.Utils.ThreadExecutor.ThreadExecutor
 import org.json4s._
 import org.json4s.jackson.Serialization.read
 
 object BPSDriverChannel {
     var channel: Option[BPSDriverChannel] = None
-    var thread: Option[Thread] = None
 
-    def apply(): Unit = {
-        channel = Some(new BPSDriverChannel)
-        thread = Some(new Thread(channel.get))
-        thread.get.start()
+    def apply(config: Map[String, String]): BPSDriverChannel = {
+        channel = channel match {
+            case None => Some(new BPSDriverChannel(config))
+            case _ => channel
+        }
+        ThreadExecutor().execute(channel.get)
+        channel.get
     }
 
     def registerListener(listener: BPStreamRemoteListener): Unit = channel match {
@@ -32,15 +36,16 @@ object BPSDriverChannel {
             case None => ???
         }
 
-    def waitForDriverDead() = {
-        thread match {
-            case Some(t) => t.join()
-            case None => ???
-        }
-    }
+//    def waitForDriverDead() = {
+//        thread match {
+//            case Some(t) => t.join()
+//            case None => ???
+//        }
+//    }
 }
 
-class BPSDriverChannel extends Runnable {
+@Component(name = "BPSDriverChannel", `type` = "BPSDriverChannel")
+class BPSDriverChannel(config: Map[String, String]) extends Runnable {
 
     lazy val host: String = InetAddress.getLocalHost.getHostAddress
     lazy val port: Int = 56789

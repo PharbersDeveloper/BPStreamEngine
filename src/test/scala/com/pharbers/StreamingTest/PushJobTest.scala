@@ -26,11 +26,14 @@ class PushJobTest extends FunSuite{
         val jobId = "201910231514"
         val traceId = "201910231514"
         val `type` = "add"
-       // val jobMsg = write(JobMsg("testJob", "jobtegy", "demo"), Nil, Nil, Map.empty, "", "test job"))
-       val jobMsg = write(JobMsg("testListener", "listener", "com.pharbers.StreamEngine.Jobs.OssJob.DynamicListenerDemo",
-           Nil, List("testJob"), List("id", "this"), Map.empty, "", "test listener"))
+//        val jobMsg = write(JobMsg("testJob", "job", "com.pharbers.StreamEngine.Jobs.OssJob.DynamicJobDemo",
+//            List("$BPSparkSession", "$BPSKfkJobStrategy", "demo"), Nil, Nil, Map.empty, "", "test job"))
+//        val jobMsg = write(JobMsg("testListener", "listener", "com.pharbers.StreamEngine.Jobs.OssJob.DynamicListenerDemo",
+//            Nil, List("testJob"), List("id", "this"), Map.empty, "", "test listener"))
 //        val jobMsg = write(JobMsg("testListener2", "listener", "com.pharbers.StreamEngine.Jobs.OssJob.DynamicListenerDemo",
 //            List("another listener"), List("testJob"), List("this"), Map.empty, "", "test listener"))
+        val jobMsg = write(JobMsg("ossStreamJob", "job", "com.pharbers.StreamEngine.Jobs.OssPartitionJob.OssJobContainer.BPSOssPartitionJobContainer",
+            List("$BPSKfkJobStrategy", "$BPSparkSession"), Nil, Nil, Map.empty, "", "test job"))
         val topic = "stream_job_submit"
 
         val pkp = new PharbersKafkaProducer[String, BPJob]

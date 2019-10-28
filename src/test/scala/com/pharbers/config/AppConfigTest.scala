@@ -24,7 +24,7 @@ class AppConfigTest extends FunSuite {
             .define("port", Type.INT, Importance.HIGH, "docs")
 
         val props = new util.Properties()
-        props.load(new FileInputStream("/Users/jeorch/Documents/test/test.properties"))
+        props.load(new FileInputStream("/Users/jeorch/Documents/test/appConfig.properties"))
 
         val parsedProps = definition.parse(props)
         println(parsedProps.get("host"))
