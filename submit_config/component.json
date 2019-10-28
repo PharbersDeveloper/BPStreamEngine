@@ -4,6 +4,9 @@
     "name": "BPSparkSession",
     "args": [],
     "config": {
+      "app.name": "bp-stream-engine",
+      "master": "yarn",
+      "spark.configs.path": "sparkConfig.properties"
     }
   },
   {

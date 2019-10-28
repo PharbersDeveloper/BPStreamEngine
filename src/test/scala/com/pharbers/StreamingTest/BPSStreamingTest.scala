@@ -2,10 +2,12 @@ package com.pharbers.StreamTest
 
 
 import java.net.{URL, URLClassLoader}
+import java.util.UUID
 
 import com.pharbers.StreamEngine.Utils.Session.Spark.BPSparkSession
 import org.scalatest.FunSuite
 import java.util.jar.JarFile
+
 import collection.JavaConverters._
 import scala.io.Source
 import scala.reflect.runtime.universe._
