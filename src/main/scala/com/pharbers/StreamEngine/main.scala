@@ -5,7 +5,6 @@ import com.pharbers.StreamEngine.Utils.Channel.Local.BPSLocalChannel
 import com.pharbers.StreamEngine.Jobs.OssPartitionJob.OssJobContainer.BPSOssPartitionJobContainer
 import com.pharbers.StreamEngine.Jobs.StreamReaderJob.StreamReaderJobContainer.BPStreamReaderJobContainer
 import com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxJobContainer.BPSSandBoxJobContainer
-import com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxMetaDataContainer.BPSSandBoxMetaDataJobContainer
 import com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxSampleDataContainer.BPSSandBoxSampleDataJobContainer
 import com.pharbers.StreamEngine.Utils.Component.ComponentContext
 import com.pharbers.StreamEngine.Utils.Config.AppConfig
@@ -31,17 +30,9 @@ object main extends App {
 //    job.exec()
 
 // TODO 整体SandBox初始化
-//    val SandBoxJob = BPSSandBoxJobContainer(spark)
-//    SandBoxJob.open()
-//    SandBoxJob.exec()
-	
-    val SampleDataJob = BPSSandBoxSampleDataJobContainer("da0fb-c055-4d27-9d1a-fc9890", spark)
-    SampleDataJob.open()
-    SampleDataJob.exec()
+    val SandBoxJob = BPSSandBoxJobContainer(spark)
+    SandBoxJob.exec()
 
-    val MetaDataJob = BPSSandBoxMetaDataJobContainer("da0fb-c055-4d27-9d1a-fc9890", spark)
-    MetaDataJob.open()
-    MetaDataJob.exec()
     
     BPSDriverChannel.waitForDriverDead()
 }
