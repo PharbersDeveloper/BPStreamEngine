@@ -50,7 +50,7 @@ case class BPSSchemaHandlerV2BPS(schemaEvent: BPSEvents) extends BPSEventHandler
 
     def event2SqlType(e: BPSEvents): org.apache.spark.sql.types.DataType = {
         // TODO: 以后全变为AVRO的Schema形式
-        //        SchemaConverters.toSqlType(new Schema.Parser().parse(e.data)).dataType
+//                SchemaConverters.toSqlType(new Schema.Parser().parse(e.data)).dataType
         implicit val formats = DefaultFormats
         val lst = read[List[BPSchemaParseElement]](e.data)
         StructType(

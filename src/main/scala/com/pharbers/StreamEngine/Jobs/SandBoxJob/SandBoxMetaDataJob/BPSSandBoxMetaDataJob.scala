@@ -1,4 +1,4 @@
-package com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxMetaData
+package com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxMetaDataJob
 
 import java.net.{HttpURLConnection, URL}
 import java.nio.charset.StandardCharsets
@@ -24,13 +24,11 @@ class BPSSandBoxMetaDataJob(path: String, jobId: String, spark: SparkSession) {
 	}
 	
 	def exec(): Unit = {
-		val metaData: List[String] = spark.sparkContext.textFile(s"$path$jobId").collect().toList.map(x =>
+		val metaData: List[String] = spark.sparkContext.textFile(s"$path/$jobId").collect().toList.map(x =>
 			x.replaceAll("""\\"""", ""))
 		val schema: String = metaData.head
 		val length: Int = regJson(JSON.parseFull(metaData.last)).getOrElse("length", 0).toString.toDouble.toInt
-		println(schema)
-		println(length)
-//		BPFileMeta2Mongo(jobId, Nil, schema, length).SchemaData()
+		BPFileMeta2Mongo(jobId, Nil, schema, length).SchemaData()
 	}
 	
 	

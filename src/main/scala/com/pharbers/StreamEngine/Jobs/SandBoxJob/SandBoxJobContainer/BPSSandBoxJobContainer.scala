@@ -3,7 +3,6 @@ package com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxJobContainer
 import java.util.UUID
 
 import com.pharbers.StreamEngine.Jobs.SandBoxJob.Listener.FileMetaListener
-import com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxMetaDataContainer.BPSSandBoxMetaDataJobContainer
 import com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxSampleDataContainer.BPSSandBoxSampleDataJobContainer
 import com.pharbers.StreamEngine.Utils.StreamJob.BPSJobContainer
 import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSKfkJobStrategy
@@ -19,8 +18,6 @@ class BPSSandBoxJobContainer( val spark: SparkSession) extends BPSJobContainer {
 	val id =  UUID.randomUUID().toString //"1aed8-53d5-48f3-b7dd-780be0"
 	type T = BPSKfkJobStrategy
 	val strategy = null
-	
-	var fmJob: FileMetaListener = _
 	
 	override def open(): Unit = {
 	

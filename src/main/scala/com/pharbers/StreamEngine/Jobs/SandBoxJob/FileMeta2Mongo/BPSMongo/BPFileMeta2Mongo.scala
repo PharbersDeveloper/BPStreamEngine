@@ -17,7 +17,7 @@ class BPFileMeta2Mongo(jobId: String,
                        schema: String,
                        length: Int) extends MongoTrait {
 	
-	val condition: DBObject = ("file-version-ids" $in jobId :: Nil)
+	val condition: DBObject = ("job-id" $in jobId :: Nil)
 	
 	def SampleData(): Unit = {
 		queryObject(condition, "FileMetaDatum") match {

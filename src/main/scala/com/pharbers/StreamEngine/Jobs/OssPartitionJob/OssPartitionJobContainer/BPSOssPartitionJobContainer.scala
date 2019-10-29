@@ -54,8 +54,6 @@ class BPSOssPartitionJobContainer(override val strategy: BPSKfkJobStrategy, val 
         case Some(is) => {
             val listener = BPSOssListener(spark, this)
             listener.active(is)
-//	        val sbListener = BPSBListener(spark, this)
-//            sbListener.active(is)
 
 //            val outputJob = new KafkaOutputJob
 //            outputJob.sink(is.selectExpr("""data AS value""", "jobId", "traceId", "type"))

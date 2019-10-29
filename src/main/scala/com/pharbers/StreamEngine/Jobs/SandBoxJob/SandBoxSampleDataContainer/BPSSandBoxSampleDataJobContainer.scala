@@ -38,9 +38,18 @@ class BPSSandBoxSampleDataJobContainer(path: String,
 	
 	override def exec(): Unit = inputStream match {
 		case Some(is) =>
-			val listener = BPSSampleDataListener(spark, this)
+			val qv = s"`tmp_view_$jobId`"
+			outputStream = is
+				.writeStream
+				.queryName(qv)
+				.outputMode("update")
+				.format("memory")
+				.start() :: outputStream
+			
+			val listener = BPSSampleDataListener(spark, this, qv, jobId)
 			listener.active(is)
 			listeners = listener :: listeners
+
 			
 		case None => ???
 	}
