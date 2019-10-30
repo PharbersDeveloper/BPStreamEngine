@@ -36,6 +36,7 @@ class BPSOssPartitionJobContainer(override val strategy: BPSKfkJobStrategy, val 
             .option("kafka.ssl.truststore.password", "pharbers")
             .option("kafka.ssl.endpoint.identification.algorithm", " ")
             .option("startingOffsets", "earliest")
+//            .option("startingOffsets", "latest")
             .option("subscribe", strategy.getTopic)
             .option("failOnDataLoss", "false")
             .load()
@@ -62,8 +63,10 @@ class BPSOssPartitionJobContainer(override val strategy: BPSKfkJobStrategy, val 
                 .partitionBy("jobId")
                 .format("parquet")
                 .outputMode("append")
-                .option("checkpointLocation", "/workData/streamingV2/" +  this.id + "/checkpoint")
-                .option("path", "/workData/streamingV2/" + this.id + "/files")
+//                .option("checkpointLocation", "/workData/streamingV2/" +  this.id + "/checkpoint")
+//                .option("path", "/workData/streamingV2/" + this.id + "/files")
+                .option("checkpointLocation", "/test/alex/" +  this.id + "/checkpoint")
+                .option("path", "/test/alex/" + this.id + "/files")
                 .start()
         }
         case None => ???

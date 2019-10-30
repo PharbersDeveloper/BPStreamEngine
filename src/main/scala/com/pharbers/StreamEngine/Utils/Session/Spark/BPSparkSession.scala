@@ -34,7 +34,8 @@ class BPSparkSession(config: Map[String, String]) {
     val sparkConfigs = new AppConfig(configDef, config.asJava)
     //这儿的set的参数是第一优先级的
     val pops = new Properties()
-    pops.load(new FileInputStream(sparkConfigs.getString(SPARK_CONFIGS_PATH_KEY)))
+//    pops.load(new FileInputStream(sparkConfigs.getString(SPARK_CONFIGS_PATH_KEY)))
+    pops.load(new FileInputStream("src/main/resources/sparkConfig.properties"))
     private val conf = new SparkConf()
         .setAll(pops.asScala)
         .setAppName("bp-stream-engine")
