@@ -1,0 +1,19 @@
+{
+  "type": "record",
+  "name": "FileMetaData",
+  "namespace": "com.pharbers.kafka.schema",
+  "fields": [
+    {
+      "name": "JobId",
+      "type": "string"
+    },
+    {
+      "name": "MetaDataPath",
+      "type": "string"
+    },
+    {
+      "name": "SampleDataPath",
+      "type": "string"
+    }
+  ]
+}

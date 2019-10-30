@@ -43,5 +43,5 @@ class BPKafkaSession(config: Map[String, String]) extends KafkaConfig{
 trait KafkaConfig{
     final val TOPIC = "topic"
     final val TOPIC_DOC = "kafka topic config"
-    val configDef: ConfigDef = new ConfigDef().define(TOPIC, Type.STRING, "oss_source", Importance.HIGH, TOPIC_DOC)
+    val configDef: ConfigDef = new ConfigDef().define(TOPIC, Type.STRING, "oss_source_1", Importance.HIGH, TOPIC_DOC)
 }

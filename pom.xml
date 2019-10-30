@@ -67,6 +67,14 @@
                     <version>${kafka.version}</version>
                 </dependency>
 
+                <!-- Mongo -->
+                <dependency>
+                    <groupId>org.mongodb</groupId>
+                    <artifactId>casbah_2.11</artifactId>
+                    <version>3.1.1</version>
+                    <type>pom</type>
+                </dependency>
+
                 <!-- spark -->
                 <!-- https://mvnrepository.com/artifact/org.apache.spark/spark-sql-kafka-0-10 -->
                 <dependency>
@@ -106,6 +114,14 @@
                     <artifactId>spark-avro_2.11</artifactId>
                     <version>4.0.0</version>
                 </dependency>
+
+                <!--Kafka-->
+                <dependency>
+                    <groupId>com.pharbers</groupId>
+                    <artifactId>pharbers-kafka</artifactId>
+                    <version>1.0</version>
+                </dependency>
+
 
                 <!-- hadoop -->
                 <dependency>
@@ -245,6 +261,23 @@
                         <arg>-nobootcp</arg>
                     </args>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.avro</groupId>
+                <artifactId>avro-maven-plugin</artifactId>
+                <version>1.8.1</version>
+                <executions>
+                    <execution>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>schema</goal>
+                        </goals>
+                        <configuration>
+                            <sourceDirectory>${project.basedir}/src/main/avro/</sourceDirectory>
+                            <outputDirectory>${project.basedir}/src/main/java/</outputDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

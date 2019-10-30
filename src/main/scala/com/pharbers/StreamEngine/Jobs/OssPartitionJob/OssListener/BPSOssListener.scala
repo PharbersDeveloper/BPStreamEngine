@@ -35,6 +35,7 @@ case class BPSOssListener(spark: SparkSession, job: BPStreamJob) extends BPStrea
             case "SandBox-Schema" => {
                 val jid = job.asInstanceOf[BPSJobContainer]
                 BPSOssPartitionMeta.pushLineToHDFS(jid.id, event2JobId(e), e.data)
+                
             }
             case "SandBox-Length" => {
                 BPSOssPartitionMeta.pushLineToHDFS(jid.id, event2JobId(e), e.data)
@@ -76,7 +77,7 @@ case class BPSOssListener(spark: SparkSession, job: BPStreamJob) extends BPStrea
                         def close(errorOrNull: scala.Throwable): Unit = {}//channel.get.close()
                     }
                 )
-                .option("checkpointLocation", "/test/streaming/" + UUID.randomUUID().toString + "/checkpoint")
+                .option("checkpointLocation", "/test/alex/" + UUID.randomUUID().toString + "/checkpoint")
                 .start() :: job.outputStream
     }
 
