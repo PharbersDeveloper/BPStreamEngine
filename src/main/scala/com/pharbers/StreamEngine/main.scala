@@ -9,30 +9,33 @@ import com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxSampleDataContainer.BPSS
 import com.pharbers.StreamEngine.Utils.Component.ComponentContext
 import com.pharbers.StreamEngine.Utils.ThreadExecutor.ThreadExecutor
 
-object main extends App {
-    
-    val context = ComponentContext()
-    ThreadExecutor.waitForShutdown()
-
+//object main extends App {
+//
 //    val spark = BPSparkSession()
 //
 //    BPSDriverChannel()
 //    BPSLocalChannel()
-
-//    val job =
-//        BPSOssPartitionJobContainer(
-//            BPSKfkJobStrategy(
-//                BPKafkaSession(spark)
-//            ),
-//            spark
-//        )
-//    job.open()
-//    job.exec()
-
-// TODO 整体SandBox初始化
+//
+////    val job =
+////        BPSOssPartitionJobContainer(
+////            BPSKfkJobStrategy(
+////                BPKafkaSession(spark)
+////            ),
+////            spark
+////        )
+////    job.open()
+////    job.exec()
+//
+//// TODO 整体SandBox初始化
 //    val SandBoxJob = BPSSandBoxJobContainer(spark)
 //    SandBoxJob.exec()
 //
 //
 //    BPSDriverChannel.waitForDriverDead()
+//}
+
+
+object a_test extends App {
+    val context = ComponentContext()
+    ThreadExecutor.waitForShutdown()
 }
