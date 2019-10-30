@@ -55,10 +55,11 @@ object AnnotationSelector {
       * @return 类完整路径
       */
     private def getClassNameByFile(filePath: String, childPackage: Boolean): Seq[String] = {
+        val separator = java.io.File.separator
         val file = new File(filePath)
         val childFiles = file.listFiles
         childFiles.filter(x => !x.isDirectory && x.getPath.endsWith(".class"))
-                .map(x => x.getPath.substring(x.getPath.indexOf("/classes") + 9, x.getPath.lastIndexOf(".")).replace("/", ".")) ++
+                .map(x => x.getPath.substring(x.getPath.indexOf(s"${separator}classes") + 9, x.getPath.lastIndexOf(".")).replace(separator, ".")) ++
                 childFiles.filter(x => x.isDirectory && childPackage).flatMap(x => getClassNameByFile(x.getPath, childPackage))
     }
 

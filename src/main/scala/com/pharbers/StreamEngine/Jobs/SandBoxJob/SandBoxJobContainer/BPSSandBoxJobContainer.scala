@@ -1,64 +1,38 @@
 package com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxJobContainer
 
-import com.pharbers.StreamEngine.Jobs.SandBoxJob.BPSandBoxJob
-import com.pharbers.StreamEngine.Jobs.SandBoxJob.SBListener.BPSBListener
-import com.pharbers.StreamEngine.Utils.StreamJob.{BPSJobContainer, BPStreamJob}
+import java.util.UUID
+
+import com.pharbers.StreamEngine.Jobs.SandBoxJob.Listener.FileMetaListener
+import com.pharbers.StreamEngine.Utils.Event.EventHandler.BPSEventHandler
+import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamListener
+import com.pharbers.StreamEngine.Utils.StreamJob.{BPDynamicStreamJob, BPSJobContainer}
 import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSKfkJobStrategy
 import org.apache.spark.sql.SparkSession
-import org.apache.spark.sql.functions.{col, from_json}
 
 object BPSSandBoxJobContainer {
-	def apply(spark: SparkSession): BPSSandBoxJobContainer =
-		new BPSSandBoxJobContainer(spark)
+	def apply(spark: SparkSession, config: Map[String, String]): BPSSandBoxJobContainer =
+		new BPSSandBoxJobContainer(spark, config)
 }
 
-class BPSSandBoxJobContainer(val spark: SparkSession) extends BPSJobContainer {
+class BPSSandBoxJobContainer( val spark: SparkSession, config: Map[String, String])
+	extends BPSJobContainer with BPDynamicStreamJob {
 	// TODO 整体SandBoxJob的初始化
-	val id = "1aed8-53d5-48f3-b7dd-780be0"
+	val id =  UUID.randomUUID().toString
 	type T = BPSKfkJobStrategy
-	val strategy: BPSKfkJobStrategy = null
-//	import spark.implicits._
-//	override def open(): Unit = {
-////		val reading = spark
-////			.read
-////			.parquet("/test/alex/test000/files/jobId=1aed8-53d5-48f3-b7dd-780be0")
-//		val reading = spark
-//			.read
-//			.text("/test/alex/test000/metadata/1aed8-53d5-48f3-b7dd-780be0")
-//
-//		inputStream = Some(reading)
-//	}
-//	override def exec(): Unit = inputStream match {
-//		case Some(_) => {
-//			// TODO：加入Kafka的任务中监控任务调度执行，下一步
-////			val listener = BPSBListener(spark, this)
-////			listener.active(is)
-////			listeners = listener :: listeners
-//
-//			val job = BPSandBoxJob(id, spark, this.inputStream, this)
-//			job.exec()
-//			jobs += id -> job
-//		}
-//		case None => ???
-//	}
+	val strategy = null
 	
 	override def open(): Unit = {
-		// TODO 初始化Kafka策略
+		println("初始化SandBoxJob")
 	}
 	
-	override def exec(): Unit = inputStream match {
-		case Some(_) =>
-		case None =>
+	override def exec(): Unit = {
+		println("执行SandBoxJob")
+		val listener = FileMetaListener(spark, this)
+		listener.active(null)
+		listeners = listener :: listeners
 	}
 	
-	override def getJobWithId(id: String, category: String = ""): BPStreamJob = {
-		jobs.get(id) match {
-			case Some(job) => job
-			case None =>
-				val job = BPSandBoxJob(id, spark, this.inputStream, this)
-				job.exec()
-				jobs += id -> job
-				job
-		}
-	}
+	override def registerListeners(listener: BPStreamListener): Unit = {}
+	
+	override def handlerExec(handler: BPSEventHandler): Unit = {}
 }

@@ -24,7 +24,7 @@ class AppConfigTest extends FunSuite {
             .define("port", Type.INT, Importance.HIGH, "docs")
 
         val props = new util.Properties()
-        props.load(new FileInputStream("/Users/jeorch/Documents/test/test.properties"))
+        props.load(new FileInputStream("/Users/jeorch/Documents/test/appConfig.properties"))
 
         val parsedProps = definition.parse(props)
         println(parsedProps.get("host"))
@@ -43,18 +43,5 @@ class AppConfigTest extends FunSuite {
         println("p=" + p)
         println("h=" + h)
 
-    }
-
-    test("test component build from config"){
-        import collection.JavaConverters._
-        val context = ComponentContext()
-        val jobs = AppConfig().getList(AppConfig.JOBS)
-        BPSDriverChannel()
-        BPSLocalChannel()
-        jobs.asScala.foreach(x => {
-            val job = context.getComponent[BPStreamJob](x)
-            job.open()
-            job.exec()
-        })
     }
 }
