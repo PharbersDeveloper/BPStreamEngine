@@ -3,8 +3,10 @@ package com.pharbers.StreamEngine.Jobs.OssPartitionJob.OssJobContainer
 import java.util.UUID
 
 import com.pharbers.StreamEngine.Jobs.OssPartitionJob.BPSOssPartitionJob
-import com.pharbers.StreamEngine.Utils.StreamJob.{BPSJobContainer, BPStreamJob}
+import com.pharbers.StreamEngine.Utils.StreamJob.{BPDynamicStreamJob, BPSJobContainer, BPStreamJob}
 import com.pharbers.StreamEngine.Jobs.OssPartitionJob.OssListener.BPSOssListener
+import com.pharbers.StreamEngine.Utils.Event.EventHandler.BPSEventHandler
+import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamListener
 import com.pharbers.StreamEngine.Utils.Config.KafkaConfig
 import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSKfkJobStrategy
 import org.apache.spark.sql.SparkSession
@@ -13,10 +15,11 @@ import org.apache.spark.sql.functions._
 import scala.collection.JavaConversions.mapAsScalaMap
 
 object BPSOssPartitionJobContainer {
-    def apply(strategy: BPSKfkJobStrategy, spark: SparkSession): BPSOssPartitionJobContainer = new BPSOssPartitionJobContainer(strategy, spark)
+    def apply(strategy: BPSKfkJobStrategy, spark: SparkSession): BPSOssPartitionJobContainer =
+        new BPSOssPartitionJobContainer(strategy, spark, Map.empty)
 }
 
-class BPSOssPartitionJobContainer(override val strategy: BPSKfkJobStrategy, val spark: SparkSession) extends BPSJobContainer {
+class BPSOssPartitionJobContainer(override val strategy: BPSKfkJobStrategy, val spark: SparkSession, config: Map[String, String]) extends BPSJobContainer with BPDynamicStreamJob{
 //    val id = UUID.randomUUID().toString
     val id = "test001"
     type T = BPSKfkJobStrategy
@@ -37,6 +40,7 @@ class BPSOssPartitionJobContainer(override val strategy: BPSKfkJobStrategy, val 
 //            .option("startingOffsets", "earliest")
             .option("startingOffsets", "latest")
             .option("subscribe", strategy.getTopic)
+            .option("failOnDataLoss", "false")
             .load()
 
         inputStream = Some(reading
@@ -82,4 +86,8 @@ class BPSOssPartitionJobContainer(override val strategy: BPSKfkJobStrategy, val 
             }
         }
     }
+
+    override def registerListeners(listener: BPStreamListener): Unit = {}
+
+    override def handlerExec(handler: BPSEventHandler): Unit = {}
 }

@@ -15,7 +15,7 @@ import collection.JavaConverters._
   * @since 2019/10/16 16:01
   * @note 一些值得注意的地方
   */
-class BaseComponentContext(var configs: List[ComponentConfig]) extends ComponentContext{
+private[Component] class BaseComponentContext(var configs: List[ComponentConfig]) extends ComponentContext{
     private var container = Map[String, AnyRef]()
     val componentAnnotations: Map[String, (String, Component)] = AppConfig().getList(AppConfig.COMPONENT_PACKAGES).asScala
             .flatMap(x => AnnotationSelector.getAnnotationClass(x, classOf[Component], true))
@@ -25,6 +25,8 @@ class BaseComponentContext(var configs: List[ComponentConfig]) extends Component
 
     override def buildComponent[T](config: ComponentConfig): T = {
         if(!configs.exists(x => x.id == config.id)) configs = config +: configs
+        //暂时不做组件替换
+        if(container.contains(config.id)) return getComponent(config.id)
         val args = config.args.map(x => {
             if(x.startsWith("$")){
                 getComponent[AnyRef](x.replace("$", ""))
@@ -39,8 +41,8 @@ class BaseComponentContext(var configs: List[ComponentConfig]) extends Component
         }
 //        val component = Class.forName(factory).getDeclaredMethod("apply", args.map(x => x.getClass): _*).invoke(null, args: _*)
         val classMirror = universe.runtimeMirror(getClass.getClassLoader)
-        val classTest = classMirror.staticModule(factory)
-        val methods = classMirror.reflectModule(classTest)
+        val factoryClass = classMirror.staticModule(factory)
+        val methods = classMirror.reflectModule(factoryClass)
         val objMirror = classMirror.reflect(methods.instance)
         val method = methods.symbol.typeSignature.member(universe.TermName("apply")).asTerm.alternatives
                 //todo: 根据type来确定方法，而不是参数数量
@@ -53,14 +55,18 @@ class BaseComponentContext(var configs: List[ComponentConfig]) extends Component
     override def getComponent[T <: AnyRef](id: String): T = {
         val component = container.getOrElse(id, createComponent(id, true))
         component match {
-            case t: T =>
-                t
-            case _ => ??? //todo: 错误日志，及异常
+            case t: T => t
+            //todo: 错误日志，及异常
+            case _ => ???
         }
     }
 
     override def createComponent[T](id: String, needAppend: Boolean = false): T = {
-        buildComponent(configs.find(x => x.id == id).getOrElse(throw new Exception(s"试图创建未配置的组件, $id")))
+        buildComponent(configs.find(x => x.id == id) match {
+            case Some(c) => c
+            //todo: 原始配置文件中组件配置不存在时，从上传的新配置文件中添加
+            case None => ???
+        })
     }
 
     override def buildComponent[T <: AnyRef](id: String, name: String, args: List[AnyRef], config: Map[String, String]): T = ???

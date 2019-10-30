@@ -7,10 +7,7 @@ import com.pharbers.StreamEngine.Jobs.StreamReaderJob.StreamReaderJobContainer.B
 import com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxJobContainer.BPSSandBoxJobContainer
 import com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxSampleDataContainer.BPSSandBoxSampleDataJobContainer
 import com.pharbers.StreamEngine.Utils.Component.ComponentContext
-import com.pharbers.StreamEngine.Utils.Config.AppConfig
-import com.pharbers.StreamEngine.Utils.Session.Kafka.BPKafkaSession
-import com.pharbers.StreamEngine.Utils.Session.Spark.BPSparkSession
-import com.pharbers.StreamEngine.Utils.StreamJob.BPStreamJob
+import com.pharbers.StreamEngine.Utils.ThreadExecutor.ThreadExecutor
 
 object main extends App {
 
@@ -63,4 +60,6 @@ object a_test extends App {
     job.exec()
 
     BPSDriverChannel.waitForDriverDead()
+    val context = ComponentContext()
+    ThreadExecutor.waitForShutdown()
 }
