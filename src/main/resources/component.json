@@ -6,7 +6,7 @@
     "config": {
       "app.name": "bp-stream-engine",
       "master": "yarn",
-      "spark.configs.path": "src/main/resource/sparkConfig.properties"
+      "spark.configs.path": "src/main/resources/sparkConfig.properties"
     }
   },
   {

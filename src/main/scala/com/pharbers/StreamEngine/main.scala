@@ -10,11 +10,14 @@ import com.pharbers.StreamEngine.Utils.Component.ComponentContext
 import com.pharbers.StreamEngine.Utils.ThreadExecutor.ThreadExecutor
 
 object main extends App {
+    
+    val context = ComponentContext()
+    ThreadExecutor.waitForShutdown()
 
-    val spark = BPSparkSession()
-
-    BPSDriverChannel()
-    BPSLocalChannel()
+//    val spark = BPSparkSession()
+//
+//    BPSDriverChannel()
+//    BPSLocalChannel()
 
 //    val job =
 //        BPSOssPartitionJobContainer(
@@ -27,39 +30,9 @@ object main extends App {
 //    job.exec()
 
 // TODO 整体SandBox初始化
-    val SandBoxJob = BPSSandBoxJobContainer(spark)
-    SandBoxJob.exec()
-
-    
-    BPSDriverChannel.waitForDriverDead()
-}
-
-//object test extends App {
+//    val SandBoxJob = BPSSandBoxJobContainer(spark)
+//    SandBoxJob.exec()
 //
-//    import collection.JavaConverters._
 //
-//    val context = ComponentContext()
-//    val jobs = AppConfig().getList(AppConfig.JOBS)
-//    BPSDriverChannel()
-//    BPSLocalChannel()
-//    jobs.asScala.foreach(x => {
-//        val job = context.getComponent[BPStreamJob](x)
-//        job.open()
-//        job.exec()
-//    })
-//}
-
-object a_test extends App {
-    val spark = BPSparkSession()
-
-    BPSDriverChannel()
-    BPSLocalChannel()
-
-    val job = BPStreamReaderJobContainer(spark)
-    job.open()
-    job.exec()
-
-    BPSDriverChannel.waitForDriverDead()
-    val context = ComponentContext()
-    ThreadExecutor.waitForShutdown()
+//    BPSDriverChannel.waitForDriverDead()
 }
