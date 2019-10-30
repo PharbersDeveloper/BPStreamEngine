@@ -7,7 +7,7 @@ import java.nio.charset.StandardCharsets
 
 import org.apache.hadoop.conf.Configuration
 
-object BPSOssPartitionMeta {
+object BPSOssPartitionMeta extends Serializable {
 
     def pushLineToHDFS(runId: String, jobId: String, line: String): Unit = {
         val configuration: Configuration = new Configuration

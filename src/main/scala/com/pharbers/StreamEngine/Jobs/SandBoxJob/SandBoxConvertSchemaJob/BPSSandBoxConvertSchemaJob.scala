@@ -1,5 +1,6 @@
 package com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxConvertSchemaJob
 
+import java.beans.Transient
 import java.util.UUID
 import java.util.concurrent.TimeUnit
 
@@ -24,6 +25,7 @@ object BPSSandBoxConvertSchemaJob {
 		new BPSSandBoxConvertSchemaJob(id, metaPath, samplePath, jobId, spark)
 }
 
+//@Transient
 class BPSSandBoxConvertSchemaJob(val id: String,
                                  metaPath: String,
                                  samplePath: String,
@@ -58,9 +60,9 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 			spark.readStream
 				.schema(StructType(
 					StructField("traceId", StringType) ::
-						StructField("type", StringType) ::
-						StructField("data", StringType) ::
-						StructField("timestamp", TimestampType) :: Nil
+					StructField("type", StringType) ::
+					StructField("data", StringType) ::
+					StructField("timestamp", TimestampType) :: Nil
 				))
 				.parquet(s"$samplePath$jobId")
     			.filter($"type" === "SandBox")

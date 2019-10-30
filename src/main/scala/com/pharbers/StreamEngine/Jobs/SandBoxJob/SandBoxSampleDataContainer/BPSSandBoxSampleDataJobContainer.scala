@@ -18,21 +18,19 @@ object BPSSandBoxSampleDataJobContainer {
 class BPSSandBoxSampleDataJobContainer(path: String,
                                        jobId: String,
                                        override val spark: SparkSession) extends BPSJobContainer {
-	val id = UUID.randomUUID().toString
+	val id = ""//UUID.randomUUID().toString
 	type T = BPSKfkJobStrategy
 	val strategy = null
 	
 	override def open(): Unit = {
-		val loadSchema =
-			StructType(
-					StructField("traceId", StringType) ::
-					StructField("type", StringType) ::
-					StructField("data", StringType) ::
-					StructField("timestamp", TimestampType) :: Nil
-			)
 
 		this.inputStream = Some(spark.readStream
-			.schema(loadSchema)
+			.schema(StructType(
+				StructField("traceId", StringType) ::
+				StructField("type", StringType) ::
+				StructField("data", StringType) ::
+				StructField("timestamp", TimestampType) :: Nil
+			))
 			.parquet(s"$path$jobId"))
 	}
 	
