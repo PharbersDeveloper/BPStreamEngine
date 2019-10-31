@@ -13,7 +13,7 @@ import com.pharbers.StreamEngine.Utils.StreamJob.BPStreamJob
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
 case class FileMetaListener(spark: SparkSession, job: BPStreamJob) extends BPStreamRemoteListener {
-	val pkc = new PharbersKafkaConsumer[String, FileMetaData]("sb_file_meta_job_test_1" :: Nil, 1000, Int.MaxValue, process)
+	val pkc = new PharbersKafkaConsumer[String, FileMetaData]("sb_file_meta_job_test" :: Nil, 1000, Int.MaxValue, process)
 
 	def process(record: ConsumerRecord[String, FileMetaData]): Unit = {
 		BPSSandBoxMetaDataJob(record.value().getMetaDataPath.toString,

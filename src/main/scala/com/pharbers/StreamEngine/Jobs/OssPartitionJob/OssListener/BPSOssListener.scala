@@ -43,10 +43,8 @@ case class BPSOssListener(spark: SparkSession, job: BPStreamJob) extends BPStrea
             case "SandBox-Length" => {
                 BPSOssPartitionMeta.pushLineToHDFS(jid.id, event2JobId(e), e.data)
                 post(s"""{"traceId": "${e.traceId}","jobId": "${e.jobId}"}""", "application/json")
-//                pollKafka(new FileMetaData(jid.id, e.jobId, "/workData/streamingV2/" + jid.id + "/metadata/" + "",
-//                    "/workData/streamingV2/" + jid.id + "/files/" + "jobId=" + "", ""))
-                pollKafka(new FileMetaData(jid.id, e.jobId, "/test/alex/" + jid.id + "/metadata/" + "",
-                    "/test/alex/" + jid.id + "/files/" + "jobId=" + "", ""))
+                pollKafka(new FileMetaData(jid.id, e.jobId, "/workData/streamingV2/" + jid.id + "/metadata/" + "",
+                    "/workData/streamingV2/" + jid.id + "/files/" + "jobId=" + "", ""))
             }
         }
     }
@@ -107,7 +105,7 @@ case class BPSOssListener(spark: SparkSession, job: BPStreamJob) extends BPStrea
 
     def pollKafka(msg: FileMetaData): Unit ={
         //todo: 参数化
-        val topic = "sb_file_meta_job_test_1"
+        val topic = "sb_file_meta_job_test"
         val pkp = new PharbersKafkaProducer[String, FileMetaData]
         val fu = pkp.produce(topic, msg.getJobId.toString, msg)
         println(fu.get(10, TimeUnit.SECONDS))

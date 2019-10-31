@@ -63,10 +63,8 @@ class BPSOssPartitionJobContainer(override val strategy: BPSKfkJobStrategy, val 
                 .partitionBy("jobId")
                 .format("parquet")
                 .outputMode("append")
-//                .option("checkpointLocation", "/workData/streamingV2/" +  this.id + "/checkpoint")
-//                .option("path", "/workData/streamingV2/" + this.id + "/files")
-                .option("checkpointLocation", "/test/alex/" +  this.id + "/checkpoint")
-                .option("path", "/test/alex/" + this.id + "/files")
+                .option("checkpointLocation", "/workData/streamingV2/" +  this.id + "/checkpoint")
+                .option("path", "/workData/streamingV2/" + this.id + "/files")
                 .start()
         }
         case None => ???

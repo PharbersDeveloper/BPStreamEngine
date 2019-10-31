@@ -7,7 +7,7 @@ import java.nio.charset.StandardCharsets
 
 import org.apache.hadoop.conf.Configuration
 
-object BPSOssPartitionMeta extends Serializable {
+object BPSOssPartitionMeta {
 
     def pushLineToHDFS(runId: String, jobId: String, line: String): Unit = {
         val configuration: Configuration = new Configuration
@@ -15,8 +15,7 @@ object BPSOssPartitionMeta extends Serializable {
         val fileSystem: FileSystem = FileSystem.get(configuration)
         //Create a path
         val fileName: String = "_metadata"
-//        val hdfsWritePath: Path = new Path("/workData/streamingV2/" + runId + "/metadata/" + jobId + "")
-        val hdfsWritePath: Path = new Path("/test/alex/" + runId + "/metadata/" + jobId + "")
+        val hdfsWritePath: Path = new Path("/workData/streamingV2/" + runId + "/metadata/" + jobId + "")
         val fsDataOutputStream: FSDataOutputStream =
             if (fileSystem.exists(hdfsWritePath))
                 fileSystem.append(hdfsWritePath)

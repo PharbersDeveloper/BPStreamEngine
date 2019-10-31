@@ -1,15 +1,16 @@
 package com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxConvertSchemaJob
 
-import java.beans.Transient
+import java.io.{BufferedWriter, OutputStreamWriter}
+import java.nio.charset.StandardCharsets
 import java.util.UUID
 import java.util.concurrent.TimeUnit
 
-import com.pharbers.StreamEngine.Jobs.OssJob.OssListenerV2.OssEventsHandler.BPSchemaParseElement
-import com.pharbers.StreamEngine.Jobs.OssPartitionJob.OssPartitionMeta.BPSOssPartitionMeta
 import com.pharbers.StreamEngine.Utils.StreamJob.BPSJobContainer
 import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSKfkJobStrategy
 import com.pharbers.kafka.producer.PharbersKafkaProducer
 import com.pharbers.kafka.schema.FileMetaData
+import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.fs.{FSDataOutputStream, FileSystem, Path}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.types.{BinaryType, BooleanType, DoubleType, FloatType, IntegerType, LongType, StringType, StructField, StructType, TimestampType}
@@ -25,13 +26,11 @@ object BPSSandBoxConvertSchemaJob {
 		new BPSSandBoxConvertSchemaJob(id, metaPath, samplePath, jobId, spark)
 }
 
-//@Transient
 class BPSSandBoxConvertSchemaJob(val id: String,
                                  metaPath: String,
                                  samplePath: String,
                                  jobId: String,
-                                 val spark: SparkSession)
-	extends BPSJobContainer  {
+                                 val spark: SparkSession) extends BPSJobContainer {
 	
 	type T = BPSKfkJobStrategy
 	val strategy = null
@@ -39,19 +38,25 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 	
 	override def open(): Unit = {
 		// TODO 要形成过滤规则参数化
-		val metaDataStream = spark.sparkContext.textFile(s"$metaPath/$jobId").toDF("MetaData")
+		val metaDataStream = spark.sparkContext
+			.textFile(s"$metaPath/$jobId")
+			.toDF("MetaData")
+			.withColumn("MetaData", regexp_replace($"MetaData" , """\\"""", ""))
+			.withColumn("MetaData", regexp_replace($"MetaData" , " ", "_"))
+//			.withColumn("MetaData", regexp_replace($"MetaData" , ",", ""))
+//			.withColumn("MetaData", regexp_replace($"MetaData" , ";", ""))
+//			.withColumn("MetaData", regexp_replace($"MetaData" , "{", ""))
+//			.withColumn("MetaData", regexp_replace($"MetaData" , "}", ""))
+//			.withColumn("MetaData", regexp_replace($"MetaData" , "(", ""))
+//			.withColumn("MetaData", regexp_replace($"MetaData" , ")", ""))
+//			.withColumn("MetaData", regexp_replace($"MetaData" , "=", ""))
 		
 		val repMetaDataStream = metaDataStream.head()
 			.getAs[String]("MetaData")
-			.replaceAll("""\\"""", "")
-			.replaceAll(" ", "_")
 		
-		metaDataStream.foreach{x =>
+		metaDataStream.collect().foreach{x =>
 			val line = x.getAs[String]("MetaData")
-				.replaceAll("""\\"""", "")
-				.replaceAll(" ", "_")
-			
-			BPSOssPartitionMeta.pushLineToHDFS(id, jobId, line)
+			pushLineToHDFS(id, jobId, line)
 		}
 		
 		val schema = event2SqlType(repMetaDataStream)
@@ -68,6 +73,13 @@ class BPSSandBoxConvertSchemaJob(val id: String,
     			.filter($"type" === "SandBox")
 				.withColumn("data", regexp_replace($"data" , """\\"""", ""))
 				.withColumn("data", regexp_replace($"data" , " ", "_"))
+//				.withColumn("data", regexp_replace($"data" , ",", ""))
+//				.withColumn("data", regexp_replace($"data" , ";", ""))
+//				.withColumn("data", regexp_replace($"data" , "{", ""))
+//				.withColumn("data", regexp_replace($"data" , "}", ""))
+//				.withColumn("data", regexp_replace($"data" , "(", ""))
+//				.withColumn("data", regexp_replace($"data" , ")", ""))
+//				.withColumn("data", regexp_replace($"data" , "=", ""))
 				.select(
 					col("traceId"),
 					from_json($"data", schema).as("data"),
@@ -92,6 +104,24 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 				
 			case None =>
 		}
+	}
+	
+	def pushLineToHDFS(runId: String, jobId: String, line: String): Unit = {
+		val configuration: Configuration = new Configuration
+		configuration.set("fs.defaultFS", "hdfs://192.168.100.137:9000")
+		val fileSystem: FileSystem = FileSystem.get(configuration)
+		//Create a path
+		val hdfsWritePath: Path = new Path("/test/alex/" + runId + "/metadata/" + jobId + "")
+		val fsDataOutputStream: FSDataOutputStream =
+			if (fileSystem.exists(hdfsWritePath))
+				fileSystem.append(hdfsWritePath)
+			else
+				fileSystem.create(hdfsWritePath)
+		
+		val bufferedWriter: BufferedWriter = new BufferedWriter(new OutputStreamWriter(fsDataOutputStream, StandardCharsets.UTF_8))
+		bufferedWriter.write(line)
+		bufferedWriter.newLine()
+		bufferedWriter.close()
 	}
 	
 	def event2SqlType(data: String): org.apache.spark.sql.types.DataType = {
