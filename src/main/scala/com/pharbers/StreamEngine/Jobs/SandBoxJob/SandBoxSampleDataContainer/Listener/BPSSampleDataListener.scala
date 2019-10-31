@@ -5,19 +5,26 @@ import com.pharbers.StreamEngine.Utils.Channel.Local.BPSLocalChannel
 import com.pharbers.StreamEngine.Utils.Event.BPSEvents
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamRemoteListener
 import com.pharbers.StreamEngine.Utils.StreamJob.BPStreamJob
+import org.apache.spark.sql.streaming.StreamingQuery
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
-case class BPSSampleDataListener(spark: SparkSession, job: BPStreamJob, qv: String, jobId: String)
+case class BPSSampleDataListener(spark: SparkSession, job: BPStreamJob, jobId: String, qv: String)
 	extends BPStreamRemoteListener {
 	
 	override def trigger(e: BPSEvents): Unit = {
-		val tmp = spark.sql(s"select * from $qv")
+		// TODO 搞不懂还不会
+//		if (sq.lastProgress != null) {
+//			println("====>" + sq.lastProgress.numInputRows)
+//		}
+
+		val tmp = spark.sql(s"select * from $qv limit 5")
     		.selectExpr("data")
 			.collect().map(x => x.toString().replaceAll("""\\"""", ""))
-			.toList.take(5)
+			.toList
 		if (tmp.nonEmpty) {
 			BPFileMeta2Mongo(jobId, tmp, "", 0).SampleData()
 			spark.catalog.dropTempView(qv)
+			job.close()
 		}
 	}
 	

@@ -6,6 +6,7 @@ import com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxSampleDataContainer.List
 import com.pharbers.StreamEngine.Utils.StreamJob.BPSJobContainer
 import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSKfkJobStrategy
 import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.streaming.StreamingQuery
 import org.apache.spark.sql.types.{StringType, StructField, StructType, TimestampType}
 
 object BPSSandBoxSampleDataJobContainer {
@@ -45,11 +46,16 @@ class BPSSandBoxSampleDataJobContainer(path: String,
 				.option("checkpointLocation", "/test/streaming/" +  UUID.randomUUID().toString + "/checkpoint")
 				.start() :: outputStream
 			
-			val listener = BPSSampleDataListener(spark, this, qv, jobId)
-			listener.trigger(null)
+			val listener = BPSSampleDataListener(spark, this, jobId, qv)
+			listener.active(null)
 			listeners = listener :: listeners
 
 			
 		case None => ???
+	}
+	
+	override def close(): Unit = {
+		outputStream.foreach(x => x.stop())
+		listeners.foreach(x => x.deActive())
 	}
 }
