@@ -103,7 +103,7 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 					.outputMode("append")
 					.format("parquet")
 //					.format("console")
-					.option("checkpointLocation", "/test/alex/" + id + "/checkpoint")
+					.option("checkpointLocation", "/test/alex/BPSSandBoxConvertSchemaJob/" + UUID.randomUUID().toString + "/checkpoint")
 					.option("path", "/test/alex/" + id + "/files")
 					.start()
 				

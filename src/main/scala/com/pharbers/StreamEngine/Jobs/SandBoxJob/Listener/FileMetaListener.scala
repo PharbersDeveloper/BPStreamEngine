@@ -19,10 +19,10 @@ case class FileMetaListener(spark: SparkSession, job: BPStreamJob) extends BPStr
 		BPSSandBoxMetaDataJob(record.value().getMetaDataPath.toString,
 			record.value().getJobId.toString, spark).exec()
 
-		val sdJob = BPSSandBoxSampleDataJobContainer(record.value().getSampleDataPath.toString,
-			record.value().getJobId.toString, spark)
-		sdJob.open()
-		sdJob.exec()
+//		val sdJob = BPSSandBoxSampleDataJobContainer(record.value().getSampleDataPath.toString,
+//			record.value().getJobId.toString, spark)
+//		sdJob.open()
+//		sdJob.exec()
 		
 		val job = BPSSandBoxConvertSchemaJob(
 			record.value().getRunId.toString,
