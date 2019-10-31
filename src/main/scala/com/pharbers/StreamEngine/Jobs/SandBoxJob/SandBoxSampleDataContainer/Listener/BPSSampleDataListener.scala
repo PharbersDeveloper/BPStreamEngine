@@ -18,7 +18,6 @@ case class BPSSampleDataListener(spark: SparkSession, job: BPStreamJob, qv: Stri
 		if (tmp.nonEmpty) {
 			BPFileMeta2Mongo(jobId, tmp, "", 0).SampleData()
 			spark.catalog.dropTempView(qv)
-//			job.close()
 		}
 	}
 	

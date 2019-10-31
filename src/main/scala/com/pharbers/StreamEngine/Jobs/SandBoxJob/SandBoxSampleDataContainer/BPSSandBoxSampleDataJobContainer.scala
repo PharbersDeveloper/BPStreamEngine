@@ -45,7 +45,7 @@ class BPSSandBoxSampleDataJobContainer(path: String,
 				.start() :: outputStream
 			
 			val listener = BPSSampleDataListener(spark, this, qv, jobId)
-			listener.active(is)
+			listener.trigger(null)
 			listeners = listener :: listeners
 
 			

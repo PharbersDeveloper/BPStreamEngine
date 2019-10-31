@@ -38,7 +38,7 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 	
 	override def open(): Unit = {
 		// TODO 要形成过滤规则参数化
-		val metaDataStream = spark.sparkContext
+		val metaData = spark.sparkContext
 			.textFile(s"$metaPath/$jobId")
 			.toDF("MetaData")
 			.withColumn("MetaData", regexp_replace($"MetaData" , """\\"""", ""))
@@ -51,16 +51,21 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 //			.withColumn("MetaData", regexp_replace($"MetaData" , ")", ""))
 //			.withColumn("MetaData", regexp_replace($"MetaData" , "=", ""))
 		
+		val jobIdRow = metaData
+			.withColumn("MetaData", lit(s"""{"jobId":"$jobId"}"""))
+		
+		val traceIdRow = jobIdRow
+			.withColumn("MetaData", lit(s"""{"traceId":"${jobId.substring(0, jobId.length-1)}"}"""))
+		val metaDataStream = metaData.union(jobIdRow).union(traceIdRow).distinct()
+		
 		val repMetaDataStream = metaDataStream.head()
 			.getAs[String]("MetaData")
-		
 		metaDataStream.collect().foreach{x =>
 			val line = x.getAs[String]("MetaData")
 			pushLineToHDFS(id, jobId, line)
 		}
 		
 		val schema = event2SqlType(repMetaDataStream)
-
 		inputStream = Some(
 			spark.readStream
 				.schema(StructType(
@@ -80,8 +85,10 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 //				.withColumn("data", regexp_replace($"data" , "(", ""))
 //				.withColumn("data", regexp_replace($"data" , ")", ""))
 //				.withColumn("data", regexp_replace($"data" , "=", ""))
+				.withColumn("jobId", lit(jobId))
 				.select(
 					col("traceId"),
+					col("jobId"),
 					from_json($"data", schema).as("data"),
 					col("timestamp").as("unixTimestamp")
 				)
@@ -92,6 +99,7 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 		inputStream match {
 			case Some(is) =>
 				is.writeStream
+    				.partitionBy("jobId")
 					.outputMode("append")
 					.format("parquet")
 //					.format("console")
@@ -125,8 +133,6 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 	}
 	
 	def event2SqlType(data: String): org.apache.spark.sql.types.DataType = {
-		// TODO: 以后全变为AVRO的Schema形式
-		//                SchemaConverters.toSqlType(new Schema.Parser().parse(e.data)).dataType
 		implicit val formats = DefaultFormats
 		val lst = read[List[BPSchemaParseElement]](data)
 		StructType(
