@@ -461,7 +461,9 @@ public class FileMetaData extends org.apache.avro.specific.SpecificRecordBase im
   private static final org.apache.avro.io.DatumWriter
     WRITER$ = new org.apache.avro.specific.SpecificDatumWriter(SCHEMA$);
 
+
   private static final org.apache.avro.io.DatumReader
     READER$ = new org.apache.avro.specific.SpecificDatumReader(SCHEMA$);
+
 
 }
