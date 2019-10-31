@@ -58,7 +58,7 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 			.withColumn("MetaData", lit(s"""{"traceId":"${jobId.substring(0, jobId.length-1)}"}"""))
 		val metaDataStream = metaData.union(jobIdRow).union(traceIdRow).distinct()
 		
-		val repMetaDataStream = metaDataStream.head()
+		val repMetaDataStream = metaData.head()
 			.getAs[String]("MetaData")
 		metaDataStream.collect().foreach{x =>
 			val line = x.getAs[String]("MetaData")
