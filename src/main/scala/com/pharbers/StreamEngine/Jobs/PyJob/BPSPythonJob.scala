@@ -73,9 +73,11 @@ class BPSPythonJob(val id: String,
                                 val oldStr = value.getAs[String]("data")
                                 val newStr = oldStr.replace("\\\"", "")
 
-                                val argv = Array[String]("/usr/bin/python", "./hello_world.py", newStr)
+                                val argv = Array[String]("/usr/bin/python", "./main.py", newStr)
                                 val pr = Runtime.getRuntime.exec(argv)
                                 val in = new BufferedReader(new InputStreamReader(pr.getInputStream))
+
+
 
                                 bufferedWriter.write(in.readLine())
                                 bufferedWriter.write("\n")
@@ -87,7 +89,7 @@ class BPSPythonJob(val id: String,
                             }
 
 //                            override def process(value: Row): Unit = {
-//                                val argv = Array[String]("/usr/bin/python", "./hello_world.py") //, )
+//                                val argv = Array[String]("/usr/bin/python", "./clean.py") //, )
 //                                val pr = Runtime.getRuntime.exec(argv)
 //                                val in = new BufferedReader(new InputStreamReader(pr.getInputStream))
 //

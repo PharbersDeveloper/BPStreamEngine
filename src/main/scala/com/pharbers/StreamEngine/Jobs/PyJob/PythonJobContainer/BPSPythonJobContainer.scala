@@ -39,7 +39,11 @@ class BPSPythonJobContainer(override val strategy: BPSKfkJobStrategy,
     override def exec(): Unit = inputStream match {
         case Some(_) =>
             val job = BPSPythonJob(id, spark, inputStream, this)
-            spark.sparkContext.addFile("./hello_world.py")
+            spark.sparkContext.addFile("./pyClean/main.py")
+            spark.sparkContext.addFile("./pyClean/results.py")
+            spark.sparkContext.addFile("./pyClean/auth.py")
+            spark.sparkContext.addFile("./pyClean/mapping.py")
+            spark.sparkContext.addFile("./pyClean/cleaning.py")
             job.open()
             job.exec()
         case None => ???
