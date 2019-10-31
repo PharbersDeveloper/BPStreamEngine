@@ -43,7 +43,7 @@ case class BPSOssListener(spark: SparkSession, job: BPStreamJob) extends BPStrea
             case "SandBox-Length" => {
                 BPSOssPartitionMeta.pushLineToHDFS(jid.id, event2JobId(e), e.data)
                 post(s"""{"traceId": "${e.traceId}","jobId": "${e.jobId}"}""", "application/json")
-                pollKafka(new FileMetaData(e.jobId, "/workData/streamingV2/" + jid.id + "/metadata/" + "",
+                pollKafka(new FileMetaData(jid.id, e.jobId, "/workData/streamingV2/" + jid.id + "/metadata/" + "",
                     "/workData/streamingV2/" + jid.id + "/files/" + "jobId=" + ""))
             }
         }
