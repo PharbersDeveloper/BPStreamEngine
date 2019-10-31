@@ -42,6 +42,7 @@ class BPSSandBoxSampleDataJobContainer(path: String,
 				.queryName(qv)
 				.outputMode("update")
 				.format("memory")
+				.option("checkpointLocation", "/test/streaming/" +  UUID.randomUUID().toString + "/checkpoint")
 				.start() :: outputStream
 			
 			val listener = BPSSampleDataListener(spark, this, qv, jobId)
