@@ -1,5 +1,6 @@
 package com.pharbers.StreamEngine.Jobs.SandBoxJob.Listener
 
+import com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxConvertSchemaJob.BPSSandBoxConvertSchemaJob
 import com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxMetaDataJob.BPSSandBoxMetaDataJob
 import com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxSampleDataContainer.BPSSandBoxSampleDataJobContainer
 import com.pharbers.kafka.consumer.PharbersKafkaConsumer
@@ -16,12 +17,24 @@ case class FileMetaListener(spark: SparkSession, job: BPStreamJob) extends BPStr
 
 	def process(record: ConsumerRecord[String, FileMetaData]): Unit = {
 		BPSSandBoxMetaDataJob(record.value().getMetaDataPath.toString,
-			                  record.value().getJobId.toString, spark).exec()
-		
+			record.value().getJobId.toString, spark).exec()
+
 		val sdJob = BPSSandBoxSampleDataJobContainer(record.value().getSampleDataPath.toString,
-			                                         record.value().getJobId.toString, spark)
+			record.value().getJobId.toString, spark)
 		sdJob.open()
 		sdJob.exec()
+		
+		val job = BPSSandBoxConvertSchemaJob(
+			record.value().getRunId.toString,
+			record.value().getMetaDataPath.toString,
+			record.value().getSampleDataPath.toString,
+			record.value().getJobId.toString, spark)
+		job.open()
+		job.exec()
+		
+//		if (record.value().getConvertType.toString == "convert_schema") {
+//
+//		}
 		
 	}
 	override def trigger(e: BPSEvents): Unit = {}

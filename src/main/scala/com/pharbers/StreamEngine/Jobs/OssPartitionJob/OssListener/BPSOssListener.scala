@@ -44,7 +44,7 @@ case class BPSOssListener(spark: SparkSession, job: BPStreamJob) extends BPStrea
                 BPSOssPartitionMeta.pushLineToHDFS(jid.id, event2JobId(e), e.data)
                 post(s"""{"traceId": "${e.traceId}","jobId": "${e.jobId}"}""", "application/json")
                 pollKafka(new FileMetaData(jid.id, e.jobId, "/workData/streamingV2/" + jid.id + "/metadata/" + "",
-                    "/workData/streamingV2/" + jid.id + "/files/" + "jobId=" + ""))
+                    "/workData/streamingV2/" + jid.id + "/files/" + "jobId=" + "", ""))
             }
         }
     }
@@ -82,7 +82,7 @@ case class BPSOssListener(spark: SparkSession, job: BPStreamJob) extends BPStrea
                         def close(errorOrNull: scala.Throwable): Unit = {}//channel.get.close()
                     }
                 )
-                .option("checkpointLocation", "/test/alex/" + UUID.randomUUID().toString + "/checkpoint")
+                .option("checkpointLocation", "/test/streamingV2/" + UUID.randomUUID().toString + "/checkpoint")
                 .start() :: job.outputStream
     }
 

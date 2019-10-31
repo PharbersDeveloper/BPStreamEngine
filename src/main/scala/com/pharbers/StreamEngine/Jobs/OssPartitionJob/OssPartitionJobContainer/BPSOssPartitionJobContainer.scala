@@ -36,6 +36,7 @@ class BPSOssPartitionJobContainer(override val strategy: BPSKfkJobStrategy, val 
             .option("kafka.ssl.truststore.password", "pharbers")
             .option("kafka.ssl.endpoint.identification.algorithm", " ")
             .option("startingOffsets", "earliest")
+//            .option("startingOffsets", "latest")
             .option("subscribe", strategy.getTopic)
             .option("failOnDataLoss", "false")
             .load()
