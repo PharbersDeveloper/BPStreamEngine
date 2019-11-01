@@ -46,13 +46,6 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 			.toDF("MetaData")
 			.withColumn("MetaData", regexp_replace($"MetaData" , """\\"""", ""))
 			.withColumn("MetaData", regexp_replace($"MetaData" , " ", "_"))
-//			.withColumn("MetaData", regexp_replace($"MetaData" , ",", ""))
-//			.withColumn("MetaData", regexp_replace($"MetaData" , ";", ""))
-//			.withColumn("MetaData", regexp_replace($"MetaData" , "{", ""))
-//			.withColumn("MetaData", regexp_replace($"MetaData" , "}", ""))
-//			.withColumn("MetaData", regexp_replace($"MetaData" , "(", ""))
-//			.withColumn("MetaData", regexp_replace($"MetaData" , ")", ""))
-//			.withColumn("MetaData", regexp_replace($"MetaData" , "=", ""))
 		
 		val jobIdRow = metaData
 			.withColumn("MetaData", lit(s"""{"jobId":"$jobId"}"""))
@@ -87,20 +80,10 @@ class BPSSandBoxConvertSchemaJob(val id: String,
     			.filter($"type" === "SandBox")
 				.withColumn("data", regexp_replace($"data" , """\\"""", ""))
 				.withColumn("data", regexp_replace($"data" , " ", "_"))
-//				.withColumn("data", regexp_replace($"data" , ",", ""))
-//				.withColumn("data", regexp_replace($"data" , ";", ""))
-//				.withColumn("data", regexp_replace($"data" , "{", ""))
-//				.withColumn("data", regexp_replace($"data" , "}", ""))
-//				.withColumn("data", regexp_replace($"data" , "(", ""))
-//				.withColumn("data", regexp_replace($"data" , ")", ""))
-//				.withColumn("data", regexp_replace($"data" , "=", ""))
 				.withColumn("jobId", lit(jobId))
 				.select(
-					col("traceId"),
-					col("jobId"),
-					from_json($"data", schema).as("data"),
-					col("timestamp").as("unixTimestamp")
-				)
+					from_json($"data", schema).as("data")
+				).select("data.*")
 		)
 	}
 	
@@ -108,7 +91,7 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 		inputStream match {
 			case Some(is) =>
 				val query = is.writeStream
-    				.partitionBy("jobId")
+//    				.partitionBy("jobId")
 					.outputMode("append")
 					.format("parquet")
 //					.format("console")
