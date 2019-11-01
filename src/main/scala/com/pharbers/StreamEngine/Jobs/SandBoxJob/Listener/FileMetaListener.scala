@@ -31,6 +31,7 @@ case class FileMetaListener(spark: SparkSession, job: BPStreamJob) extends BPStr
 			record.value().getJobId.toString, spark)
 		job.open()
 		job.exec()
+		println("------->" + record.value().getJobId)
 		
 //		if (record.value().getConvertType.toString == "convert_schema") {
 //

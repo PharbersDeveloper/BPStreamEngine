@@ -5,6 +5,7 @@ import java.nio.charset.StandardCharsets
 import java.util.UUID
 import java.util.concurrent.TimeUnit
 
+import com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxConvertSchemaJob.Listener.BPSConvertSchemaJob
 import com.pharbers.StreamEngine.Utils.StreamJob.BPSJobContainer
 import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSKfkJobStrategy
 import com.pharbers.kafka.producer.PharbersKafkaProducer
@@ -36,6 +37,8 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 	val strategy = null
 	import spark.implicits._
 	
+	var totalRow: Long = 0
+	
 	override def open(): Unit = {
 		// TODO 要形成过滤规则参数化
 		val metaData = spark.sparkContext
@@ -56,12 +59,18 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 		
 		val traceIdRow = jobIdRow
 			.withColumn("MetaData", lit(s"""{"traceId":"${jobId.substring(0, jobId.length-1)}"}"""))
+		
 		val metaDataStream = metaData.union(jobIdRow).union(traceIdRow).distinct()
 		
 		val repMetaDataStream = metaData.head()
 			.getAs[String]("MetaData")
+		
 		metaDataStream.collect().foreach{x =>
 			val line = x.getAs[String]("MetaData")
+			if (line.contains("""{"length":""")) {
+				totalRow = line.substring(line.indexOf(":") + 1)
+					.replaceAll("_", "").replace("}", "").toLong
+			}
 			pushLineToHDFS(id, jobId, line)
 		}
 		
@@ -98,20 +107,27 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 	override def exec(): Unit = {
 		inputStream match {
 			case Some(is) =>
-				is.writeStream
+				val query = is.writeStream
     				.partitionBy("jobId")
 					.outputMode("append")
 					.format("parquet")
 //					.format("console")
-					.option("checkpointLocation", "/test/alex/BPSSandBoxConvertSchemaJob/" + UUID.randomUUID().toString + "/checkpoint")
+					.option("checkpointLocation", "/test/alex/" + id + "/checkpoint")
 					.option("path", "/test/alex/" + id + "/files")
 					.start()
+				outputStream = query :: outputStream
 				
-//				pollKafka(new FileMetaData(id, jobId, "/test/alex/" + id + "/metadata/" + "",
-//					"/test/alex/" + id + "/files/" + "jobId=" + "", ""))
+				val listener = BPSConvertSchemaJob(id, jobId, spark, this, query, totalRow)
+				listener.active(null)
+				listeners = listener :: listeners
 				
 			case None =>
 		}
+	}
+	
+	override def close(): Unit = {
+		outputStream.foreach(_.stop())
+		listeners.foreach(_.deActive())
 	}
 	
 	def pushLineToHDFS(runId: String, jobId: String, line: String): Unit = {
@@ -151,13 +167,6 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 		
 	}
 	
-	def pollKafka(msg: FileMetaData): Unit ={
-		//todo: 参数化
-		val topic = "sb_file_meta_job_test"
-		val pkp = new PharbersKafkaProducer[String, FileMetaData]
-		val fu = pkp.produce(topic, msg.getJobId.toString, msg)
-		println(fu.get(10, TimeUnit.SECONDS))
-	}
 }
 
 case class BPSchemaParseElement(key: String, `type`: String)
