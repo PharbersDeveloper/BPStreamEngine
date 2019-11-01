@@ -89,7 +89,7 @@ class BPSDriverChannel(config: Map[String, String]) extends Runnable {
                 } else if (item.isReadable()) {
                     val client =  item.channel().asInstanceOf[SocketChannel]
                     // TODO: 分包读取的机制
-                    val Buffer = ByteBuffer.allocate(2048)
+                    val Buffer = ByteBuffer.allocate(4096)
                     if (client.read(Buffer) > 0) {
                         val result = new String(Buffer.array()).trim()
                         //todo: log
