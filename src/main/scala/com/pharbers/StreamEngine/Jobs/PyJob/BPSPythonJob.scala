@@ -77,10 +77,12 @@ class BPSPythonJob(val id: String,
                                 val pr = Runtime.getRuntime.exec(argv)
                                 val in = new BufferedReader(new InputStreamReader(pr.getInputStream))
 
-
-
-                                bufferedWriter.write(in.readLine())
-                                bufferedWriter.write("\n")
+                                var lines = in.readLine()
+                                while(lines != null){
+                                    bufferedWriter.write(lines)
+                                    bufferedWriter.write("\n")
+                                    lines = in.readLine()
+                                }
                             }
 
                             override def close(errorOrNull: Throwable): Unit = {

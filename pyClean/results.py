@@ -3,6 +3,7 @@
 
 import json
 
+
 class ResultTag(object):
     Error = -1
     Keep = 0

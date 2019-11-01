@@ -19,21 +19,15 @@ if __name__ == "__main__":
 
     # print("2. need continue with cleaning process ")
     try:
-        input = sys.argv[1].decode("UTF-8", errors="ignore")
-        event = json.loads(input)
-        metadata = {}  # arg["_metadata"]
-        result = process(event)
-        result = ResultModel(
-            data=result,
-            metadata=metadata,
-            tag=ResultTag.Success
-        )
-        print(result.toJson())
+        event = sys.argv[1].decode("UTF-8", errors="ignore")
+        event = json.loads(event)
+        for item in process(event):
+            print(item.toJson())
     except:
         import traceback
-
         exType, exValue, exTrace = sys.exc_info()
         print(ResultModel(
+            data=event,
             tag=ResultTag.Error,
             errMsg=str(repr(traceback.format_exception(exType, exValue, exTrace)))
         ).toJson())

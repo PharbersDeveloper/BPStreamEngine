@@ -2,28 +2,46 @@
 # -*- coding: UTF-8 -*-
 
 from mapping import create_mapping
+from results import ResultModel
+from results import ResultTag
+
 
 def process(event):
     # 0. Create an col name mapping table
     mapping = create_mapping()
 
     reval = {}
+
     # 1. Change data col name
-    for key in event.keys():
-        for m in mapping:
-            if key in m["Candidate"]:
-                reval[m["ColName"]] = event[key]
+    old_data = event
+    for m in mapping:
+        value = None
+        for old_key in old_data.keys():
+            if old_key.upper() in m["Candidate"]:
+                value = old_data[old_key]
+                break
 
-    # 2. 返回打包, 只保留固定的Col
-    # for v in mapping:
-    #     if v not in reval.keys():
-    #         if v["Type"] is "String":
-    #             reval[v] = ""
-    #         else:
-    #             reval[v] = 0
+        if m["Type"] is "String":
+            if value is None:
+                reval[m["ColName"]] = ""
+            else:
+                reval[m["ColName"]] = value
+        elif m["Type"] is "Integer":
+            if value is None:
+                reval[m["ColName"]] = 0
+            else:
+                reval[m["ColName"]] = int(value)
+        else :
+            if value is None:
+                reval[m["ColName"]] = 0.0
+            else:
+                reval[m["ColName"]] = float(value)
 
-    # event["data"] = reval
-    event = reval
+    metadata = {}  # arg["_metadata"]
+    result = ResultModel(
+        data=reval,
+        metadata=metadata,
+        tag=ResultTag.Success
+    )
 
-    # result = json.dumps(event, ensure_ascii=False)
-    return event
+    return [result]

@@ -5,27 +5,27 @@ def create_mapping():
     return [
         {
             "ColName": "PROVINCE_NAME", "Type": "String",
-            "Candidate": ["省", "省份", "省/自治区/直辖市", "Province", "PROVINCE"]
+            "Candidate": ["省", "省份", "省/自治区/直辖市", "PROVINCE"]
         },
         {
             "ColName": "CITY_NAME", "Type": "String",
-            "Candidate": ["城市", "City", "CITY"]
+            "Candidate": ["城市", "CITY"]
         },
         {
             "ColName": "YEAR", "Type": "Integer",
-            "Candidate": ["年", "YEARID"]
+            "Candidate": ["年", "YEARID", "YEAR"]
         },
         {
             "ColName": "QUARTER", "Type": "Integer",
-            "Candidate": ["季度", "年季"]
+            "Candidate": ["季度", "年季", "QUARTER"]
         },
         {
             "ColName": "MONTH", "Type": "Integer",
-            "Candidate": ["月", "YYYYMM", "年月", "Period", "月份"]
+            "Candidate": ["月", "YYYYMM", "年月", "PERIOD", "月份", "MONTH"]
         },
         {
             "ColName": "HOSP_NAME", "Type": "String",
-            "Candidate": ["LILLY_HSPTL_NAME", "医院名称", "Hospital Name", "HOSPITAL"]
+            "Candidate": ["LILLY_HSPTL_NAME", "医院名称", "HOSPITAL NAME", "HOSPITAL"]
         },
         {
             "ColName": "HOSP_CODE", "Type": "String",
@@ -33,15 +33,15 @@ def create_mapping():
         },
         {
             "ColName": "HOSP_LEVEL", "Type": "String",
-            "Candidate": ["医院等级", "Hospital Degree", "LEVEL"]
+            "Candidate": ["医院等级", "HOSPITAL DEGREE", "LEVEL"]
         },
         {
             "ColName": "ATC", "Type": "String",
-            "Candidate": ["ATC编码", "ATC码", "通用名ATC编码"]
+            "Candidate": ["ATC编码", "ATC码", "通用名ATC编码", "ATC"]
         },
         {
             "ColName": "MOLE_NAME", "Type": "String",
-            "Candidate": ["Molecule Name", "MCL_NAME", "药品名", "分子名", "药品名称", "类别名称", "MOLECULE"]
+            "Candidate": ["MOLECULE NAME", "MCL_NAME", "药品名", "分子名", "药品名称", "类别名称", "MOLECULE"]
         },
         {
             "ColName": "KEY_BRAND", "Type": "String",
@@ -53,7 +53,7 @@ def create_mapping():
         },
         {
             "ColName": "PACK", "Type": "String",
-            "Candidate": ["包装", "包装单位", "PACK_DES", "Pack"]
+            "Candidate": ["包装", "包装单位", "PACK_DES", "PACK"]
         },
         {
             "ColName": "SPEC", "Type": "String",
@@ -61,7 +61,7 @@ def create_mapping():
         },
         {
             "ColName": "PACK_QTY", "Type": "String",
-            "Candidate": ["包装数量", "包装规格", "PACKAGE_QTY", "PACK_NUMBER", "PackNumber"]
+            "Candidate": ["包装数量", "包装规格", "PACKAGE_QTY", "PACK_NUMBER", "PACKNUMBER"]
         },
         {
             "ColName": "SALES_VALUE", "Type": "Double",
