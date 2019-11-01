@@ -96,7 +96,7 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 					.format("parquet")
 //					.format("console")
 					.option("checkpointLocation", "/test/alex/" + id + "/checkpoint")
-					.option("path", "/test/alex/" + id + "/files")
+					.option("path", "/test/alex/" + id + "/" + jobId + "/files")
 					.start()
 				outputStream = query :: outputStream
 				
