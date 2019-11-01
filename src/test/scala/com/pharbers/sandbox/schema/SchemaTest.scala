@@ -19,25 +19,25 @@ class SchemaTest extends FunSuite with MongoTrait {
 		val metaDataPath = "/test/streamingV2/0829b025-48ac-450c-843c-6d4ee91765ca/metadata"
 		val sampleDataPath = "/test/streamingV2/0829b025-48ac-450c-843c-6d4ee91765ca/files/jobId="
 		
-		val jobId = "23d78-4083-422a-9fdc-b227f1"
-		val job = BPSConvertMAX5JobContainer(id, metaDataPath, sampleDataPath, jobId, "Pfizer_1701_1712_GYC.csv" ,spark)
-		job.open()
-		job.exec()
+//		val jobId = "23d78-4083-422a-9fdc-b227f1"
+//		val job = BPSConvertMAX5JobContainer(id, metaDataPath, sampleDataPath, jobId, "Pfizer_1701_1712_GYC.csv" ,spark)
+//		job.open()
+//		job.exec()
 		
-//		val result = queryAll("FileMetaDatum")
-//		println(result.size)
-//		val finalResult = result.flatMap{ r =>
-//			r.get("job-id").asInstanceOf[BasicDBList].toList.flatMap{ l =>
-//				Map(r.getAsOrElse[String]("name", "") -> l.toString)
-//			}
-//		}
-//		finalResult.foreach{ r =>
-//			val jobId = r._2
-//			val job = BPSConvertMAX5JobContainer(id, metaDataPath, sampleDataPath, jobId, r._1 ,spark)
-//			job.open()
-//			job.exec()
-//			Thread.sleep(1000)
-//		}
+		val result = queryAll("FileMetaDatum")
+		println(result.size)
+		val finalResult = result.flatMap{ r =>
+			r.get("job-id").asInstanceOf[BasicDBList].toList.flatMap{ l =>
+				Map(r.getAsOrElse[String]("name", "") -> l.toString)
+			}
+		}
+		finalResult.foreach{ r =>
+			val jobId = r._2
+			val job = BPSConvertMAX5JobContainer(id, metaDataPath, sampleDataPath, jobId, r._1 ,spark)
+			job.open()
+			job.exec()
+			Thread.sleep(1000)
+		}
 		
 		ThreadExecutor.waitForShutdown()
 	}
