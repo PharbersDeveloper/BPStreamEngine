@@ -21,9 +21,10 @@ case class BPSConvertSchemaJob(id: String,
 	override def trigger(e: BPSEvents): Unit = {
 		query.recentProgress.foreach { x =>
 			cumulative += x.numInputRows
-			println("=======> Total Row " + sumRow)
-			println("====>" + cumulative)
+//			println("=======> Total Row " + sumRow)
+//			println("====>" + cumulative)
 			if (cumulative >= sumRow) {
+				println("====>" + cumulative)
 				// TODO 将处理好的Schema发送邮件
 //				pollKafka(new FileMetaData(id, jobId, "/test/alex/" + id + "/metadata/" + "",
 //					"/test/alex/" + id + "/files/" + "jobId=" + "", ""))
