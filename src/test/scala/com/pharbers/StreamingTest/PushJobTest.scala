@@ -72,7 +72,7 @@ class PushJobTest extends FunSuite{
         val jobId = "201910231514"
         val traceId = "201910231514"
         val `type` = "stop"
-        val jobMsg = "testJob"
+        val jobMsg = "SandBoxJobContainer_6260762d-5c7a-495f-be09-70128d8a440b"
 
         val topic = "stream_job_submit"
 
