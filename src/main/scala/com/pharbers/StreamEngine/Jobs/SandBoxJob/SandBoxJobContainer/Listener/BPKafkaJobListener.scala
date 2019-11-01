@@ -48,6 +48,14 @@ class BPKafkaJobListener(val id: String,
 			1000,
 			Int.MaxValue, process
 		)
+		try {
+			val t = new Thread(pkc)
+			t.start()
+		} catch {
+			case e: Exception =>
+				println(e.getMessage)
+				pkc.close()
+		}
 	}
 	
 	override def close(): Unit = {
