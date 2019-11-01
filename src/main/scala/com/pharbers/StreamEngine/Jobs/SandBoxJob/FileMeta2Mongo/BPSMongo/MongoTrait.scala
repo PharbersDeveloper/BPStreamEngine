@@ -33,4 +33,13 @@ trait MongoTrait extends MongoInstance {
 		dbIns.close()
 		result
 	}
+	
+	def queryAll(coll: String): List[DBObject] = {
+		import collection.JavaConverters._
+		val dbIns = MongoClient(url, port)
+		val collect = dbIns.getDB(databaseName).getCollection(coll)
+		val result = collect.find(DBObject()).toArray().asScala.toList
+		dbIns.close()
+		result
+	}
 }

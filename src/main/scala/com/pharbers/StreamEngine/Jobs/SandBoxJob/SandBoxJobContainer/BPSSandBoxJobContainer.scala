@@ -1,8 +1,6 @@
 package com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxJobContainer
 
-import java.util.UUID
-
-import com.pharbers.StreamEngine.Jobs.SandBoxJob.Listener.FileMetaListener
+import com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxJobContainer.Listener.BPKafkaJobListener
 import com.pharbers.StreamEngine.Utils.Event.EventHandler.BPSEventHandler
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamListener
 import com.pharbers.StreamEngine.Utils.StreamJob.{BPDynamicStreamJob, BPSJobContainer}
@@ -15,21 +13,23 @@ object BPSSandBoxJobContainer {
 }
 
 class BPSSandBoxJobContainer( val spark: SparkSession, config: Map[String, String])
-	extends BPSJobContainer with BPDynamicStreamJob {
-	// TODO 整体SandBoxJob的初始化
-	val id =  UUID.randomUUID().toString
+	extends BPSJobContainer
+		with BPDynamicStreamJob {
+	
+	val id: String = ""//UUID.randomUUID().toString
 	type T = BPSKfkJobStrategy
-	val strategy = null
+	val strategy: T  = null
 	
 	override def open(): Unit = {
-		println("初始化SandBoxJob")
+		// TODO log
+		println("初始化SandBoxJobContainer")
 	}
 	
 	override def exec(): Unit = {
-		println("执行SandBoxJob")
-		val listener = FileMetaListener(spark, this)
-		listener.active(null)
-		listeners = listener :: listeners
+		// TODO log
+		println("执行SandBoxJobContainer")
+		val job = BPKafkaJobListener(this.id, spark, this)
+		job.exec()
 	}
 	
 	override def registerListeners(listener: BPStreamListener): Unit = {}
