@@ -3,6 +3,7 @@ package com.pharbers.StreamEngine.Jobs.OssPartitionJob.OssListener
 import java.net.{HttpURLConnection, URL}
 import java.nio.charset.StandardCharsets
 import java.util.UUID
+import java.util.concurrent.TimeUnit
 
 import com.pharbers.StreamEngine.Jobs.OssPartitionJob.OssPartitionMeta.BPSOssPartitionMeta
 import com.pharbers.StreamEngine.Utils.Channel.Driver.BPSDriverChannel
@@ -10,6 +11,8 @@ import com.pharbers.StreamEngine.Utils.Channel.Worker.BPSWorkerChannel
 import com.pharbers.StreamEngine.Utils.StreamJob.{BPSJobContainer, BPStreamJob}
 import com.pharbers.StreamEngine.Utils.Event.BPSEvents
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamRemoteListener
+import com.pharbers.kafka.producer.PharbersKafkaProducer
+import com.pharbers.kafka.schema.FileMetaData
 import org.apache.spark.TaskContext
 import org.apache.spark.sql.{DataFrame, ForeachWriter, Row, SparkSession}
 import org.json4s.DefaultFormats
@@ -40,6 +43,8 @@ case class BPSOssListener(spark: SparkSession, job: BPStreamJob) extends BPStrea
             case "SandBox-Length" => {
                 BPSOssPartitionMeta.pushLineToHDFS(jid.id, event2JobId(e), e.data)
                 post(s"""{"traceId": "${e.traceId}","jobId": "${e.jobId}"}""", "application/json")
+                pollKafka(new FileMetaData(jid.id, e.jobId, "/workData/streamingV2/" + jid.id + "/metadata/" + "",
+                    "/workData/streamingV2/" + jid.id + "/files/" + "jobId=" + "", ""))
             }
         }
     }
@@ -77,7 +82,7 @@ case class BPSOssListener(spark: SparkSession, job: BPStreamJob) extends BPStrea
                         def close(errorOrNull: scala.Throwable): Unit = {}//channel.get.close()
                     }
                 )
-                .option("checkpointLocation", "/test/alex/" + UUID.randomUUID().toString + "/checkpoint")
+                .option("checkpointLocation", "/test/streamingV2/" + UUID.randomUUID().toString + "/checkpoint")
                 .start() :: job.outputStream
     }
 
@@ -96,5 +101,13 @@ case class BPSOssListener(spark: SparkSession, job: BPStreamJob) extends BPStrea
         conn.setDoOutput(true)
         conn.getOutputStream.write(postDataBytes)
         conn.getResponseCode
+    }
+
+    def pollKafka(msg: FileMetaData): Unit ={
+        //todo: 参数化
+        val topic = "sb_file_meta_job_test"
+        val pkp = new PharbersKafkaProducer[String, FileMetaData]
+        val fu = pkp.produce(topic, msg.getJobId.toString, msg)
+        println(fu.get(10, TimeUnit.SECONDS))
     }
 }

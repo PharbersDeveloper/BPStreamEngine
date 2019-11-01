@@ -92,10 +92,7 @@ private[Component] class BaseJobHandler(nodeHandler: NodeMsgHandler, jobBuilder:
                             //todo: log
                             case e: Exception => new Exception(s"jobId: ${x.value().getJob}, traceId: ${x.value().getTraceId}", e)
                         }
-                    //todo: 提交一个job链
-                    case "list" =>
-                    //todo：提交一个job树
-                    case "tree" =>
+                    case "addList" => read[List[JobMsg]](x.value().getJob.toString).foreach(x => add(x))
                     case "stop" => finish(x.value().getJob.toString)
                     case _ =>
                 }

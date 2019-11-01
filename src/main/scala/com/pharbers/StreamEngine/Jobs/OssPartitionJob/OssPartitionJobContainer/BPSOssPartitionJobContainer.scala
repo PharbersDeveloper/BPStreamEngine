@@ -20,23 +20,21 @@ object BPSOssPartitionJobContainer {
 }
 
 class BPSOssPartitionJobContainer(override val strategy: BPSKfkJobStrategy, val spark: SparkSession, config: Map[String, String]) extends BPSJobContainer with BPDynamicStreamJob{
-//    val id = UUID.randomUUID().toString
-    val id = "test001"
+    val id = "0829b025-48ac-450c-843c-6d4ee91765ca"
     type T = BPSKfkJobStrategy
     import spark.implicits._
-    //    val listener = new BPSOssListener(spark, this)
 
     override def open(): Unit = {
         val reading = spark.readStream
             .format("kafka")
-            .options(mapAsScalaMap(KafkaConfig.PROPS).map(x => (x._1.toString, x._2.toString)))
-//            .option("kafka.bootstrap.servers", "123.56.179.133:9092")
-//            .option("kafka.security.protocol", "SSL")
-//            .option("kafka.ssl.keystore.location", "./kafka.broker1.keystore.jks")
-//            .option("kafka.ssl.keystore.password", "pharbers")
-//            .option("kafka.ssl.truststore.location", "./kafka.broker1.truststore.jks")
-//            .option("kafka.ssl.truststore.password", "pharbers")
-//            .option("kafka.ssl.endpoint.identification.algorithm", " ")
+//            .options(mapAsScalaMap(KafkaConfig.PROPS).map(x => (x._1.toString, x._2.toString)))
+            .option("kafka.bootstrap.servers", "123.56.179.133:9092")
+            .option("kafka.security.protocol", "SSL")
+            .option("kafka.ssl.keystore.location", "./kafka.broker1.keystore.jks")
+            .option("kafka.ssl.keystore.password", "pharbers")
+            .option("kafka.ssl.truststore.location", "./kafka.broker1.truststore.jks")
+            .option("kafka.ssl.truststore.password", "pharbers")
+            .option("kafka.ssl.endpoint.identification.algorithm", " ")
             .option("startingOffsets", "earliest")
 //            .option("startingOffsets", "latest")
             .option("subscribe", strategy.getTopic)
@@ -58,9 +56,6 @@ class BPSOssPartitionJobContainer(override val strategy: BPSKfkJobStrategy, val 
         case Some(is) => {
             val listener = BPSOssListener(spark, this)
             listener.active(is)
-
-//            val outputJob = new KafkaOutputJob
-//            outputJob.sink(is.selectExpr("""data AS value""", "jobId", "traceId", "type"))
     
             listeners = listener :: listeners
             
@@ -68,8 +63,8 @@ class BPSOssPartitionJobContainer(override val strategy: BPSKfkJobStrategy, val 
                 .partitionBy("jobId")
                 .format("parquet")
                 .outputMode("append")
-                .option("checkpointLocation", "/test/alex/" + this.id + "/checkpoint")
-                .option("path", "/test/alex/" + this.id + "/files")
+                .option("checkpointLocation", "/workData/streamingV2/" +  this.id + "/checkpoint")
+                .option("path", "/workData/streamingV2/" + this.id + "/files")
                 .start()
         }
         case None => ???

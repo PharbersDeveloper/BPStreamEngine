@@ -26,6 +26,10 @@ class PushJobTest extends FunSuite{
         val jobId = "201910231514"
         val traceId = "201910231514"
         val `type` = "add"
+        val jobs =
+                JobMsg("ossStreamJob", "job", "com.pharbers.StreamEngine.Jobs.OssPartitionJob.OssJobContainer.BPSOssPartitionJobContainer", List("$BPSKfkJobStrategy", "$BPSparkSession"), Nil, Nil, Map.empty, "", "oss job") ::
+                JobMsg("sandBoxJob", "job", "com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxJobContainer.BPSSandBoxJobContainer", List("$BPSparkSession"), Nil, Nil, Map.empty, "", "sandbox job") ::
+                Nil
 //        val jobMsg = write(JobMsg("testJob", "job", "com.pharbers.StreamEngine.Jobs.OssJob.DynamicJobDemo",
 //            List("$BPSparkSession", "$BPSKfkJobStrategy", "demo"), Nil, Nil, Map.empty, "", "test job"))
 //        val jobMsg = write(JobMsg("testListener", "listener", "com.pharbers.StreamEngine.Jobs.OssJob.DynamicListenerDemo",
@@ -34,6 +38,26 @@ class PushJobTest extends FunSuite{
 //            List("another listener"), List("testJob"), List("this"), Map.empty, "", "test listener"))
         val jobMsg = write(JobMsg("ossStreamJob", "job", "com.pharbers.StreamEngine.Jobs.OssPartitionJob.OssJobContainer.BPSOssPartitionJobContainer",
             List("$BPSKfkJobStrategy", "$BPSparkSession"), Nil, Nil, Map.empty, "", "test job"))
+        val topic = "stream_job_submit"
+
+        val pkp = new PharbersKafkaProducer[String, BPJob]
+        val bpJob = new BPJob(jobId, traceId, `type`, jobMsg)
+        val fu = pkp.produce(topic, jobId, bpJob)
+        println(fu.get(10, TimeUnit.SECONDS))
+    }
+
+    test("push jobs") {
+        import org.json4s._
+        import org.json4s.jackson.Serialization.write
+        implicit val formats: DefaultFormats.type = DefaultFormats
+        val jobId = "201910231514"
+        val traceId = "201910231514"
+        val `type` = "addList"
+        val jobs = JobMsg("ossStreamJob", "job", "com.pharbers.StreamEngine.Jobs.OssPartitionJob.OssJobContainer.BPSOssPartitionJobContainer", List("$BPSKfkJobStrategy", "$BPSparkSession"), Nil, Nil, Map.empty, "", "oss job") ::
+                    JobMsg("sandBoxJob", "job", "com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxJobContainer.BPSSandBoxJobContainer", List("$BPSparkSession"), Nil, Nil, Map.empty, "", "sandbox job") ::
+                    Nil
+
+        val jobMsg = write(jobs)
         val topic = "stream_job_submit"
 
         val pkp = new PharbersKafkaProducer[String, BPJob]
