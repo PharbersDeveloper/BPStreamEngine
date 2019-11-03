@@ -19,23 +19,32 @@ class BPKafkaJobListener(val id: String,
                          container: BPSJobContainer) extends BPStreamJob {
 	type T = BPSJobStrategy
 	override val strategy: T = null
-	
+	// TODO 多线程有问题，临时解决，或从源头解决
+	var hisJobId = ""
 	val process: ConsumerRecord[String, FileMetaData] => Unit = (record: ConsumerRecord[String, FileMetaData]) => {
-		BPSSandBoxMetaDataJob(record.value().getMetaDataPath.toString,
-			record.value().getJobId.toString, spark).exec()
-		
-//			val sdJob = BPSSandBoxSampleDataJobContainer(record.value().getSampleDataPath.toString,
-//				record.value().getJobId.toString, spark)
-//			sdJob.open()
-//			sdJob.exec()
-		
-		val convertJob: BPSSandBoxConvertSchemaJob = BPSSandBoxConvertSchemaJob(
-			record.value().getRunId.toString,
-			record.value().getMetaDataPath.toString,
-			record.value().getSampleDataPath.toString,
-			record.value().getJobId.toString, spark)
-		convertJob.open()
-		convertJob.exec()
+		if (record.value().getJobId.toString != hisJobId) {
+			hisJobId = record.value().getJobId.toString
+
+			println("Fuck ===>" + record.value().getJobId)
+			BPSSandBoxMetaDataJob(record.value().getMetaDataPath.toString,
+				record.value().getJobId.toString, spark).exec()
+
+			//			val sdJob = BPSSandBoxSampleDataJobContainer(record.value().getSampleDataPath.toString,
+			//				record.value().getJobId.toString, spark)
+			//			sdJob.open()
+			//			sdJob.exec()
+
+			val convertJob: BPSSandBoxConvertSchemaJob = BPSSandBoxConvertSchemaJob(
+				record.value().getRunId.toString,
+				record.value().getMetaDataPath.toString,
+				record.value().getSampleDataPath.toString,
+				record.value().getJobId.toString, spark)
+			convertJob.open()
+			convertJob.exec()
+		} else {
+			println("咋还重复传递JobID呢")
+		}
+
 		
 //		if (record.value().getConvertType.toString == "convert_schema") {
 //

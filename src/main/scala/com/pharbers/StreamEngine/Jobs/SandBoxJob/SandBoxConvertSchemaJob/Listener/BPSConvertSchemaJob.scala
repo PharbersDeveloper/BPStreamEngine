@@ -17,19 +17,20 @@ case class BPSConvertSchemaJob(id: String,
                                job: BPStreamJob,
                                query: StreamingQuery,
                                sumRow: Long) extends BPStreamListener {
-	var cumulative: Long = 0
 	override def trigger(e: BPSEvents): Unit = {
-		query.recentProgress.foreach { x =>
-			cumulative += x.numInputRows
-//			println("=======> Total Row " + sumRow)
-//			println("====>" + cumulative)
-			if (cumulative >= sumRow) {
-				println("====>" + cumulative)
-				// TODO 将处理好的Schema发送邮件
+		val cumulative = query.recentProgress.map(_.numInputRows).sum
+
+		if(query.lastProgress != null) {
+			println("---->" + query.lastProgress.numInputRows)
+		}
+		println("=========> Total Row " + sumRow)
+		println("=====>" + cumulative)
+		if (cumulative >= sumRow) {
+			println("******>" + cumulative)
+			// TODO 将处理好的Schema发送邮件
 //				pollKafka(new FileMetaData(id, jobId, "/test/alex/" + id + "/metadata/" + "",
 //					"/test/alex/" + id + "/files/" + "jobId=" + "", ""))
-				job.close()
-			}
+			job.close()
 		}
 	}
 	

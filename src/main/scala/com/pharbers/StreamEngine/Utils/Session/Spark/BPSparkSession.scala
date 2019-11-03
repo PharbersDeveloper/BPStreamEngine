@@ -52,5 +52,5 @@ class BPSparkSession(config: Map[String, String]) {
     spark.sparkContext.addJar("./jars/kafka-avro-serializer-5.2.1.jar")
     spark.sparkContext.addJar("./jars/common-config-5.2.1.jar")
     spark.sparkContext.addJar("./jars/common-utils-5.2.1.jar")
-//    spark.sparkContext.setLogLevel("ERROR")
+    //spark.sparkContext.setLogLevel("ERROR")
 }
