@@ -16,7 +16,7 @@ class BPSPythonJobContainer(override val strategy: BPSKfkJobStrategy,
                             override val spark: SparkSession) extends BPSJobContainer with Serializable {
     type T = BPSKfkJobStrategy
 
-    val id: String = "abc061" //UUID.randomUUID().toString
+    val id: String = "abc069" //UUID.randomUUID().toString
 
     override def open(): Unit = {
         lazy val loadSchema: StructType = new StructType()

@@ -7,11 +7,15 @@ import java.nio.charset.StandardCharsets
 import org.apache.hadoop.conf.Configuration
 import org.json4s.jackson.Serialization.write
 import com.pharbers.StreamEngine.Utils.Event.BPSEvents
-import org.apache.spark.sql.{Row, ForeachWriter, SparkSession}
+import org.apache.spark.sql.{ForeachWriter, Row, SparkSession}
 import org.apache.hadoop.fs.{FSDataOutputStream, FileSystem, Path}
 import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSJobStrategy
 import com.pharbers.StreamEngine.Utils.StreamJob.{BPSJobContainer, BPStreamJob}
 import java.io.{BufferedReader, BufferedWriter, InputStreamReader, OutputStreamWriter}
+import org.json4s.DefaultFormats
+import org.json4s.jackson.Serialization.write
+import org.apache.spark.sql.functions.regexp_replace
+import scala.util.parsing.json.JSON
 
 object BPSPythonJob {
     def apply(id: String,
@@ -34,20 +38,38 @@ class BPSPythonJob(val id: String,
     }
 
     override def exec(): Unit = {
+        val resultPath = "/test/qi/" + id
+        val successPath = resultPath + "/file"
+        val errPath = resultPath + "/err"
+        val metadataPath = resultPath + "/metadata"
+
+        val metaData = spark.sparkContext
+                .textFile(s"/test/alex/ff89f6cf-7f52-4ae1-a5ec-2609169b3994/metadata/bf28d-1e0e-4abe-822c-bd09b0")
+                .collect()
+                .map(_.toString())
+                .map { row =>
+                    if (row.startsWith("{")) {
+                        val tmp = row.split(":")
+                        tmp(0).tail.replace("\"", "") -> tmp(1).init.replace("\"", "")
+                    } else {
+                        "schema" -> JSON.parseFull(row).get
+                    }
+                }.toMap
+
+        var isFirst = true
         inputStream match {
             case Some(is) =>
                 is.writeStream
                         .foreach(new ForeachWriter[Row]() {
-                            var bufferedWriter: BufferedWriter = _
+                            var successBufferedWriter: BufferedWriter = _
+                            var errBufferedWriter: BufferedWriter = _
+                            var metadataBufferedWriter: BufferedWriter = _
 
-                            override def open(partitionId: Long, version: Long): Boolean = {
-                                val hdfsWritePath: Path = new Path("/test/qi/" + id)
+                            def openHdfs(paht: String): BufferedWriter = {
+                                val hdfsWritePath: Path = new Path(paht)
 
                                 val configuration: Configuration = new Configuration()
                                 configuration.set("fs.defaultFS", "hdfs://spark.master:9000")
-//                                configuration.setBoolean("dfs.support.append", true)
-//                                configuration.set("dfs.client.block.write.replace-datanode-on-failure.enable", "true")
-//                                configuration.set("dfs.client.block.write.replace-datanode-on-failure.policy", "NEVER")
 
                                 val fileSystem: FileSystem = FileSystem.get(configuration)
                                 val fsDataOutputStream: FSDataOutputStream =
@@ -56,66 +78,54 @@ class BPSPythonJob(val id: String,
                                     else
                                         fileSystem.create(hdfsWritePath)
 
-                                bufferedWriter = new BufferedWriter(new OutputStreamWriter(fsDataOutputStream, StandardCharsets.UTF_8))
+                                new BufferedWriter(new OutputStreamWriter(fsDataOutputStream, StandardCharsets.UTF_8))
+                            }
 
+                            override def open(partitionId: Long, version: Long): Boolean = {
+                                successBufferedWriter = openHdfs(successPath)
+                                errBufferedWriter = openHdfs(errPath)
+                                metadataBufferedWriter = openHdfs(metadataPath)
                                 true
                             }
 
                             override def process(value: Row): Unit = {
-//                                {"\"Market\"":"\"策略市场\"","\"Province\"":"\"福建省\"",
-//                                    "\"City\"":"\"泉州市\"","\"Year\"":"2017","\"Quarter\"":"1",
-//                                    "\"Month\"":"1","\"Code\"":"3505004","\"Hospital\"":"NA",
-//                                    "\"Level\"":"NA","\"ATC\"":"NA","\"Molecule\"":"NA",
-//                                    "\"Product\"":"NA","\"Specificat\"":"NA","\"Size\"":"NA",
-//                                    "\"Pack\"":"NA","\"Form\"":"NA","\"Adminst\"":"NA",
-//                                    "\"Quantity\"":"3310","\"Value\"":"3846","\"Corporatio\"":"NA",
-//                                    "\"TA I\"":"\"WH\"","\"TA II\"":"\"WH\""}
-                                val oldStr = value.getAs[String]("data")
-                                val newStr = oldStr.replace("\\\"", "")
-
-                                val argv = Array[String]("/usr/bin/python", "./main.py", newStr)
-                                val pr = Runtime.getRuntime.exec(argv)
+                                val data = JSON.parseFull(value.getAs[String]("data").replace("\\\"", "")).get
+                                val argv = write(Map("metadata" -> metaData, "data" -> data))(DefaultFormats)
+                                val pyArgs = Array[String]("/usr/bin/python", "./main.py", argv)
+                                val pr = Runtime.getRuntime.exec(pyArgs)
                                 val in = new BufferedReader(new InputStreamReader(pr.getInputStream))
 
                                 var lines = in.readLine()
-                                while(lines != null){
-                                    bufferedWriter.write(lines)
-                                    bufferedWriter.write("\n")
+                                while (lines != null) {
+                                    JSON.parseFull(lines) match {
+                                        case Some(result: Map[String, AnyRef]) =>
+                                            if (result("tag").asInstanceOf[Double] == 1) {
+                                                successBufferedWriter.write(write(result("data"))(DefaultFormats))
+                                                successBufferedWriter.write("\n")
+                                                if(isFirst){
+                                                    metadataBufferedWriter.write(write(result("metadata"))(DefaultFormats))
+                                                    isFirst = false
+                                                }
+                                            } else {
+                                                errBufferedWriter.write(lines)
+                                                errBufferedWriter.write("\n")
+                                            }
+                                        case None =>
+                                            errBufferedWriter.write(lines)
+                                            errBufferedWriter.write("\n")
+                                    }
                                     lines = in.readLine()
                                 }
                             }
 
                             override def close(errorOrNull: Throwable): Unit = {
-                                bufferedWriter.flush()
-                                bufferedWriter.close()
+                                successBufferedWriter.flush()
+                                successBufferedWriter.close()
+                                errBufferedWriter.flush()
+                                errBufferedWriter.close()
+                                metadataBufferedWriter.flush()
+                                metadataBufferedWriter.close()
                             }
-
-//                            override def process(value: Row): Unit = {
-//                                val argv = Array[String]("/usr/bin/python", "./clean.py") //, )
-//                                val pr = Runtime.getRuntime.exec(argv)
-//                                val in = new BufferedReader(new InputStreamReader(pr.getInputStream))
-//
-//                                implicit val formats: DefaultFormats.type = DefaultFormats
-//
-//                                var line: String = in.readLine()
-//                                while (line != null) {
-//                                    val event = BPSEvents(
-//                                        value.getAs[String]("jobId"),
-//                                        value.getAs[String]("traceId"),
-//                                        value.getAs[String]("type"),
-//                                        line,
-//                                        value.getAs[java.sql.Timestamp]("timestamp")
-//                                    )
-//                                    bufferedWriter.write(write(event))
-//                                    bufferedWriter.newLine()
-//                                    line = in.readLine()
-//                                }
-//
-//                                in.close()
-//                                pr.waitFor()
-//                            }
-
-//
                         })
 //                        .trigger(Trigger.Continuous("1 second"))
                         .start()

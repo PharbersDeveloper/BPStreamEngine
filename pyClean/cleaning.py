@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
 
+import string
 from mapping import create_mapping
 from results import ResultModel
 from results import ResultTag
@@ -10,10 +11,16 @@ def process(event):
     # 0. Create an col name mapping table
     mapping = create_mapping()
 
-    reval = {}
+    old_data = event["data"]
+    metadata = event["metadata"]
+
+    file_name = string.split(metadata["fileName"], ".")[0]
+    file_name = string.split(file_name, "_")
+    file_company = file_name[0]
+    file_source = file_name[len(file_name)-1]
 
     # 1. Change data col name
-    old_data = event
+    reval = {}
     for m in mapping:
         value = None
         for old_key in old_data.keys():
@@ -31,13 +38,20 @@ def process(event):
                 reval[m["ColName"]] = 0
             else:
                 reval[m["ColName"]] = int(value)
-        else :
+        elif m["Type"] is "Double":
             if value is None:
                 reval[m["ColName"]] = 0.0
             else:
                 reval[m["ColName"]] = float(value)
+    reval["COMPANY"] = file_company
+    reval["SOURCE"] = file_source
 
-    metadata = {}  # arg["_metadata"]
+    # 2. Change metadata schema
+    schema = []
+    for m in mapping:
+        schema.append({"key": m["ColName"], "type": m["Type"]})
+    metadata["schema"] = schema
+
     result = ResultModel(
         data=reval,
         metadata=metadata,
