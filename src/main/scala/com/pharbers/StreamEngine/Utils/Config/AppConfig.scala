@@ -1,9 +1,8 @@
 package com.pharbers.StreamEngine.Utils.Config
 
-import java.io.FileInputStream
 import java.util
+import java.io.FileInputStream
 import java.util.{Map, Properties}
-
 import org.apache.kafka.common.config.ConfigDef.{Importance, Type}
 import org.apache.kafka.common.config.{AbstractConfig, ConfigDef}
 
@@ -79,6 +78,4 @@ object AppConfig  {
 
 }
 
-class AppConfig(definition: ConfigDef, originals: util.Map[_, _]) extends AbstractConfig(definition, originals) {
-
-}
+class AppConfig(definition: ConfigDef, originals: util.Map[_, _]) extends AbstractConfig(definition, originals)
