@@ -37,7 +37,7 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 	
 	override def open(): Unit = {
 		// 延迟2分钟，因HDFS存储大文件需要再机器中传输
-		Thread.sleep(1000 * 60 * 2)
+//		Thread.sleep(1000 * 60 * 2)
 		// TODO 要形成过滤规则参数化
 		val metaData = SchemaConverter.column2legal("MetaData",spark.sparkContext
 			.textFile(s"$metaPath/$jobId")
@@ -68,7 +68,7 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 			}
 			
 			val schema = SchemaConverter.str2SqlType(repMetaDataStream)
-			checkPath(s"$samplePath$jobId")
+			checkPath(s"$samplePath")
 			inputStream = Some(
 				spark.readStream
 					.schema(StructType(
@@ -77,8 +77,8 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 							StructField("data", StringType) ::
 							StructField("timestamp", TimestampType) :: Nil
 					))
-					.parquet(s"$samplePath$jobId")
-					.filter($"type" === "SandBox")
+					.parquet(s"$samplePath")
+					.filter($"jobId" === jobId and $"type" === "SandBox")
 					.withColumn("data", regexp_replace($"data", """\\"""", ""))
 					.withColumn("data", regexp_replace($"data", " ", "_"))
 					.withColumn("data", regexp_replace($"data", "\\(", ""))
