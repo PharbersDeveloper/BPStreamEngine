@@ -36,6 +36,8 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 	var totalRow: Long = 0
 	
 	override def open(): Unit = {
+		// 延迟2分钟，因HDFS存储大文件需要再机器中传输
+		Thread.sleep(1000 * 60 * 2)
 		// TODO 要形成过滤规则参数化
 		val metaData = SchemaConverter.column2legal("MetaData",spark.sparkContext
 			.textFile(s"$metaPath/$jobId")

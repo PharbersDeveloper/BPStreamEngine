@@ -25,12 +25,15 @@ class BPSparkSession(config: Map[String, String]) {
     final val SPARK_CONFIGS_PATH_DOC = "spark 配置文件目录"
     final val APP_NAME_KEY = "app.name"
     final val APP_NAME_DOC = "项目名称"
-    final val master_KEY = "master"
-    final val master_DOC = "master节点"
+    final val MASTER_KEY = "master"
+    final val MASTER_DOC = "master节点"
+    final val LOG_LEVEL_KEY = "log.level"
+    final val LOG_LEVEL_DOC = "日志等级 ERROR、WARN、INFO、DEBUG、TRACE"
     val configDef = new ConfigDef()
-            .define(SPARK_CONFIGS_PATH_KEY, Type.STRING, null, Importance.HIGH, SPARK_CONFIGS_PATH_DOC)
+            .define(SPARK_CONFIGS_PATH_KEY, Type.STRING, "src/main/resources/sparkConfig.properties", Importance.HIGH, SPARK_CONFIGS_PATH_DOC)
             .define(APP_NAME_KEY, Type.STRING, "bp-stream-engine", Importance.HIGH, APP_NAME_DOC)
-            .define(master_KEY, Type.STRING, "yarn", Importance.HIGH, master_DOC)
+            .define(MASTER_KEY, Type.STRING, "yarn", Importance.HIGH, MASTER_DOC)
+            .define(LOG_LEVEL_KEY, Type.STRING, "WARN", Importance.HIGH, LOG_LEVEL_DOC)
     val sparkConfigs = new AppConfig(configDef, config.asJava)
     //这儿的set的参数是第一优先级的
     val pops = new Properties()
@@ -44,6 +47,7 @@ class BPSparkSession(config: Map[String, String]) {
 
     val spark = SparkSession.builder()
         .config(conf).getOrCreate()
+    spark.sparkContext.setLogLevel(sparkConfigs.getString(LOG_LEVEL_KEY))
     spark.sparkContext.setLocalProperty("host", InetAddress.getLocalHost.getHostAddress)
     spark.sparkContext.addFile("./kafka.broker1.keystore.jks")
     spark.sparkContext.addFile("./kafka.broker1.truststore.jks")
