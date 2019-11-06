@@ -37,7 +37,7 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 	
 	override def open(): Unit = {
 		// 延迟2分钟，因HDFS存储大文件需要再机器中传输
-		Thread.sleep(1000 * 60 * 2)
+//		Thread.sleep(1000 * 60 * 2)
 		// TODO 要形成过滤规则参数化
 		val metaData = SchemaConverter.column2legal("MetaData",spark.sparkContext
 			.textFile(s"$metaPath/$jobId")
@@ -68,17 +68,18 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 			}
 			
 			val schema = SchemaConverter.str2SqlType(repMetaDataStream)
-			checkPath(s"$samplePath$jobId")
+			checkPath(s"$samplePath")
 			inputStream = Some(
 				spark.readStream
 					.schema(StructType(
 						StructField("traceId", StringType) ::
 							StructField("type", StringType) ::
 							StructField("data", StringType) ::
-							StructField("timestamp", TimestampType) :: Nil
+							StructField("timestamp", TimestampType) ::
+							StructField("jobId", StringType) :: Nil
 					))
-					.parquet(s"$samplePath$jobId")
-					.filter($"type" === "SandBox")
+					.parquet(s"$samplePath")
+					.filter($"jobId" === jobId and $"type" === "SandBox")
 					.withColumn("data", regexp_replace($"data", """\\"""", ""))
 					.withColumn("data", regexp_replace($"data", " ", "_"))
 					.withColumn("data", regexp_replace($"data", "\\(", ""))
@@ -95,13 +96,8 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 	override def exec(): Unit = {
 		inputStream match {
 			case Some(is) =>
-				val query = is.writeStream
-					.outputMode("append")
-					.format("parquet")
-//					.format("console")
-					.option("checkpointLocation", s"/test/alex/$id/files/$jobId/checkpoint")
-					.option("path", s"/test/alex/$id/files/$jobId")
-					.start()
+
+
 				outputStream = query :: outputStream
 				
 				val listener = BPSConvertSchemaJob(id, jobId, spark, this, query, totalRow)
