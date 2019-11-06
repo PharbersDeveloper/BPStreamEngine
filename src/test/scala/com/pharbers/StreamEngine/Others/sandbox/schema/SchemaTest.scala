@@ -1,4 +1,4 @@
-package com.pharbers.sandbox.schema
+package com.pharbers.StreamEngine.Others.sandbox.schema
 
 import java.util.UUID
 

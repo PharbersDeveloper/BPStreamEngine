@@ -1,20 +1,13 @@
-package com.pharbers.config
+package com.pharbers.StreamEngine.Utils.Config
 
 import java.io.FileInputStream
 import java.util
 
-import com.pharbers.StreamEngine.Utils.Channel.Driver.BPSDriverChannel
-import com.pharbers.StreamEngine.Utils.Channel.Local.BPSLocalChannel
-import com.pharbers.StreamEngine.Utils.Component.ComponentContext
-import com.pharbers.StreamEngine.Utils.Config.AppConfig
-import com.pharbers.StreamEngine.Utils.StreamJob.BPStreamJob
-import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSKfkJobStrategy
 import io.confluent.common.config.ConfigDef
-import io.confluent.common.config.ConfigDef.Type
-import io.confluent.common.config.ConfigDef.Importance
+import io.confluent.common.config.ConfigDef.{Importance, Type}
 import org.scalatest.FunSuite
 
-class AppConfigTest extends FunSuite {
+class KafkaConfigTest extends FunSuite {
 
     test("config define") {
         println("start")
