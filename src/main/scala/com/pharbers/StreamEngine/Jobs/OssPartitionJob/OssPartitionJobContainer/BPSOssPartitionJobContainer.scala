@@ -7,7 +7,6 @@ import com.pharbers.StreamEngine.Utils.StreamJob.{BPDynamicStreamJob, BPSJobCont
 import com.pharbers.StreamEngine.Jobs.OssPartitionJob.OssListener.BPSOssListener
 import com.pharbers.StreamEngine.Utils.Event.EventHandler.BPSEventHandler
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamListener
-import com.pharbers.StreamEngine.Utils.Config.KafkaConfig
 import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSKfkJobStrategy
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions._

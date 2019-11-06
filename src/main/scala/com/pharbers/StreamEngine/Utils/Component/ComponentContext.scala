@@ -17,7 +17,7 @@ import scala.io.Source
   */
 object ComponentContext{
     //以后可以通过配置选择需要的实现
-    private val instance: ComponentContext = new BaseComponentContext(getConfigs(AppConfig().getString(AppConfig.COMPONENT_CONFIG_PATH)))
+    private val instance: ComponentContext = new BaseComponentContext(getConfigs(AppConfig().getString(AppConfig.COMPONENT_CONFIG_PATH_KEY)))
     def apply(): ComponentContext = instance
     def getConfigs(path: String): List[ComponentConfig] = {
         implicit val formats: DefaultFormats.type = DefaultFormats

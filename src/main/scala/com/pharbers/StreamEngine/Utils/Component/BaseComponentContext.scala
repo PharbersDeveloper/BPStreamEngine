@@ -17,7 +17,7 @@ import collection.JavaConverters._
   */
 private[Component] class BaseComponentContext(var configs: List[ComponentConfig]) extends ComponentContext{
     private var container = Map[String, AnyRef]()
-    val componentAnnotations: Map[String, (String, Component)] = AppConfig().getList(AppConfig.COMPONENT_PACKAGES).asScala
+    val componentAnnotations: Map[String, (String, Component)] = AppConfig().getList(AppConfig.COMPONENT_PACKAGES_KEY).asScala
             .flatMap(x => AnnotationSelector.getAnnotationClass(x, classOf[Component], true))
             .map(x => (x._2.name, (x._1, x._2))).toMap
 

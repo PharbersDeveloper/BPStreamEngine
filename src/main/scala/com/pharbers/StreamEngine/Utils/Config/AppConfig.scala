@@ -43,6 +43,3 @@ object AppConfig {
         props
     }
 }
-
-@deprecated
-class AppConfig(definition: ConfigDef, originals: util.Map[_, _]) extends AbstractConfig(definition, originals)
