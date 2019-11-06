@@ -11,7 +11,7 @@ import com.pharbers.StreamEngine.Utils.Session.Spark.BPSparkSession
  * @note 注意配置文件的优先级和使用方式
  */
 class BPKafkaSessionTest extends FunSuite {
-    test("Create BPKafkaSession By Default Config ") {
+    test("Create BPKafkaSession By Default Config") {
         val spark = BPSparkSession()
         val session = BPKafkaSession(spark, Map.empty)
         assert(session.kafkaUrl == session.kafkaUrl)
