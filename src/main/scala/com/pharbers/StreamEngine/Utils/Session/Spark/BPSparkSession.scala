@@ -6,10 +6,8 @@ import java.io.FileInputStream
 import collection.JavaConverters._
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.SparkSession
-import org.apache.kafka.common.config.ConfigDef
-import com.pharbers.StreamEngine.Utils.Config.AppConfig
+import com.pharbers.StreamEngine.Utils.Config.BPSConfig
 import com.pharbers.StreamEngine.Utils.Annotation.Component
-import org.apache.kafka.common.config.ConfigDef.{Importance, Type}
 
 object BPSparkSession {
     def apply(): SparkSession = new BPSparkSession(Map.empty).spark
@@ -21,7 +19,7 @@ object BPSparkSession {
 class BPSparkSession(config: Map[String, String]) extends BPSparkSessionConfig {
     // 此处 Config 的配置优先级高于 Submit 时设置的配置
     private val pops = new Properties()
-    private val sparkConfigs = new AppConfig(configDef, config.asJava)
+    private val sparkConfigs = new BPSConfig(configDef, config.asJava)
     pops.load(new FileInputStream(sparkConfigs.getString(SPARK_CONFIGS_PATH_KEY)))
     private val conf = new SparkConf()
             .setAll(pops.asScala)
