@@ -18,9 +18,10 @@ object BPSparkSession {
 @Component(name = "BPSparkSession", `type` = "session")
 class BPSparkSession(config: Map[String, String]) extends BPSparkSessionConfig {
     // 此处 Config 的配置优先级高于 Submit 时设置的配置
-    private val pops = new Properties()
     private val sparkConfigs = new BPSConfig(configDef, config.asJava)
+    private val pops = new Properties()
     pops.load(new FileInputStream(sparkConfigs.getString(SPARK_CONFIGS_PATH_KEY)))
+
     private val conf = new SparkConf()
             .setAll(pops.asScala)
             .setAppName(sparkConfigs.getString(APP_NAME_KEY))

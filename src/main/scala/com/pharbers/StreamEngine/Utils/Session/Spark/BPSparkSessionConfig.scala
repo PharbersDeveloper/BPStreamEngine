@@ -4,10 +4,10 @@ import org.apache.kafka.common.config.ConfigDef
 import org.apache.kafka.common.config.ConfigDef.{Importance, Type}
 
 trait BPSparkSessionConfig {
-    val defaultSparkConfigsPathKey = "src/main/resources/sparkConfig.properties"
-    val defaultAppNameKey = "bp-stream-engine"
-    val defaultMasterKey = "yarn"
-    val defaultLogLevelKey = "WARN"
+    val defaultSparkConfigsPath = "src/main/resources/sparkConfig.properties"
+    val defaultAppName = "bp-stream-engine"
+    val defaultMaster = "yarn"
+    val defaultLogLevel = "WARN"
 
     final val SPARK_CONFIGS_PATH_KEY = "spark.configs.path"
     final val SPARK_CONFIGS_PATH_DOC = "spark 配置文件目录"
@@ -19,8 +19,8 @@ trait BPSparkSessionConfig {
     final val LOG_LEVEL_DOC = "日志等级 ERROR、WARN、INFO、DEBUG、TRACE"
 
     final val configDef: ConfigDef = new ConfigDef()
-            .define(SPARK_CONFIGS_PATH_KEY, Type.STRING, defaultSparkConfigsPathKey, Importance.HIGH, SPARK_CONFIGS_PATH_DOC)
-            .define(APP_NAME_KEY, Type.STRING, defaultAppNameKey, Importance.HIGH, APP_NAME_DOC)
-            .define(MASTER_KEY, Type.STRING, defaultMasterKey, Importance.HIGH, MASTER_DOC)
-            .define(LOG_LEVEL_KEY, Type.STRING, defaultLogLevelKey, Importance.HIGH, LOG_LEVEL_DOC)
+            .define(SPARK_CONFIGS_PATH_KEY, Type.STRING, defaultSparkConfigsPath, Importance.HIGH, SPARK_CONFIGS_PATH_DOC)
+            .define(APP_NAME_KEY, Type.STRING, defaultAppName, Importance.HIGH, APP_NAME_DOC)
+            .define(MASTER_KEY, Type.STRING, defaultMaster, Importance.HIGH, MASTER_DOC)
+            .define(LOG_LEVEL_KEY, Type.STRING, defaultLogLevel, Importance.HIGH, LOG_LEVEL_DOC)
 }
