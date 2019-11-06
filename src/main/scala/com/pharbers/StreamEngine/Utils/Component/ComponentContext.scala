@@ -1,15 +1,12 @@
 package com.pharbers.StreamEngine.Utils.Component
 
-import com.pharbers.StreamEngine.Utils.Config.AppConfig
 import org.json4s._
-import org.json4s.jackson.Serialization.read
-
 import scala.io.Source
+import org.json4s.jackson.Serialization.read
+import com.pharbers.StreamEngine.Utils.Config.AppConfig
 
 /** 功能描述
   *
-  * @param args 构造参数
-  * @tparam T 构造泛型参数
   * @author dcs
   * @version 0.0
   * @since 2019/10/16 11:07

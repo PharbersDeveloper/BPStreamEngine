@@ -1,15 +1,12 @@
 package com.pharbers.StreamEngine.Utils.Component
 
-import com.pharbers.StreamEngine.Utils.Annotation.{AnnotationSelector, Component}
-import com.pharbers.StreamEngine.Utils.Config.AppConfig
-
-import scala.reflect.runtime.universe
 import collection.JavaConverters._
+import scala.reflect.runtime.universe
+import com.pharbers.StreamEngine.Utils.Config.AppConfig
+import com.pharbers.StreamEngine.Utils.Annotation.{AnnotationSelector, Component}
 
 /** 功能描述
   *
-  * @param args 构造参数
-  * @tparam T 构造泛型参数
   * @author dcs
   * @version 0.0
   * @since 2019/10/16 16:01

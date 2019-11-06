@@ -1,18 +1,14 @@
 package com.pharbers.StreamEngine.Utils.Component.Dynamic
 
 import java.util.Date
-
 import com.pharbers.StreamEngine.Utils.Annotation.Component
 import com.pharbers.StreamEngine.Utils.Component.Node.{NodeMsg, NodeMsgHandler}
 import com.pharbers.StreamEngine.Utils.Event.EventHandler.BPSEventHandler
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamListener
 import com.pharbers.StreamEngine.Utils.StreamJob.BPDynamicStreamJob
-import scala.reflect.runtime.universe._
 
 /** 功能描述
   *
-  * @param args 构造参数
-  * @tparam T 构造泛型参数
   * @author dcs
   * @version 0.0
   * @since 2019/10/23 13:28

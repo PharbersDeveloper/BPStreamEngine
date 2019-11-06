@@ -2,7 +2,6 @@ package com.pharbers.StreamEngine.Utils.Component.Dynamic
 
 import java.time.Duration
 
-import com.pharbers.StreamEngine.Jobs.OssJob.DynamicJobDemo
 import com.pharbers.StreamEngine.Utils.Annotation.Component
 import com.pharbers.StreamEngine.Utils.Component.ComponentContext
 import com.pharbers.StreamEngine.Utils.Component.Node.NodeMsgHandler
@@ -21,8 +20,6 @@ import scala.reflect.runtime.universe._
 
 /** 功能描述
   *
-  * @param args 构造参数
-  * @tparam T 构造泛型参数
   * @author dcs
   * @version 0.0
   * @since 2019/10/22 16:22
