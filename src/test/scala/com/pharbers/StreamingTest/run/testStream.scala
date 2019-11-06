@@ -53,7 +53,8 @@ class testStream extends FunSuite  {
                         StructField("traceId", StringType) ::
                                 StructField("type", StringType) ::
                                 StructField("data", StringType) ::
-                                StructField("timestamp", TimestampType) :: Nil
+                                StructField("timestamp", TimestampType) ::
+                                StructField("jobId", StringType) :: Nil
                     ))
                     .parquet("/workData/streamingV2/0829b025-48ac-450c-843c-6d4ee91765ca/files")
                     .filter($"jobId" === "bc6b6-3048-434a-a51a-a80c10" and $"type" === "SandBox")

@@ -10,6 +10,7 @@ import com.pharbers.StreamEngine.Utils.Config.AppConfig
 import com.pharbers.StreamEngine.Utils.Event.EventHandler.BPSEventHandler
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamListener
 import com.pharbers.StreamEngine.Utils.StreamJob.BPDynamicStreamJob
+import com.pharbers.StreamEngine.Utils.ThreadExecutor.ThreadExecutor
 import com.pharbers.kafka.consumer.PharbersKafkaConsumer
 import com.pharbers.kafka.schema.BPJob
 import org.apache.kafka.common.config.ConfigDef.{Importance, Type}
@@ -151,8 +152,7 @@ private[Component] class BaseJobHandler(nodeHandler: NodeMsgHandler, jobBuilder:
 object BaseJobHandler {
     private[Component] def apply(nodeHandler: NodeMsgHandler, jobBuilder: BPDynamicStreamJobBuilder, config: Map[String, String]): BaseJobHandler = {
         val jobHandler = new BaseJobHandler(nodeHandler, jobBuilder, config)
-        //todo: 线程池， 和chanel一起弄
-        new Thread(jobHandler).start()
+        ThreadExecutor().execute(jobHandler)
         jobHandler
     }
 }

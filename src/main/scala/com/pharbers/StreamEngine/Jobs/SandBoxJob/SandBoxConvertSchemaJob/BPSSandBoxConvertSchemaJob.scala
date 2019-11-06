@@ -75,7 +75,8 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 						StructField("traceId", StringType) ::
 							StructField("type", StringType) ::
 							StructField("data", StringType) ::
-							StructField("timestamp", TimestampType) :: Nil
+							StructField("timestamp", TimestampType) ::
+							StructField("jobId", StringType) :: Nil
 					))
 					.parquet(s"$samplePath")
 					.filter($"jobId" === jobId and $"type" === "SandBox")
@@ -95,13 +96,8 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 	override def exec(): Unit = {
 		inputStream match {
 			case Some(is) =>
-				val query = is.writeStream
-					.outputMode("append")
-					.format("parquet")
-//					.format("console")
-					.option("checkpointLocation", s"/test/alex/$id/files/$jobId/checkpoint")
-					.option("path", s"/test/alex/$id/files/$jobId")
-					.start()
+
+
 				outputStream = query :: outputStream
 				
 				val listener = BPSConvertSchemaJob(id, jobId, spark, this, query, totalRow)

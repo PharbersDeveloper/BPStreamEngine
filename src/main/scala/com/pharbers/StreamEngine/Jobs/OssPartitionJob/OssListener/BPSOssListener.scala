@@ -44,7 +44,7 @@ case class BPSOssListener(spark: SparkSession, job: BPStreamJob) extends BPStrea
                 BPSOssPartitionMeta.pushLineToHDFS(jid.id, event2JobId(e), e.data)
                 post(s"""{"traceId": "${e.traceId}","jobId": "${e.jobId}"}""", "application/json")
                 pollKafka(new FileMetaData(jid.id, e.jobId, "/workData/streamingV2/" + jid.id + "/metadata/",
-                    "/workData/streamingV2/" + jid.id + "/files", ""))
+                    "/workData/streamingV2/files/" + jid.id + "/files", ""))
             }
         }
     }

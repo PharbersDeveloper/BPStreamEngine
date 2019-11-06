@@ -20,7 +20,7 @@ object BPSOssPartitionJobContainer {
 }
 
 class BPSOssPartitionJobContainer(override val strategy: BPSKfkJobStrategy, val spark: SparkSession, config: Map[String, String]) extends BPSJobContainer with BPDynamicStreamJob{
-    val id = "0829b025-48ac-450c-843c-6d4ee91765ca"
+    val id = UUID.randomUUID().toString
     type T = BPSKfkJobStrategy
     import spark.implicits._
 
@@ -36,9 +36,8 @@ class BPSOssPartitionJobContainer(override val strategy: BPSKfkJobStrategy, val 
             .option("kafka.ssl.truststore.password", "pharbers")
             .option("kafka.ssl.endpoint.identification.algorithm", " ")
             .option("startingOffsets", "earliest")
-            //.option("startingOffsets", "latest")
             .option("subscribe", strategy.getTopic)
-            .option("failOnDataLoss", "false")
+//            .option("failOnDataLoss", "false")
             .load()
 
         inputStream = Some(reading
@@ -63,8 +62,8 @@ class BPSOssPartitionJobContainer(override val strategy: BPSKfkJobStrategy, val 
                 .partitionBy("jobId")
                 .format("parquet")
                 .outputMode("append")
-                .option("checkpointLocation", "/workData/streamingV2/" +  this.id + "/checkpoint")
-                .option("path", "/workData/streamingV2/" + this.id + "/files")
+                .option("checkpointLocation", "/workData/streamingV2/checkpoint/" +  this.id + "/checkpoint")
+                .option("path", "/workData/streamingV2/files/" + this.id + "/files")
                 .start()
         }
         case None => ???
