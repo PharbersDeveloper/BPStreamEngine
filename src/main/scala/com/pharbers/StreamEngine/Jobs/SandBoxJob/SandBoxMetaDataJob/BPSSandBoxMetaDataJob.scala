@@ -1,16 +1,11 @@
 package com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxMetaDataJob
 
-import java.net.{HttpURLConnection, URL}
-import java.nio.charset.StandardCharsets
 
 import com.pharbers.StreamEngine.Jobs.SandBoxJob.FileMeta2Mongo.BPSMongo.BPFileMeta2Mongo
-import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSJobStrategy
-import com.pharbers.StreamEngine.Utils.StreamJob.{BPSJobContainer, BPStreamJob}
-import org.apache.spark.sql
-import org.apache.spark.sql.{DataFrame, SparkSession}
-
+import org.apache.spark.sql.SparkSession
 import scala.util.parsing.json._
 
+// TODO: 需要重构拓展不好，所有血缘入库的MetaData地方都应该走这个job
 object BPSSandBoxMetaDataJob {
 	def apply(path: String,
 	          jobId: String,
@@ -30,18 +25,4 @@ class BPSSandBoxMetaDataJob(path: String, jobId: String, spark: SparkSession) {
 		val length: Int = regJson(JSON.parseFull(metaData.last)).getOrElse("length", 0).toString.toDouble.toInt
 		BPFileMeta2Mongo(jobId, Nil, schema, length).SchemaData()
 	}
-	
-	
-//	def post(body: String, contentType: String): Unit = {
-//		val conn = new URL("http://192.168.100.116:36416/v0/Stream2HDFSFinish").openConnection.asInstanceOf[HttpURLConnection]
-//		val postDataBytes = body.getBytes(StandardCharsets.UTF_8)
-//		conn.setRequestMethod("POST")
-//		conn.setRequestProperty("Content-Type", contentType)
-//		conn.setRequestProperty("Content-Length", String.valueOf(postDataBytes.length))
-//		conn.setConnectTimeout(60000)
-//		conn.setReadTimeout(60000)
-//		conn.setDoOutput(true)
-//		conn.getOutputStream.write(postDataBytes)
-//		conn.getResponseCode
-//	}
 }

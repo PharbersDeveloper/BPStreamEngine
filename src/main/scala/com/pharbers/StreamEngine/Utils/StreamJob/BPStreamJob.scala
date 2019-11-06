@@ -25,7 +25,7 @@ trait BPStreamJob {
         outputStream.foreach(_.stop())
         inputStream match {
             case Some(is) =>
-            case None => ???
+            case None =>
         }
     }
     def exec(): Unit = {}
