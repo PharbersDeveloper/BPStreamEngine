@@ -96,7 +96,13 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 	override def exec(): Unit = {
 		inputStream match {
 			case Some(is) =>
-
+				val query = is.writeStream
+						.outputMode("append")
+						.format("parquet")
+//					.format("console")
+						.option("checkpointLocation", s"/test/alex/$id/files/$jobId/checkpoint")
+						.option("path", s"/test/alex/$id/files/$jobId")
+						.start()
 
 				outputStream = query :: outputStream
 				
