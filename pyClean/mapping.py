@@ -28,6 +28,12 @@ def create_mapping():
             "Candidate": ["城市", "CITY", "City"]
         },
         {
+            "ColName": "PREFECTURE_NAME",
+            "ColDesc": "区县名",
+            "Type": "String",
+            "Candidate": ["区县"]
+        },
+        {
             "ColName": "YEAR",
             "ColDesc": "年份",
             "Type": "Integer",

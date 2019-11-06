@@ -2,59 +2,59 @@ package com.pharbers.StreamEngine.Jobs.PyJob
 
 import org.apache.spark.sql
 import org.json4s.DefaultFormats
+import scala.util.parsing.json.JSON
 import java.nio.charset.StandardCharsets
-
 import org.apache.hadoop.conf.Configuration
 import org.json4s.jackson.Serialization.write
-import com.pharbers.StreamEngine.Utils.Event.BPSEvents
 import org.apache.spark.sql.{ForeachWriter, Row, SparkSession}
 import org.apache.hadoop.fs.{FSDataOutputStream, FileSystem, Path}
 import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSJobStrategy
 import com.pharbers.StreamEngine.Utils.StreamJob.{BPSJobContainer, BPStreamJob}
 import java.io.{BufferedReader, BufferedWriter, InputStreamReader, OutputStreamWriter}
-import org.json4s.DefaultFormats
-import org.json4s.jackson.Serialization.write
-import org.apache.spark.sql.functions.regexp_replace
-import scala.util.parsing.json.JSON
 
 object BPSPythonJob {
-    def apply(id: String,
-              spark: SparkSession,
-              inputStream: Option[sql.DataFrame],
-              container: BPSJobContainer): BPSPythonJob =
-        new BPSPythonJob(id, spark, inputStream, container)
+    def apply(id: String, spark: SparkSession,
+              inputStream: Option[sql.DataFrame], container: BPSJobContainer,
+              jobConf: Map[String, Any]): BPSPythonJob =
+        new BPSPythonJob(id, spark, inputStream, container, jobConf)
 }
 
-class BPSPythonJob(val id: String,
-                   val spark: SparkSession,
-                   val is: Option[sql.DataFrame],
-                   val container: BPSJobContainer) extends BPStreamJob with Serializable {
+// TODO 目前很多功能还没有定制化，如选择执行的 Python 入口
+/** 执行 Python 的 Job
+ *
+ * @author clock
+ * @version 0.1
+ * @since 2019/11/6 17:43
+ * @node 可用的配置参数
+ * {{{
+ *     hdfsAddr = "hdfs://spark.master:9000"
+ *     resultPath = "hdfs:///test/sub/"
+ *     metadata = Map("jobId" -> "a", "fileName" -> "b")
+ * }}}
+ */
+class BPSPythonJob(override val id: String, override val spark: SparkSession,
+                   is: Option[sql.DataFrame], container: BPSJobContainer,
+                   jobConf: Map[String, Any]) extends BPStreamJob with Serializable {
 
     type T = BPSJobStrategy
     override val strategy: BPSJobStrategy = null
+
+    val hdfsAddr: String = jobConf.getOrElse("hdfsAddr", "hdfs://spark.master:9000").toString
+    val resultPath: String =
+        if(jobConf("resultPath").toString.endsWith("/"))
+            jobConf("resultPath").toString + id
+        else
+            jobConf("resultPath").toString + "/" + id
+    val metadata: Map[String, Any] = jobConf("metadata").asInstanceOf[Map[String, Any]]
 
     override def open(): Unit = {
         inputStream = is
     }
 
     override def exec(): Unit = {
-        val resultPath = "/test/qi/" + id
         val successPath = resultPath + "/file"
         val errPath = resultPath + "/err"
         val metadataPath = resultPath + "/metadata"
-
-        val metaData = spark.sparkContext
-                .textFile(s"/test/alex/ff89f6cf-7f52-4ae1-a5ec-2609169b3994/metadata/bf28d-1e0e-4abe-822c-bd09b0")
-                .collect()
-                .map(_.toString())
-                .map { row =>
-                    if (row.startsWith("{")) {
-                        val tmp = row.split(":")
-                        tmp(0).tail.replace("\"", "") -> tmp(1).init.replace("\"", "")
-                    } else {
-                        "schema" -> JSON.parseFull(row).get
-                    }
-                }.toMap
 
         var isFirst = true
         inputStream match {
@@ -65,11 +65,11 @@ class BPSPythonJob(val id: String,
                             var errBufferedWriter: BufferedWriter = _
                             var metadataBufferedWriter: BufferedWriter = _
 
-                            def openHdfs(paht: String): BufferedWriter = {
-                                val hdfsWritePath: Path = new Path(paht)
+                            def openHdfs(path: String): BufferedWriter = {
+                                val hdfsWritePath: Path = new Path(path)
 
                                 val configuration: Configuration = new Configuration()
-                                configuration.set("fs.defaultFS", "hdfs://spark.master:9000")
+                                configuration.set("fs.defaultFS", hdfsAddr)
 
                                 val fileSystem: FileSystem = FileSystem.get(configuration)
                                 val fsDataOutputStream: FSDataOutputStream =
@@ -90,7 +90,7 @@ class BPSPythonJob(val id: String,
 
                             override def process(value: Row): Unit = {
                                 val data = JSON.parseFull(value.getAs[String]("data").replace("\\\"", "")).get
-                                val argv = write(Map("metadata" -> metaData, "data" -> data))(DefaultFormats)
+                                val argv = write(Map("metadata" -> metadata, "data" -> data))(DefaultFormats)
                                 val pyArgs = Array[String]("/usr/bin/python", "./main.py", argv)
                                 val pr = Runtime.getRuntime.exec(pyArgs)
                                 val in = new BufferedReader(new InputStreamReader(pr.getInputStream))
@@ -127,7 +127,6 @@ class BPSPythonJob(val id: String,
                                 metadataBufferedWriter.close()
                             }
                         })
-//                        .trigger(Trigger.Continuous("1 second"))
                         .start()
                         .awaitTermination()
             case None => ???

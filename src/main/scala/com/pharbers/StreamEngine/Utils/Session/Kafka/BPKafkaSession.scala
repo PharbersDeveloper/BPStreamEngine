@@ -14,6 +14,19 @@ object BPKafkaSession {
     }
 }
 
+/** 创建 KafkaSession 实例
+ *
+ * @author clock
+ * @version 0.1
+ * @since 2019/11/6 17:37
+ * @node 可用的配置参数
+ * {{{
+ *     url = kafka url
+ *     schema = schema url
+ *     topic = topic name
+ * }}}
+ * @example {{{val kafka = new BPKafkaSession(Map("topic" -> "test"))}}}
+ */
 @Component(name = "BPKafkaSession", `type` = "session")
 class BPKafkaSession(config: Map[String, String]) extends BPKafkaSessionConfig {
     val kafkaConfigs: BPSConfig = new BPSConfig(configDef, config.asJava)
