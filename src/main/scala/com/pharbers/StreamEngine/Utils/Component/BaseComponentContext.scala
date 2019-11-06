@@ -1,15 +1,12 @@
 package com.pharbers.StreamEngine.Utils.Component
 
-import com.pharbers.StreamEngine.Utils.Annotation.{AnnotationSelector, Component}
-import com.pharbers.StreamEngine.Utils.Config.AppConfig
-
-import scala.reflect.runtime.universe
 import collection.JavaConverters._
+import scala.reflect.runtime.universe
+import com.pharbers.StreamEngine.Utils.Config.AppConfig
+import com.pharbers.StreamEngine.Utils.Annotation.{AnnotationSelector, Component}
 
 /** 功能描述
   *
-  * @param args 构造参数
-  * @tparam T 构造泛型参数
   * @author dcs
   * @version 0.0
   * @since 2019/10/16 16:01
@@ -17,7 +14,7 @@ import collection.JavaConverters._
   */
 private[Component] class BaseComponentContext(var configs: List[ComponentConfig]) extends ComponentContext{
     private var container = Map[String, AnyRef]()
-    val componentAnnotations: Map[String, (String, Component)] = AppConfig().getList(AppConfig.COMPONENT_PACKAGES).asScala
+    val componentAnnotations: Map[String, (String, Component)] = AppConfig().getList(AppConfig.COMPONENT_PACKAGES_KEY).asScala
             .flatMap(x => AnnotationSelector.getAnnotationClass(x, classOf[Component], true))
             .map(x => (x._2.name, (x._1, x._2))).toMap
 

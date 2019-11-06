@@ -1,7 +1,6 @@
 package com.pharbers.StreamEngine.Jobs.KfkSinkJob
 import java.util.UUID
 
-import com.pharbers.StreamEngine.Utils.Config.KafkaConfig
 import com.pharbers.StreamEngine.Utils.StreamJob.{BPSJobContainer, BPStreamJob}
 import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.{BPSJobStrategy, BPSKfkJobStrategy}
 import org.apache.spark.sql
