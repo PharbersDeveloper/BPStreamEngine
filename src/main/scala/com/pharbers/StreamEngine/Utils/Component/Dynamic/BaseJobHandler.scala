@@ -2,11 +2,10 @@ package com.pharbers.StreamEngine.Utils.Component.Dynamic
 
 import java.time.Duration
 
-import com.pharbers.StreamEngine.Jobs.OssJob.DynamicJobDemo
 import com.pharbers.StreamEngine.Utils.Annotation.Component
 import com.pharbers.StreamEngine.Utils.Component.ComponentContext
 import com.pharbers.StreamEngine.Utils.Component.Node.NodeMsgHandler
-import com.pharbers.StreamEngine.Utils.Config.AppConfig
+import com.pharbers.StreamEngine.Utils.Config.{ BPSConfig}
 import com.pharbers.StreamEngine.Utils.Event.EventHandler.BPSEventHandler
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamListener
 import com.pharbers.StreamEngine.Utils.StreamJob.BPDynamicStreamJob
@@ -22,8 +21,6 @@ import scala.reflect.runtime.universe._
 
 /** 功能描述
   *
-  * @param args 构造参数
-  * @tparam T 构造泛型参数
   * @author dcs
   * @version 0.0
   * @since 2019/10/22 16:22
@@ -34,7 +31,7 @@ private[Component] class BaseJobHandler(nodeHandler: NodeMsgHandler, jobBuilder:
     final val TOPIC_CONFIG_KEY = "topic"
     final val TOPIC_CONFIG_DOC = "kafka topic"
     configDef.define(TOPIC_CONFIG_KEY, Type.STRING, "stream_job_submit", Importance.HIGH, TOPIC_CONFIG_DOC)
-    private val handlerConfig: AppConfig = new AppConfig(configDef, config.asJava)
+    private val handlerConfig: BPSConfig = new BPSConfig(configDef, config.asJava)
     private var jobs: Map[String, BPDynamicStreamJob] = Map.empty
 
     override def add(jobMsg: JobMsg): Unit = {

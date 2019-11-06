@@ -1,7 +1,7 @@
 package com.pharbers.StreamEngine.Utils.Component.Node
 
 import com.pharbers.StreamEngine.Utils.Annotation.Component
-import com.pharbers.StreamEngine.Utils.Config.AppConfig
+import com.pharbers.StreamEngine.Utils.Config.BPSConfig
 import collection.JavaConverters._
 
 /** 功能描述
@@ -15,7 +15,7 @@ import collection.JavaConverters._
   */
 @Component(name = "BaseNodeMsgHandler", `type` = "NodeMsgHandler")
 private[Component] class BaseNodeMsgHandler(config: Map[String, String]) extends NodeMsgHandler{
-    val handlerConfig: AppConfig = new AppConfig(configDef,  config.asJava)
+    val handlerConfig: BPSConfig = new BPSConfig(configDef,  config.asJava)
     private var nodes: Map[String, NodeMsg] = Map.empty
 
     override def find(id: String): Option[NodeMsg] = nodes.get(id)

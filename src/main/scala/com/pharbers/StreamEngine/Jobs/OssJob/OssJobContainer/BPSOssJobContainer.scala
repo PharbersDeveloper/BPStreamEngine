@@ -24,6 +24,7 @@ class BPSOssJobContainer(override val strategy: BPSKfkJobStrategy, val spark: Sp
     //    val listener = new BPSOssListener(spark, this)
 
     override def open(): Unit = {
+        //todo: options(map[String, String])
         val reading = spark.readStream
             .format("kafka")
             .option("kafka.bootstrap.servers", "123.56.179.133:9092")
