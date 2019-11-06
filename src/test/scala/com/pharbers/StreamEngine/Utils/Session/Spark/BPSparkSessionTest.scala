@@ -15,6 +15,6 @@ class BPSparkSessionTest extends FunSuite {
     }
 
     test("Create BPSparkSession By Args Config ") {
-        assert(BPSparkSession(Map()) != null)
+        assert(BPSparkSession(Map("app.name" -> "BPSparkSessionTest")) != null)
     }
 }
