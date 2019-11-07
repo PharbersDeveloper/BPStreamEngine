@@ -8,6 +8,7 @@ trait BPSparkSessionConfig {
     val defaultAppName = "bp-stream-engine"
     val defaultMaster = "yarn"
     val defaultLogLevel = "WARN"
+    val defaultRunModel = "client"
 
     final val SPARK_CONFIGS_PATH_KEY = "spark.configs.path"
     final val SPARK_CONFIGS_PATH_DOC = "spark 配置文件目录"
@@ -25,5 +26,5 @@ trait BPSparkSessionConfig {
             .define(APP_NAME_KEY, Type.STRING, defaultAppName, Importance.HIGH, APP_NAME_DOC)
             .define(MASTER_KEY, Type.STRING, defaultMaster, Importance.HIGH, MASTER_DOC)
             .define(LOG_LEVEL_KEY, Type.STRING, defaultLogLevel, Importance.HIGH, LOG_LEVEL_DOC)
-            .define(RUN_MODEL_KEY, Type.STRING, Importance.HIGH, RUN_MODEL_DOC)
+            .define(RUN_MODEL_KEY, Type.STRING, defaultRunModel, Importance.HIGH, RUN_MODEL_DOC)
 }

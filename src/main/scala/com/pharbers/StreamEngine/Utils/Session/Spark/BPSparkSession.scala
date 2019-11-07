@@ -55,6 +55,7 @@ class BPSparkSession(config: Map[String, String]) extends BPSparkSessionConfig {
             spark.sparkContext.addJar("./jars/kafka-avro-serializer-5.2.1.jar")
             spark.sparkContext.addJar("./jars/common-config-5.2.1.jar")
             spark.sparkContext.addJar("./jars/common-utils-5.2.1.jar")
+            spark.sparkContext.addJar("./jars/logs-1.0.jar")
         case _ =>
     }
 }
