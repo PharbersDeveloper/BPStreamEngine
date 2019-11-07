@@ -42,7 +42,7 @@ def create_mapping():
         {
             "ColName": "QUARTER",
             "ColDesc": "季度",
-            "Type": "Integer",
+            "Type": "String", #"Integer", TODO 月份里有个是2018Q1
             "Candidate": ["季度", "年季", "QUARTER"]
         },
         {
