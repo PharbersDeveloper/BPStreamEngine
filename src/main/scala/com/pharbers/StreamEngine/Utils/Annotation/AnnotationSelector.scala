@@ -56,10 +56,11 @@ object AnnotationSelector {
       */
     private def getClassNameByFile(filePath: String, childPackage: Boolean, packagePath: String): Seq[String] = {
         val separator = java.io.File.separator
-        val file = new File(filePath)
+        //todo: 在test里运行时因为会有同名包，这儿的url可能会变成test里面的出现bug,感觉这儿很容易出其他bug，\时window的分隔符，但是同时时java和四则的转义符
+        val classPath = filePath.replace("test-classes/" + packagePath.replaceAll("\\\\", "/"), "classes/" + packagePath.replaceAll("\\\\", "/"))
+        val file = new File(classPath)
         val childFiles = file.listFiles
         childFiles.filter(x => !x.isDirectory && x.getPath.endsWith(".class"))
-                //todo: 在test里面运行时目录结构不是/classes/开始的，需要改一下
                 .map(x => x.getPath.substring(x.getPath.indexOf(packagePath), x.getPath.lastIndexOf(".")).replace(separator, ".")) ++
                 childFiles.filter(x => x.isDirectory && childPackage).flatMap(x => getClassNameByFile(x.getPath, childPackage, packagePath))
     }
