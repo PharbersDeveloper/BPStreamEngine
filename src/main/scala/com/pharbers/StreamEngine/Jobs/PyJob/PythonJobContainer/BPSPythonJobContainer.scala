@@ -34,6 +34,13 @@ class BPSPythonJobContainer(override val strategy: BPSKfkJobStrategy,
     val matedataPath = "hdfs:///test/alex/07b8411a-5064-4271-bfd3-73079f2b42b2/metadata/"
     val filesPath = "hdfs:///test/alex/07b8411a-5064-4271-bfd3-73079f2b42b2/files/"
     val resultPath = "hdfs:///test/qi/"
+    val pyFiles = List(
+        "./pyClean/main.py",
+        "./pyClean/results.py",
+        "./pyClean/auth.py",
+        "./pyClean/mapping.py",
+        "./pyClean/cleaning.py"
+    )
 
     override def open(): Unit = {
         metadata = BPSParseSchema.parseMetadata(matedataPath + id)(spark)
@@ -49,15 +56,11 @@ class BPSPythonJobContainer(override val strategy: BPSKfkJobStrategy,
 
     override def exec(): Unit = inputStream match {
         case Some(_) =>
+            pyFiles.foreach(spark.sparkContext.addFile)
             val job = BPSPythonJob(id, spark, inputStream, this, Map(
                 "resultPath" -> resultPath,
                 "metadata" -> metadata
             ))
-            spark.sparkContext.addFile("./pyClean/main.py")
-            spark.sparkContext.addFile("./pyClean/results.py")
-            spark.sparkContext.addFile("./pyClean/auth.py")
-            spark.sparkContext.addFile("./pyClean/mapping.py")
-            spark.sparkContext.addFile("./pyClean/cleaning.py")
             job.open()
             job.exec()
         case None => ???

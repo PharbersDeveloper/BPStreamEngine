@@ -20,6 +20,16 @@ object ReadParquetScript extends App {
 
     val spark = BPSparkSession()
 
+    def byBatchForCsv(): Unit = {
+        val reading = spark.read
+                .format("com.databricks.spark.csv")
+                .option("header", "true") //这里如果在csv第一行有属性的话，没有就是"false"
+                .option("inferSchema", true.toString)//这是自动推断属性列的数据类型。
+                .load("hdfs:///test/qi/57fe0-2bda-4880-8301-dc55a0/file") //文件的路径
+        reading.show(false)
+    }
+    byBatchForCsv()
+
     def byBatch(): Unit = {
         val reading = spark.read.parquet(filesPath)
         reading.show(false)
@@ -40,6 +50,4 @@ object ReadParquetScript extends App {
                 .start()
         query.awaitTermination()
     }
-
-    byStream()
 }
