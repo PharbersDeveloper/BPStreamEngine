@@ -32,11 +32,15 @@ class BPSparkSession(config: Map[String, String]) extends BPSparkSessionConfig {
     spark.sparkContext.setLocalProperty("host", InetAddress.getLocalHost.getHostAddress)
 
     // 初始环境设置
-    spark.sparkContext.addFile("./kafka.broker1.keystore.jks")
-    spark.sparkContext.addFile("./kafka.broker1.truststore.jks")
-    spark.sparkContext.addJar("./target/BP-Stream-Engine-1.0-SNAPSHOT.jar")
-    spark.sparkContext.addJar("./jars/kafka-schema-registry-client-5.2.1.jar")
-    spark.sparkContext.addJar("./jars/kafka-avro-serializer-5.2.1.jar")
-    spark.sparkContext.addJar("./jars/common-config-5.2.1.jar")
-    spark.sparkContext.addJar("./jars/common-utils-5.2.1.jar")
+    sparkConfigs.getString(RUN_MODEL_KEY) match {
+        case "client" =>
+            spark.sparkContext.addFile("./kafka.broker1.keystore.jks")
+            spark.sparkContext.addFile("./kafka.broker1.truststore.jks")
+            spark.sparkContext.addJar("./target/BP-Stream-Engine-1.0-SNAPSHOT.jar")
+            spark.sparkContext.addJar("./jars/kafka-schema-registry-client-5.2.1.jar")
+            spark.sparkContext.addJar("./jars/kafka-avro-serializer-5.2.1.jar")
+            spark.sparkContext.addJar("./jars/common-config-5.2.1.jar")
+            spark.sparkContext.addJar("./jars/common-utils-5.2.1.jar")
+        case _ =>
+    }
 }

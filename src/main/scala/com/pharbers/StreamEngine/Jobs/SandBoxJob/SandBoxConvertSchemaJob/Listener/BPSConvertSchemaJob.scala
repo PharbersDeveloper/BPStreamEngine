@@ -21,12 +21,12 @@ case class BPSConvertSchemaJob(id: String,
 		val cumulative = query.recentProgress.map(_.numInputRows).sum
 
 		if(query.lastProgress != null) {
-			println("---->" + query.lastProgress.numInputRows)
+			logger.debug("---->" + query.lastProgress.numInputRows)
 		}
-		println("=========> Total Row " + sumRow)
-		println("=====>" + cumulative)
+		logger.debug("=========> Total Row " + sumRow)
+		logger.debug("=====>" + cumulative)
 		if (cumulative >= sumRow) {
-			println("******>" + cumulative)
+			logger.debug("******>" + cumulative)
 			// TODO 将处理好的Schema发送邮件
 //				pollKafka(new FileMetaData(id, jobId, "/test/alex/" + id + "/metadata/" + "",
 //					"/test/alex/" + id + "/files/" + "jobId=" + "", ""))
@@ -43,6 +43,6 @@ case class BPSConvertSchemaJob(id: String,
 		val topic = "sb_file_meta_job_test"
 		val pkp = new PharbersKafkaProducer[String, FileMetaData]
 		val fu = pkp.produce(topic, msg.getJobId.toString, msg)
-		println(fu.get(10, TimeUnit.SECONDS))
+		logger.info(fu.get(10, TimeUnit.SECONDS))
 	}
 }

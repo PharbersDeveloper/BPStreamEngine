@@ -6,7 +6,9 @@
     "config": {
       "app.name": "bp-stream-engine",
       "master": "yarn",
-      "spark.configs.path": "sparkConfig.properties"
+      "spark.configs.path": "sparkConfig.properties",
+      "log.level": "INFO",
+      "run.model": "cluster"
     }
   },
   {

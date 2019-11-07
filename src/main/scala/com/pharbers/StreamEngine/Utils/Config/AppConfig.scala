@@ -25,12 +25,16 @@ object AppConfig {
     final val THREAD_MAX_KEY = "thread.max"
     final val THREAD_MAX_DOC = "线程池最大线程数"
 
+    final val LOG_CONFIG_PATH_KEY = "log.config.path"
+    final val  LOG_CONFIG_PATH_DOC = "log配置文件路径"
+
     private def configDef: ConfigDef = new ConfigDef()
                 .define(PROJECT_NAME_KEY, Type.STRING, Importance.HIGH, PROJECT_NAME_DOC)
                 .define(HOSTNAME_KEY, Type.STRING, Importance.HIGH, HOSTNAME_DOC)
                 .define(COMPONENT_CONFIG_PATH_KEY, Type.STRING, Importance.HIGH, COMPONENT_CONFIG_PATH_DOC)
                 .define(COMPONENT_PACKAGES_KEY, Type.LIST, Importance.HIGH, COMPONENT_PACKAGES_DOC)
                 .define(THREAD_MAX_KEY, Type.INT, Importance.HIGH, THREAD_MAX_DOC)
+                .define(LOG_CONFIG_PATH_KEY, Type.STRING, Importance.HIGH, LOG_CONFIG_PATH_DOC)
 
     def apply(): BPSConfig = new BPSConfig(configDef, baseProps)
 

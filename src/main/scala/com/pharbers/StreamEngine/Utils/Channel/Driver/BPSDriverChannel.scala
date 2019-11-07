@@ -11,6 +11,7 @@ import com.pharbers.StreamEngine.Utils.Annotation.Component
 import com.pharbers.StreamEngine.Utils.Event.BPSEvents
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamRemoteListener
 import com.pharbers.StreamEngine.Utils.ThreadExecutor.ThreadExecutor
+import com.pharbers.util.log.PhLogable
 import org.json4s._
 import org.json4s.jackson.Serialization.read
 
@@ -45,7 +46,7 @@ object BPSDriverChannel {
 }
 
 @Component(name = "BPSDriverChannel", `type` = "BPSDriverChannel")
-class BPSDriverChannel(config: Map[String, String]) extends Runnable {
+class BPSDriverChannel(config: Map[String, String]) extends Runnable with PhLogable{
 
     lazy val host: String = InetAddress.getLocalHost.getHostAddress
     lazy val port: Int = 56789
@@ -65,8 +66,7 @@ class BPSDriverChannel(config: Map[String, String]) extends Runnable {
 
         val ops: Int = driverSocket.validOps
         val selectKy: SelectionKey = driverSocket.register(selector, ops, null)
-        //todo： log
-        println("Driver Channel Server")
+        logger.info("Driver Channel Server")
         while (true) {
             // Selects a set of keys whose corresponding channels are ready for I/O operations
             selector.select()
@@ -81,8 +81,7 @@ class BPSDriverChannel(config: Map[String, String]) extends Runnable {
                 // Tests whether this key's channel is ready to accept a new socket connection
                 if (item.isAcceptable()) {
                     val client = driverSocket.accept()
-                    //todo: log
-                    println("Connection Accepted: " + client.getLocalAddress())
+                    logger.info("Connection Accepted: " + client.getLocalAddress())
                     client.configureBlocking(false)
                     client.register(selector, SelectionKey.OP_READ)
 
@@ -92,14 +91,12 @@ class BPSDriverChannel(config: Map[String, String]) extends Runnable {
                     val Buffer = ByteBuffer.allocate(4096)
                     if (client.read(Buffer) > 0) {
                         val result = new String(Buffer.array()).trim()
-                        //todo: log
-                        println("Message received: " + result)
+                        logger.info("Message received: " + result)
 
                         if (result.equals("alfred end")) {
                             client.close()
-                            //todo: log
-                            println("It's time to close connection")
-                            println("Server will keep running. Try running client again to establish new connection")
+                            logger.info("It's time to close connection")
+                            logger.info("Server will keep running. Try running client again to establish new connection")
                         }
 
                         implicit val formats = DefaultFormats

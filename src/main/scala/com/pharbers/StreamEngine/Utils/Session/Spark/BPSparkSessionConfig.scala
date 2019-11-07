@@ -17,10 +17,13 @@ trait BPSparkSessionConfig {
     final val MASTER_DOC = "master节点"
     final val LOG_LEVEL_KEY = "log.level"
     final val LOG_LEVEL_DOC = "日志等级 ERROR、WARN、INFO、DEBUG、TRACE"
+    final val RUN_MODEL_KEY = "run.model"
+    final val RUN_MODEL_DOC = "运行的模式client, 或者cluster"
 
     final val configDef: ConfigDef = new ConfigDef()
             .define(SPARK_CONFIGS_PATH_KEY, Type.STRING, defaultSparkConfigsPath, Importance.HIGH, SPARK_CONFIGS_PATH_DOC)
             .define(APP_NAME_KEY, Type.STRING, defaultAppName, Importance.HIGH, APP_NAME_DOC)
             .define(MASTER_KEY, Type.STRING, defaultMaster, Importance.HIGH, MASTER_DOC)
             .define(LOG_LEVEL_KEY, Type.STRING, defaultLogLevel, Importance.HIGH, LOG_LEVEL_DOC)
+            .define(RUN_MODEL_KEY, Type.STRING, Importance.HIGH, RUN_MODEL_DOC)
 }

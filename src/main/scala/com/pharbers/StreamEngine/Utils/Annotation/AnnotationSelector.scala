@@ -35,7 +35,7 @@ object AnnotationSelector {
         val url: URL = loader.getResource(packagePath)
         if (url != null) {
             val classes = url.getProtocol match {
-                case "file" => getClassNameByFile(url.getPath, childPackage)
+                case "file" => getClassNameByFile(url.getPath, childPackage, packagePath.replace("/", java.io.File.separator))
                 case "jar" => getClassNameByJar(url.getPath, childPackage)
             }
             classes.map(x => {
@@ -54,13 +54,14 @@ object AnnotationSelector {
       * @param childPackage 是否遍历子包
       * @return 类完整路径
       */
-    private def getClassNameByFile(filePath: String, childPackage: Boolean): Seq[String] = {
+    private def getClassNameByFile(filePath: String, childPackage: Boolean, packagePath: String): Seq[String] = {
         val separator = java.io.File.separator
         val file = new File(filePath)
         val childFiles = file.listFiles
         childFiles.filter(x => !x.isDirectory && x.getPath.endsWith(".class"))
-                .map(x => x.getPath.substring(x.getPath.indexOf(s"${separator}classes") + 9, x.getPath.lastIndexOf(".")).replace(separator, ".")) ++
-                childFiles.filter(x => x.isDirectory && childPackage).flatMap(x => getClassNameByFile(x.getPath, childPackage))
+                //todo: 在test里面运行时目录结构不是/classes/开始的，需要改一下
+                .map(x => x.getPath.substring(x.getPath.indexOf(packagePath), x.getPath.lastIndexOf(".")).replace(separator, ".")) ++
+                childFiles.filter(x => x.isDirectory && childPackage).flatMap(x => getClassNameByFile(x.getPath, childPackage, packagePath))
     }
 
     private def getClassNameByJar(jarPath: String, childPackage: Boolean): Seq[String] = {
