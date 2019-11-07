@@ -87,8 +87,9 @@ private[Component] class BaseJobHandler(nodeHandler: NodeMsgHandler, jobBuilder:
                         try {
                             add(read[JobMsg](x.value().getJob.toString))
                         } catch {
-                            //todo: log
-                            case e: Exception => new Exception(s"jobId: ${x.value().getJob}, traceId: ${x.value().getTraceId}", e)
+                            case e: Exception =>
+                                val exception = new Exception(s"jobId: ${x.value().getJob}, traceId: ${x.value().getTraceId}", e)
+                                logger.error("add job error",exception)
                         }
                     case "addList" => read[List[JobMsg]](x.value().getJob.toString).foreach(x => add(x))
                     case "stop" => finish(x.value().getJob.toString)

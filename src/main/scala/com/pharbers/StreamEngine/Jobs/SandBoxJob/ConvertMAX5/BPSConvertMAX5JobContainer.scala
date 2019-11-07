@@ -88,7 +88,7 @@ class BPSConvertMAX5JobContainer(val id: String,
 	override def exec(): Unit = {
 		inputStream match {
 			case Some(is) =>
-				println(s"=====>>>$jobId")
+				logger.info(s"=====>>>$jobId")
 				val query = is.writeStream
 					.outputMode("append")
 //					.format("parquet")

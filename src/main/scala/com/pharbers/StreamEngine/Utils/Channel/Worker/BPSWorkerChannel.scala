@@ -4,6 +4,8 @@ import java.net.{InetAddress, InetSocketAddress}
 import java.nio.ByteBuffer
 import java.nio.channels.SocketChannel
 
+import com.pharbers.util.log.PhLogable
+
 
 object BPSWorkerChannel {
 //    var host: Broadcast[String] = _
@@ -19,7 +21,7 @@ object BPSWorkerChannel {
 //    }
 }
 
-class BPSWorkerChannel(host: String, port: Int) extends Serializable {
+class BPSWorkerChannel(host: String, port: Int) extends Serializable with PhLogable{
 
     lazy val addr = new InetSocketAddress(host, port)
 
@@ -31,8 +33,7 @@ class BPSWorkerChannel(host: String, port: Int) extends Serializable {
         }catch {
             case e: Exception => throw new Exception(s"error~~~worker~~~~host:${addr.getHostString} $host, name: ${addr.getPort}", e)
         }
-        //todo: log
-        println("Connecting to Server on port 55555 ...")
+        logger.info("Connecting to Server on port 55555 ...")
     }
 
     def pushMessage(msg: String): Unit = {
