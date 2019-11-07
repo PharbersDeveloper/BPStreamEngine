@@ -75,7 +75,7 @@ class BPSPythonJob(override val id: String, override val spark: SparkSession,
                                 configuration.set("fs.defaultFS", hdfsAddr)
 
                                 val fileSystem: FileSystem = FileSystem.get(configuration)
-                                val hdfsWritePath = new Path(path + partitionId + version)
+                                val hdfsWritePath = new Path(path + "/" + partitionId)
 
                                 val fsDataOutputStream: FSDataOutputStream =
                                     if (fileSystem.exists(hdfsWritePath))
