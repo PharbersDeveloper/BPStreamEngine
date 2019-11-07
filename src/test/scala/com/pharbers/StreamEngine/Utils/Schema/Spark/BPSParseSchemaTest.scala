@@ -18,7 +18,7 @@ class BPSParseSchemaTest extends FunSuite {
     test("解析在 Parquet 中 Metadata 的 Schema") {
         implicit val spark: SparkSession = BPSparkSession()
 
-        val st: StructType = BPSParseSchema.parseByMetadata(matedataPath + id)
+        val st: StructType = BPSParseSchema.parseSchemaByMetadata(matedataPath + id)
         assert(st != null)
         st.foreach(x => println(x))
     }

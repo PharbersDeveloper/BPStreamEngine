@@ -26,7 +26,7 @@ object ReadParquetScript extends App {
     }
 
     def byStream(): Unit = {
-        val loadSchema = BPSParseSchema.parseByMetadata(matedataPath + id)(spark)
+        val loadSchema = BPSParseSchema.parseSchemaByMetadata(matedataPath + id)(spark)
         val reading = spark.readStream
                 .schema(loadSchema)
                 .option("startingOffsets", "earliest")

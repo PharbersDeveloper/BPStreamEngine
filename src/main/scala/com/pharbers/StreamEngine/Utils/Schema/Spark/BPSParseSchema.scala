@@ -70,7 +70,7 @@ object BPSParseSchema {
      * @since 2019/11/6 17:34
      * @example {{{BPSParseSchema.parseByMetadata()()}}}
      */
-    def parseByMetadata(metadataPath: String)(implicit spark: SparkSession): StructType = {
+    def parseSchemaByMetadata(metadataPath: String)(implicit spark: SparkSession): StructType = {
         val matadataMap = parseMetadata(metadataPath)
         parseSchema(matadataMap("schema").asInstanceOf[List[_]])
     }
