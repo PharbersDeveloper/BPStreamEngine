@@ -1,8 +1,7 @@
-package com.pharbers.StreamEngine.Utils.Context
+package com.pharbers.StreamEngine.Utils.Component
 
-import org.scalatest.FunSuite
 import com.pharbers.StreamEngine.Utils.Log.BPSLogContext
-import com.pharbers.StreamEngine.Utils.Component.ComponentContext
+import org.scalatest.FunSuite
 
 /** Spark Session Test
  *
