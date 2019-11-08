@@ -12,7 +12,7 @@ import org.scalatest.FunSuite
 class SchemaTest extends FunSuite with MongoTrait {
 	import com.mongodb.casbah.Imports._
 	test("to Clock data数据") {
-		val context = ComponentContext()
+		ComponentContext.init()
 		val id = "ff89f6cf-7f52-4ae1-a5ec-2609169b3995"//UUID.randomUUID().toString
 		println(s"=========> uuid =>$id")
 		val spark = BPSparkSession()

@@ -22,12 +22,12 @@ class BPSSandBoxJobContainer( val spark: SparkSession, config: Map[String, Strin
 	
 	override def open(): Unit = {
 		// TODO log
-		println("初始化SandBoxJobContainer")
+		logger.info("初始化SandBoxJobContainer")
 	}
 	
 	override def exec(): Unit = {
 		// TODO log
-		println("执行SandBoxJobContainer")
+		logger.info("执行SandBoxJobContainer")
 		val job = BPKafkaJobListener(this.id, spark, this)
 		job.exec()
 	}

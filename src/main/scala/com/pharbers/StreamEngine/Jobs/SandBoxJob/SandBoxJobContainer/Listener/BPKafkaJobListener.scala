@@ -4,6 +4,7 @@ import com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxConvertSchemaJob.BPSSand
 import com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxMetaDataJob.BPSSandBoxMetaDataJob
 import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSJobStrategy
 import com.pharbers.StreamEngine.Utils.StreamJob.{BPSJobContainer, BPStreamJob}
+import com.pharbers.StreamEngine.Utils.ThreadExecutor.ThreadExecutor
 import com.pharbers.kafka.consumer.PharbersKafkaConsumer
 import com.pharbers.kafka.schema.FileMetaData
 import org.apache.kafka.clients.consumer.ConsumerRecord
@@ -25,7 +26,7 @@ class BPKafkaJobListener(val id: String,
 		if (record.value().getJobId.toString != hisJobId) {
 			hisJobId = record.value().getJobId.toString
 
-			println("Fuck ===>" + record.value().getJobId)
+			logger.info("Fuck ===>" + record.value().getJobId)
 			BPSSandBoxMetaDataJob(record.value().getMetaDataPath.toString,
 				record.value().getJobId.toString, spark).exec()
 
@@ -42,7 +43,7 @@ class BPKafkaJobListener(val id: String,
 			convertJob.open()
 			convertJob.exec()
 		} else {
-			println("咋还重复传递JobID呢")
+			logger.error("咋还重复传递JobID呢", hisJobId)
 		}
 
 		
@@ -57,14 +58,7 @@ class BPKafkaJobListener(val id: String,
 			1000,
 			Int.MaxValue, process
 		)
-		try {
-			val t = new Thread(pkc)
-			t.start()
-		} catch {
-			case e: Exception =>
-				println(e.getMessage)
-				pkc.close()
-		}
+		ThreadExecutor().execute(pkc)
 	}
 	
 	override def close(): Unit = {

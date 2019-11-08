@@ -14,7 +14,7 @@ def process(event):
     old_data = event["data"]
     metadata = event["metadata"]
 
-    file_name = string.split(metadata["fileName"], ".")[0]
+    file_name = "Pfizer_1701_1712_CPA" #string.split(metadata["fileName"], ".")[0]
     file_name = string.split(file_name, "_")
     file_company = file_name[0]
     file_source = file_name[len(file_name)-1]

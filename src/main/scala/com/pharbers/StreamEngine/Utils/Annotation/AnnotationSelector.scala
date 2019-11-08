@@ -8,8 +8,6 @@ import java.util.jar.{JarEntry, JarFile}
 
 /** 功能描述
   *
-  * @param args 构造参数
-  * @tparam T 构造泛型参数
   * @author dcs
   * @version 0.0
   * @since 2019/10/16 14:51
@@ -35,7 +33,7 @@ object AnnotationSelector {
         val url: URL = loader.getResource(packagePath)
         if (url != null) {
             val classes = url.getProtocol match {
-                case "file" => getClassNameByFile(url.getPath, childPackage)
+                case "file" => getClassNameByFile(url.getPath, childPackage, packagePath.replace("/", java.io.File.separator))
                 case "jar" => getClassNameByJar(url.getPath, childPackage)
             }
             classes.map(x => {
@@ -54,13 +52,15 @@ object AnnotationSelector {
       * @param childPackage 是否遍历子包
       * @return 类完整路径
       */
-    private def getClassNameByFile(filePath: String, childPackage: Boolean): Seq[String] = {
+    private def getClassNameByFile(filePath: String, childPackage: Boolean, packagePath: String): Seq[String] = {
         val separator = java.io.File.separator
-        val file = new File(filePath)
+        //todo: 在test里运行时因为会有同名包，这儿的url可能会变成test里面的出现bug,感觉这儿很容易出其他bug，\时window的分隔符，但是同时时java和四则的转义符
+        val classPath = filePath.replace("test-classes/" + packagePath.replaceAll("\\\\", "/"), "classes/" + packagePath.replaceAll("\\\\", "/"))
+        val file = new File(classPath)
         val childFiles = file.listFiles
         childFiles.filter(x => !x.isDirectory && x.getPath.endsWith(".class"))
-                .map(x => x.getPath.substring(x.getPath.indexOf(s"${separator}classes") + 9, x.getPath.lastIndexOf(".")).replace(separator, ".")) ++
-                childFiles.filter(x => x.isDirectory && childPackage).flatMap(x => getClassNameByFile(x.getPath, childPackage))
+                .map(x => x.getPath.substring(x.getPath.indexOf(packagePath), x.getPath.lastIndexOf(".")).replace(separator, ".")) ++
+                childFiles.filter(x => x.isDirectory && childPackage).flatMap(x => getClassNameByFile(x.getPath, childPackage, packagePath))
     }
 
     private def getClassNameByJar(jarPath: String, childPackage: Boolean): Seq[String] = {

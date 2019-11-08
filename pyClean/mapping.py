@@ -28,6 +28,12 @@ def create_mapping():
             "Candidate": ["城市", "CITY", "City"]
         },
         {
+            "ColName": "PREFECTURE_NAME",
+            "ColDesc": "区县名",
+            "Type": "String",
+            "Candidate": ["区县"]
+        },
+        {
             "ColName": "YEAR",
             "ColDesc": "年份",
             "Type": "Integer",
@@ -36,7 +42,7 @@ def create_mapping():
         {
             "ColName": "QUARTER",
             "ColDesc": "季度",
-            "Type": "Integer",
+            "Type": "String", #"Integer", TODO 月份里有个是2018Q1
             "Candidate": ["季度", "年季", "QUARTER"]
         },
         {

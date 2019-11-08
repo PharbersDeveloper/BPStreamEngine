@@ -1,13 +1,14 @@
 package com.pharbers.StreamEngine.Utils.Component.Node
 
-import com.pharbers.StreamEngine.Utils.Annotation.Component
 import com.pharbers.StreamEngine.Utils.Config.BPSConfig
-import collection.JavaConverters._
+import com.pharbers.StreamEngine.Utils.Annotation.Component
+
+object BaseNodeMsgHandler {
+    private[Component] def apply(config: Map[String, String]): BaseNodeMsgHandler = new BaseNodeMsgHandler(config)
+}
 
 /** 功能描述
   *
-  * @param args 构造参数
-  * @tparam T 构造泛型参数
   * @author dcs
   * @version 0.0
   * @since 2019/10/22 15:47
@@ -15,7 +16,7 @@ import collection.JavaConverters._
   */
 @Component(name = "BaseNodeMsgHandler", `type` = "NodeMsgHandler")
 private[Component] class BaseNodeMsgHandler(config: Map[String, String]) extends NodeMsgHandler{
-    val handlerConfig: BPSConfig = new BPSConfig(configDef,  config.asJava)
+    val handlerConfig: BPSConfig = BPSConfig(configDef,  config)
     private var nodes: Map[String, NodeMsg] = Map.empty
 
     override def find(id: String): Option[NodeMsg] = nodes.get(id)
@@ -49,8 +50,4 @@ private[Component] class BaseNodeMsgHandler(config: Map[String, String]) extends
     override def load(path: String): Unit = {
         //todo： load from hdfs
     }
-}
-
-object BaseNodeMsgHandler {
-    private[Component] def apply(config: Map[String, String]): BaseNodeMsgHandler = new BaseNodeMsgHandler(config)
 }

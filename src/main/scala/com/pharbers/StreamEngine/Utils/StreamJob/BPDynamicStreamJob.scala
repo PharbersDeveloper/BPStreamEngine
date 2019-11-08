@@ -15,4 +15,9 @@ import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamListener
 trait BPDynamicStreamJob extends BPStreamJob{
     def registerListeners(listener: BPStreamListener)
     def handlerExec(handler: BPSEventHandler)
+
+    override def close(): Unit = {
+        //todo: 要先在JobHandler中注销才行
+        super.close()
+    }
 }

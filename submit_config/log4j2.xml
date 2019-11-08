@@ -19,8 +19,7 @@
                 <ThresholdFilter level="INFO" onMatch="ACCEPT" onMismatch="DENY"/>
             </Filters>
             <PatternLayout>
-                <!--<Pattern>{"Time": "%d{yyyy/MM/dd HH:mm:ss.SSS}","Hostname": "%host","ProjectName": "BP-Stream-Engine","Level": "%p","File": "%l","Func": "%M","UserId": "%X{USERID}","TraceId": "%X{TRACEID}","JobId": "%X{JOBID}","Message": "%m", "Thread": "%t"}%n</Pattern>-->
-                <Pattern>[%d{yyyy/MM/dd HH:mm:ss.SSS}] %p: %m (%F:%L)(thread:%t)%n</Pattern>
+                <Pattern>{"Time": "%d{yyyy/MM/dd HH:mm:ss.SSS}","Hostname": "%host","ProjectName": "BP-Stream-Engine","Level": "%p","File": "%l","Func": "%M","UserId": "%X{USERID}","TraceId": "%X{TRACEID}","JobId": "%X{JOBID}","Message": "%m", "Thread": "%t"}%n</Pattern>
             </PatternLayout>
             <Policies>
                 <TimeBasedTriggeringPolicy/>

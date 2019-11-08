@@ -55,6 +55,7 @@ class BPSSandBoxSampleDataJobContainer(path: String,
 	}
 	
 	override def close(): Unit = {
+		//todo：
 		outputStream.foreach(x => x.stop())
 		listeners.foreach(x => x.deActive())
 	}

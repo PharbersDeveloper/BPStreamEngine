@@ -10,11 +10,11 @@ import org.scalatest.FunSuite
  * @note 注意配置文件的优先级和使用方式
  */
 class BPSparkSessionTest extends FunSuite {
-    test("Create BPSparkSession By Default Config ") {
+    test("Create BPSparkSession By Default Config") {
         assert(BPSparkSession() != null)
     }
 
-    test("Create BPSparkSession By Args Config ") {
+    test("Create BPSparkSession By Args Config") {
         assert(BPSparkSession(Map("app.name" -> "BPSparkSessionTest")) != null)
     }
 }

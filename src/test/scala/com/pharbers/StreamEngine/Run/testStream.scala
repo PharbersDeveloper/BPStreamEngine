@@ -1,7 +1,9 @@
-package com.pharbers.StreamingTest.run
+package com.pharbers.StreamEngine.Run
 
 import com.pharbers.StreamEngine.Jobs.SandBoxJob.SchemaConverter
+import com.pharbers.StreamEngine.Utils.Component.ComponentContext
 import com.pharbers.StreamEngine.Utils.Session.Spark.BPSparkSession
+import com.pharbers.StreamEngine.Utils.ThreadExecutor.ThreadExecutor
 import org.apache.spark.sql.functions.{from_json, lit, regexp_replace}
 import org.apache.spark.sql.types.{StringType, StructField, StructType, TimestampType}
 import org.scalatest.FunSuite
@@ -95,5 +97,10 @@ class testStream extends FunSuite  {
                 .option("path", s"/test/dcs/parquet/")
                 .start()
         query.awaitTermination()
+    }
+
+    test("componment"){
+        ComponentContext.init()
+        ThreadExecutor.waitForShutdown()
     }
 }

@@ -15,6 +15,20 @@ object BPSparkSession {
     def apply(config: Map[String, String]): SparkSession = new BPSparkSession(config).spark
 }
 
+/** 创建 SparkSession 实例
+ *
+ * @author clock
+ * @version 0.1
+ * @since 2019/11/6 17:37
+ * @node 可用的配置参数
+ * {{{
+ *     spark.configs.path = spark 配置文件目录
+ *     app.name = 项目名称
+ *     master = master节点
+ *     log.level = 日志等级
+ * }}}
+ * @example {{{val spark = new BPSparkSession(Map("log.level" -> "INFO"))}}}
+ */
 @Component(name = "BPSparkSession", `type` = "session")
 class BPSparkSession(config: Map[String, String]) extends BPSparkSessionConfig {
     // 此处 Config 的配置优先级高于 Submit 时设置的配置
@@ -32,11 +46,16 @@ class BPSparkSession(config: Map[String, String]) extends BPSparkSessionConfig {
     spark.sparkContext.setLocalProperty("host", InetAddress.getLocalHost.getHostAddress)
 
     // 初始环境设置
-    spark.sparkContext.addFile("./kafka.broker1.keystore.jks")
-    spark.sparkContext.addFile("./kafka.broker1.truststore.jks")
-    spark.sparkContext.addJar("./target/BP-Stream-Engine-1.0-SNAPSHOT.jar")
-    spark.sparkContext.addJar("./jars/kafka-schema-registry-client-5.2.1.jar")
-    spark.sparkContext.addJar("./jars/kafka-avro-serializer-5.2.1.jar")
-    spark.sparkContext.addJar("./jars/common-config-5.2.1.jar")
-    spark.sparkContext.addJar("./jars/common-utils-5.2.1.jar")
+    sparkConfigs.getString(RUN_MODEL_KEY) match {
+        case "client" =>
+            spark.sparkContext.addFile("./kafka.broker1.keystore.jks")
+            spark.sparkContext.addFile("./kafka.broker1.truststore.jks")
+            spark.sparkContext.addJar("./target/BP-Stream-Engine-1.0-SNAPSHOT.jar")
+            spark.sparkContext.addJar("./jars/kafka-schema-registry-client-5.2.1.jar")
+            spark.sparkContext.addJar("./jars/kafka-avro-serializer-5.2.1.jar")
+            spark.sparkContext.addJar("./jars/common-config-5.2.1.jar")
+            spark.sparkContext.addJar("./jars/common-utils-5.2.1.jar")
+            spark.sparkContext.addJar("./jars/logs-1.0.jar")
+        case _ =>
+    }
 }
