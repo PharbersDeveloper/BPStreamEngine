@@ -45,7 +45,7 @@ object KafkaConfig  {
             .define(KAFKA_STARTING_OFFSETS_KEY, Type.STRING, Importance.HIGH, KAFKA_STARTING_OFFSETS_DOC)
 
     // 保持单例
-    lazy val bc: BPSConfig = BPSConfig(configDef, baseProps)
+    private lazy val bc: BPSConfig = BPSConfig(configDef, baseProps)
     def apply(): BPSConfig = bc
 
     def apply(props: Map[String, String]): BPSConfig = BPSConfig(configDef, props)

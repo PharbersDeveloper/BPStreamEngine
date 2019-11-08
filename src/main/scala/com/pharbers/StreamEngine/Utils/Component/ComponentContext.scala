@@ -14,9 +14,11 @@ import com.pharbers.StreamEngine.Utils.Config.AppConfig
  */
 object ComponentContext {
     //TODO 以后可以通过配置选择需要的实现
-    def init(): ComponentContext = new BaseComponentContext(
+    // 保持单例
+    private lazy val inst = new BaseComponentContext(
         getComponentConfigLst(AppConfig().getString(AppConfig.COMPONENT_CONFIG_PATH_KEY))
     )
+    def init(): ComponentContext = inst
 
     private def getComponentConfigLst(path: String): List[ComponentConfig] = {
         implicit val formats: DefaultFormats.type = DefaultFormats
