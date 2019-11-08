@@ -9,8 +9,9 @@ import com.pharbers.StreamEngine.Utils.Session.Kafka.Avro.BPSAvroDeserializer
 
 object BPKafkaSession {
     def apply(spark: SparkSession, config: Map[String, String]): BPKafkaSession = {
-        spark.udf.register("deserialize", (bytes: Array[Byte]) => BPSAvroDeserializer(config).deserialize(bytes))
-        new BPKafkaSession(config)
+        val tmp = new BPKafkaSession(config)
+        spark.udf.register("deserialize", (bytes: Array[Byte]) => BPSAvroDeserializer(bytes))
+        tmp
     }
 }
 
@@ -34,5 +35,5 @@ class BPKafkaSession(config: Map[String, String]) extends BPKafkaSessionConfig {
     lazy val kafkaUrl: String = kafkaConfigs.getString(KAFKA_URL_KEY)
     lazy val schemaRegistryUrl: String = kafkaConfigs.getString(SCHEMA_URL_KEY)
     lazy val topic: String = kafkaConfigs.getString(TOPIC_KEY)
-    lazy val sparkSchema: DataType = BPSAvroDeserializer(kafkaUrl, schemaRegistryUrl).getSchema(topic)
+    lazy val sparkSchema: DataType = BPSAvroDeserializer.getSchema(topic)
 }
