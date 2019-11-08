@@ -42,7 +42,7 @@ private[Component] class BaseJobHandler(nodeHandler: NodeMsgHandler, jobBuilder:
         //todo: 需要能够根据构造函数是否需要config参数来确定是否添加config到args中
         val args = jobMsg.args.map(x => {
             if (x.startsWith("$")) {
-                ComponentContext().getComponent[AnyRef](x.replace("$", ""))
+                ComponentContext.init().getComponent[AnyRef](x.replace("$", ""))
             } else {
                 x
             }
