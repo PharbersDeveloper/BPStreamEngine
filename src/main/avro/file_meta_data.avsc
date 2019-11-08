@@ -4,6 +4,10 @@
   "namespace": "com.pharbers.kafka.schema",
   "fields": [
     {
+      "name": "RunId",
+      "type": "string"
+    },
+    {
       "name": "JobId",
       "type": "string"
     },
@@ -13,6 +17,10 @@
     },
     {
       "name": "SampleDataPath",
+      "type": "string"
+    },
+    {
+      "name": "ConvertType",
       "type": "string"
     }
   ]

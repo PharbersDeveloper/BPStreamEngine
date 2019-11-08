@@ -18,3 +18,6 @@ logs/
 kafka.broker1.keystore.jks
 kafka.broker1.truststore.jks
 *.jar
+
+venv/
+*.pyc

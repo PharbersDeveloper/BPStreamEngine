@@ -6,6 +6,7 @@ import com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxSampleDataContainer.List
 import com.pharbers.StreamEngine.Utils.StreamJob.BPSJobContainer
 import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSKfkJobStrategy
 import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.streaming.StreamingQuery
 import org.apache.spark.sql.types.{StringType, StructField, StructType, TimestampType}
 
 object BPSSandBoxSampleDataJobContainer {
@@ -18,21 +19,19 @@ object BPSSandBoxSampleDataJobContainer {
 class BPSSandBoxSampleDataJobContainer(path: String,
                                        jobId: String,
                                        override val spark: SparkSession) extends BPSJobContainer {
-	val id = UUID.randomUUID().toString
+	val id = ""//UUID.randomUUID().toString
 	type T = BPSKfkJobStrategy
 	val strategy = null
 	
 	override def open(): Unit = {
-		val loadSchema =
-			StructType(
-					StructField("traceId", StringType) ::
-					StructField("type", StringType) ::
-					StructField("data", StringType) ::
-					StructField("timestamp", TimestampType) :: Nil
-			)
 
 		this.inputStream = Some(spark.readStream
-			.schema(loadSchema)
+			.schema(StructType(
+				StructField("traceId", StringType) ::
+				StructField("type", StringType) ::
+				StructField("data", StringType) ::
+				StructField("timestamp", TimestampType) :: Nil
+			))
 			.parquet(s"$path$jobId"))
 	}
 	
@@ -44,13 +43,20 @@ class BPSSandBoxSampleDataJobContainer(path: String,
 				.queryName(qv)
 				.outputMode("update")
 				.format("memory")
+				.option("checkpointLocation", "/test/streaming/" +  UUID.randomUUID().toString + "/checkpoint")
 				.start() :: outputStream
 			
-			val listener = BPSSampleDataListener(spark, this, qv, jobId)
-			listener.active(is)
+			val listener = BPSSampleDataListener(spark, this, jobId, qv)
+			listener.active(null)
 			listeners = listener :: listeners
 
 			
 		case None => ???
+	}
+	
+	override def close(): Unit = {
+		//todo：
+		outputStream.foreach(x => x.stop())
+		listeners.foreach(x => x.deActive())
 	}
 }

@@ -146,6 +146,11 @@
                     <artifactId>log4j-core</artifactId>
                     <version>${log4j.version}</version>
                 </dependency>
+                <dependency>
+                    <groupId>com.pharbers</groupId>
+                    <artifactId>logs</artifactId>
+                    <version>1.0</version>
+                </dependency>
 
                 <!-- https://mvnrepository.com/artifact/com.typesafe.scala-logging/scala-logging -->
                 <dependency>
@@ -194,6 +199,12 @@
                     <version>3.2.11</version>
                 </dependency>
 
+                <!-- Kafka_client-->
+                <dependency>
+                    <groupId>com.pharbers</groupId>
+                    <artifactId>pharbers-kafka</artifactId>
+                    <version>1.0</version>
+                </dependency>
             </dependencies>
         </profile>
     </profiles>
@@ -205,8 +216,8 @@
                 <directory>src/main/resources</directory>
                 <includes>
                     <include>**/*.xml</include>
-                    <include>**/*.json</include>
-                    <include>**/*.properties</include>
+                    <!--<include>**/*.json</include>-->
+                    <!--<include>**/*.properties</include>-->
                 </includes>
             </resource>
         </resources>

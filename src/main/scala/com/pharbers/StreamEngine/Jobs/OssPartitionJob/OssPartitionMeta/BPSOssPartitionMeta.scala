@@ -15,7 +15,8 @@ object BPSOssPartitionMeta {
         val fileSystem: FileSystem = FileSystem.get(configuration)
         //Create a path
         val fileName: String = "_metadata"
-        val hdfsWritePath: Path = new Path("/test/alex/" + runId + "/metadata/" + jobId + "")
+        val hdfsWritePath: Path = new Path("/workData/streamingV2/" + runId + "/metadata/" + jobId + "")
+//        val hdfsWritePath: Path = new Path("/test/alex/" + runId + "/metadata/" + jobId + "")
         val fsDataOutputStream: FSDataOutputStream =
             if (fileSystem.exists(hdfsWritePath))
                 fileSystem.append(hdfsWritePath)
