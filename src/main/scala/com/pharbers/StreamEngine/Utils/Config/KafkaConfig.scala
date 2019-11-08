@@ -1,11 +1,10 @@
 package com.pharbers.StreamEngine.Utils.Config
 
-import java.io.FileInputStream
 import java.util
-import java.util.{Map, Properties}
-
+import java.util.Properties
+import java.io.FileInputStream
+import org.apache.kafka.common.config.ConfigDef
 import org.apache.kafka.common.config.ConfigDef.{Importance, Type}
-import org.apache.kafka.common.config.{AbstractConfig, ConfigDef}
 
 object KafkaConfig  {
     val kafkaConfigEnvPath: String = "kafka.config.path"
@@ -45,9 +44,11 @@ object KafkaConfig  {
             .define(KAFKA_SSL_ENDPOINT_IDENTIFICATION_ALGORITHM_KEY, Type.STRING, Importance.HIGH, KAFKA_SSL_ENDPOINT_IDENTIFICATION_ALGORITHM_DOC)
             .define(KAFKA_STARTING_OFFSETS_KEY, Type.STRING, Importance.HIGH, KAFKA_STARTING_OFFSETS_DOC)
 
-    def apply(): BPSConfig = new BPSConfig(configDef, baseProps)
+    // 保持单例
+    lazy val bc: BPSConfig = BPSConfig(configDef, baseProps)
+    def apply(): BPSConfig = bc
 
-    def apply(props: util.Map[_, _]): BPSConfig = new BPSConfig(configDef, baseProps)
+    def apply(props: Map[String, String]): BPSConfig = BPSConfig(configDef, props)
 
     private def baseProps: util.Map[_, _] = {
         val appConfigPath: String = sys.env.getOrElse(kafkaConfigEnvPath, defaultKafkaConfigsPath)
