@@ -15,7 +15,7 @@ class SchemaTest extends FunSuite with MongoTrait {
 		ComponentContext.init()
 		val id = "ff89f6cf-7f52-4ae1-a5ec-2609169b3995"//UUID.randomUUID().toString
 		println(s"=========> uuid =>$id")
-		val spark = BPSparkSession()
+//		val spark = BPSparkSession()
 		val metaDataPath = "/test/streamingV2/0829b025-48ac-450c-843c-6d4ee91765ca/metadata"
 		val sampleDataPath = "/test/streamingV2/0829b025-48ac-450c-843c-6d4ee91765ca/files/jobId="
 		
@@ -31,13 +31,13 @@ class SchemaTest extends FunSuite with MongoTrait {
 				Map(r.getAsOrElse[String]("name", "") -> l.toString)
 			}
 		}
-		finalResult.foreach{ r =>
-			val jobId = r._2
-			val job = BPSConvertMAX5JobContainer(id, metaDataPath, sampleDataPath, jobId, r._1 ,spark)
-			job.open()
-			job.exec()
-			Thread.sleep(1000)
-		}
+		println(finalResult.size)
+		
+//		val head = finalResult.head
+//		val tail = finalResult.tail
+//		val job = BPSConvertMAX5JobContainer(id, metaDataPath, sampleDataPath, head._2, head._1, tail, spark)
+//		job.open()
+//		job.exec()
 		
 		ThreadExecutor.waitForShutdown()
 	}
