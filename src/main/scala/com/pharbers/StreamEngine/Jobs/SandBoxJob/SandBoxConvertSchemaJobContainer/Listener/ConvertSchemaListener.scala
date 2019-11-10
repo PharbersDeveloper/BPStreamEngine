@@ -1,4 +1,4 @@
-package com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxConvertSchemaJob.Listener
+package com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxConvertSchemaJobContainer.Listener
 
 import java.util.concurrent.TimeUnit
 
@@ -11,17 +11,15 @@ import com.pharbers.kafka.schema.FileMetaData
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.streaming.StreamingQuery
 
-case class BPSConvertSchemaJob(id: String,
-                               jobId: String,
-                               spark: SparkSession,
-                               job: BPStreamJob,
-                               query: StreamingQuery,
-                               sumRow: Long) extends BPStreamListener {
+case class ConvertSchemaListener(id: String,
+                                 jobId: String,
+                                 spark: SparkSession,
+                                 job: BPStreamJob,
+                                 query: StreamingQuery,
+                                 sumRow: Long) extends BPStreamListener {
 	override def trigger(e: BPSEvents): Unit = {
 		val cumulative = query.recentProgress.map(_.numInputRows).sum
 
-		println("=========> Total Row " + sumRow)
-		println("=====>" + cumulative)
 		if (cumulative >= sumRow) {
 			logger.debug("******>" + cumulative)
 			// TODO 将处理好的Schema发送邮件

@@ -1,10 +1,10 @@
-package com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxConvertSchemaJob
+package com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxConvertSchemaJobContainer
 
 import java.io.{BufferedWriter, OutputStreamWriter}
 import java.nio.charset.StandardCharsets
 
 import com.pharbers.StreamEngine.Jobs.OssPartitionJob.OssPartitionMeta.BPSOssPartitionMeta
-import com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxConvertSchemaJob.Listener.BPSConvertSchemaJob
+import com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxConvertSchemaJobContainer.Listener.ConvertSchemaListener
 import com.pharbers.StreamEngine.Jobs.SandBoxJob.SchemaConverter
 import com.pharbers.StreamEngine.Utils.StreamJob.BPSJobContainer
 import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSKfkJobStrategy
@@ -40,8 +40,6 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 		val metaData = SchemaConverter.column2legal("MetaData",spark.sparkContext
 			.textFile(s"$metaPath/$jobId")
 			.toDF("MetaData"))
-//			.withColumn("MetaData", regexp_replace($"MetaData" , """\\"""", ""))
-//			.withColumn("MetaData", regexp_replace($"MetaData" , " ", "_"))
 		
 		if (metaData.count() > 1) {
 			val jobIdRow = metaData
@@ -61,7 +59,6 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 					totalRow = line.substring(line.indexOf(":") + 1)
 						.replaceAll("_", "").replace("}", "").toLong
 				}
-//				BPSOssPartitionMeta.pushLineToHDFS(id, jobId, line)
 				pushLineToHDFS(id, jobId, line)
 			}
 			
@@ -70,7 +67,7 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 			inputStream = Some(
 				spark.readStream
 					.schema(StructType(
-						StructField("traceId", StringType) ::
+							StructField("traceId", StringType) ::
 							StructField("type", StringType) ::
 							StructField("data", StringType) ::
 							StructField("timestamp", TimestampType) ::
@@ -102,7 +99,7 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 
 				outputStream = query :: outputStream
 				
-				val listener = BPSConvertSchemaJob(id, jobId, spark, this, query, totalRow)
+				val listener = ConvertSchemaListener(id, jobId, spark, this, query, totalRow)
 				listener.active(null)
 				listeners = listener :: listeners
 				
@@ -142,5 +139,3 @@ class BPSSandBoxConvertSchemaJob(val id: String,
             fileSystem.mkdirs(new Path(path))
     }
 }
-
-case class BPSchemaParseElement(key: String, `type`: String)

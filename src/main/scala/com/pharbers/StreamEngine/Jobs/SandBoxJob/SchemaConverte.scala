@@ -1,7 +1,5 @@
 package com.pharbers.StreamEngine.Jobs.SandBoxJob
 
-import com.databricks.spark.avro.SchemaConverters
-import org.apache.avro.Schema
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.{BinaryType, BooleanType, DoubleType, FloatType, IntegerType, LongType, StringType, StructField, StructType}
@@ -14,8 +12,6 @@ case class BPSchemaParseElement(key: String, `type`: String)
 object SchemaConverter {
 	
 	def str2SqlType(data: String): org.apache.spark.sql.types.DataType = {
-		// TODO: 以后全变为AVRO的Schema形式
-//        SchemaConverters.toSqlType(new Schema.Parser().parse(data)).dataType
 		implicit val formats: DefaultFormats.type = DefaultFormats
 		val lstData: List[BPSchemaParseElement] = read[List[BPSchemaParseElement]](data)
 		StructType(
