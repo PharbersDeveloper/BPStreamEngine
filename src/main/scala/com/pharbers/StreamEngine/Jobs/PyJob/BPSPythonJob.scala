@@ -167,7 +167,9 @@ class BPSPythonJob(override val id: String,
                         .start()
                 outputStream = query :: outputStream
 
-                val listener = BPSProgressListenerAndClose(this, query, 418434)
+                val rowLength = metadata("length").asInstanceOf[String].tail.init.toLong
+
+                val listener = BPSProgressListenerAndClose(this, query, rowLength)
                 listener.active(null)
                 listeners = listener :: listeners
             case None => ???

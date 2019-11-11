@@ -10,8 +10,10 @@ import com.pharbers.StreamEngine.Jobs.PyJob.Listener.BPSProgressListenerAndClose
 import com.pharbers.StreamEngine.Utils.StreamJob.{BPDynamicStreamJob, BPSJobContainer}
 
 object BPSPythonJobContainer {
-    def apply(strategy: BPSKfkJobStrategy, spark: SparkSession): BPSPythonJobContainer =
-        new BPSPythonJobContainer(spark, Map.empty)
+    def apply(strategy: BPSKfkJobStrategy,
+              spark: SparkSession,
+              config: Map[String, String]): BPSPythonJobContainer =
+        new BPSPythonJobContainer(spark, config)
 }
 
 /** 执行 Python 的 Job
@@ -35,10 +37,10 @@ class BPSPythonJobContainer(override val spark: SparkSession,
 
     var metadata: Map[String, Any] = Map.empty
 
-    val id = "57fe0-2bda-4880-8301-dc55a0" //UUID.randomUUID().toString
-    val matedataPath = "hdfs:///test/alex/07b8411a-5064-4271-bfd3-73079f2b42b2/metadata/"
-    val filesPath = "hdfs:///test/alex/07b8411a-5064-4271-bfd3-73079f2b42b2/files/"
-    val resultPath = "hdfs:///test/qi/"
+    val id: String = config("jobId").toString
+    val matedataPath: String = config("matedataPath").toString
+    val filesPath: String = config("filesPath").toString
+    val resultPath: String = config("resultPath").toString
     val pyFiles = List(
         "./pyClean/main.py",
         "./pyClean/results.py",
