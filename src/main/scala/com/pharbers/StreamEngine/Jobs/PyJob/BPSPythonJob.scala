@@ -14,11 +14,14 @@ import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSJobStrategy
 import com.pharbers.StreamEngine.Utils.StreamJob.{BPSJobContainer, BPStreamJob}
 import java.io.{BufferedReader, BufferedWriter, InputStreamReader, OutputStreamWriter}
 
+import com.pharbers.StreamEngine.Jobs.PyJob.Listener.BPSProgressListenerAndClose
 import org.apache.spark.sql.types.StringType
 
 object BPSPythonJob {
-    def apply(id: String, spark: SparkSession,
-              inputStream: Option[sql.DataFrame], container: BPSJobContainer,
+    def apply(id: String,
+              spark: SparkSession,
+              inputStream: Option[sql.DataFrame],
+              container: BPSJobContainer,
               jobConf: Map[String, Any]): BPSPythonJob =
         new BPSPythonJob(id, spark, inputStream, container, jobConf)
 }
@@ -36,9 +39,12 @@ object BPSPythonJob {
  *     metadata = Map("jobId" -> "a", "fileName" -> "b")
  * }}}
  */
-class BPSPythonJob(override val id: String, override val spark: SparkSession,
-                   is: Option[sql.DataFrame], container: BPSJobContainer,
-                   jobConf: Map[String, Any]) extends BPStreamJob with Serializable {
+class BPSPythonJob(override val id: String,
+                   override val spark: SparkSession,
+                   is: Option[sql.DataFrame],
+                   container: BPSJobContainer,
+                   jobConf: Map[String, Any])
+        extends BPStreamJob with Serializable {
 
     type T = BPSJobStrategy
     override val strategy: BPSJobStrategy = null
@@ -64,7 +70,7 @@ class BPSPythonJob(override val id: String, override val spark: SparkSession,
         var csvTitle: List[String] = Nil
         inputStream match {
             case Some(is) =>
-                is.writeStream
+                val query = is.writeStream
                         .foreach(new ForeachWriter[Row]() {
                             var successBufferedWriter: Option[BufferedWriter] = None
                             var errBufferedWriter: Option[BufferedWriter] = None
@@ -102,7 +108,7 @@ class BPSPythonJob(override val id: String, override val spark: SparkSession,
                             }
 
                             override def process(value: Row): Unit = {
-                                val data = value.schema.map{schema =>
+                                val data = value.schema.map { schema =>
                                     schema.dataType match {
                                         case StringType =>
                                             schema.name -> value.getAs[String](schema.name)
@@ -122,7 +128,7 @@ class BPSPythonJob(override val id: String, override val spark: SparkSession,
                                             if (result("tag").asInstanceOf[Double] == 1) {
                                                 if (isFirst) {
                                                     val metadata = result("metadata").asInstanceOf[Map[String, Any]]
-                                                    csvTitle = metadata("schema").asInstanceOf[List[Any]].map{x =>
+                                                    csvTitle = metadata("schema").asInstanceOf[List[Any]].map { x =>
                                                         x.asInstanceOf[Map[String, String]]("key").toString
                                                     }
 
@@ -159,7 +165,13 @@ class BPSPythonJob(override val id: String, override val spark: SparkSession,
                             }
                         })
                         .start()
-                        .awaitTermination()
+                outputStream = query :: outputStream
+
+                val rowLength = metadata("length").asInstanceOf[String].tail.init.toLong
+
+                val listener = BPSProgressListenerAndClose(this, query, rowLength)
+                listener.active(null)
+                listeners = listener :: listeners
             case None => ???
         }
     }

@@ -3,8 +3,8 @@ package com.pharbers.StreamEngine.Utils.Config
 import java.util
 import java.util.Properties
 import java.io.FileInputStream
+import org.apache.kafka.common.config.ConfigDef
 import org.apache.kafka.common.config.ConfigDef.{Importance, Type}
-import org.apache.kafka.common.config.{AbstractConfig, ConfigDef}
 
 object AppConfig {
     val appConfigEnvPath: String = "path"
@@ -36,9 +36,11 @@ object AppConfig {
                 .define(THREAD_MAX_KEY, Type.INT, Importance.HIGH, THREAD_MAX_DOC)
                 .define(LOG_CONFIG_PATH_KEY, Type.STRING, Importance.HIGH, LOG_CONFIG_PATH_DOC)
 
-    def apply(): BPSConfig = new BPSConfig(configDef, baseProps)
+    // 保持单例
+    private lazy val bc: BPSConfig = BPSConfig(configDef, baseProps)
+    def apply(): BPSConfig = bc
 
-    def apply(props: util.Map[_, _]): BPSConfig = new BPSConfig(configDef, props)
+    def apply(props: Map[String, String]): BPSConfig = BPSConfig(configDef, props)
 
     private def baseProps: util.Map[_, _] = {
         val appConfigPath: String = sys.env.getOrElse(appConfigEnvPath, defaultAppConfigsPath)

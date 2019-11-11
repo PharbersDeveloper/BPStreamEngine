@@ -28,14 +28,14 @@ object BPSDriverChannel {
     }
 
     def registerListener(listener: BPStreamRemoteListener): Unit = channel match {
-            case Some(c) => c.registerListener(listener)
-            case None => ???
-        }
+        case Some(c) => c.registerListener(listener)
+        case None => ???
+    }
 
     def unRegisterListener(listener: BPStreamRemoteListener): Unit = channel match {
-            case Some(c) => c.lst = c.lst.filterNot(_ == listener)
-            case None => ???
-        }
+        case Some(c) => c.lst = c.lst.filterNot(_ == listener)
+        case None => ???
+    }
 
 //    def waitForDriverDead() = {
 //        thread match {
@@ -45,14 +45,16 @@ object BPSDriverChannel {
 //    }
 }
 
+// TODO 希望可以补全注释，因为我不知道这是干什么的
 @Component(name = "BPSDriverChannel", `type` = "BPSDriverChannel")
-class BPSDriverChannel(config: Map[String, String]) extends Runnable with PhLogable{
+class BPSDriverChannel(config: Map[String, String]) extends Runnable with PhLogable {
 
     lazy val host: String = InetAddress.getLocalHost.getHostAddress
     lazy val port: Int = 56789
     var lst: List[BPStreamRemoteListener] = Nil
 
     def registerListener(listener: BPStreamRemoteListener): Unit = lst = listener :: lst
+
     def trigger(e: BPSEvents): Unit = lst.filter(_.hit(e)).foreach(_.trigger(e))
 
     override def run(): Unit = {
@@ -86,7 +88,7 @@ class BPSDriverChannel(config: Map[String, String]) extends Runnable with PhLoga
                     client.register(selector, SelectionKey.OP_READ)
 
                 } else if (item.isReadable()) {
-                    val client =  item.channel().asInstanceOf[SocketChannel]
+                    val client = item.channel().asInstanceOf[SocketChannel]
                     // TODO: 分包读取的机制
                     val Buffer = ByteBuffer.allocate(4096)
                     if (client.read(Buffer) > 0) {

@@ -8,7 +8,7 @@ import com.pharbers.util.log.PhLogable
 
 
 object BPSWorkerChannel {
-//    var host: Broadcast[String] = _
+    //    var host: Broadcast[String] = _
     val port: Int = 56789
 
     def apply(host: String): BPSWorkerChannel = {
@@ -21,7 +21,8 @@ object BPSWorkerChannel {
 //    }
 }
 
-class BPSWorkerChannel(host: String, port: Int) extends Serializable with PhLogable{
+// TODO 希望可以补全注释，因为我不知道这是干什么的
+class BPSWorkerChannel(host: String, port: Int) extends Serializable with PhLogable {
 
     lazy val addr = new InetSocketAddress(host, port)
 
@@ -30,7 +31,7 @@ class BPSWorkerChannel(host: String, port: Int) extends Serializable with PhLoga
     def connect(): Unit = {
         try {
             client = Some(SocketChannel.open(addr))
-        }catch {
+        } catch {
             case e: Exception => throw new Exception(s"error~~~worker~~~~host:${addr.getHostString} $host, name: ${addr.getPort}", e)
         }
         logger.info("Connecting to Server on port 55555 ...")

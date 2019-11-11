@@ -100,7 +100,7 @@ class testStream extends FunSuite  {
     }
 
     test("componment"){
-        val context = ComponentContext()
+        ComponentContext.init()
         ThreadExecutor.waitForShutdown()
     }
 }

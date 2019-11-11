@@ -2,10 +2,11 @@ package com.pharbers.StreamEngine.Utils.Component.Dynamic
 
 import java.time.Duration
 
+import collection.JavaConverters._
 import com.pharbers.StreamEngine.Utils.Annotation.Component
 import com.pharbers.StreamEngine.Utils.Component.ComponentContext
 import com.pharbers.StreamEngine.Utils.Component.Node.NodeMsgHandler
-import com.pharbers.StreamEngine.Utils.Config.{ BPSConfig}
+import com.pharbers.StreamEngine.Utils.Config.BPSConfig
 import com.pharbers.StreamEngine.Utils.Event.EventHandler.BPSEventHandler
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamListener
 import com.pharbers.StreamEngine.Utils.StreamJob.BPDynamicStreamJob
@@ -16,22 +17,34 @@ import org.apache.kafka.common.config.ConfigDef.{Importance, Type}
 import org.json4s._
 import org.json4s.jackson.Serialization.read
 
-import collection.JavaConverters._
 import scala.reflect.runtime.universe._
 
+object BaseJobHandler {
+    private[Component] def apply(nodeHandler: NodeMsgHandler,
+                                 jobBuilder: BPDynamicStreamJobBuilder,
+                                 config: Map[String, String]): BaseJobHandler = {
+        val jobHandler = new BaseJobHandler(nodeHandler, jobBuilder, config)
+        ThreadExecutor().execute(jobHandler)
+        jobHandler
+    }
+}
+
 /** 功能描述
-  *
-  * @author dcs
-  * @version 0.0
-  * @since 2019/10/22 16:22
-  * @note
-  */
+ *
+ * @author dcs
+ * @version 0.0
+ * @since 2019/10/22 16:22
+ * @note
+ */
 @Component(name = "BaseJobHandler", `type` = "JobHandler")
-private[Component] class BaseJobHandler(nodeHandler: NodeMsgHandler, jobBuilder: BPDynamicStreamJobBuilder, config: Map[String, String]) extends JobHandler {
+private[Component] class BaseJobHandler(nodeHandler: NodeMsgHandler,
+                                        jobBuilder: BPDynamicStreamJobBuilder,
+                                        config: Map[String, String]) extends JobHandler {
+
     final val TOPIC_CONFIG_KEY = "topic"
     final val TOPIC_CONFIG_DOC = "kafka topic"
     configDef.define(TOPIC_CONFIG_KEY, Type.STRING, "stream_job_submit", Importance.HIGH, TOPIC_CONFIG_DOC)
-    private val handlerConfig: BPSConfig = new BPSConfig(configDef, config.asJava)
+    private val handlerConfig: BPSConfig = BPSConfig(configDef, config)
     private var jobs: Map[String, BPDynamicStreamJob] = Map.empty
 
     override def add(jobMsg: JobMsg): Unit = {
@@ -42,7 +55,7 @@ private[Component] class BaseJobHandler(nodeHandler: NodeMsgHandler, jobBuilder:
         //todo: 需要能够根据构造函数是否需要config参数来确定是否添加config到args中
         val args = jobMsg.args.map(x => {
             if (x.startsWith("$")) {
-                ComponentContext().getComponent[AnyRef](x.replace("$", ""))
+                ComponentContext.init().getComponent[AnyRef](x.replace("$", ""))
             } else {
                 x
             }
@@ -89,7 +102,7 @@ private[Component] class BaseJobHandler(nodeHandler: NodeMsgHandler, jobBuilder:
                         } catch {
                             case e: Exception =>
                                 val exception = new Exception(s"jobId: ${x.value().getJob}, traceId: ${x.value().getTraceId}", e)
-                                logger.error("add job error",exception)
+                                logger.error("add job error", exception)
                         }
                     case "addList" => read[List[JobMsg]](x.value().getJob.toString).foreach(x => add(x))
                     case "stop" => finish(x.value().getJob.toString)
@@ -144,13 +157,5 @@ private[Component] class BaseJobHandler(nodeHandler: NodeMsgHandler, jobBuilder:
             case _ => throw new Exception("参数不存在")
         }
         im.reflectField(field).get
-    }
-}
-
-object BaseJobHandler {
-    private[Component] def apply(nodeHandler: NodeMsgHandler, jobBuilder: BPDynamicStreamJobBuilder, config: Map[String, String]): BaseJobHandler = {
-        val jobHandler = new BaseJobHandler(nodeHandler, jobBuilder, config)
-        ThreadExecutor().execute(jobHandler)
-        jobHandler
     }
 }

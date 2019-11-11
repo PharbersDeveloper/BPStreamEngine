@@ -3,12 +3,17 @@ package com.pharbers.StreamEngine.Jobs.PyJob.PythonJobContainer
 import org.apache.spark.sql.SparkSession
 import com.pharbers.StreamEngine.Jobs.PyJob.BPSPythonJob
 import com.pharbers.StreamEngine.Utils.Schema.Spark.BPSParseSchema
-import com.pharbers.StreamEngine.Utils.StreamJob.BPSJobContainer
+import com.pharbers.StreamEngine.Utils.Event.EventHandler.BPSEventHandler
+import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamListener
 import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSKfkJobStrategy
+import com.pharbers.StreamEngine.Jobs.PyJob.Listener.BPSProgressListenerAndClose
+import com.pharbers.StreamEngine.Utils.StreamJob.{BPDynamicStreamJob, BPSJobContainer}
 
 object BPSPythonJobContainer {
-    def apply(strategy: BPSKfkJobStrategy, spark: SparkSession): BPSPythonJobContainer =
-        new BPSPythonJobContainer(strategy, spark)
+    def apply(strategy: BPSKfkJobStrategy,
+              spark: SparkSession,
+              config: Map[String, String]): BPSPythonJobContainer =
+        new BPSPythonJobContainer(spark, config)
 }
 
 /** 执行 Python 的 Job
@@ -23,17 +28,19 @@ object BPSPythonJobContainer {
  *      metadata = Map("jobId" -> "a", "fileName" -> "b")
  * }}}
  */
-class BPSPythonJobContainer(override val strategy: BPSKfkJobStrategy,
-                            override val spark: SparkSession) extends BPSJobContainer with Serializable {
+class BPSPythonJobContainer(override val spark: SparkSession,
+                            config: Map[String, String])
+        extends BPSJobContainer with BPDynamicStreamJob with Serializable {
 
-    val id = "57fe0-2bda-4880-8301-dc55a0" //UUID.randomUUID().toString
+    override val strategy: BPSKfkJobStrategy = null
     type T = BPSKfkJobStrategy
 
     var metadata: Map[String, Any] = Map.empty
 
-    val matedataPath = "hdfs:///test/alex/07b8411a-5064-4271-bfd3-73079f2b42b2/metadata/"
-    val filesPath = "hdfs:///test/alex/07b8411a-5064-4271-bfd3-73079f2b42b2/files/"
-    val resultPath = "hdfs:///test/qi/"
+    val id: String = config("jobId").toString
+    val matedataPath: String = config("matedataPath").toString
+    val filesPath: String = config("filesPath").toString
+    val resultPath: String = config("resultPath").toString
     val pyFiles = List(
         "./pyClean/main.py",
         "./pyClean/results.py",
@@ -65,4 +72,8 @@ class BPSPythonJobContainer(override val strategy: BPSKfkJobStrategy,
             job.exec()
         case None => ???
     }
+
+    override def registerListeners(listener: BPStreamListener): Unit = {}
+
+    override def handlerExec(handler: BPSEventHandler): Unit = {}
 }
