@@ -23,7 +23,7 @@ private[Component] class BaseNodeMsgHandler(config: Map[String, String]) extends
 
     override def add(node: NodeMsg): Unit = {
         if(nodes.contains(node.id)){
-            throw new Exception("node already exists")
+            throw new Exception(s"node already exists ${node.id}")
         } else {
             nodes = nodes ++ Map(node.id -> node)
             save(handlerConfig.getString(this.PATH_CONFIG_KEY))
