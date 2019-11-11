@@ -1,15 +1,10 @@
 package com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxConvertSchemaJobContainer
 
-import java.io.{BufferedWriter, OutputStreamWriter}
-import java.nio.charset.StandardCharsets
-
-import com.pharbers.StreamEngine.Jobs.OssPartitionJob.OssPartitionMeta.BPSOssPartitionMeta
 import com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxConvertSchemaJobContainer.Listener.ConvertSchemaListener
 import com.pharbers.StreamEngine.Jobs.SandBoxJob.SchemaConverter
+import com.pharbers.StreamEngine.Utils.HDFS.BPSHDFSFile
 import com.pharbers.StreamEngine.Utils.StreamJob.BPSJobContainer
 import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSKfkJobStrategy
-import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.{FSDataOutputStream, FileSystem, Path}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.types.{StringType, StructField, StructType, TimestampType}
@@ -30,7 +25,7 @@ class BPSSandBoxConvertSchemaJob(val id: String,
                                  val spark: SparkSession) extends BPSJobContainer {
 	
 	type T = BPSKfkJobStrategy
-	val strategy = null
+	val strategy: Null = null
 	import spark.implicits._
 	
 	var totalRow: Long = 0
@@ -53,17 +48,19 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 			val repMetaDataStream = metaData.head()
 				.getAs[String]("MetaData")
 			
+			val path = s"/test/alex/$id/metadata/$jobId"
+			
 			metaDataStream.collect().foreach{x =>
 				val line = x.getAs[String]("MetaData")
 				if (line.contains("""{"length":""")) {
 					totalRow = line.substring(line.indexOf(":") + 1)
 						.replaceAll("_", "").replace("}", "").toLong
 				}
-				pushLineToHDFS(id, jobId, line)
+				BPSHDFSFile.appendLine2HDFS(path, line)
 			}
 			
 			val schema = SchemaConverter.str2SqlType(repMetaDataStream)
-			checkPath(s"$samplePath")
+			BPSHDFSFile.checkPath(s"$samplePath")
 			val reading = spark.readStream.schema(StructType(
 					StructField("traceId", StringType) ::
 						StructField("type", StringType) ::
@@ -105,31 +102,4 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 		outputStream.foreach(_.stop())
 		listeners.foreach(_.deActive())
 	}
-	
-	def pushLineToHDFS(runId: String, jobId: String, line: String): Unit = {
-		val configuration: Configuration = new Configuration
-		configuration.set("fs.defaultFS", "hdfs://192.168.100.137:9000")
-		val fileSystem: FileSystem = FileSystem.get(configuration)
-		//Create a path
-        val hdfsWritePath: Path = new Path("/test/alex/" + runId + "/metadata/" + jobId + "")
-		val fsDataOutputStream: FSDataOutputStream =
-			if (fileSystem.exists(hdfsWritePath))
-				fileSystem.append(hdfsWritePath)
-			else
-				fileSystem.create(hdfsWritePath)
-		
-		val bufferedWriter: BufferedWriter = new BufferedWriter(new OutputStreamWriter(fsDataOutputStream, StandardCharsets.UTF_8))
-		bufferedWriter.write(line)
-		bufferedWriter.newLine()
-		bufferedWriter.close()
-	}
-	
-    def checkPath(path: String): Unit = {
-        val configuration: Configuration = new Configuration
-        configuration.set("fs.defaultFS", "hdfs://192.168.100.137:9000")
-        val fileSystem: FileSystem = FileSystem.get(configuration)
-        //Create a path
-        if (!fileSystem.exists(new Path(path)))
-            fileSystem.mkdirs(new Path(path))
-    }
 }
