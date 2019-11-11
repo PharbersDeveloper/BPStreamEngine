@@ -2,12 +2,16 @@ package com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxConvertSchemaJob
 
 import java.io.{BufferedWriter, OutputStreamWriter}
 import java.nio.charset.StandardCharsets
+import java.util.concurrent.TimeUnit
 
 import com.pharbers.StreamEngine.Jobs.OssPartitionJob.OssPartitionMeta.BPSOssPartitionMeta
 import com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxConvertSchemaJob.Listener.BPSConvertSchemaJob
 import com.pharbers.StreamEngine.Jobs.SandBoxJob.SchemaConverter
+import com.pharbers.StreamEngine.Utils.Component.Dynamic.JobMsg
 import com.pharbers.StreamEngine.Utils.StreamJob.BPSJobContainer
 import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSKfkJobStrategy
+import com.pharbers.kafka.producer.PharbersKafkaProducer
+import com.pharbers.kafka.schema.BPJob
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FSDataOutputStream, FileSystem, Path}
 import org.apache.spark.sql.functions._
@@ -106,7 +110,7 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 				val listener = BPSConvertSchemaJob(id, jobId, spark, this, query, totalRow)
 				listener.active(null)
 				listeners = listener :: listeners
-				
+				pushPyjob(id, s"/test/alex/$id/metadata/", s"/test/alex/$id/files/", jobId)
 			case None =>
 		}
 	}
@@ -142,6 +146,29 @@ class BPSSandBoxConvertSchemaJob(val id: String,
         if (!fileSystem.exists(new Path(path)))
             fileSystem.mkdirs(new Path(path))
     }
+
+	//todo: 临时测试用后面需要删掉
+	private def pushPyjob(runId: String, metadataPath: String, filesPath: String, jobId: String): Unit ={
+		import org.json4s._
+		import org.json4s.jackson.Serialization.write
+		implicit val formats: DefaultFormats.type = DefaultFormats
+//		val jobId = "201910231514"
+		val traceId = ""
+		val `type` = "add"
+		val jobConfig = Map("jobId" -> jobId,
+			"matedataPath" -> metadataPath,
+			"filesPath" -> filesPath,
+			"resultPath" -> "hdfs:///test/qi/"
+		)
+		val job = JobMsg("ossPyJob" + jobId, "job", "com.pharbers.StreamEngine.Jobs.PyJob.PythonJobContainer.BPSPythonJobContainer",
+			List("$BPSparkSession"), Nil, Nil, jobConfig, "", "test job")
+		val jobMsg = write(job)
+		val topic = "stream_job_submit_dcs"
+		val pkp = new PharbersKafkaProducer[String, BPJob]
+		val bpJob = new BPJob(jobId, traceId, `type`, jobMsg)
+		val fu = pkp.produce(topic, jobId, bpJob)
+		println(fu.get(10, TimeUnit.SECONDS))
+	}
 }
 
 case class BPSchemaParseElement(key: String, `type`: String)

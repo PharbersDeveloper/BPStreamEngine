@@ -19,7 +19,7 @@ def create_mapping():
             "ColName": "PROVINCE_NAME",
             "ColDesc": "省份名",
             "Type": "String",
-            "Candidate": ["省", "省份", "省/自治区/直辖市", "PROVINCE", "Province"]
+            "Candidate": ["省", "省份", "省/自治区/直辖市", "PROVINCE", "Province", "PROVINCES"]
         },
         {
             "ColName": "CITY_NAME",
@@ -73,13 +73,13 @@ def create_mapping():
             "ColName": "ATC",
             "ColDesc": "ATC编码",
             "Type": "String",
-            "Candidate": ["ATC编码", "ATC码", "通用名ATC编码", "ATC"]
+            "Candidate": ["ATC编码", "ATC码", "通用名ATC编码", "ATC", "ATC_CODE"]
         },
         {
             "ColName": "MOLE_NAME",
             "ColDesc": "分子名",
             "Type": "String",
-            "Candidate": ["MOLECULE NAME", "MCL_NAME", "药品名", "分子名", "药品名称", "类别名称", "MOLECULE", "Molecule"]
+            "Candidate": ["MOLECULE NAME", "MCL_NAME", "药品名", "分子名", "药品名称", "类别名称", "MOLECULE", "Molecule", "MOLE_NAME"]
         },
         {
             "ColName": "KEY_BRAND",
@@ -91,25 +91,25 @@ def create_mapping():
             "ColName": "PRODUCT_NAME",
             "ColDesc": "商品名",
             "Type": "String",
-            "Candidate": ["商品名", "药品商品名", "PRODUCT", "Product"]
+            "Candidate": ["商品名", "药品商品名", "PRODUCT", "Product", "PRODUCT_NAME"]
         },
         {
             "ColName": "PACK",
             "ColDesc": "包装",
             "Type": "String",
-            "Candidate": ["包装", "包装单位", "PACK_DES", "PACK", "Pack"]
+            "Candidate": ["包装", "包装单位", "PACK", "Pack", "PACKAGE"]
         },
         {
             "ColName": "SPEC",
             "ColDesc": "规格",
             "Type": "String",
-            "Candidate": ["药品规格", "规格", "统一规格", "SPECIFICAT"]
+            "Candidate": ["药品规格", "规格", "统一规格", "SPECIFICAT", "PACK_DES"]
         },
         {
             "ColName": "DOSAGE",
             "ColDesc": "剂型",
             "Type": "String",
-            "Candidate": ["剂型", "FORM", "Form"]
+            "Candidate": ["剂型", "FORM", "Form", "DOSAGE"]
         },
         {
             "ColName": "PACK_QTY",
@@ -133,7 +133,7 @@ def create_mapping():
             "ColName": "DELIVERY_WAY",
             "ColDesc": "给药途径",
             "Type": "String",
-            "Candidate": ["给药途径", "ROAD", "途径", "ADMINST"]
+            "Candidate": ["给药途径", "ROAD", "途径", "ADMINST", "DELIVERY_WAY"]
         },
         {
             "ColName": "MANUFACTURER_NAME",
