@@ -1,10 +1,12 @@
 package com.pharbers.StreamEngine.Jobs.SandBoxJob
 
-import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.types.{BinaryType, BooleanType, DoubleType, FloatType, IntegerType, LongType, StringType, StructField, StructType}
-import org.json4s.DefaultFormats
-import org.json4s.jackson.Serialization.read
+import org.apache.spark.sql.types.{ArrayType, BinaryType, BooleanType, DoubleType, FloatType, IntegerType, LongType, StringType, StructField, StructType}
+import org.json4s._
+import org.json4s.jackson.Serialization._
+import org.json4s.jackson.JsonMethods._
+import org.json4s.jackson.Serialization
 
 case class BPSchemaParseElement(key: String, `type`: String)
 
@@ -29,10 +31,37 @@ object SchemaConverter {
 		)
 	}
 	
-	// TODO 转换不合法的Schema列名，这边抽象和使用的不对，处理不了流的，要改进
+	def renameColumn(jsonStr: String): String =  {
+		implicit val formats: AnyRef with Formats = Serialization.formats(NoTypeHints)
+		
+		var tmpNum = 0
+		val schemas = parse(jsonStr).extract[List[BPSchemaParseElement]]
+		val schemaKeys = schemas.map(_.key)
+		val schemaKeysDis = schemaKeys.distinct
+		val diffSchemaKeys = schemaKeys diff schemaKeysDis
+		val renameSchema = schemas.map{ x =>
+			if (diffSchemaKeys.contains(x.key)) {
+				tmpNum += 1
+				BPSchemaParseElement(s"${x.key}_$tmpNum", x.`type`)
+			} else {
+				BPSchemaParseElement(x.key, x.`type`)
+			}
+		}
+		val toJsonStr = write(renameSchema)
+		println(toJsonStr)
+		toJsonStr
+	}
+	
+	def renameDFColumnTest(df: DataFrame, spark: SparkSession): DataFrame = {
+		import spark.implicits._
+		
+		val tmp = column2legal("data", df)
+//			.withColumn("data", regexp_replace($"data", "((?!省份_)省份)+", "省份_1"))
+//			.withColumn("data", regexp_replace($"data", "((?!省份_)省份)+", "省份_2"))
+		tmp
+	}
+	
 	def column2legal(colu: String, df: DataFrame): DataFrame = {
-//		implicit spark: SparkSession
-//		import spark.implicits._
 		df.withColumn(colu, regexp_replace(col(colu), """\\"""", ""))
 			.withColumn(colu, regexp_replace(col(colu) , " ", "_"))
 //			.withColumn(colu, regexp_replace(col(colu) , ",", ""))

@@ -1,6 +1,6 @@
 package com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxJobContainer.Listener
 
-import com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxConvertSchemaJob.BPSSandBoxConvertSchemaJob
+import com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxConvertSchemaJobContainer.BPSSandBoxConvertSchemaJob
 import com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxMetaDataJob.BPSSandBoxMetaDataJob
 import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSJobStrategy
 import com.pharbers.StreamEngine.Utils.StreamJob.{BPSJobContainer, BPStreamJob}
@@ -20,13 +20,11 @@ class BPKafkaJobListener(val id: String,
                          container: BPSJobContainer) extends BPStreamJob {
 	type T = BPSJobStrategy
 	override val strategy: T = null
-	// TODO 多线程有问题，临时解决，或从源头解决
 	var hisJobId = ""
 	val process: ConsumerRecord[String, FileMetaData] => Unit = (record: ConsumerRecord[String, FileMetaData]) => {
 		if (record.value().getJobId.toString != hisJobId) {
 			hisJobId = record.value().getJobId.toString
 
-			logger.info("Fuck ===>" + record.value().getJobId)
 			BPSSandBoxMetaDataJob(record.value().getMetaDataPath.toString,
 				record.value().getJobId.toString, spark).exec()
 
