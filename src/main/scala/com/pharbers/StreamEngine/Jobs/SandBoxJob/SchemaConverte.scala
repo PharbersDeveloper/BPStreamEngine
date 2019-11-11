@@ -1,8 +1,8 @@
 package com.pharbers.StreamEngine.Jobs.SandBoxJob
 
-import org.apache.spark.sql.{Column, DataFrame, SparkSession}
+import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.types.{ArrayType, BinaryType, BooleanType, DoubleType, FloatType, IntegerType, LongType, StringType, StructField, StructType}
+import org.apache.spark.sql.types.{BinaryType, BooleanType, DoubleType, FloatType, IntegerType, LongType, StringType, StructField, StructType}
 import org.json4s._
 import org.json4s.jackson.Serialization._
 import org.json4s.jackson.JsonMethods._
@@ -31,6 +31,7 @@ object SchemaConverter {
 		)
 	}
 	
+	// 废弃
 	def renameColumn(jsonStr: String): String =  {
 		implicit val formats: AnyRef with Formats = Serialization.formats(NoTypeHints)
 		
@@ -48,17 +49,7 @@ object SchemaConverter {
 			}
 		}
 		val toJsonStr = write(renameSchema)
-		println(toJsonStr)
 		toJsonStr
-	}
-	
-	def renameDFColumnTest(df: DataFrame, spark: SparkSession): DataFrame = {
-		import spark.implicits._
-		
-		val tmp = column2legal("data", df)
-//			.withColumn("data", regexp_replace($"data", "((?!省份_)省份)+", "省份_1"))
-//			.withColumn("data", regexp_replace($"data", "((?!省份_)省份)+", "省份_2"))
-		tmp
 	}
 	
 	def column2legal(colu: String, df: DataFrame): DataFrame = {

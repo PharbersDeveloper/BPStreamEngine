@@ -43,11 +43,6 @@ class BPKafkaJobListener(val id: String,
 		} else {
 			logger.error("咋还重复传递JobID呢", hisJobId)
 		}
-
-		
-//		if (record.value().getConvertType.toString == "convert_schema") {
-//
-//		}
 	}
 	
 	override def exec(): Unit = {

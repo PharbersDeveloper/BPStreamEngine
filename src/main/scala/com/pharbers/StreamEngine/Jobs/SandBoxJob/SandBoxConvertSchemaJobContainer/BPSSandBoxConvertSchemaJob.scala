@@ -64,26 +64,20 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 			
 			val schema = SchemaConverter.str2SqlType(repMetaDataStream)
 			checkPath(s"$samplePath")
+			val reading = spark.readStream.schema(StructType(
+					StructField("traceId", StringType) ::
+						StructField("type", StringType) ::
+						StructField("data", StringType) ::
+						StructField("timestamp", TimestampType) ::
+						StructField("jobId", StringType) :: Nil
+				))
+				.parquet(s"$samplePath")
+				.filter($"jobId" === jobId and $"type" === "SandBox")
+			
 			inputStream = Some(
-				spark.readStream
-					.schema(StructType(
-							StructField("traceId", StringType) ::
-							StructField("type", StringType) ::
-							StructField("data", StringType) ::
-							StructField("timestamp", TimestampType) ::
-							StructField("jobId", StringType) :: Nil
-					))
-					.parquet(s"$samplePath")
-					.filter($"jobId" === jobId and $"type" === "SandBox")
-					.withColumn("data", regexp_replace($"data", """\\"""", ""))
-					.withColumn("data", regexp_replace($"data", " ", "_"))
-					.withColumn("data", regexp_replace($"data", "\\(", ""))
-					.withColumn("data", regexp_replace($"data", "\\)", ""))
-					.withColumn("data", regexp_replace($"data", "=", ""))
-					.withColumn("data", regexp_replace($"data", "\\\\n|\\\\\t", ""))
-					.select(
-						from_json($"data", schema).as("data")
-					).select("data.*")
+				SchemaConverter.column2legal("data", reading).select(
+					from_json($"data", schema).as("data")
+				).select("data.*")
 			)
 		}
 	}
