@@ -1,12 +1,13 @@
 package com.pharbers.StreamEngine.Jobs.PyJob.PythonJobContainer
 
+import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.spark.sql.SparkSession
+import org.apache.hadoop.conf.Configuration
 import com.pharbers.StreamEngine.Jobs.PyJob.BPSPythonJob
 import com.pharbers.StreamEngine.Utils.Schema.Spark.BPSParseSchema
 import com.pharbers.StreamEngine.Utils.Event.EventHandler.BPSEventHandler
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamListener
 import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSKfkJobStrategy
-import com.pharbers.StreamEngine.Jobs.PyJob.Listener.BPSProgressListenerAndClose
 import com.pharbers.StreamEngine.Utils.StreamJob.{BPDynamicStreamJob, BPSJobContainer}
 
 object BPSPythonJobContainer {
@@ -49,7 +50,22 @@ class BPSPythonJobContainer(override val spark: SparkSession,
         "./pyClean/cleaning.py"
     )
 
+    // 当所需文件未准备完毕，则等待
+    def notFoundShouldWait(path: String): Unit = {
+        val configuration: Configuration = new Configuration
+        configuration.set("fs.defaultFS", "hdfs://192.168.100.137:9000")
+        val fileSystem: FileSystem = FileSystem.get(configuration)
+        val filePath: Path = new Path(path)
+        if (!fileSystem.exists(filePath)) {
+            logger.debug(path + "文件不存在，等待 1s")
+            Thread.sleep(1000)
+            notFoundShouldWait(path)
+        }
+    }
+
     override def open(): Unit = {
+        notFoundShouldWait(matedataPath + id)
+        notFoundShouldWait(filesPath + id)
         metadata = BPSParseSchema.parseMetadata(matedataPath + id)(spark)
         val loadSchema = BPSParseSchema.parseSchema(metadata("schema").asInstanceOf[List[_]])
 
