@@ -40,6 +40,11 @@ case class BPSOssListener(spark: SparkSession, job: BPStreamJob) extends BPStrea
                 BPSOssPartitionMeta.pushLineToHDFS(jid.id, event2JobId(e), e.data)
                 
             }
+            case "SandBox-Lables" => {
+                val jid = job.asInstanceOf[BPSJobContainer]
+                BPSOssPartitionMeta.pushLineToHDFS(jid.id, event2JobId(e), e.data)
+
+            }
             case "SandBox-Length" => {
                 BPSOssPartitionMeta.pushLineToHDFS(jid.id, event2JobId(e), e.data)
                 post(s"""{"traceId": "${e.traceId}","jobId": "${e.jobId}"}""", "application/json")
@@ -49,12 +54,12 @@ case class BPSOssListener(spark: SparkSession, job: BPStreamJob) extends BPStrea
         }
     }
 
-    override def hit(e: BPSEvents): Boolean = e.`type` == "SandBox-Schema" || e.`type` == "SandBox-Length"
+    override def hit(e: BPSEvents): Boolean = e.`type` == "SandBox-Schema" || e.`type` == "SandBox-Lables" || e.`type` == "SandBox-Length"
 
     override def active(s: DataFrame): Unit = {
         BPSDriverChannel.registerListener(this)
 
-        job.outputStream = s.filter($"type" === "SandBox-Schema" || $"type" === "SandBox-Length").writeStream
+        job.outputStream = s.filter($"type" === "SandBox-Schema" || $"type" === "SandBox-Lables" || $"type" === "SandBox-Length").writeStream
                 .foreach(
                     new ForeachWriter[Row] {
 
