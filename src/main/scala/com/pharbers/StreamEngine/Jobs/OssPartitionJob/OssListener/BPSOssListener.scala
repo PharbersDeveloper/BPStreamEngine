@@ -35,27 +35,36 @@ case class BPSOssListener(spark: SparkSession, job: BPStreamJob) extends BPStrea
     override def trigger(e: BPSEvents): Unit = {
         val jid = job.asInstanceOf[BPSJobContainer]
         // TODO: 后面可变配置化
-	    val path = s"/workData/streamingV2/${jid.id}/metadata/${event2JobId(e)}"
+        val genPath = s"/workData/streamingV2"
+	    val metaDataPath = s"$genPath/${jid.id}/metadata"
+        val sampleDataPath = s"$genPath/files/${jid.id}/files"
+        
         e.`type` match {
             case "SandBox-Schema" => {
 //                BPSOssPartitionMeta.pushLineToHDFS(jid.id, event2JobId(e), e.data)
-                BPSHDFSFile.appendLine2HDFS(path, e.data)
+                BPSHDFSFile.appendLine2HDFS(s"$metaDataPath/${event2JobId(e)}", e.data)
+            }
+            case "SandBox-Lables" => {
+                BPSHDFSFile.appendLine2HDFS(s"$metaDataPath/${event2JobId(e)}", e.data)
             }
             case "SandBox-Length" => {
                 BPSHDFSFile.appendLine2HDFS("", e.data)
+	            //TODO： 需要改GO或TS的接口,后面改成Kafka
                 post(s"""{"traceId": "${e.traceId}","jobId": "${e.jobId}"}""", "application/json")
-                pollKafka(new FileMetaData(jid.id, e.jobId, "/workData/streamingV2/" + jid.id + "/metadata/",
-                    "/workData/streamingV2/files/" + jid.id + "/files", ""))
+                pollKafka(new FileMetaData(jid.id, e.jobId, metaDataPath, sampleDataPath, ""))
+	            
+//                pollKafka(new FileMetaData(jid.id, e.jobId, "/workData/streamingV2/" + jid.id + "/metadata/",
+//                    "/workData/streamingV2/files/" + jid.id + "/files", ""))
             }
         }
     }
 
-    override def hit(e: BPSEvents): Boolean = e.`type` == "SandBox-Schema" || e.`type` == "SandBox-Length"
+    override def hit(e: BPSEvents): Boolean = e.`type` == "SandBox-Schema" || e.`type` == "SandBox-Lables" || e.`type` == "SandBox-Length"
 
     override def active(s: DataFrame): Unit = {
         BPSDriverChannel.registerListener(this)
 
-        job.outputStream = s.filter($"type" === "SandBox-Schema" || $"type" === "SandBox-Length").writeStream
+        job.outputStream = s.filter($"type" === "SandBox-Schema" || $"type" === "SandBox-Lables" || $"type" === "SandBox-Length").writeStream
                 .foreach(
                     new ForeachWriter[Row] {
 
@@ -92,7 +101,7 @@ case class BPSOssListener(spark: SparkSession, job: BPStreamJob) extends BPStrea
     }
 
     def post(body: String, contentType: String): Unit = {
-        val conn = new URL("http://192.168.100.116:36416/v0/UpdateJobIDWithTraceID").openConnection.asInstanceOf[HttpURLConnection]
+        val conn = new URL("http://192.168.100.116:8080/v0/updateInfoWithJobId").openConnection.asInstanceOf[HttpURLConnection]
         val postDataBytes = body.getBytes(StandardCharsets.UTF_8)
         conn.setRequestMethod("POST")
         conn.setRequestProperty("Content-Type", contentType)

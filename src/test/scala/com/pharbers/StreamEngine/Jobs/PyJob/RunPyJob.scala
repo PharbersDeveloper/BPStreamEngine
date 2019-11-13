@@ -6,7 +6,7 @@ import com.pharbers.StreamEngine.Jobs.PyJob.PythonJobContainer.BPSPythonJobConta
 object RunPyJob extends App {
 
     def directStart(): Unit = {
-        val job = BPSPythonJobContainer(null, BPSparkSession())
+        val job = BPSPythonJobContainer(null, BPSparkSession(), Map.empty)
         job.open()
         job.exec()
     }

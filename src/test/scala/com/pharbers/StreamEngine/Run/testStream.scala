@@ -98,9 +98,4 @@ class testStream extends FunSuite  {
                 .start()
         query.awaitTermination()
     }
-
-    test("componment"){
-        ComponentContext.init()
-        ThreadExecutor.waitForShutdown()
-    }
 }

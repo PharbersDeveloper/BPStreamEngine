@@ -13,6 +13,7 @@ import org.apache.hadoop.fs.{FSDataOutputStream, FileSystem, Path}
 import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSJobStrategy
 import com.pharbers.StreamEngine.Utils.StreamJob.{BPSJobContainer, BPStreamJob}
 import java.io.{BufferedReader, BufferedWriter, InputStreamReader, OutputStreamWriter}
+import java.util.UUID
 
 import com.pharbers.StreamEngine.Jobs.PyJob.Listener.BPSProgressListenerAndClose
 import org.apache.spark.sql.types.StringType
@@ -164,10 +165,13 @@ class BPSPythonJob(override val id: String,
                                 metadataBufferedWriter.get.close()
                             }
                         })
+                        .option("checkpointLocation", s"/test/alex/$id/files/${UUID.randomUUID().toString}/checkpoint")
                         .start()
                 outputStream = query :: outputStream
 
-                val listener = BPSProgressListenerAndClose(this, query, 418434)
+                val rowLength = metadata("length").asInstanceOf[String].tail.init.toLong
+
+                val listener = BPSProgressListenerAndClose(this, query, rowLength)
                 listener.active(null)
                 listeners = listener :: listeners
             case None => ???
