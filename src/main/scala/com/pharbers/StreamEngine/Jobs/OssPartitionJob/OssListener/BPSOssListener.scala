@@ -44,22 +44,19 @@ case class BPSOssListener(spark: SparkSession, job: BPStreamJob) extends BPStrea
 //                BPSOssPartitionMeta.pushLineToHDFS(jid.id, event2JobId(e), e.data)
                 BPSHDFSFile.appendLine2HDFS(s"$metaDataPath/${event2JobId(e)}", e.data)
             }
-            case "SandBox-Lables" => {
+            case "SandBox-Labels" => {
                 BPSHDFSFile.appendLine2HDFS(s"$metaDataPath/${event2JobId(e)}", e.data)
             }
             case "SandBox-Length" => {
-                BPSHDFSFile.appendLine2HDFS("", e.data)
-	            //TODO： 需要改GO或TS的接口,后面改成Kafka
+                BPSHDFSFile.appendLine2HDFS(s"$metaDataPath/${event2JobId(e)}", e.data)
+	            //TODO： 需要改TS的接口,后面改成Kafka
                 post(s"""{"traceId": "${e.traceId}","jobId": "${e.jobId}"}""", "application/json")
                 pollKafka(new FileMetaData(jid.id, e.jobId, metaDataPath, sampleDataPath, ""))
-	            
-//                pollKafka(new FileMetaData(jid.id, e.jobId, "/workData/streamingV2/" + jid.id + "/metadata/",
-//                    "/workData/streamingV2/files/" + jid.id + "/files", ""))
             }
         }
     }
 
-    override def hit(e: BPSEvents): Boolean = e.`type` == "SandBox-Schema" || e.`type` == "SandBox-Lables" || e.`type` == "SandBox-Length"
+    override def hit(e: BPSEvents): Boolean = e.`type` == "SandBox-Schema" || e.`type` == "SandBox-Labels" || e.`type` == "SandBox-Length"
 
     override def active(s: DataFrame): Unit = {
         BPSDriverChannel.registerListener(this)
@@ -101,7 +98,7 @@ case class BPSOssListener(spark: SparkSession, job: BPStreamJob) extends BPStrea
     }
 
     def post(body: String, contentType: String): Unit = {
-        val conn = new URL("http://192.168.100.116:8080/v0/updateInfoWithJobId").openConnection.asInstanceOf[HttpURLConnection]
+        val conn = new URL("http://192.168.100.116:8080/createInfoWithJobId").openConnection.asInstanceOf[HttpURLConnection]
         val postDataBytes = body.getBytes(StandardCharsets.UTF_8)
         conn.setRequestMethod("POST")
         conn.setRequestProperty("Content-Type", contentType)

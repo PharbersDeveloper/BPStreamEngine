@@ -4,12 +4,21 @@ import com.pharbers.StreamEngine.Jobs.SandBoxJob.FileMeta2Mongo.BPSMongo.{BPFile
 import org.scalatest.FunSuite
 import com.mongodb.casbah.Imports._
 
-class MongoTest extends FunSuite {
+class MongoTest extends FunSuite with MongoTrait {
 	test("Mongo test") {
-		val condition = ("file-version-ids" $in "5dae7f13421aa916688fc10f" :: Nil)
-		println(condition.toString)
-		1 to 3 foreach { _ =>
-			BPFileMeta2Mongo("", Nil, "", 0).SampleData()
+//		32952-5e1d-4931-b5df-bbdab
+		
+		val condition = DBObject("jobId" -> "db7c8-b275-4d72-adc3-aa4070")
+		queryObject(condition, "datasets") match {
+			case None =>
+			case Some(obj) => {
+			
+			}
+		}
+		
+//
+//		1 to 1 foreach { _ =>
+//			BPFileMeta2Mongo("", Nil, "", 0).SampleData()
 //			queryObject(condition, "FileMetaDatum") match {
 //				case None => println("None")
 //				case Some(res) =>
@@ -19,8 +28,7 @@ class MongoTest extends FunSuite {
 //				//				res += "file-version-ids" -> res.getAs[List[String]]("file-version-ids").map(r => r :+ "bb" :+ "cc")
 //				//				updateObject(DBObject("group-id" -> "1"), "FileMetaDatum", res)
 //			}
-			
-		}
-		
+//		}
+//
 	}
 }
