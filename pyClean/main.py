@@ -40,5 +40,10 @@ from py4j.java_gateway import JavaGateway, CallbackServerParameters
 if __name__ == "__main__":
     gateway = JavaGateway(
         callback_server_parameters=CallbackServerParameters())
-    gateway.entry_point.writeHdfs("abcdsdf")
-    gateway.close()
+
+    while 1:
+        message = gateway.entry_point.pop()
+        if message != "error":
+            gateway.entry_point.writeHdfs(message)
+
+    # gateway.close()

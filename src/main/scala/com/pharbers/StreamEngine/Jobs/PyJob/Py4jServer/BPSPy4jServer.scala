@@ -16,22 +16,33 @@ import org.json4s.jackson.Serialization.write
  * @since 2019/11/14 19:04
  * @note 一些值得注意的地方
  */
-object ts extends Serializable {
-    var isStarted = false
-    var server: GatewayServer = null
-}
+//object ts extends Serializable {
+//    var isStarted = false
+//    var server: GatewayServer = null
+//}
 
-case class BPSPy4jServer(var isFirst: Boolean,
-                         var csvTitle: List[String])
-                        (successBufferedWriter: Option[BufferedWriter],
-                         errBufferedWriter: Option[BufferedWriter],
-                         metadataBufferedWriter: Option[BufferedWriter]) extends Serializable with PhLogable {
+object BPSPy4jServer extends Serializable {
 
-    def startServer(): Unit = {
-        if (!ts.isStarted) {
-            ts.server = new GatewayServer(this)
-            ts.server.start(true)
-            ts.isStarted = true
+    var csvTitle: List[String] = Nil
+    var successBufferedWriter: Option[BufferedWriter] = None
+    var errBufferedWriter: Option[BufferedWriter] = None
+    var metadataBufferedWriter: Option[BufferedWriter] = None
+    val lock = new Object
+    var data: List[String] = Nil
+
+    var server: GatewayServer = _
+
+    def startServer(
+                       csvTitle: List[String],
+                       sw: Option[BufferedWriter],
+                       ew: Option[BufferedWriter],
+                       mw: Option[BufferedWriter]): Unit = {
+        if (server == null) {
+            successBufferedWriter = sw
+            errBufferedWriter = ew
+            metadataBufferedWriter = mw
+            server = new GatewayServer(this)
+            server.start(true)
         }
     }
 
@@ -42,16 +53,23 @@ case class BPSPy4jServer(var isFirst: Boolean,
         errBufferedWriter.get.close()
         metadataBufferedWriter.get.flush()
         metadataBufferedWriter.get.close()
-        if (ts.isStarted) {
-            ts.server.shutdown()
+        if (server != null) {
+            server.shutdown()
+            server = null
         }
     }
+
+    def startEndpoint(argv: String): Unit = {
+        Runtime.getRuntime.exec(Array[String]("/usr/bin/python", "./main.py", argv))
+    }
+
+    def isServerStarted(): Boolean = server != null
 
     def map2csv(title: List[String], m: Map[String, Any]): List[Any] = title.map(m)
 
     def writeHdfs(str: String): Unit = {
-        logger.info(str)
         errBufferedWriter.get.write(str)
+        errBufferedWriter.get.flush()
 //        JSON.parseFull(str) match {
 //            case Some(result: Map[String, AnyRef]) =>
 //                if (result("tag").asInstanceOf[Double] == 1) {
@@ -80,5 +98,21 @@ case class BPSPy4jServer(var isFirst: Boolean,
 //                errBufferedWriter.get.write(str)
 //                errBufferedWriter.get.write("\n")
 //        }
+    }
+
+     def push(message: String): Unit = {
+         lock.synchronized {
+            data = data :+ message
+         }
+    }
+
+    def pop(): String = {
+        lock.synchronized {
+            if (data.nonEmpty) {
+                val result = data.head
+                data = data.tail
+                result
+            } else "error"
+        }
     }
 }

@@ -78,7 +78,6 @@ class BPSPythonJob(override val id: String,
                             var successBufferedWriter: Option[BufferedWriter] = None
                             var errBufferedWriter: Option[BufferedWriter] = None
                             var metadataBufferedWriter: Option[BufferedWriter] = None
-                            var gate: Option[BPSPy4jServer] = None
 
                             def openHdfs(path: String, partitionId: Long, version: Long): Option[BufferedWriter] = {
                                 val configuration: Configuration = new Configuration()
@@ -97,21 +96,20 @@ class BPSPythonJob(override val id: String,
                             }
 
                             override def open(partitionId: Long, version: Long): Boolean = {
-                                gate =
-                                    if (gate.isEmpty) {
-                                        successBufferedWriter =
-                                            if (successBufferedWriter.isEmpty) openHdfs(successPath, partitionId, version)
-                                            else successBufferedWriter
-                                        errBufferedWriter =
-                                            if (errBufferedWriter.isEmpty) openHdfs(errPath, partitionId, version)
-                                            else errBufferedWriter
-                                        metadataBufferedWriter =
-                                            if (metadataBufferedWriter.isEmpty) openHdfs(metadataPath, partitionId, version)
-                                            else metadataBufferedWriter
-                                        val tmp = BPSPy4jServer(isFirst, csvTitle)(successBufferedWriter, errBufferedWriter, metadataBufferedWriter)
-                                        tmp.startServer()
-                                        Some(tmp)
-                                    } else gate
+                                if (!BPSPy4jServer.isServerStarted()) {
+                                    successBufferedWriter =
+                                        if (successBufferedWriter.isEmpty) openHdfs(successPath, partitionId, version)
+                                        else successBufferedWriter
+                                    errBufferedWriter =
+                                        if (errBufferedWriter.isEmpty) openHdfs(errPath, partitionId, version)
+                                        else errBufferedWriter
+                                    metadataBufferedWriter =
+                                        if (metadataBufferedWriter.isEmpty) openHdfs(metadataPath, partitionId, version)
+                                        else metadataBufferedWriter
+                                    BPSPy4jServer.startServer(csvTitle, successBufferedWriter, errBufferedWriter, metadataBufferedWriter)
+                                    BPSPy4jServer.startEndpoint("fuck")
+                                }
+
                                 true
                             }
 
@@ -124,21 +122,12 @@ class BPSPythonJob(override val id: String,
                                     }
                                 }.toMap
                                 val argv = write(Map("metadata" -> metadata, "data" -> data))(DefaultFormats)
-                                if (isFirst) {
-//                                    BPSPy4jServer(isFirst, csvTitle)(successBufferedWriter, errBufferedWriter, metadataBufferedWriter).startServer()
-                                    Runtime.getRuntime.exec(Array[String]("/usr/bin/python", "./main.py", argv))
-                                    isFirst = false
-                                }
+//                                Runtime.getRuntime.exec(Array[String]("/usr/bin/python", "./main.py", argv))
+                                BPSPy4jServer.push("alfred test 001\n")
                             }
 
                             override def close(errorOrNull: Throwable): Unit = {
-//                                successBufferedWriter.get.flush()
-//                                successBufferedWriter.get.close()
-//                                errBufferedWriter.get.flush()
-//                                errBufferedWriter.get.close()
-//                                metadataBufferedWriter.get.flush()
-//                                metadataBufferedWriter.get.close()
-                                gate.get.closeServer()
+                                BPSPy4jServer.closeServer()
                             }
                         })
                         .option("checkpointLocation", s"/test/qi2/$id/checkpoint")
