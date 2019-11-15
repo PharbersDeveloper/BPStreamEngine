@@ -18,6 +18,7 @@ import java.util.UUID
 import com.pharbers.StreamEngine.Jobs.PyJob.Listener.BPSProgressListenerAndClose
 import com.pharbers.StreamEngine.Jobs.PyJob.Py4jServer.BPSPy4jServer
 import org.apache.spark.sql.types.StringType
+import py4j.GatewayServer
 
 object BPSPythonJob {
     def apply(id: String,
@@ -77,13 +78,14 @@ class BPSPythonJob(override val id: String,
                             var successBufferedWriter: Option[BufferedWriter] = None
                             var errBufferedWriter: Option[BufferedWriter] = None
                             var metadataBufferedWriter: Option[BufferedWriter] = None
+                            var gate: Option[BPSPy4jServer] = None
 
                             def openHdfs(path: String, partitionId: Long, version: Long): Option[BufferedWriter] = {
                                 val configuration: Configuration = new Configuration()
                                 configuration.set("fs.defaultFS", hdfsAddr)
 
                                 val fileSystem: FileSystem = FileSystem.get(configuration)
-                                val hdfsWritePath = new Path(path + "/" + partitionId)
+                                val hdfsWritePath = new Path(path + "/" + UUID.randomUUID().toString)
 
                                 val fsDataOutputStream: FSDataOutputStream =
                                     if (fileSystem.exists(hdfsWritePath))
@@ -104,6 +106,12 @@ class BPSPythonJob(override val id: String,
                                 metadataBufferedWriter =
                                         if (metadataBufferedWriter.isEmpty) openHdfs(metadataPath, partitionId, version)
                                         else metadataBufferedWriter
+                                gate =
+                                    if (gate.isEmpty) {
+                                        val tmp = BPSPy4jServer(isFirst, csvTitle)(successBufferedWriter, errBufferedWriter, metadataBufferedWriter)
+                                        tmp.startServer()
+                                        Some(tmp)
+                                    } else gate
                                 true
                             }
 
@@ -117,7 +125,7 @@ class BPSPythonJob(override val id: String,
                                 }.toMap
                                 val argv = write(Map("metadata" -> metadata, "data" -> data))(DefaultFormats)
                                 if (isFirst) {
-                                    BPSPy4jServer(isFirst, csvTitle)(successBufferedWriter, errBufferedWriter, metadataBufferedWriter).startServer()
+//                                    BPSPy4jServer(isFirst, csvTitle)(successBufferedWriter, errBufferedWriter, metadataBufferedWriter).startServer()
                                     Runtime.getRuntime.exec(Array[String]("/usr/bin/python", "./main.py", argv))
                                     isFirst = false
                                 }
@@ -130,6 +138,7 @@ class BPSPythonJob(override val id: String,
                                 errBufferedWriter.get.close()
                                 metadataBufferedWriter.get.flush()
                                 metadataBufferedWriter.get.close()
+
                             }
                         })
                         .option("checkpointLocation", s"/test/alex/$id/files/${UUID.randomUUID().toString}/checkpoint")

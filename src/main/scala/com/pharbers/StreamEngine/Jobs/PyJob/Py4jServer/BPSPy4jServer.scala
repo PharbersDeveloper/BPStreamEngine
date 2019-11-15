@@ -2,7 +2,10 @@ package com.pharbers.StreamEngine.Jobs.PyJob.Py4jServer
 
 import py4j.GatewayServer
 import java.io.BufferedWriter
+
+import com.pharbers.util.log.PhLogable
 import org.json4s.DefaultFormats
+
 import scala.util.parsing.json.JSON
 import org.json4s.jackson.Serialization.write
 
@@ -13,20 +16,34 @@ import org.json4s.jackson.Serialization.write
  * @since 2019/11/14 19:04
  * @note 一些值得注意的地方
  */
+object ts extends Serializable {
+    var isStarted = false
+    lazy val server = new GatewayServer(this)
+}
+
 case class BPSPy4jServer(var isFirst: Boolean,
                          var csvTitle: List[String])
                         (successBufferedWriter: Option[BufferedWriter],
                          errBufferedWriter: Option[BufferedWriter],
-                         metadataBufferedWriter: Option[BufferedWriter]) extends Serializable {
+                         metadataBufferedWriter: Option[BufferedWriter]) extends Serializable with PhLogable {
 
     def startServer(): Unit = {
-        val server = new GatewayServer(this)
-        server.start(false)
+        if (!ts.isStarted) {
+            ts.server.start(true)
+            ts.isStarted = true
+        }
+    }
+
+    def closeServer(): Unit = {
+        if (ts.isStarted) {
+            ts.server.shutdown()
+        }
     }
 
     def map2csv(title: List[String], m: Map[String, Any]): List[Any] = title.map(m)
 
     def writeHdfs(str: String): Unit = {
+        logger.info(str)
         errBufferedWriter.get.write(str)
 //        JSON.parseFull(str) match {
 //            case Some(result: Map[String, AnyRef]) =>

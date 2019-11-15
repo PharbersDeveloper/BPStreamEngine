@@ -41,4 +41,4 @@ if __name__ == "__main__":
     gateway = JavaGateway(
         callback_server_parameters=CallbackServerParameters())
     gateway.entry_point.writeHdfs("abcdsdf")
-    gateway.shutdown()
+    gateway.close()
