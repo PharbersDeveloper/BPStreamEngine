@@ -138,10 +138,10 @@ class BPSPythonJob(override val id: String,
                                 errBufferedWriter.get.close()
                                 metadataBufferedWriter.get.flush()
                                 metadataBufferedWriter.get.close()
-
+                                gate.get.closeServer()
                             }
                         })
-                        .option("checkpointLocation", s"/test/alex/$id/files/${UUID.randomUUID().toString}/checkpoint")
+                        .option("checkpointLocation", s"/test/qi2/$id/checkpoint")
                         .start()
                 outputStream = query :: outputStream
 
