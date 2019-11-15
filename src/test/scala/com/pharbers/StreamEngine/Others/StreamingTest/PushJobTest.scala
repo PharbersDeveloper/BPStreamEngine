@@ -57,9 +57,9 @@ class PushJobTest extends FunSuite{
 //            JobMsg("ossStreamJob", "job", "com.pharbers.StreamEngine.Jobs.OssPartitionJob.OssJobContainer.BPSOssPartitionJobContainer", List("$BPSKfkJobStrategy", "$BPSparkSession"), Nil, Nil, Map.empty, "", "oss job") ::
 //                    JobMsg("sandBoxJob", "job", "com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxJobContainer.BPSSandBoxJobContainer", List("$BPSparkSession"), Nil, Nil, Map.empty, "", "sandbox job") ::
                 JobMsg("pyBoxJob", "job", "com.pharbers.StreamEngine.Jobs.PyJob.PythonJobContainer.BPSPythonJobContainer", List("$BPSparkSession"), Nil, Nil, Map(
-                    "jobId" -> "6de6e-c417-4532-8a10-9fbc50",
-                    "matedataPath" -> "hdfs:///test/alex/07b8411a-5064-4271-bfd3-73079f2b42b2/metadata/",
-                    "filesPath" -> "hdfs:///test/alex/07b8411a-5064-4271-bfd3-73079f2b42b2/files/",
+                    "jobId" -> "03586-4810-48ba-bb9e-be6680",
+                    "matedataPath" -> "hdfs:///test/alex/0829b025-48ac-450c-843c-6d4ee91765ca/metadata/",
+                    "filesPath" -> "hdfs:///test/alex/0829b025-48ac-450c-843c-6d4ee91765ca/files/",
                     "resultPath" -> "hdfs:///test/qi2/"
                 ), "", "py job") ::
         Nil
