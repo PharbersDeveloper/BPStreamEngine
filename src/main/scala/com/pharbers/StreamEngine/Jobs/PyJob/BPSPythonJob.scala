@@ -96,7 +96,7 @@ class BPSPythonJob(override val id: String,
                             }
 
                             override def open(partitionId: Long, version: Long): Boolean = {
-                                if (!BPSPy4jServer.isServerStarted()) {
+                                if (!BPSPy4jServer.isServerStarted) {
                                     successBufferedWriter =
                                         if (successBufferedWriter.isEmpty) openHdfs(successPath, partitionId, version)
                                         else successBufferedWriter
@@ -123,6 +123,7 @@ class BPSPythonJob(override val id: String,
                                 }.toMap
                                 val argv = write(Map("metadata" -> metadata, "data" -> data))(DefaultFormats)
 //                                Runtime.getRuntime.exec(Array[String]("/usr/bin/python", "./main.py", argv))
+                                BPSPy4jServer.metadataBufferedWriter.get.write("alfred test 002\n")
                                 BPSPy4jServer.push("alfred test 001\n")
                             }
 

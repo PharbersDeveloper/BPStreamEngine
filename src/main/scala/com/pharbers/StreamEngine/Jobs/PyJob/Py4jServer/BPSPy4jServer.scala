@@ -63,7 +63,7 @@ object BPSPy4jServer extends Serializable {
         Runtime.getRuntime.exec(Array[String]("/usr/bin/python", "./main.py", argv))
     }
 
-    def isServerStarted(): Boolean = server != null
+    def isServerStarted: Boolean = server != null
 
     def map2csv(title: List[String], m: Map[String, Any]): List[Any] = title.map(m)
 
@@ -102,6 +102,7 @@ object BPSPy4jServer extends Serializable {
 
      def push(message: String): Unit = {
          lock.synchronized {
+            successBufferedWriter.get.write("push\n")
             data = data :+ message
          }
     }
@@ -109,7 +110,9 @@ object BPSPy4jServer extends Serializable {
     def pop(): String = {
         lock.synchronized {
             if (data.nonEmpty) {
+                successBufferedWriter.get.write("pop\n")
                 val result = data.head
+                successBufferedWriter.get.write(result)
                 data = data.tail
                 result
             } else "error"
