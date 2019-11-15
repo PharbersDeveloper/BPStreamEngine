@@ -128,7 +128,7 @@ class BPSPythonJob(override val id: String,
                             }
 
                             override def close(errorOrNull: Throwable): Unit = {
-                                BPSPy4jServer.closeServer()
+//                                BPSPy4jServer.closeServer()
                             }
                         })
                         .option("checkpointLocation", s"/test/qi2/$id/checkpoint")

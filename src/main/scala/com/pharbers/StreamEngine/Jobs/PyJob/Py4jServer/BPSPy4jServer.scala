@@ -29,6 +29,7 @@ object BPSPy4jServer extends Serializable {
     var metadataBufferedWriter: Option[BufferedWriter] = None
     val lock = new Object
     var data: List[String] = Nil
+    var closeFlag = false
 
     var server: GatewayServer = _
 
