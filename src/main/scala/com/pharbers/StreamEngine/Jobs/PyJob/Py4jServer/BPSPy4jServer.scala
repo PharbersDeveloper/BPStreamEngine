@@ -101,10 +101,10 @@ object BPSPy4jServer extends Serializable {
 //        }
     }
 
-     def push(message: String): Unit = {
-         lock.synchronized {
+    def push(message: String): Unit = {
+        lock.synchronized {
             data = data :+ message
-         }
+        }
     }
 
     def pop(): String = {

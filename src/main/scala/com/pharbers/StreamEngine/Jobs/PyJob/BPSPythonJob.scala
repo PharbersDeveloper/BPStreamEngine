@@ -73,7 +73,7 @@ class BPSPythonJob(override val id: String,
         var csvTitle: List[String] = Nil
         inputStream match {
             case Some(is) =>
-                val query = is.repartition(1).writeStream
+                val query = is.repartition(2).writeStream
                         .foreach(new ForeachWriter[Row]() {
                             var successBufferedWriter: Option[BufferedWriter] = None
                             var errBufferedWriter: Option[BufferedWriter] = None
@@ -106,10 +106,10 @@ class BPSPythonJob(override val id: String,
                                 metadataBufferedWriter =
                                     if (metadataBufferedWriter.isEmpty) openHdfs(metadataPath, partitionId, version)
                                     else metadataBufferedWriter
-//                                if (!BPSPy4jServer.isServerStarted) {
+                                if (!BPSPy4jServer.isServerStarted) {
                                     BPSPy4jServer.startServer(csvTitle, successBufferedWriter, errBufferedWriter, metadataBufferedWriter)
                                     BPSPy4jServer.startEndpoint("fuck")
-//                                }
+                                }
                                 pid = partitionId
 
                                 true
@@ -125,8 +125,8 @@ class BPSPythonJob(override val id: String,
                                 }.toMap
                                 val argv = write(Map("metadata" -> metadata, "data" -> data))(DefaultFormats)
 //                                Runtime.getRuntime.exec(Array[String]("/usr/bin/python", "./main.py", argv))
-                                successBufferedWriter.get.write(value.toString())
-                                metadataBufferedWriter.get.write("alfred test 002\t" + pid + "\n")
+//                                successBufferedWriter.get.write(value.toString())
+//                                metadataBufferedWriter.get.write("alfred test 002\t" + pid + "\n")
                                 BPSPy4jServer.push("alfred test 001\t" + pid + "\n")
                             }
 
