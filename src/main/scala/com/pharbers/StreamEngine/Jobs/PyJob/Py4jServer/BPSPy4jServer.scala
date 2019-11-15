@@ -18,7 +18,7 @@ import org.json4s.jackson.Serialization.write
  */
 object ts extends Serializable {
     var isStarted = false
-    lazy val server = new GatewayServer(this)
+    var server: GatewayServer = null
 }
 
 case class BPSPy4jServer(var isFirst: Boolean,
@@ -29,12 +29,13 @@ case class BPSPy4jServer(var isFirst: Boolean,
 
     def startServer(): Unit = {
         if (!ts.isStarted) {
+            ts.server = new GatewayServer(this)
             ts.server.start(true)
             ts.isStarted = true
         }
     }
 
-    def closeServer(): Unit = {successBufferedWriter.get.flush()
+    def closeServer(): Unit = {
         successBufferedWriter.get.flush()
         successBufferedWriter.get.close()
         errBufferedWriter.get.flush()
