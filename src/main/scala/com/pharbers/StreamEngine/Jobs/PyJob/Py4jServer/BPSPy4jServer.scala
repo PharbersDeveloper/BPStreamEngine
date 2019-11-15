@@ -103,7 +103,6 @@ object BPSPy4jServer extends Serializable {
 
      def push(message: String): Unit = {
          lock.synchronized {
-            successBufferedWriter.get.write("push\n")
             data = data :+ message
          }
     }
@@ -111,9 +110,7 @@ object BPSPy4jServer extends Serializable {
     def pop(): String = {
         lock.synchronized {
             if (data.nonEmpty) {
-                successBufferedWriter.get.write("pop\n")
                 val result = data.head
-                successBufferedWriter.get.write(result)
                 data = data.tail
                 result
             } else "error"

@@ -73,11 +73,12 @@ class BPSPythonJob(override val id: String,
         var csvTitle: List[String] = Nil
         inputStream match {
             case Some(is) =>
-                val query = is.writeStream
+                val query = is.repartition(1).writeStream
                         .foreach(new ForeachWriter[Row]() {
                             var successBufferedWriter: Option[BufferedWriter] = None
                             var errBufferedWriter: Option[BufferedWriter] = None
                             var metadataBufferedWriter: Option[BufferedWriter] = None
+                            var pid = -1L
 
                             def openHdfs(path: String, partitionId: Long, version: Long): Option[BufferedWriter] = {
                                 val configuration: Configuration = new Configuration()
@@ -96,19 +97,20 @@ class BPSPythonJob(override val id: String,
                             }
 
                             override def open(partitionId: Long, version: Long): Boolean = {
-                                if (!BPSPy4jServer.isServerStarted) {
-                                    successBufferedWriter =
-                                        if (successBufferedWriter.isEmpty) openHdfs(successPath, partitionId, version)
-                                        else successBufferedWriter
-                                    errBufferedWriter =
-                                        if (errBufferedWriter.isEmpty) openHdfs(errPath, partitionId, version)
-                                        else errBufferedWriter
-                                    metadataBufferedWriter =
-                                        if (metadataBufferedWriter.isEmpty) openHdfs(metadataPath, partitionId, version)
-                                        else metadataBufferedWriter
+                                successBufferedWriter =
+                                    if (successBufferedWriter.isEmpty) openHdfs(successPath, partitionId, version)
+                                    else successBufferedWriter
+                                errBufferedWriter =
+                                    if (errBufferedWriter.isEmpty) openHdfs(errPath, partitionId, version)
+                                    else errBufferedWriter
+                                metadataBufferedWriter =
+                                    if (metadataBufferedWriter.isEmpty) openHdfs(metadataPath, partitionId, version)
+                                    else metadataBufferedWriter
+//                                if (!BPSPy4jServer.isServerStarted) {
                                     BPSPy4jServer.startServer(csvTitle, successBufferedWriter, errBufferedWriter, metadataBufferedWriter)
                                     BPSPy4jServer.startEndpoint("fuck")
-                                }
+//                                }
+                                pid = partitionId
 
                                 true
                             }
@@ -123,8 +125,9 @@ class BPSPythonJob(override val id: String,
                                 }.toMap
                                 val argv = write(Map("metadata" -> metadata, "data" -> data))(DefaultFormats)
 //                                Runtime.getRuntime.exec(Array[String]("/usr/bin/python", "./main.py", argv))
-                                BPSPy4jServer.metadataBufferedWriter.get.write("alfred test 002\n")
-                                BPSPy4jServer.push("alfred test 001\n")
+                                successBufferedWriter.get.write(value.toString())
+                                metadataBufferedWriter.get.write("alfred test 002\t" + pid + "\n")
+                                BPSPy4jServer.push("alfred test 001\t" + pid + "\n")
                             }
 
                             override def close(errorOrNull: Throwable): Unit = {
@@ -145,7 +148,8 @@ class BPSPythonJob(override val id: String,
     }
 
     override def close(): Unit = {
-        super.close()
-        container.finishJobWithId(id)
+        logger.info("end =========>>> alfred test")
+//        super.close()
+//        container.finishJobWithId(id)
     }
 }
