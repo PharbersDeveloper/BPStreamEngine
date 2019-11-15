@@ -16,6 +16,7 @@ import java.io.{BufferedReader, BufferedWriter, InputStreamReader, OutputStreamW
 import java.util.UUID
 
 import com.pharbers.StreamEngine.Jobs.PyJob.Listener.BPSProgressListenerAndClose
+import com.pharbers.StreamEngine.Jobs.PyJob.Py4jServer.BPSPy4jServer
 import org.apache.spark.sql.types.StringType
 
 object BPSPythonJob {
@@ -93,8 +94,6 @@ class BPSPythonJob(override val id: String,
                                 Some(new BufferedWriter(new OutputStreamWriter(fsDataOutputStream, StandardCharsets.UTF_8)))
                             }
 
-                            def map2csv(title: List[String], m: Map[String, Any]): List[Any] = title.map(m)
-
                             override def open(partitionId: Long, version: Long): Boolean = {
                                 successBufferedWriter =
                                         if (successBufferedWriter.isEmpty) openHdfs(successPath, partitionId, version)
@@ -116,43 +115,11 @@ class BPSPythonJob(override val id: String,
                                         case _ => ???
                                     }
                                 }.toMap
-
                                 val argv = write(Map("metadata" -> metadata, "data" -> data))(DefaultFormats)
-                                val pyArgs = Array[String]("/usr/bin/python", "./main.py", argv)
-                                val pr = Runtime.getRuntime.exec(pyArgs)
-                                val in = new BufferedReader(new InputStreamReader(pr.getInputStream))
-
-                                var lines = in.readLine()
-                                while (lines != null) {
-                                    JSON.parseFull(lines) match {
-                                        case Some(result: Map[String, AnyRef]) =>
-                                            if (result("tag").asInstanceOf[Double] == 1) {
-                                                if (isFirst) {
-                                                    val metadata = result("metadata").asInstanceOf[Map[String, Any]]
-                                                    csvTitle = metadata("schema").asInstanceOf[List[Any]].map { x =>
-                                                        x.asInstanceOf[Map[String, String]]("key").toString
-                                                    }
-
-                                                    successBufferedWriter.get.write(csvTitle.mkString(","))
-                                                    successBufferedWriter.get.newLine()
-
-                                                    metadataBufferedWriter.get.write(write(metadata)(DefaultFormats))
-                                                    isFirst = false
-                                                }
-
-                                                successBufferedWriter.get.write(
-                                                    map2csv(csvTitle, result("data").asInstanceOf[Map[String, Any]]).mkString(",")
-                                                )
-                                                successBufferedWriter.get.write("\n")
-                                            } else {
-                                                errBufferedWriter.get.write(lines)
-                                                errBufferedWriter.get.write("\n")
-                                            }
-                                        case None =>
-                                            errBufferedWriter.get.write(lines)
-                                            errBufferedWriter.get.write("\n")
-                                    }
-                                    lines = in.readLine()
+                                if (isFirst) {
+                                    BPSPy4jServer(isFirst, csvTitle)(successBufferedWriter, errBufferedWriter, metadataBufferedWriter).startServer()
+                                    Runtime.getRuntime.exec(Array[String]("/usr/bin/python", "./main.py", argv))
+                                    isFirst = false
                                 }
                             }
 
