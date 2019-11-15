@@ -97,17 +97,17 @@ class BPSPythonJob(override val id: String,
                             }
 
                             override def open(partitionId: Long, version: Long): Boolean = {
-                                successBufferedWriter =
-                                        if (successBufferedWriter.isEmpty) openHdfs(successPath, partitionId, version)
-                                        else successBufferedWriter
-                                errBufferedWriter =
-                                        if (errBufferedWriter.isEmpty) openHdfs(errPath, partitionId, version)
-                                        else errBufferedWriter
-                                metadataBufferedWriter =
-                                        if (metadataBufferedWriter.isEmpty) openHdfs(metadataPath, partitionId, version)
-                                        else metadataBufferedWriter
                                 gate =
                                     if (gate.isEmpty) {
+                                        successBufferedWriter =
+                                            if (successBufferedWriter.isEmpty) openHdfs(successPath, partitionId, version)
+                                            else successBufferedWriter
+                                        errBufferedWriter =
+                                            if (errBufferedWriter.isEmpty) openHdfs(errPath, partitionId, version)
+                                            else errBufferedWriter
+                                        metadataBufferedWriter =
+                                            if (metadataBufferedWriter.isEmpty) openHdfs(metadataPath, partitionId, version)
+                                            else metadataBufferedWriter
                                         val tmp = BPSPy4jServer(isFirst, csvTitle)(successBufferedWriter, errBufferedWriter, metadataBufferedWriter)
                                         tmp.startServer()
                                         Some(tmp)
@@ -132,12 +132,12 @@ class BPSPythonJob(override val id: String,
                             }
 
                             override def close(errorOrNull: Throwable): Unit = {
-                                successBufferedWriter.get.flush()
-                                successBufferedWriter.get.close()
-                                errBufferedWriter.get.flush()
-                                errBufferedWriter.get.close()
-                                metadataBufferedWriter.get.flush()
-                                metadataBufferedWriter.get.close()
+//                                successBufferedWriter.get.flush()
+//                                successBufferedWriter.get.close()
+//                                errBufferedWriter.get.flush()
+//                                errBufferedWriter.get.close()
+//                                metadataBufferedWriter.get.flush()
+//                                metadataBufferedWriter.get.close()
                                 gate.get.closeServer()
                             }
                         })

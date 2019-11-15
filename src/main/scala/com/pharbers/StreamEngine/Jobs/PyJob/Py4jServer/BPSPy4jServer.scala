@@ -34,7 +34,13 @@ case class BPSPy4jServer(var isFirst: Boolean,
         }
     }
 
-    def closeServer(): Unit = {
+    def closeServer(): Unit = {successBufferedWriter.get.flush()
+        successBufferedWriter.get.flush()
+        successBufferedWriter.get.close()
+        errBufferedWriter.get.flush()
+        errBufferedWriter.get.close()
+        metadataBufferedWriter.get.flush()
+        metadataBufferedWriter.get.close()
         if (ts.isStarted) {
             ts.server.shutdown()
         }
