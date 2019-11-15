@@ -1,5 +1,8 @@
 package com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxConvertSchemaJobContainer
 
+import java.net.{HttpURLConnection, URL}
+import java.nio.charset.StandardCharsets
+
 import com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxConvertSchemaJobContainer.Listener.ConvertSchemaListener
 import com.pharbers.StreamEngine.Jobs.SandBoxJob.SchemaConverter
 import com.pharbers.StreamEngine.Utils.HDFS.BPSHDFSFile
@@ -8,6 +11,7 @@ import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSKfkJobStrategy
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.types.{StringType, StructField, StructType, TimestampType}
+import org.json4s.jackson.Serialization.write
 
 object BPSSandBoxConvertSchemaJob {
     def apply(id: String,
@@ -59,6 +63,10 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 				BPSHDFSFile.appendLine2HDFS(path, line)
 			}
 			
+			val json = s"""{"jobId":"$jobId","path":"$path"}"""
+			
+			post(json, "application/json")
+			
 			val schema = SchemaConverter.str2SqlType(repMetaDataStream)
 			BPSHDFSFile.checkPath(s"$samplePath")
 			val reading = spark.readStream.schema(StructType(
@@ -101,5 +109,18 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 	override def close(): Unit = {
 		outputStream.foreach(_.stop())
 		listeners.foreach(_.deActive())
+	}
+	
+	def post(body: String, contentType: String): Unit = {
+		val conn = new URL("http://192.168.100.116:8080/updateInfoWithJobId").openConnection.asInstanceOf[HttpURLConnection]
+		val postDataBytes = body.getBytes(StandardCharsets.UTF_8)
+		conn.setRequestMethod("POST")
+		conn.setRequestProperty("Content-Type", contentType)
+		conn.setRequestProperty("Content-Length", String.valueOf(postDataBytes.length))
+		conn.setConnectTimeout(60000)
+		conn.setReadTimeout(60000)
+		conn.setDoOutput(true)
+		conn.getOutputStream.write(postDataBytes)
+		conn.getResponseCode
 	}
 }

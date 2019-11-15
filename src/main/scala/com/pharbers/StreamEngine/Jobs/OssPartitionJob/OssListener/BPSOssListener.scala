@@ -61,7 +61,7 @@ case class BPSOssListener(spark: SparkSession, job: BPStreamJob) extends BPStrea
     override def active(s: DataFrame): Unit = {
         BPSDriverChannel.registerListener(this)
 
-        job.outputStream = s.filter($"type" === "SandBox-Schema" || $"type" === "SandBox-Lables" || $"type" === "SandBox-Length").writeStream
+        job.outputStream = s.filter($"type" === "SandBox-Schema" || $"type" === "SandBox-Labels" || $"type" === "SandBox-Length").writeStream
                 .foreach(
                     new ForeachWriter[Row] {
 
