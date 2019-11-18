@@ -2,10 +2,8 @@ package com.pharbers.StreamEngine.Jobs.PyJob
 
 import org.apache.spark.sql
 import org.json4s.DefaultFormats
-
 import scala.util.parsing.json.JSON
 import java.nio.charset.StandardCharsets
-
 import org.apache.hadoop.conf.Configuration
 import org.json4s.jackson.Serialization.write
 import org.apache.spark.sql.{ForeachWriter, Row, SparkSession}
@@ -14,7 +12,6 @@ import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSJobStrategy
 import com.pharbers.StreamEngine.Utils.StreamJob.{BPSJobContainer, BPStreamJob}
 import java.io.{BufferedReader, BufferedWriter, InputStreamReader, OutputStreamWriter}
 import java.util.UUID
-
 import com.pharbers.StreamEngine.Jobs.PyJob.Listener.BPSProgressListenerAndClose
 import org.apache.spark.sql.types.StringType
 
@@ -71,7 +68,7 @@ class BPSPythonJob(override val id: String,
         var csvTitle: List[String] = Nil
         inputStream match {
             case Some(is) =>
-                val query = is.writeStream
+                val query = is.repartition().writeStream
                         .foreach(new ForeachWriter[Row]() {
                             var successBufferedWriter: Option[BufferedWriter] = None
                             var errBufferedWriter: Option[BufferedWriter] = None
