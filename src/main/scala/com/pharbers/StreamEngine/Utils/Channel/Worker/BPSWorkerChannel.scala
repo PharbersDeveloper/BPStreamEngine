@@ -4,9 +4,11 @@ import java.net.{InetAddress, InetSocketAddress}
 import java.nio.ByteBuffer
 import java.nio.channels.SocketChannel
 
+import com.pharbers.util.log.PhLogable
+
 
 object BPSWorkerChannel {
-//    var host: Broadcast[String] = _
+    //    var host: Broadcast[String] = _
     val port: Int = 56789
 
     def apply(host: String): BPSWorkerChannel = {
@@ -19,7 +21,8 @@ object BPSWorkerChannel {
 //    }
 }
 
-class BPSWorkerChannel(host: String, port: Int) extends Serializable {
+// TODO 希望可以补全注释，因为我不知道这是干什么的
+class BPSWorkerChannel(host: String, port: Int) extends Serializable with PhLogable {
 
     lazy val addr = new InetSocketAddress(host, port)
 
@@ -28,11 +31,10 @@ class BPSWorkerChannel(host: String, port: Int) extends Serializable {
     def connect(): Unit = {
         try {
             client = Some(SocketChannel.open(addr))
-        }catch {
+        } catch {
             case e: Exception => throw new Exception(s"error~~~worker~~~~host:${addr.getHostString} $host, name: ${addr.getPort}", e)
         }
-        //todo: log
-        println("Connecting to Server on port 55555 ...")
+        logger.info("Connecting to Server on port 55555 ...")
     }
 
     def pushMessage(msg: String): Unit = {

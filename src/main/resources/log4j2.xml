@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Configuration status="OFF" name="MyApp" packages="">
+<Configuration status="OFF" name="MyApp" packages="com.pharbers.util.log.plugin">
     <properties>
         <property name="LOG_HOME">logs</property>
         <property name="FILE_NAME">app</property>
@@ -10,7 +10,7 @@
                 <ThresholdFilter level="all" onMatch="ACCEPT" onMismatch="DENY"/>
             </Filters>
             <PatternLayout>
-                <Pattern>%d{yyyy/MM/dd HH:mm:ss.SSS}, %p, %m%n</Pattern>
+                <Pattern>[%d{yyyy/MM/dd HH:mm:ss.SSS}] %p: %m (%F:%L)(thread:%t)%n</Pattern>
             </PatternLayout>
         </Console>
         <RollingFile name="RollingFile" fileName="${LOG_HOME}/${FILE_NAME}.log"
@@ -19,7 +19,8 @@
                 <ThresholdFilter level="INFO" onMatch="ACCEPT" onMismatch="DENY"/>
             </Filters>
             <PatternLayout>
-                <Pattern>%d{yyyy/MM/dd HH:mm:ss.SSS}, %p, %m%n</Pattern>
+                <!--<Pattern>{"Time": "%d{yyyy/MM/dd HH:mm:ss.SSS}","Hostname": "%host","ProjectName": "BP-Stream-Engine","Level": "%p","File": "%l","Func": "%M","UserId": "%X{USERID}","TraceId": "%X{TRACEID}","JobId": "%X{JOBID}","Message": "%m", "Thread": "%t"}%n</Pattern>-->
+                <Pattern>[%d{yyyy/MM/dd HH:mm:ss.SSS}] %p: %m (%F:%L)(thread:%t)%n</Pattern>
             </PatternLayout>
             <Policies>
                 <TimeBasedTriggeringPolicy/>
