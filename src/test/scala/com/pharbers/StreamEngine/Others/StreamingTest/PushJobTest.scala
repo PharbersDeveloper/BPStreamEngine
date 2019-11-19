@@ -60,12 +60,12 @@ class PushJobTest extends FunSuite{
                     "jobId" -> "03586-4810-48ba-bb9e-be6680",
                     "matedataPath" -> "hdfs:///test/alex/0829b025-48ac-450c-843c-6d4ee91765ca/metadata/",
                     "filesPath" -> "hdfs:///test/alex/0829b025-48ac-450c-843c-6d4ee91765ca/files/",
-                    "resultPath" -> "hdfs:///test/qi2/"
+                    "resultPath" -> "hdfs:///test/qi3/"
                 ), "", "py job") ::
         Nil
 
         val jobMsg = write(jobs)
-        val topic = "stream_job_submit_qi"
+        val topic = "stream_job_submit_qi2"
 
         val pkp = new PharbersKafkaProducer[String, BPJob]
         val bpJob = new BPJob(jobId, traceId, `type`, jobMsg)
