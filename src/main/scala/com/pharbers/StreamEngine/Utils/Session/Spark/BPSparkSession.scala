@@ -44,7 +44,7 @@ class BPSparkSession(config: Map[String, String]) extends BPSparkSessionConfig {
     val spark: SparkSession = SparkSession.builder().config(conf).getOrCreate()
     spark.sparkContext.setLogLevel(sparkConfigs.getString(LOG_LEVEL_KEY))
     spark.sparkContext.setLocalProperty("host", InetAddress.getLocalHost.getHostAddress)
-
+    spark.streams.addListener(new SparkQueryListener)
     // 初始环境设置
     sparkConfigs.getString(RUN_MODEL_KEY) match {
         case "client" =>

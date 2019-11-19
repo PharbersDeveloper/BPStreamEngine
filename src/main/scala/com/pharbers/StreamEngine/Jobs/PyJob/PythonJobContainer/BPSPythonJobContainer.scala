@@ -81,6 +81,7 @@ class BPSPythonJobContainer(override val spark: SparkSession,
 
     override def exec(): Unit = inputStream match {
         case Some(_) =>
+            //todo: 为了submit后能使用，时使用--file预先加入了file。之后可以选择将py文件放在hdfs中，这儿根据配置的hdfs目录加载
             pyFiles.foreach(spark.sparkContext.addFile)
             val job = BPSPythonJob(id, spark, inputStream, this, Map(
                 "resultPath" -> resultPath,
