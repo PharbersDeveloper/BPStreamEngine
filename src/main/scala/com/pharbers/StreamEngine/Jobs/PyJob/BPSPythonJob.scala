@@ -62,29 +62,31 @@ class BPSPythonJob(override val id: String,
         val errPath = resultPath + "/err"
         val metadataPath = resultPath + "/metadata"
         val checkpointPath = resultPath + "/checkpoint"
+        val rowRecordPath = resultPath + "/row_record"
 
         inputStream match {
             case Some(is) =>
                 val query = is.repartition(1).writeStream
                         .option("checkpointLocation", checkpointPath)
                         .foreach(new ForeachWriter[Row]() {
-                            var isFirst = true
-                            var py4jServer: Option[BPSPy4jServer] = None
 
                             override def open(partitionId: Long, version: Long): Boolean = {
                                 val genPath: String => String =
                                     path => s"$path/part-$partitionId-${UUID.randomUUID().toString}.$fileSuffix"
 
-                                if(isFirst){
-                                    isFirst = false
-
-                                    py4jServer = if (py4jServer.isEmpty) {
-                                        val server = BPSPy4jServer()
-                                        server.openBuffer(hdfsAddr)(genPath(metadataPath), genPath(successPath), genPath(errPath))
+                                synchronized {
+                                    BPSPy4jServer.server = if (!BPSPy4jServer.isStarted) {
+                                        val server = BPSPy4jServer(Map(
+                                            "hdfsAddr" -> hdfsAddr,
+                                            "rowRecordPath" -> genPath(rowRecordPath),
+                                            "successPath" -> genPath(successPath),
+                                            "errPath" -> genPath(errPath),
+                                            "metadataPath" -> genPath(metadataPath)
+                                        ))
                                         server.startServer()
                                         server.startEndpoint(server.server.getPort.toString)
                                         Some(server)
-                                    } else py4jServer
+                                    } else BPSPy4jServer.server
                                 }
 
                                 true
@@ -99,18 +101,21 @@ class BPSPythonJob(override val id: String,
                                     }
                                 }.toMap
 
-                                py4jServer.get.push(
+                                BPSPy4jServer.server.get.push(
                                     write(Map("metadata" -> lastMetadata, "data" -> data))(DefaultFormats)
                                 )
                             }
 
-                            override def close(errorOrNull: Throwable): Unit = {}
+                            override def close(errorOrNull: Throwable): Unit = {
+                                BPSPy4jServer.server.get.push("EOF")
+                                BPSPy4jServer.server = None
+                            }
                         })
                         .start()
                 outputStream = query :: outputStream
 
                 val rowLength = lastMetadata("length").asInstanceOf[String].tail.init.toLong
-                val listener = BPSProgressListenerAndClose(this, query, null)
+                val listener = BPSProgressListenerAndClose(this, spark, rowLength, rowRecordPath)
                 listener.active(null)
                 listeners = listener :: listeners
             case None => ???
