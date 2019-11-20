@@ -14,26 +14,32 @@ import scala.util.parsing.json.JSON
  * @note
  */
 object ReadParquetScript extends App {
-    val id = "57fe0-2bda-4880-8301-dc55a0"
-    val matedataPath = "hdfs:///test/alex/07b8411a-5064-4271-bfd3-73079f2b42b2/metadata/"
-    val filesPath = "hdfs:///test/alex/07b8411a-5064-4271-bfd3-73079f2b42b2/files/"
+    val id = "03586-4810-48ba-bb9e-be6680"
+    val matedataPath = "hdfs:///test/alex/0829b025-48ac-450c-843c-6d4ee91765ca/metadata/"
+    val filesPath = "hdfs:///test/alex/0829b025-48ac-450c-843c-6d4ee91765ca/files/"
 
     val spark = BPSparkSession()
 
     def byBatchForCsv(): Unit = {
+//        val path = "hdfs:///test/qi3/abc001/metadata"
+//        val path = "hdfs:///test/qi3/abc001/file"
+        val path = "hdfs:///test/qi3/abc001/err"
         val reading = spark.read
                 .format("com.databricks.spark.csv")
                 .option("header", "true") //这里如果在csv第一行有属性的话，没有就是"false"
                 .option("inferSchema", true.toString)//这是自动推断属性列的数据类型。
-                .load("hdfs:///test/qi/57fe0-2bda-4880-8301-dc55a0/file") //文件的路径
+                .load(path) //文件的路径
         reading.show(false)
+        println(reading.count())
     }
     byBatchForCsv()
 
     def byBatch(): Unit = {
-        val reading = spark.read.parquet(filesPath)
+        val loadSchema = BPSParseSchema.parseSchemaByMetadata(matedataPath + id)(spark)
+        val reading = spark.read.schema(loadSchema).parquet(filesPath)
         reading.show(false)
     }
+//    byBatch()
 
     def byStream(): Unit = {
         val loadSchema = BPSParseSchema.parseSchemaByMetadata(matedataPath + id)(spark)

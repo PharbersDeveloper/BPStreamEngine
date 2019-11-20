@@ -1,19 +1,15 @@
 package com.pharbers.StreamEngine.Jobs.PyJob
 
+import java.util.UUID
 import org.apache.spark.sql
 import org.json4s.DefaultFormats
-import scala.util.parsing.json.JSON
-import java.nio.charset.StandardCharsets
-import org.apache.hadoop.conf.Configuration
+import org.apache.spark.sql.types.StringType
 import org.json4s.jackson.Serialization.write
 import org.apache.spark.sql.{ForeachWriter, Row, SparkSession}
-import org.apache.hadoop.fs.{FSDataOutputStream, FileSystem, Path}
+import com.pharbers.StreamEngine.Jobs.PyJob.Py4jServer.BPSPy4jServer
 import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSJobStrategy
 import com.pharbers.StreamEngine.Utils.StreamJob.{BPSJobContainer, BPStreamJob}
-import java.io.{BufferedReader, BufferedWriter, InputStreamReader, OutputStreamWriter}
-import java.util.UUID
 import com.pharbers.StreamEngine.Jobs.PyJob.Listener.BPSProgressListenerAndClose
-import org.apache.spark.sql.types.StringType
 
 object BPSPythonJob {
     def apply(id: String,
@@ -32,28 +28,30 @@ object BPSPythonJob {
  * @since 2019/11/6 17:43
  * @node 可用的配置参数
  * {{{
- *     hdfsAddr = "hdfs://spark.master:9000"
+ *     fileSuffix = "csv" // 默认
+ *     hdfsAddr = "hdfs://spark.master:9000" // 默认
  *     resultPath = "hdfs:///test/sub/"
- *     metadata = Map("jobId" -> "a", "fileName" -> "b")
+ *     lastMetadata = Map("jobId" -> "a", "fileName" -> "b")
  * }}}
  */
 class BPSPythonJob(override val id: String,
                    override val spark: SparkSession,
                    is: Option[sql.DataFrame],
                    container: BPSJobContainer,
-                   jobConf: Map[String, Any])
-        extends BPStreamJob with Serializable {
+                   jobConf: Map[String, Any]) extends BPStreamJob with Serializable {
 
     type T = BPSJobStrategy
     override val strategy: BPSJobStrategy = null
 
+    val fileSuffix: String = jobConf.getOrElse("fileSuffix", "csv").toString
     val hdfsAddr: String = jobConf.getOrElse("hdfsAddr", "hdfs://spark.master:9000").toString
-    val resultPath: String =
+    val resultPath: String = {
         if (jobConf("resultPath").toString.endsWith("/"))
             jobConf("resultPath").toString + id
         else
             jobConf("resultPath").toString + "/" + id
-    val metadata: Map[String, Any] = jobConf("metadata").asInstanceOf[Map[String, Any]]
+    }
+    val lastMetadata: Map[String, Any] = jobConf("lastMetadata").asInstanceOf[Map[String, Any]]
 
     override def open(): Unit = {
         inputStream = is
@@ -63,45 +61,32 @@ class BPSPythonJob(override val id: String,
         val successPath = resultPath + "/file"
         val errPath = resultPath + "/err"
         val metadataPath = resultPath + "/metadata"
+        val checkpointPath = resultPath + "/checkpoint"
 
-        var isFirst = true
-        var csvTitle: List[String] = Nil
         inputStream match {
             case Some(is) =>
-                val query = is.repartition().writeStream
+                val query = is.repartition(1).writeStream
+                        .option("checkpointLocation", checkpointPath)
                         .foreach(new ForeachWriter[Row]() {
-                            var successBufferedWriter: Option[BufferedWriter] = None
-                            var errBufferedWriter: Option[BufferedWriter] = None
-                            var metadataBufferedWriter: Option[BufferedWriter] = None
-
-                            def openHdfs(path: String, partitionId: Long, version: Long): Option[BufferedWriter] = {
-                                val configuration: Configuration = new Configuration()
-                                configuration.set("fs.defaultFS", hdfsAddr)
-
-                                val fileSystem: FileSystem = FileSystem.get(configuration)
-                                val hdfsWritePath = new Path(path + "/" + partitionId)
-
-                                val fsDataOutputStream: FSDataOutputStream =
-                                    if (fileSystem.exists(hdfsWritePath))
-                                        fileSystem.append(hdfsWritePath)
-                                    else
-                                        fileSystem.create(hdfsWritePath)
-
-                                Some(new BufferedWriter(new OutputStreamWriter(fsDataOutputStream, StandardCharsets.UTF_8)))
-                            }
-
-                            def map2csv(title: List[String], m: Map[String, Any]): List[Any] = title.map(m)
+                            var isFirst = true
+                            var py4jServer: Option[BPSPy4jServer] = None
 
                             override def open(partitionId: Long, version: Long): Boolean = {
-                                successBufferedWriter =
-                                        if (successBufferedWriter.isEmpty) openHdfs(successPath, partitionId, version)
-                                        else successBufferedWriter
-                                errBufferedWriter =
-                                        if (errBufferedWriter.isEmpty) openHdfs(errPath, partitionId, version)
-                                        else errBufferedWriter
-                                metadataBufferedWriter =
-                                        if (metadataBufferedWriter.isEmpty) openHdfs(metadataPath, partitionId, version)
-                                        else metadataBufferedWriter
+                                val genPath: String => String =
+                                    path => s"$path/part-$partitionId-${UUID.randomUUID().toString}.$fileSuffix"
+
+                                if(isFirst){
+                                    isFirst = false
+
+                                    py4jServer = if (py4jServer.isEmpty) {
+                                        val server = BPSPy4jServer()
+                                        server.openBuffer(hdfsAddr)(genPath(metadataPath), genPath(successPath), genPath(errPath))
+                                        server.startServer()
+                                        server.startEndpoint(server.server.getPort.toString)
+                                        Some(server)
+                                    } else py4jServer
+                                }
+
                                 true
                             }
 
@@ -114,61 +99,18 @@ class BPSPythonJob(override val id: String,
                                     }
                                 }.toMap
 
-                                val argv = write(Map("metadata" -> metadata, "data" -> data))(DefaultFormats)
-                                val pyArgs = Array[String]("/usr/bin/python", "./main.py", argv)
-                                val pr = Runtime.getRuntime.exec(pyArgs)
-                                val in = new BufferedReader(new InputStreamReader(pr.getInputStream))
-
-                                var lines = in.readLine()
-                                while (lines != null) {
-                                    JSON.parseFull(lines) match {
-                                        case Some(result: Map[String, AnyRef]) =>
-                                            if (result("tag").asInstanceOf[Double] == 1) {
-                                                if (isFirst) {
-                                                    val metadata = result("metadata").asInstanceOf[Map[String, Any]]
-                                                    csvTitle = metadata("schema").asInstanceOf[List[Any]].map { x =>
-                                                        x.asInstanceOf[Map[String, String]]("key").toString
-                                                    }
-
-                                                    successBufferedWriter.get.write(csvTitle.mkString(","))
-                                                    successBufferedWriter.get.newLine()
-
-                                                    metadataBufferedWriter.get.write(write(metadata)(DefaultFormats))
-                                                    isFirst = false
-                                                }
-
-                                                successBufferedWriter.get.write(
-                                                    map2csv(csvTitle, result("data").asInstanceOf[Map[String, Any]]).mkString(",")
-                                                )
-                                                successBufferedWriter.get.write("\n")
-                                            } else {
-                                                errBufferedWriter.get.write(lines)
-                                                errBufferedWriter.get.write("\n")
-                                            }
-                                        case None =>
-                                            errBufferedWriter.get.write(lines)
-                                            errBufferedWriter.get.write("\n")
-                                    }
-                                    lines = in.readLine()
-                                }
+                                py4jServer.get.push(
+                                    write(Map("metadata" -> lastMetadata, "data" -> data))(DefaultFormats)
+                                )
                             }
 
-                            override def close(errorOrNull: Throwable): Unit = {
-                                successBufferedWriter.get.flush()
-                                successBufferedWriter.get.close()
-                                errBufferedWriter.get.flush()
-                                errBufferedWriter.get.close()
-                                metadataBufferedWriter.get.flush()
-                                metadataBufferedWriter.get.close()
-                            }
+                            override def close(errorOrNull: Throwable): Unit = {}
                         })
-                        .option("checkpointLocation", s"/test/alex/$id/files/${UUID.randomUUID().toString}/checkpoint")
                         .start()
                 outputStream = query :: outputStream
 
-                val rowLength = metadata("length").asInstanceOf[String].tail.init.toLong
-
-                val listener = BPSProgressListenerAndClose(this, query, rowLength)
+                val rowLength = lastMetadata("length").asInstanceOf[String].tail.init.toLong
+                val listener = BPSProgressListenerAndClose(this, query, null)
                 listener.active(null)
                 listeners = listener :: listeners
             case None => ???
@@ -176,6 +118,7 @@ class BPSPythonJob(override val id: String,
     }
 
     override def close(): Unit = {
+//        logger.info("end =========>>> alfred test")
         super.close()
         container.finishJobWithId(id)
     }

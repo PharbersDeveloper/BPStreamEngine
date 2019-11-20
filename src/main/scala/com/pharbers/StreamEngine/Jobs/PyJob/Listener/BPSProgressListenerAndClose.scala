@@ -4,6 +4,7 @@ import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.streaming.StreamingQuery
 import com.pharbers.StreamEngine.Utils.Event.BPSEvents
 import com.pharbers.StreamEngine.Jobs.PyJob.BPSPythonJob
+import com.pharbers.StreamEngine.Jobs.PyJob.Py4jServer.BPSPy4jServer
 import com.pharbers.StreamEngine.Utils.Channel.Local.BPSLocalChannel
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamListener
 
@@ -17,15 +18,15 @@ import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamListener
  */
 case class BPSProgressListenerAndClose(override val job: BPSPythonJob,
                                        query: StreamingQuery,
-                                       sumRow: Long) extends BPStreamListener {
+                                       py4jServer: BPSPy4jServer) extends BPStreamListener {
 //    val query: StreamingQuery = job.outputStream.head
 
     override def trigger(e: BPSEvents): Unit = {
         val cumulative = query.recentProgress.map(_.numInputRows).sum
-
-        if (query.lastProgress != null) {
-            logger.debug("---->" + query.lastProgress.numInputRows)
-        }
+        val sumRow = 2//py4jServer.totalRow
+//        if (query.lastProgress != null) {
+//            logger.debug("---->" + query.lastProgress.numInputRows)
+//        }
         logger.debug("=========> Total Row " + sumRow)
         logger.debug("=====>" + cumulative)
         if (cumulative >= sumRow) {

@@ -122,7 +122,6 @@
                     <version>1.0</version>
                 </dependency>
 
-
                 <!-- hadoop -->
                 <dependency>
                     <groupId>org.apache.hadoop</groupId>

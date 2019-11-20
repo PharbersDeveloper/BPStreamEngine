@@ -1,8 +1,9 @@
 package com.pharbers.StreamEngine.Jobs.PyJob.PythonJobContainer
 
-import org.apache.hadoop.fs.{FileSystem, Path}
+import java.util.UUID
 import org.apache.spark.sql.SparkSession
 import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.fs.{FileSystem, Path}
 import com.pharbers.StreamEngine.Jobs.PyJob.BPSPythonJob
 import com.pharbers.StreamEngine.Utils.Schema.Spark.BPSParseSchema
 import com.pharbers.StreamEngine.Utils.Event.EventHandler.BPSEventHandler
@@ -82,9 +83,9 @@ class BPSPythonJobContainer(override val spark: SparkSession,
     override def exec(): Unit = inputStream match {
         case Some(_) =>
             pyFiles.foreach(spark.sparkContext.addFile)
-            val job = BPSPythonJob(id, spark, inputStream, this, Map(
+            val job = BPSPythonJob("abc001", spark, inputStream, this, Map( //UUID.randomUUID().toString
                 "resultPath" -> resultPath,
-                "metadata" -> metadata
+                "lastMetadata" -> metadata
             ))
             job.open()
             job.exec()
