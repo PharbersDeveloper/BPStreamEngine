@@ -1,8 +1,6 @@
 package com.pharbers.StreamEngine.Jobs.PyJob
 
-import java.net.ServerSocket
 import java.util.UUID
-
 import org.apache.spark.sql
 import org.json4s.DefaultFormats
 import org.apache.spark.sql.types.StringType
@@ -70,19 +68,24 @@ class BPSPythonJob(override val id: String,
                 val query = is.repartition(1).writeStream
                         .option("checkpointLocation", checkpointPath)
                         .foreach(new ForeachWriter[Row]() {
+                            var isFirst = true
                             var py4jServer: Option[BPSPy4jServer] = None
 
                             override def open(partitionId: Long, version: Long): Boolean = {
                                 val genPath: String => String =
                                     path => s"$path/part-$partitionId-${UUID.randomUUID().toString}.$fileSuffix"
 
-                                py4jServer = if (py4jServer.isEmpty) {
-                                    val server = BPSPy4jServer()
-                                    server.openBuffer(hdfsAddr)(genPath(metadataPath), genPath(successPath), genPath(errPath))
-                                    server.startServer()
-                                    server.startEndpoint(server.server.getPort.toString)
-                                    Some(server)
-                                } else py4jServer
+                                if(isFirst){
+                                    isFirst = false
+
+                                    py4jServer = if (py4jServer.isEmpty) {
+                                        val server = BPSPy4jServer()
+                                        server.openBuffer(hdfsAddr)(genPath(metadataPath), genPath(successPath), genPath(errPath))
+                                        server.startServer()
+                                        server.startEndpoint(server.server.getPort.toString)
+                                        Some(server)
+                                    } else py4jServer
+                                }
 
                                 true
                             }

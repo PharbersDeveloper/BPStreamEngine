@@ -48,7 +48,7 @@ if __name__ == "__main__":
         # if message == "EMPTY":
         #     continue
         # elif message == "EOF":
-        #     gateway.entry_point.closeServer()
+        #     gateway.entry_point.stopServer()
         # else:
         #     for item in facade(message):
         #         gateway.entry_point.writeHdfs(item.toJson())
