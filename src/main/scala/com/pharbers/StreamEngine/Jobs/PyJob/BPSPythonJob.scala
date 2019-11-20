@@ -1,14 +1,13 @@
 package com.pharbers.StreamEngine.Jobs.PyJob
 
+import java.net.ServerSocket
+import java.util.UUID
+
 import org.apache.spark.sql
 import org.json4s.DefaultFormats
-import java.nio.charset.StandardCharsets
-import org.apache.hadoop.conf.Configuration
 import org.apache.spark.sql.types.StringType
 import org.json4s.jackson.Serialization.write
-import java.io.{BufferedWriter, OutputStreamWriter}
 import org.apache.spark.sql.{ForeachWriter, Row, SparkSession}
-import org.apache.hadoop.fs.{FSDataOutputStream, FileSystem, Path}
 import com.pharbers.StreamEngine.Jobs.PyJob.Py4jServer.BPSPy4jServer
 import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSJobStrategy
 import com.pharbers.StreamEngine.Utils.StreamJob.{BPSJobContainer, BPStreamJob}
@@ -66,21 +65,24 @@ class BPSPythonJob(override val id: String,
         val metadataPath = resultPath + "/metadata"
         val checkpointPath = resultPath + "/checkpoint"
 
-        val rowLength = lastMetadata("length").asInstanceOf[String].tail.init.toLong
-
         inputStream match {
             case Some(is) =>
                 val query = is.repartition(1).writeStream
                         .option("checkpointLocation", checkpointPath)
                         .foreach(new ForeachWriter[Row]() {
-                            override def open(partitionId: Long, version: Long): Boolean = {
-                                val genPath: String => String = path => s"$path/part-$partitionId-$id.$fileSuffix"
+                            var py4jServer: Option[BPSPy4jServer] = None
 
-                                BPSPy4jServer(rowLength).openBuffer(hdfsAddr)(
-                                    genPath(metadataPath),
-                                    genPath(successPath),
-                                    genPath(errPath)
-                                ).startServer().startEndpoint()
+                            override def open(partitionId: Long, version: Long): Boolean = {
+                                val genPath: String => String =
+                                    path => s"$path/part-$partitionId-${UUID.randomUUID().toString}.$fileSuffix"
+
+                                py4jServer = if (py4jServer.isEmpty) {
+                                    val server = BPSPy4jServer()
+                                    server.openBuffer(hdfsAddr)(genPath(metadataPath), genPath(successPath), genPath(errPath))
+                                    server.startServer()
+                                    server.startEndpoint(server.server.getPort.toString)
+                                    Some(server)
+                                } else py4jServer
 
                                 true
                             }
@@ -94,7 +96,7 @@ class BPSPythonJob(override val id: String,
                                     }
                                 }.toMap
 
-                                BPSPy4jServer.server.push(
+                                py4jServer.get.push(
                                     write(Map("metadata" -> lastMetadata, "data" -> data))(DefaultFormats)
                                 )
                             }
@@ -104,6 +106,7 @@ class BPSPythonJob(override val id: String,
                         .start()
                 outputStream = query :: outputStream
 
+                val rowLength = lastMetadata("length").asInstanceOf[String].tail.init.toLong
                 val listener = BPSProgressListenerAndClose(this, query, null)
                 listener.active(null)
                 listeners = listener :: listeners
