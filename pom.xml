@@ -134,6 +134,12 @@
                     <artifactId>hadoop-hdfs</artifactId>
                     <version>${hadoop.version}</version>
                 </dependency>
+                <!--elasticsearch-->
+                <dependency>
+                    <groupId>org.elasticsearch</groupId>
+                    <artifactId>elasticsearch-spark-20_2.11</artifactId>
+                    <version>7.2.0</version>
+                </dependency>
 
                 <!--log4j-->
                 <dependency>
