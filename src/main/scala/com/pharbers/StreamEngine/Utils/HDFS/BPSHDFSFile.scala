@@ -9,11 +9,9 @@ import org.apache.hadoop.fs.{FSDataOutputStream, FileSystem, Path}
 object BPSHDFSFile {
 	val configuration: Configuration = new Configuration
 	configuration.set("fs.defaultFS", "hdfs://192.168.100.137:9000")
-    def checkPath(path: String): Unit = {
+    def checkPath(path: String): Boolean = {
         val fileSystem: FileSystem = FileSystem.get(configuration)
-        //Create a path
-        if (!fileSystem.exists(new Path(path)))
-            fileSystem.mkdirs(new Path(path))
+	    fileSystem.exists(new Path(path))
     }
 	
 	def appendLine2HDFS(path: String, line: String): Unit = {

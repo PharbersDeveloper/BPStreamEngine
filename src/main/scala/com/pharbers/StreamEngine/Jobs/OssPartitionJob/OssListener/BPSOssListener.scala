@@ -5,7 +5,6 @@ import java.nio.charset.StandardCharsets
 import java.util.UUID
 import java.util.concurrent.TimeUnit
 
-import com.pharbers.StreamEngine.Jobs.OssPartitionJob.OssPartitionMeta.BPSOssPartitionMeta
 import com.pharbers.StreamEngine.Utils.Channel.Driver.BPSDriverChannel
 import com.pharbers.StreamEngine.Utils.Channel.Worker.BPSWorkerChannel
 import com.pharbers.StreamEngine.Utils.StreamJob.{BPSJobContainer, BPStreamJob}
@@ -112,7 +111,7 @@ case class BPSOssListener(spark: SparkSession, job: BPStreamJob) extends BPStrea
 
     def pollKafka(msg: FileMetaData): Unit ={
         //todo: 参数化
-        val topic = "sb_file_meta_job_test"
+        val topic = "sb_file_meta_job"
         val pkp = new PharbersKafkaProducer[String, FileMetaData]
         val fu = pkp.produce(topic, msg.getJobId.toString, msg)
         logger.info(fu.get(10, TimeUnit.SECONDS))
