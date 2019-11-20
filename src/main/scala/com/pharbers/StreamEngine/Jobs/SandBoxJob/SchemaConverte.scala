@@ -54,7 +54,7 @@ object SchemaConverter {
 	
 	def column2legal(colu: String, df: DataFrame): DataFrame = {
 		df.withColumn(colu, regexp_replace(col(colu), """\\"""", ""))
-			.withColumn(colu, regexp_replace(col(colu) , " ", "_"))
+			.withColumn(colu, regexp_replace(col(colu) , " ", ""))
 //			.withColumn(colu, regexp_replace(col(colu) , ",", ""))
 //			.withColumn(colu, regexp_replace(col(colu) , ";", ""))
 //			.withColumn(colu, regexp_replace(col(colu) , "\\{", ""))

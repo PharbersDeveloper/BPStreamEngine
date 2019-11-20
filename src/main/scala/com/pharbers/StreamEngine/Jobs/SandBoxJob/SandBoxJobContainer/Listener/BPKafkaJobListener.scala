@@ -3,7 +3,6 @@ package com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxJobContainer.Listener
 import java.util.concurrent.TimeUnit
 
 import com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxConvertSchemaJobContainer.BPSSandBoxConvertSchemaJob
-import com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxMetaDataJob.BPSSandBoxMetaDataJob
 import com.pharbers.StreamEngine.Utils.Component.Dynamic.JobMsg
 import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSJobStrategy
 import com.pharbers.StreamEngine.Utils.StreamJob.{BPSJobContainer, BPStreamJob}
@@ -11,6 +10,7 @@ import com.pharbers.StreamEngine.Utils.ThreadExecutor.ThreadExecutor
 import com.pharbers.kafka.consumer.PharbersKafkaConsumer
 import com.pharbers.kafka.producer.PharbersKafkaProducer
 import com.pharbers.kafka.schema.{BPJob, FileMetaData}
+import org.apache.avro.specific.SpecificRecord
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.spark.sql.SparkSession
 
@@ -29,9 +29,6 @@ class BPKafkaJobListener(val id: String,
 		if (record.value().getJobId.toString != hisJobId) {
 			hisJobId = record.value().getJobId.toString
 
-			BPSSandBoxMetaDataJob(record.value().getMetaDataPath.toString,
-				record.value().getJobId.toString, spark).exec()
-
 			val convertJob: BPSSandBoxConvertSchemaJob = BPSSandBoxConvertSchemaJob(
 				record.value().getRunId.toString,
 				record.value().getMetaDataPath.toString,
@@ -40,12 +37,12 @@ class BPKafkaJobListener(val id: String,
 			convertJob.open()
 			convertJob.exec()
 			
-			pushPyjob(
-				record.value().getRunId.toString,
-				s"/test/alex/${record.value().getRunId.toString}/metadata/",
-				s"/test/alex/${record.value().getRunId.toString}/files/",
-				record.value().getJobId.toString
-			)
+//			pushPyjob(
+//				record.value().getRunId.toString,
+//				s"/test/alex/${record.value().getRunId.toString}/metadata/",
+//				s"/test/alex/${record.value().getRunId.toString}/files/",
+//				record.value().getJobId.toString
+//			)
 		} else {
 			logger.error("咋还重复传递JobID呢", hisJobId)
 		}
@@ -53,7 +50,7 @@ class BPKafkaJobListener(val id: String,
 	
 	override def exec(): Unit = {
 		val pkc = new PharbersKafkaConsumer[String, FileMetaData](
-			"sb_file_meta_job_test" :: Nil,
+			"sb_file_meta_job" :: Nil,
 			1000,
 			Int.MaxValue, process
 		)
@@ -88,4 +85,10 @@ class BPKafkaJobListener(val id: String,
 		println(fu.get(10, TimeUnit.SECONDS))
 	}
 	
+	def pollKafka(topic: String, msg: SpecificRecord, jobId: String): Unit ={
+		//TODO: 参数化
+		val pkp = new PharbersKafkaProducer[String, SpecificRecord]
+		val fu = pkp.produce(topic, jobId, msg)
+		logger.info(fu.get(10, TimeUnit.SECONDS))
+	}
 }

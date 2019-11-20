@@ -1,0 +1,41 @@
+{
+  "type": "record",
+  "name": "DataSet",
+  "namespace": "com.pharbers.kafka.schema",
+  "fields": [
+    {
+      "name": "parentIds",
+      "type": {
+        "items": "string",
+        "type": "array"
+      }
+    },
+    {
+      "name": "jobId",
+      "type": "string"
+    },
+    {
+      "name": "colName",
+      "type": {
+        "items": "string",
+        "type": "array"
+      }
+    },
+    {
+      "name": "tabName",
+      "type": "string"
+    },
+    {
+      "name": "length",
+      "type": "int"
+    },
+    {
+      "name": "url",
+      "type": "string"
+    },
+    {
+      "name": "description",
+      "type": "string"
+    }
+  ]
+}
