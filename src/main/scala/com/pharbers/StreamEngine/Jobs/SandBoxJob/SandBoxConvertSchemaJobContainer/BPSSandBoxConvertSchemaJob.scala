@@ -3,9 +3,12 @@ package com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxConvertSchemaJobContain
 import java.util.{Collections, UUID}
 import java.util.concurrent.TimeUnit
 
+import com.pharbers.StreamEngine.Jobs.SandBoxJob.BloodJob.BPSBloodJob
 import com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxConvertSchemaJobContainer.Listener.ConvertSchemaListener
 import com.pharbers.StreamEngine.Jobs.SandBoxJob.SchemaConverter
+import com.pharbers.StreamEngine.Utils.Convert.BPSMetaData2Map
 import com.pharbers.StreamEngine.Utils.HDFS.BPSHDFSFile
+import com.pharbers.StreamEngine.Utils.Status.BPSJobStatus
 import com.pharbers.StreamEngine.Utils.StreamJob.BPSJobContainer
 import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSKfkJobStrategy
 import com.pharbers.kafka.producer.PharbersKafkaProducer
@@ -17,6 +20,7 @@ import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.types.{StringType, StructField, StructType, TimestampType}
 import org.json4s.DefaultFormats
 import org.json4s.jackson.Serialization._
+
 import collection.JavaConverters._
 
 object BPSSandBoxConvertSchemaJob {
@@ -53,7 +57,8 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 		val (schemaData, colNames, tabName, length) = writeMetaData(metaData, METADATASAVEPATH)
 		totalRow = length
 		
-		submitDataSet(Nil, colNames, tabName, length, "")
+		val dfs = new DataSet(Collections.emptyList(), JOBID, colNames.asJava, tabName, length, PARQUETSAVEPATH, jobId)
+		BPSBloodJob(JOBID, "data_set_job", dfs).exec()
 		
 		val schema = SchemaConverter.str2SqlType(schemaData)
 		
@@ -74,7 +79,9 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 				from_json($"data", schema).as("data")
 			).select("data.*")
 		)
-		updateJob("pending", "", "")
+		
+		val pendingJob = new Job(JOBID, BPSJobStatus.Pending.toString, "", "")
+		BPSBloodJob(JOBID, "job_status", pendingJob).exec()
 	}
 	
 	override def exec(): Unit = {
@@ -86,21 +93,24 @@ class BPSSandBoxConvertSchemaJob(val id: String,
     					.option("checkpointLocation", CHECKPOINTSAVEPATH)
     					.option("path", PARQUETSAVEPATH)
 					    .start()
-
 				outputStream = query :: outputStream
-				
 				val listener = ConvertSchemaListener(id, jobId, spark, this, query, totalRow)
 				listener.active(null)
 				listeners = listener :: listeners
-				updateJob("exec", "", "")
-			case None => updateJob("error", "inputStream is None", "")
+				
+				val execJob = new Job(JOBID, BPSJobStatus.Exec.toString, "", "")
+				BPSBloodJob(JOBID, "job_status", execJob).exec()
+			case None =>
+				val errorJob = new Job(JOBID, BPSJobStatus.Fail.toString, "inputStream is None", "")
+				BPSBloodJob(JOBID, "job_status", errorJob).exec()
 		}
 	}
 	
 	override def close(): Unit = {
+		val successJob = new Job(JOBID, BPSJobStatus.Success.toString, "", "")
+		BPSBloodJob(JOBID, "job_status", successJob).exec()
 		outputStream.foreach(_.stop())
 		listeners.foreach(_.deActive())
-		updateJob("success", "", "")
 	}
 	
 	def notFoundShouldWait(path: String): Unit = {
@@ -111,9 +121,8 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 		}
 	}
 	
-	def writeMetaData(metaData: RDD[String], path: String): (String, List[String], String, Int) = {
-		
-		val contentMap = metaDataContent2Map(metaData.collect().toList.map(_.replaceAll("""\\"""", "")))
+	def writeMetaData(metaData: RDD[String], path: String): (String, List[CharSequence], String, Int) = {
+		val contentMap = BPSMetaData2Map.list2Map(metaData.collect().toList.map(_.replaceAll("""\\"""", "")))
 		implicit val formats: DefaultFormats.type = DefaultFormats
 		val schema  = write(contentMap("schema").asInstanceOf[List[Map[String, Any]]])
 		
@@ -131,44 +140,5 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 		val colNames =  contentMap("schema").asInstanceOf[List[Map[String, Any]]].map(_("key").toString)
 		val tabName = contentMap("tag").asInstanceOf[Map[String, Any]]("sheetName").toString
 		(schema, colNames, tabName, contentMap("length").toString.toInt)
-	}
-	
-	def metaDataContent2Map(lst: List[String]): Map[String, Any] = {
-		implicit val formats: DefaultFormats.type = DefaultFormats
-		var jsonMap: Map[String, Any] = Map()
-		lst.foreach{ line =>
-			try {
-				val schema = read[List[Map[String, Any]]](line)
-				jsonMap = jsonMap ++ Map("schema" -> schema)
-			} catch {
-				case _: Throwable =>
-					val obj = read[Map[String, Any]](line)
-					obj match {
-						case o if o.contains("label") => jsonMap = jsonMap ++ Map("tag" -> o)
-						case o if o.contains("length") => jsonMap = jsonMap ++ Map("length" -> o("length"))
-						case _ =>
-					}
-			}
-		}
-		jsonMap
-	}
-	
-	def submitDataSet(parentNode: List[CharSequence], colName: List[CharSequence], tabName: String, length: Int, des: String): Unit = {
-		val topic = "data_set_job"
-		val dfs = new DataSet(parentNode.asJava, JOBID, colName.asJava, tabName, length, PARQUETSAVEPATH, des)
-		pollKafka(topic,  dfs)
-	}
-	
-	def updateJob(status: String, error: String, des: String): Unit = {
-		val topic = "job_status"
-		val job = new Job(JOBID, status,error,des)
-		pollKafka(topic, job)
-	}
-	
-	def pollKafka(topic: String, msg: SpecificRecord): Unit ={
-		//TODO: 参数化
-		val pkp = new PharbersKafkaProducer[String, SpecificRecord]
-		val fu = pkp.produce(topic, JOBID, msg)
-		logger.info(fu.get(10, TimeUnit.SECONDS))
 	}
 }
