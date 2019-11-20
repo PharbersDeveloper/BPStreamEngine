@@ -1,81 +1,51 @@
 package com.pharbers.StreamEngine.Utils.Config
 
-import java.io.FileInputStream
 import java.util
-import java.util.{Map, Properties}
-
+import java.util.Properties
+import java.io.FileInputStream
+import org.apache.kafka.common.config.ConfigDef
 import org.apache.kafka.common.config.ConfigDef.{Importance, Type}
-import org.apache.kafka.common.config.{AbstractConfig, ConfigDef}
 
-object AppConfig  {
-
-    final private  val CD: ConfigDef = baseConfigDef
-    final private  val PROP: Map[_, _] = baseProps
-
-    final private val APP_CONFIG_PATH_KEY = "app.config.path"
-    final private val DEFAULT_APP_CONFIG_PATH = "src/main/resources/app.config.properties"
+object AppConfig {
+    val appConfigEnvPath: String = "path"
+    val defaultAppConfigsPath: String = "src/main/resources/app.config.properties"
 
     final val PROJECT_NAME_KEY = "project.name"
-    final private val PROJECT_NAME_DOC = "The name is project name."
+    final val PROJECT_NAME_DOC = "The name is project name."
 
     final val HOSTNAME_KEY = "hostname"
-    final private val HOSTNAME_DOC = "The hostname is the host'name."
+    final val HOSTNAME_DOC = "The hostname is the host'name."
 
-    final val COMPONENT_CONFIG_PATH = "component.config.path"
-    final private val COMPONENT_CONFIG_PATH_DOC = "组件配置文件路径"
+    final val COMPONENT_CONFIG_PATH_KEY = "component.config.path"
+    final val COMPONENT_CONFIG_PATH_DOC = "组件配置文件路径"
 
-    final val COMPONENT_PACKAGES = "component.packages"
-    final private val COMPONENT_PACKAGES_DOC = "组件包目录"
-    final val JOBS = "jobs"
-    final private val JOBS_DOC = "需要运行的job"
+    final val COMPONENT_PACKAGES_KEY = "component.packages"
+    final val COMPONENT_PACKAGES_DOC = "组件包目录"
 
-    private val ac = new AppConfig(CD, PROP)
-    def apply(): AppConfig = ac
+    final val THREAD_MAX_KEY = "thread.max"
+    final val THREAD_MAX_DOC = "线程池最大线程数"
 
-    def apply(props: Map[_, _]): AppConfig = new AppConfig(CD, props)
+    final val LOG_CONFIG_PATH_KEY = "log.config.path"
+    final val  LOG_CONFIG_PATH_DOC = "log配置文件路径"
 
-    private def baseConfigDef: ConfigDef = {
-        new ConfigDef()
-            .define(
-                PROJECT_NAME_KEY,
-                Type.STRING,
-                Importance.HIGH,
-                PROJECT_NAME_DOC)
-            .define(
-                HOSTNAME_KEY,
-                Type.STRING,
-                Importance.HIGH,
-                HOSTNAME_DOC
-            )
-            .define(
-                COMPONENT_CONFIG_PATH,
-                Type.STRING,
-                Importance.HIGH,
-                COMPONENT_CONFIG_PATH_DOC
-            )
-            .define(
-                COMPONENT_PACKAGES,
-                Type.LIST,
-                Importance.HIGH,
-                COMPONENT_PACKAGES_DOC
-            )
-            .define(
-                JOBS,
-                Type.LIST,
-                Importance.HIGH,
-                JOBS_DOC
-            )
-    }
+    private def configDef: ConfigDef = new ConfigDef()
+                .define(PROJECT_NAME_KEY, Type.STRING, Importance.HIGH, PROJECT_NAME_DOC)
+                .define(HOSTNAME_KEY, Type.STRING, Importance.HIGH, HOSTNAME_DOC)
+                .define(COMPONENT_CONFIG_PATH_KEY, Type.STRING, Importance.HIGH, COMPONENT_CONFIG_PATH_DOC)
+                .define(COMPONENT_PACKAGES_KEY, Type.LIST, Importance.HIGH, COMPONENT_PACKAGES_DOC)
+                .define(THREAD_MAX_KEY, Type.INT, Importance.HIGH, THREAD_MAX_DOC)
+                .define(LOG_CONFIG_PATH_KEY, Type.STRING, Importance.HIGH, LOG_CONFIG_PATH_DOC)
 
-    private def baseProps: Map[_, _] = {
-        val appConfigPath: String = sys.env.getOrElse(APP_CONFIG_PATH_KEY, DEFAULT_APP_CONFIG_PATH)
+    // 保持单例
+    private lazy val bc: BPSConfig = BPSConfig(configDef, baseProps)
+    def apply(): BPSConfig = bc
+
+    def apply(props: Map[String, String]): BPSConfig = BPSConfig(configDef, props)
+
+    private def baseProps: util.Map[_, _] = {
+        val appConfigPath: String = sys.env.getOrElse(appConfigEnvPath, defaultAppConfigsPath)
         val props = new Properties()
         props.load(new FileInputStream(appConfigPath))
         props
     }
-
-}
-
-class AppConfig(definition: ConfigDef, originals: util.Map[_, _]) extends AbstractConfig(definition, originals) {
-
 }

@@ -3,26 +3,28 @@ package com.pharbers.StreamEngine.Jobs.OssJob.OssJobContainer
 import java.util.UUID
 
 import com.pharbers.StreamEngine.Jobs.OssPartitionJob.BPSOssPartitionJob
-import com.pharbers.StreamEngine.Utils.StreamJob.{BPSJobContainer, BPStreamJob}
+import com.pharbers.StreamEngine.Utils.StreamJob.{BPDynamicStreamJob, BPSJobContainer, BPStreamJob}
 import com.pharbers.StreamEngine.Jobs.OssJob.OssListenerV2.BPSOssListenerV2
-import com.pharbers.StreamEngine.Utils.Annotation.Component
+import com.pharbers.StreamEngine.Utils.Event.EventHandler.BPSEventHandler
+import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamListener
 import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSKfkJobStrategy
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions._
 
 object BPSOssJobContainer {
-    def apply(strategy: BPSKfkJobStrategy, spark: SparkSession): BPSOssJobContainer = new BPSOssJobContainer(strategy, spark)
+    def apply(strategy: BPSKfkJobStrategy, spark: SparkSession): BPSOssJobContainer = new BPSOssJobContainer(strategy, spark, Map.empty)
 
-    def apply(strategy: BPSKfkJobStrategy, spark: SparkSession, config: Map[String, String]): BPSOssJobContainer = new BPSOssJobContainer(strategy, spark)
+    def apply(strategy: BPSKfkJobStrategy, spark: SparkSession, config: Map[String, String]): BPSOssJobContainer = new BPSOssJobContainer(strategy, spark, config)
 }
-@Component(name = "BPSOssJobContainer", `type` = "job")
-class BPSOssJobContainer(override val strategy: BPSKfkJobStrategy, val spark: SparkSession) extends BPSJobContainer {
+
+class BPSOssJobContainer(override val strategy: BPSKfkJobStrategy, val spark: SparkSession, config: Map[String, String]) extends BPSJobContainer{
     val id = UUID.randomUUID().toString
     type T = BPSKfkJobStrategy
     import spark.implicits._
     //    val listener = new BPSOssListener(spark, this)
 
     override def open(): Unit = {
+        //todo: options(map[String, String])
         val reading = spark.readStream
             .format("kafka")
             .option("kafka.bootstrap.servers", "123.56.179.133:9092")
@@ -32,7 +34,7 @@ class BPSOssJobContainer(override val strategy: BPSKfkJobStrategy, val spark: Sp
             .option("kafka.ssl.truststore.location", "./kafka.broker1.truststore.jks")
             .option("kafka.ssl.truststore.password", "pharbers")
             .option("kafka.ssl.endpoint.identification.algorithm", " ")
-            .option("subscribe", "oss_topic_1")
+            .option("subscribe", strategy.getTopic)
             .option("startingOffsets", "earliest")
             .load()
 

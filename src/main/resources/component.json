@@ -4,6 +4,11 @@
     "name": "BPSparkSession",
     "args": [],
     "config": {
+      "app.name": "bp-stream-engine",
+      "master": "yarn",
+      "spark.configs.path": "src/main/resources/sparkConfig.properties",
+      "log.level": "INFO",
+      "run.model": "client"
     }
   },
   {
@@ -12,7 +17,8 @@
     "args": ["$BPSparkSession"],
     "config": {
       "topic": "oss_source",
-      "url": "http://123.56.179.133:9092"
+      "url": "http://123.56.179.133:9092",
+      "schema": "http://123.56.179.133:8081"
     }
   },
   {
@@ -24,9 +30,41 @@
     }
   },
   {
-    "id": "BPSOssJobContainer",
-    "name": "BPSOssJobContainer",
-    "args": ["$BPSKfkJobStrategy", "$BPSparkSession"],
+    "id": "NodeMsgHandler",
+    "name": "BaseNodeMsgHandler",
+    "args": [],
+    "config": {
+      "path": "/test/dcs/nodeMsg/"
+    }
+  },
+  {
+    "id": "BPDynamicStreamJobBuilder",
+    "name": "BaseDynamicStreamJobBuilder",
+    "args": ["$NodeMsgHandler"],
+    "config": {
+      "": ""
+    }
+  },
+  {
+    "id": "JobHandler",
+    "name": "BaseJobHandler",
+    "args": ["$NodeMsgHandler", "$BPDynamicStreamJobBuilder"],
+    "config": {
+      "topic": "stream_job_submit"
+    }
+  },
+  {
+    "id": "BPSDriverChannel",
+    "name": "BPSDriverChannel",
+    "args": [],
+    "config": {
+      "": ""
+    }
+  },
+  {
+    "id": "BPSLocalChannel",
+    "name": "BPSLocalChannel",
+    "args": [],
     "config": {
       "": ""
     }
