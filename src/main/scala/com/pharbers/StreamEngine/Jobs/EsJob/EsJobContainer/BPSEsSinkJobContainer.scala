@@ -72,7 +72,8 @@ class BPSEsSinkJobContainer(override val spark: SparkSession,
     override def exec(): Unit = inputStream match {
         case Some(_) =>
             val job = BPSEsSinkJob(id, spark, inputStream, this, Map(
-                "indexName" -> indexName
+                "indexName" -> indexName,
+                "metadata" -> metadata
             ))
             job.open()
             job.exec()

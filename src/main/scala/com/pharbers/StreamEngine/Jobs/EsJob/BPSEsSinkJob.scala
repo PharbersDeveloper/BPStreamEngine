@@ -1,5 +1,6 @@
 package com.pharbers.StreamEngine.Jobs.EsJob
 
+import com.pharbers.StreamEngine.Jobs.EsJob.Listener.EsSinkJobListener
 import org.apache.spark.sql
 import org.apache.spark.sql.SparkSession
 import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSJobStrategy
@@ -32,6 +33,7 @@ class BPSEsSinkJob(override val id: String,
     override val strategy: BPSJobStrategy = null
 
     val indexName: String =jobConf.getOrElse("indexName", throw new Exception("no indexName found")).toString
+    val metadata: Map[String, Any] = jobConf("metadata").asInstanceOf[Map[String, Any]]
 
     override def open(): Unit = {
         inputStream = is
@@ -46,6 +48,11 @@ class BPSEsSinkJob(override val id: String,
                     .format("es")
                     .start(indexName)
                 outputStream = query :: outputStream
+
+                val length = metadata("length").asInstanceOf[String].tail.init.toLong
+                val listener = EsSinkJobListener(id, id, spark, this, query, length)
+                listener.active(null)
+                listeners = listener :: listeners
 
             case None => ???
         }
