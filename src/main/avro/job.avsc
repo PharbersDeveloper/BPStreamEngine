@@ -1,0 +1,23 @@
+{
+  "type": "record",
+  "name": "Job",
+  "namespace": "com.pharbers.kafka.schema",
+  "fields": [
+    {
+      "name": "jobId",
+      "type": "string"
+    },
+    {
+      "name": "status",
+      "type": "string"
+    },
+    {
+      "name": "error",
+      "type": "string"
+    },
+    {
+      "name": "description",
+      "type": "string"
+    }
+  ]
+}

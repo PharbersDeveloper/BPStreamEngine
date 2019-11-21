@@ -1,4 +1,4 @@
-package com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxConvertSchemaJob.Listener
+package com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxConvertSchemaJobContainer.Listener
 
 import java.util.concurrent.TimeUnit
 
@@ -11,20 +11,15 @@ import com.pharbers.kafka.schema.FileMetaData
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.streaming.StreamingQuery
 
-case class BPSConvertSchemaJob(id: String,
-                               jobId: String,
-                               spark: SparkSession,
-                               job: BPStreamJob,
-                               query: StreamingQuery,
-                               sumRow: Long) extends BPStreamListener {
+case class ConvertSchemaListener(id: String,
+                                 jobId: String,
+                                 spark: SparkSession,
+                                 job: BPStreamJob,
+                                 query: StreamingQuery,
+                                 sumRow: Long) extends BPStreamListener {
 	override def trigger(e: BPSEvents): Unit = {
 		val cumulative = query.recentProgress.map(_.numInputRows).sum
 
-		if(query.lastProgress != null) {
-			logger.debug("---->" + query.lastProgress.numInputRows)
-		}
-		logger.debug("=========> Total Row " + sumRow)
-		logger.debug("=====>" + cumulative)
 		if (cumulative >= sumRow) {
 			logger.debug("******>" + cumulative)
 			// TODO 将处理好的Schema发送邮件
@@ -40,7 +35,7 @@ case class BPSConvertSchemaJob(id: String,
 	
 	def pollKafka(msg: FileMetaData): Unit ={
 		//todo: 参数化
-		val topic = "sb_file_meta_job_test"
+		val topic = ""
 		val pkp = new PharbersKafkaProducer[String, FileMetaData]
 		val fu = pkp.produce(topic, msg.getJobId.toString, msg)
 		logger.info(fu.get(10, TimeUnit.SECONDS))
