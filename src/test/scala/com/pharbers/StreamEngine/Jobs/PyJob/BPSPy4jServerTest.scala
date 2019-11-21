@@ -22,10 +22,10 @@ class BPSPy4jServerTest extends FunSuite {
         val partitionId = 0
 
         val resultPath = "hdfs:///test/qi3/" + "abc001"
+        val rowRecordPath = resultPath + "/row_record"
+        val metadataPath = resultPath + "/metadata"
         val successPath = resultPath + "/file"
         val errPath = resultPath + "/err"
-        val metadataPath = resultPath + "/metadata"
-        val rowRecordPath = resultPath + "/row_record"
 
         val genPath: String => String =
             path => s"$path/part-$partitionId-${UUID.randomUUID().toString}.$fileSuffix"

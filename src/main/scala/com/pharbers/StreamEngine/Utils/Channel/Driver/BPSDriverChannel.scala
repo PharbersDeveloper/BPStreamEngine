@@ -45,7 +45,7 @@ object BPSDriverChannel {
 //    }
 }
 
-// TODO 希望可以补全注释，因为我不知道这是干什么的
+// TODO 希望可以补全注释
 @Component(name = "BPSDriverChannel", `type` = "BPSDriverChannel")
 class BPSDriverChannel(config: Map[String, String]) extends Runnable with PhLogable {
 
