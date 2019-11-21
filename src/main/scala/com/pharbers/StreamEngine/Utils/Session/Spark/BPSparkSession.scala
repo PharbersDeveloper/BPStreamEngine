@@ -56,6 +56,7 @@ class BPSparkSession(config: Map[String, String]) extends BPSparkSessionConfig {
             spark.sparkContext.addJar("./jars/common-config-5.2.1.jar")
             spark.sparkContext.addJar("./jars/common-utils-5.2.1.jar")
             spark.sparkContext.addJar("./jars/logs-1.0.jar")
+            spark.sparkContext.addJar("./jars/elasticsearch-spark-20_2.11-7.2.0.jar")
         case _ =>
     }
 }
