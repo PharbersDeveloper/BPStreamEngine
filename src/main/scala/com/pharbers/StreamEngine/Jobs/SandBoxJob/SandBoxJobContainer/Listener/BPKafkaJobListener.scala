@@ -1,5 +1,6 @@
 package com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxJobContainer.Listener
 
+import java.util.UUID
 import java.util.concurrent.TimeUnit
 
 import com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxConvertSchemaJobContainer.BPSSandBoxConvertSchemaJob
@@ -22,18 +23,31 @@ object BPKafkaJobListener {
 class BPKafkaJobListener(val id: String,
                          val spark: SparkSession,
                          container: BPSJobContainer) extends BPStreamJob {
+	
 	type T = BPSJobStrategy
 	override val strategy: T = null
 	var hisJobId = ""
 	val process: ConsumerRecord[String, FileMetaData] => Unit = (record: ConsumerRecord[String, FileMetaData]) => {
 		if (record.value().getJobId.toString != hisJobId) {
+			val JOBID: String = UUID.randomUUID().toString
+			val ID: String = UUID.randomUUID().toString
+			val METADATASAVEPATH: String = s"/test/alex2/$ID/metadata/$JOBID"
+			val CHECKPOINTSAVEPATH: String = s"/test/alex2/$ID/files/$JOBID/checkpoint"
+			val PARQUETSAVEPATH: String =  s"/test/alex2/$ID/files/$JOBID"
 			hisJobId = record.value().getJobId.toString
-
+			
+			val jobParam = Map(
+				"parentJobId" -> record.value().getJobId.toString,
+				"parentMetaData" -> record.value().getMetaDataPath.toString,
+				"parentSampleData" -> record.value().getSampleDataPath.toString,
+				"currentJobId" -> JOBID,
+				"metaDataSavePath" -> METADATASAVEPATH,
+				"checkPointSavePath" -> CHECKPOINTSAVEPATH,
+				"parquetSavePath" -> PARQUETSAVEPATH
+			)
+			
 			val convertJob: BPSSandBoxConvertSchemaJob = BPSSandBoxConvertSchemaJob(
-				record.value().getRunId.toString,
-				record.value().getMetaDataPath.toString,
-				record.value().getSampleDataPath.toString,
-				record.value().getJobId.toString, spark)
+				record.value().getRunId.toString, jobParam, spark)
 			convertJob.open()
 			convertJob.exec()
 			
