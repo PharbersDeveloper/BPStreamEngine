@@ -26,9 +26,9 @@ object RunPyJob extends App {
         val `type` = "addList"
         val clazz = "com.pharbers.StreamEngine.Jobs.PyJob.PythonJobContainer.BPSPythonJobContainer"
         val jobs = JobMsg("pyBoxJob", "job", clazz, List("$BPSparkSession"), Nil, Nil, Map(
-            "jobId" -> "03586-4810-48ba-bb9e-be6680",
-            "matedataPath" -> "hdfs:///test/alex/0829b025-48ac-450c-843c-6d4ee91765ca/metadata/",
-            "filesPath" -> "hdfs:///test/alex/0829b025-48ac-450c-843c-6d4ee91765ca/files/03586-4810-48ba-bb9e-be6680",
+            "jobId" -> "2bcf28e3-4a7a-4c08-b0c7-6dddee9fb894",
+            "matedataPath" -> "hdfs:///test/alex2/a6d8e117-67d7-46f7-b932-4627c6677b0f/metadata/",
+            "filesPath" -> "hdfs:///test/alex2/a6d8e117-67d7-46f7-b932-4627c6677b0f/files/2bcf28e3-4a7a-4c08-b0c7-6dddee9fb894",
             "resultPath" -> "hdfs:///test/qi3/"
         ), "", "py job") :: Nil
 

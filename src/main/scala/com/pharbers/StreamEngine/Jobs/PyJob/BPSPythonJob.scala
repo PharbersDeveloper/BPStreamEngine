@@ -66,7 +66,7 @@ class BPSPythonJob(override val id: String,
 
         inputStream match {
             case Some(is) =>
-                val query = is.repartition(1).writeStream
+                val query = is.repartition(2).writeStream
                         .option("checkpointLocation", checkpointPath)
                         .foreach(new ForeachWriter[Row]() {
 
@@ -78,7 +78,7 @@ class BPSPythonJob(override val id: String,
                                     BPSPy4jServer.server = if (!BPSPy4jServer.isStarted) {
                                         val server = BPSPy4jServer(Map(
                                             "hdfsAddr" -> hdfsAddr,
-                                            "rowRecordPath" -> rowRecordPath,
+                                            "rowRecordPath" -> genPath(rowRecordPath),
                                             "successPath" -> genPath(successPath),
                                             "errPath" -> genPath(errPath),
                                             "metadataPath" -> genPath(metadataPath)
@@ -119,7 +119,7 @@ class BPSPythonJob(override val id: String,
                         .start()
                 outputStream = query :: outputStream
 
-                val rowLength = lastMetadata("length").asInstanceOf[String].tail.init.toLong
+                val rowLength = lastMetadata("length").asInstanceOf[String].toLong
 
                 val listener = BPSProgressListenerAndClose(this, spark, rowLength, rowRecordPath)
                 listener.active(null)
