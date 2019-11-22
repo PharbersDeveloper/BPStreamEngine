@@ -1,6 +1,7 @@
 package com.pharbers.StreamEngine.Utils.Session.Spark
 
 import com.pharbers.util.log.PhLogable
+import org.apache.spark.scheduler._
 import org.apache.spark.sql.streaming.StreamingQueryListener
 
 /** 功能描述
@@ -29,4 +30,26 @@ class SparkQueryListener extends StreamingQueryListener with PhLogable{
             case _ => logger.info(s"listener:${event.id},${event.runId}")
         }
     }
+}
+
+class BPSparkListener extends SparkListener with PhLogable{
+    override def onJobStart(jobStart: SparkListenerJobStart): Unit = {
+        logger.info("job start" + jobStart.jobId)
+    }
+    override def onTaskStart(taskStart: SparkListenerTaskStart): Unit = {
+        logger.info("task start" + taskStart.stageId)
+    }
+
+    override def onTaskEnd(taskEnd: SparkListenerTaskEnd): Unit = {
+        logger.info("onTaskEnd" + taskEnd.stageId)
+    }
+
+    override def onOtherEvent(event: SparkListenerEvent): Unit = {
+        logger.info("other event" + event.toString)
+    }
+
+    override def onExecutorAdded(executorAdded: SparkListenerExecutorAdded): Unit ={
+        logger.info("onExecutorAdded" + executorAdded.executorId + executorAdded.executorInfo)
+    }
+
 }

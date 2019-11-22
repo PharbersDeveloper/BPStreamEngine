@@ -38,6 +38,7 @@ class BPSparkSession(config: Map[String, String]) extends BPSparkSessionConfig {
 
     private val conf = new SparkConf()
             .setAll(pops.asScala)
+            .set("spark.extraListeners", "com.pharbers.StreamEngine.Utils.Session.Spark.BPSparkListener")
             .setAppName(sparkConfigs.getString(APP_NAME_KEY))
             .setMaster(sparkConfigs.getString(MASTER_KEY))
 
