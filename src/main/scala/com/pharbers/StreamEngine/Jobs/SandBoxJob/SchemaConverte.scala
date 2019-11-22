@@ -1,12 +1,12 @@
 package com.pharbers.StreamEngine.Jobs.SandBoxJob
 
-import com.databricks.spark.avro.SchemaConverters
-import org.apache.avro.Schema
-import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.{BinaryType, BooleanType, DoubleType, FloatType, IntegerType, LongType, StringType, StructField, StructType}
-import org.json4s.DefaultFormats
-import org.json4s.jackson.Serialization.read
+import org.json4s._
+import org.json4s.jackson.Serialization._
+import org.json4s.jackson.JsonMethods._
+import org.json4s.jackson.Serialization
 
 case class BPSchemaParseElement(key: String, `type`: String)
 
@@ -14,8 +14,6 @@ case class BPSchemaParseElement(key: String, `type`: String)
 object SchemaConverter {
 	
 	def str2SqlType(data: String): org.apache.spark.sql.types.DataType = {
-		// TODO: 以后全变为AVRO的Schema形式
-//        SchemaConverters.toSqlType(new Schema.Parser().parse(data)).dataType
 		implicit val formats: DefaultFormats.type = DefaultFormats
 		val lstData: List[BPSchemaParseElement] = read[List[BPSchemaParseElement]](data)
 		StructType(
@@ -33,12 +31,30 @@ object SchemaConverter {
 		)
 	}
 	
-	// TODO 转换不合法的Schema列名，这边抽象和使用的不对，处理不了流的，要改进
+	// 废弃
+	def renameColumn(jsonStr: String): String =  {
+		implicit val formats: AnyRef with Formats = Serialization.formats(NoTypeHints)
+		
+		var tmpNum = 0
+		val schemas = parse(jsonStr).extract[List[BPSchemaParseElement]]
+		val schemaKeys = schemas.map(_.key)
+		val schemaKeysDis = schemaKeys.distinct
+		val diffSchemaKeys = schemaKeys diff schemaKeysDis
+		val renameSchema = schemas.map{ x =>
+			if (diffSchemaKeys.contains(x.key)) {
+				tmpNum += 1
+				BPSchemaParseElement(s"${x.key}_$tmpNum", x.`type`)
+			} else {
+				BPSchemaParseElement(x.key, x.`type`)
+			}
+		}
+		val toJsonStr = write(renameSchema)
+		toJsonStr
+	}
+	
 	def column2legal(colu: String, df: DataFrame): DataFrame = {
-//		implicit spark: SparkSession
-//		import spark.implicits._
 		df.withColumn(colu, regexp_replace(col(colu), """\\"""", ""))
-			.withColumn(colu, regexp_replace(col(colu) , " ", "_"))
+			.withColumn(colu, regexp_replace(col(colu) , " ", ""))
 //			.withColumn(colu, regexp_replace(col(colu) , ",", ""))
 //			.withColumn(colu, regexp_replace(col(colu) , ";", ""))
 //			.withColumn(colu, regexp_replace(col(colu) , "\\{", ""))

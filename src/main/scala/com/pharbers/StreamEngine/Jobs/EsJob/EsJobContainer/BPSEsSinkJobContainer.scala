@@ -1,38 +1,32 @@
-package com.pharbers.StreamEngine.Jobs.PyJob.PythonJobContainer
+package com.pharbers.StreamEngine.Jobs.EsJob.EsJobContainer
 
-import java.util.UUID
+import com.pharbers.StreamEngine.Jobs.EsJob.BPSEsSinkJob
+import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.spark.sql.SparkSession
 import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.{FileSystem, Path}
-import com.pharbers.StreamEngine.Jobs.PyJob.BPSPythonJob
 import com.pharbers.StreamEngine.Utils.Schema.Spark.BPSParseSchema
 import com.pharbers.StreamEngine.Utils.Event.EventHandler.BPSEventHandler
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamListener
 import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSKfkJobStrategy
 import com.pharbers.StreamEngine.Utils.StreamJob.{BPDynamicStreamJob, BPSJobContainer}
 
-object BPSPythonJobContainer {
+object BPSEsSinkJobContainer {
     def apply(strategy: BPSKfkJobStrategy,
               spark: SparkSession,
-              config: Map[String, String]): BPSPythonJobContainer =
-        new BPSPythonJobContainer(spark, config)
+              config: Map[String, String]): BPSEsSinkJobContainer =
+        new BPSEsSinkJobContainer(spark, config)
 }
 
-/** 执行 Python 的 Job
+/** 执行 EsSink 的 Job
  *
- * @author clock
+ * @author jeorch
  * @version 0.1
- * @since 2019/11/6 17:43
+ * @since 2019/11/19 15:43
  * @node 可用的配置参数
- * {{{
- *      hdfsAddr = "hdfs://spark.master:9000"
- *      resultPath = "hdfs:///test/sub/"
- *      metadata = Map("jobId" -> "a", "fileName" -> "b")
- * }}}
  */
-class BPSPythonJobContainer(override val spark: SparkSession,
+class BPSEsSinkJobContainer(override val spark: SparkSession,
                             config: Map[String, String])
-        extends BPSJobContainer with BPDynamicStreamJob with Serializable {
+        extends BPSJobContainer with BPDynamicStreamJob {
 
     override val strategy: BPSKfkJobStrategy = null
     type T = BPSKfkJobStrategy
@@ -42,22 +36,15 @@ class BPSPythonJobContainer(override val spark: SparkSession,
     val id: String = config("jobId").toString
     val matedataPath: String = config("matedataPath").toString
     val filesPath: String = config("filesPath").toString
-    val resultPath: String = config("resultPath").toString
-    val hdfsAddr: String = config.getOrElse("hdfsAddr", "hdfs://spark.master:9000").toString
-    val pyFiles = List(
-        "./pyClean/main.py",
-        "./pyClean/results.py",
-        "./pyClean/auth.py",
-        "./pyClean/mapping.py",
-        "./pyClean/cleaning.py"
-    )
+    val indexName: String = config("indexName").toString
 
     // 当所需文件未准备完毕，则等待
     def notFoundShouldWait(path: String): Unit = {
         val configuration: Configuration = new Configuration
-        configuration.set("fs.defaultFS", hdfsAddr)
+        configuration.set("fs.defaultFS", "hdfs://192.168.100.137:9000")
         val fileSystem: FileSystem = FileSystem.get(configuration)
-        if (!fileSystem.exists(new Path(path))) {
+        val filePath: Path = new Path(path)
+        if (!fileSystem.exists(filePath)) {
             logger.debug(path + "文件不存在，等待 1s")
             Thread.sleep(1000)
             notFoundShouldWait(path)
@@ -65,11 +52,13 @@ class BPSPythonJobContainer(override val spark: SparkSession,
     }
 
     override def open(): Unit = {
-        notFoundShouldWait(matedataPath + id)
+        notFoundShouldWait(matedataPath)
         //不全是path + jobid， 可能是path + jobid + file
         notFoundShouldWait(filesPath )
-        metadata = BPSParseSchema.parseMetadata(matedataPath + id)(spark)
+        metadata = BPSParseSchema.parseMetadata(matedataPath)(spark)
         val loadSchema = BPSParseSchema.parseSchema(metadata("schema").asInstanceOf[List[_]])
+
+        println(loadSchema)
 
         val reading = spark.readStream
                 .schema(loadSchema)
@@ -82,11 +71,9 @@ class BPSPythonJobContainer(override val spark: SparkSession,
 
     override def exec(): Unit = inputStream match {
         case Some(_) =>
-            //todo: 为了submit后能使用，时使用--file预先加入了file。之后可以选择将py文件放在hdfs中，这儿根据配置的hdfs目录加载
-            pyFiles.foreach(spark.sparkContext.addFile)
-            val job = BPSPythonJob("abc001", spark, inputStream, this, Map( //UUID.randomUUID().toString
-                "resultPath" -> resultPath,
-                "lastMetadata" -> metadata
+            val job = BPSEsSinkJob(id, spark, inputStream, this, Map(
+                "indexName" -> indexName,
+                "metadata" -> metadata
             ))
             job.open()
             job.exec()

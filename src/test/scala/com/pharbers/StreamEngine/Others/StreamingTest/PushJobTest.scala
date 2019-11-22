@@ -2,6 +2,8 @@ package com.pharbers.StreamEngine.Others.StreamingTest
 
 import java.io.File
 import java.util.concurrent.TimeUnit
+
+import com.pharbers.StreamEngine.Jobs.PyJob.Py4jServer.BPSPy4jServer
 import com.pharbers.StreamEngine.Utils.Component.Dynamic.JobMsg
 import com.pharbers.kafka.producer.PharbersKafkaProducer
 import com.pharbers.kafka.schema.BPJob
@@ -57,15 +59,15 @@ class PushJobTest extends FunSuite{
 //            JobMsg("ossStreamJob", "job", "com.pharbers.StreamEngine.Jobs.OssPartitionJob.OssJobContainer.BPSOssPartitionJobContainer", List("$BPSKfkJobStrategy", "$BPSparkSession"), Nil, Nil, Map.empty, "", "oss job") ::
 //                    JobMsg("sandBoxJob", "job", "com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxJobContainer.BPSSandBoxJobContainer", List("$BPSparkSession"), Nil, Nil, Map.empty, "", "sandbox job") ::
                 JobMsg("pyBoxJob", "job", "com.pharbers.StreamEngine.Jobs.PyJob.PythonJobContainer.BPSPythonJobContainer", List("$BPSparkSession"), Nil, Nil, Map(
-                    "jobId" -> "57fe0-2bda-4880-8301-dc55a0",
-                    "matedataPath" -> "hdfs:///test/alex/07b8411a-5064-4271-bfd3-73079f2b42b2/metadata/",
-                    "filesPath" -> "hdfs:///test/alex/07b8411a-5064-4271-bfd3-73079f2b42b2/files/",
-                    "resultPath" -> "hdfs:///test/qi/"
+                    "jobId" -> "03586-4810-48ba-bb9e-be6680",
+                    "matedataPath" -> "hdfs:///test/alex/0829b025-48ac-450c-843c-6d4ee91765ca/metadata/",
+                    "filesPath" -> "hdfs:///test/alex/0829b025-48ac-450c-843c-6d4ee91765ca/files/",
+                    "resultPath" -> "hdfs:///test/qi3/"
                 ), "", "py job") ::
         Nil
 
         val jobMsg = write(jobs)
-        val topic = "stream_job_submit_dcs"
+        val topic = "stream_job_submit_qi2"
 
         val pkp = new PharbersKafkaProducer[String, BPJob]
         val bpJob = new BPJob(jobId, traceId, `type`, jobMsg)
