@@ -43,6 +43,7 @@ class BPSPythonJobContainer(override val spark: SparkSession,
     val matedataPath: String = config("matedataPath").toString
     val filesPath: String = config("filesPath").toString
     val resultPath: String = config("resultPath").toString
+    val hdfsAddr: String = config.getOrElse("hdfsAddr", "hdfs://spark.master:9000").toString
     val pyFiles = List(
         "./pyClean/main.py",
         "./pyClean/results.py",
@@ -54,10 +55,9 @@ class BPSPythonJobContainer(override val spark: SparkSession,
     // 当所需文件未准备完毕，则等待
     def notFoundShouldWait(path: String): Unit = {
         val configuration: Configuration = new Configuration
-        configuration.set("fs.defaultFS", "hdfs://192.168.100.137:9000")
+        configuration.set("fs.defaultFS", hdfsAddr)
         val fileSystem: FileSystem = FileSystem.get(configuration)
-        val filePath: Path = new Path(path)
-        if (!fileSystem.exists(filePath)) {
+        if (!fileSystem.exists(new Path(path))) {
             logger.debug(path + "文件不存在，等待 1s")
             Thread.sleep(1000)
             notFoundShouldWait(path)

@@ -59,7 +59,7 @@ case class BPSPy4jServer(serverConf: Map[String, Any] = Map().empty) extends Ser
         Some(new BufferedWriter(new OutputStreamWriter(fsDataOutputStream, StandardCharsets.UTF_8)))
     }
 
-    private def writeRowRecord(row: Long): Unit = {
+    def writeRowRecord(row: Long): Unit = {
         rowRecordBufferedWriter.get.write(row.toString)
         rowRecordBufferedWriter.get.newLine()
         rowRecordBufferedWriter.get.flush()
@@ -77,7 +77,7 @@ case class BPSPy4jServer(serverConf: Map[String, Any] = Map().empty) extends Ser
         successBufferedWriter.get.flush()
     }
 
-    private def writeErr(str: String): Unit = {
+    def writeErr(str: String): Unit = {
         errBufferedWriter.get.write(str)
         errBufferedWriter.get.newLine()
         errBufferedWriter.get.flush()

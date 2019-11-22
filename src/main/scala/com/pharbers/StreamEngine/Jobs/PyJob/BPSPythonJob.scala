@@ -78,7 +78,7 @@ class BPSPythonJob(override val id: String,
                                     BPSPy4jServer.server = if (!BPSPy4jServer.isStarted) {
                                         val server = BPSPy4jServer(Map(
                                             "hdfsAddr" -> hdfsAddr,
-                                            "rowRecordPath" -> genPath(rowRecordPath),
+                                            "rowRecordPath" -> rowRecordPath,
                                             "successPath" -> genPath(successPath),
                                             "errPath" -> genPath(errPath),
                                             "metadataPath" -> genPath(metadataPath)
@@ -93,17 +93,22 @@ class BPSPythonJob(override val id: String,
                             }
 
                             override def process(value: Row): Unit = {
-                                val data = value.schema.map { schema =>
-                                    schema.dataType match {
-                                        case StringType =>
-                                            schema.name -> value.getAs[String](schema.name)
-                                        case _ => ???
-                                    }
-                                }.toMap
+                                if(lastMetadata.get("label").isEmpty) {
+                                    BPSPy4jServer.server.get.curRow += 1
+                                    BPSPy4jServer.server.get.writeErr(value.toString())
+                                } else {
+                                    val data = value.schema.map { schema =>
+                                        schema.dataType match {
+                                            case StringType =>
+                                                schema.name -> value.getAs[String](schema.name)
+                                            case _ => ???
+                                        }
+                                    }.toMap
 
-                                BPSPy4jServer.server.get.push(
-                                    write(Map("metadata" -> lastMetadata, "data" -> data))(DefaultFormats)
-                                )
+                                    BPSPy4jServer.server.get.push(
+                                        write(Map("metadata" -> lastMetadata, "data" -> data))(DefaultFormats)
+                                    )
+                                }
                             }
 
                             override def close(errorOrNull: Throwable): Unit = {
@@ -115,6 +120,7 @@ class BPSPythonJob(override val id: String,
                 outputStream = query :: outputStream
 
                 val rowLength = lastMetadata("length").asInstanceOf[String].tail.init.toLong
+
                 val listener = BPSProgressListenerAndClose(this, spark, rowLength, rowRecordPath)
                 listener.active(null)
                 listeners = listener :: listeners
