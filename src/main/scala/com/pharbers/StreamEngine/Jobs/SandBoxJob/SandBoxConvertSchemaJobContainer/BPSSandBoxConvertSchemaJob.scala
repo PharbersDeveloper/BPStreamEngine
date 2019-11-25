@@ -72,7 +72,7 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 				from_json($"data", schema).as("data")
 			).select("data.*")
 		)
-		
+
 		val pendingJob = new Job(jobParam("currentJobId"), BPSJobStatus.Pending.toString, "", "")
 		BPSBloodJob(jobParam("currentJobId"), "job_status", pendingJob).exec()
 	}
@@ -136,7 +136,7 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 			BPSHDFSFile.appendLine2HDFS(path, line)
 		}
 		val colNames =  contentMap("schema").asInstanceOf[List[Map[String, Any]]].map(_("key").toString)
-		val tabName = contentMap("tag").asInstanceOf[Map[String, Any]]("sheetName").toString
+		val tabName = contentMap.getOrElse("tag", Map.empty).asInstanceOf[Map[String, Any]].getOrElse("sheetName", "").toString
 		(schema, colNames, tabName, contentMap("length").toString.toInt)
 	}
 }

@@ -30,7 +30,7 @@ case class BPSProgressListenerAndClose(override val job: BPSPythonJob,
         logger.debug("=========> Total Row " + rowLength)
         logger.debug("=====>" + rows)
         if (rows >= rowLength) {
-            logger.debug("******>" + rows)
+            logger.info("******>" + rows)
             job.close()
         }
     }

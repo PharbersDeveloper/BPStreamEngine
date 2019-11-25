@@ -59,15 +59,15 @@ class PushJobTest extends FunSuite{
 //            JobMsg("ossStreamJob", "job", "com.pharbers.StreamEngine.Jobs.OssPartitionJob.OssJobContainer.BPSOssPartitionJobContainer", List("$BPSKfkJobStrategy", "$BPSparkSession"), Nil, Nil, Map.empty, "", "oss job") ::
 //                    JobMsg("sandBoxJob", "job", "com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxJobContainer.BPSSandBoxJobContainer", List("$BPSparkSession"), Nil, Nil, Map.empty, "", "sandbox job") ::
                 JobMsg("pyBoxJob", "job", "com.pharbers.StreamEngine.Jobs.PyJob.PythonJobContainer.BPSPythonJobContainer", List("$BPSparkSession"), Nil, Nil, Map(
-                    "jobId" -> "03586-4810-48ba-bb9e-be6680",
-                    "matedataPath" -> "hdfs:///test/alex/0829b025-48ac-450c-843c-6d4ee91765ca/metadata/",
-                    "filesPath" -> "hdfs:///test/alex/0829b025-48ac-450c-843c-6d4ee91765ca/files/",
-                    "resultPath" -> "hdfs:///test/qi3/"
+                    "jobId" -> "2bcf28e3-4a7a-4c08-b0c7-6dddee9fb894",
+                    "matedataPath" -> "/test/alex2/a6d8e117-67d7-46f7-b932-4627c6677b0f/metadata/",
+                    "filesPath" -> "/test/alex2/a6d8e117-67d7-46f7-b932-4627c6677b0f/files/2bcf28e3-4a7a-4c08-b0c7-6dddee9fb894",
+                    "resultPath" -> "hdfs:///test/dcs/testPy2"
                 ), "", "py job") ::
         Nil
 
         val jobMsg = write(jobs)
-        val topic = "stream_job_submit_qi2"
+        val topic = "stream_job_submit"
 
         val pkp = new PharbersKafkaProducer[String, BPJob]
         val bpJob = new BPJob(jobId, traceId, `type`, jobMsg)

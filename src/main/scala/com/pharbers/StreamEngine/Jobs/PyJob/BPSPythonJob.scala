@@ -61,7 +61,7 @@ class BPSPythonJob(override val id: String,
         val successPath = resultPath + "/file"
         val errPath = resultPath + "/err"
         val metadataPath = resultPath + "/metadata"
-        val checkpointPath = resultPath + "/checkpoint"
+        val checkpointPath = resultPath + "/checkpoint/"
         val rowRecordPath = resultPath + "/row_record"
 
         inputStream match {
@@ -76,6 +76,7 @@ class BPSPythonJob(override val id: String,
 
                                 synchronized {
                                     BPSPy4jServer.server = if (!BPSPy4jServer.isStarted) {
+                                        //todo：hdfs不支持并行写入，这儿目录一样的话可能抛异常
                                         val server = BPSPy4jServer(Map(
                                             "hdfsAddr" -> hdfsAddr,
                                             "rowRecordPath" -> rowRecordPath,
@@ -93,10 +94,10 @@ class BPSPythonJob(override val id: String,
                             }
 
                             override def process(value: Row): Unit = {
-                                if(lastMetadata.get("label").isEmpty) {
-                                    BPSPy4jServer.server.get.curRow += 1
-                                    BPSPy4jServer.server.get.writeErr(value.toString())
-                                } else {
+//                                if(lastMetadata.get("label").isEmpty) {
+//                                    BPSPy4jServer.server.get.curRow += 1
+//                                    BPSPy4jServer.server.get.writeErr(value.toString())
+//                                } else {
                                     val data = value.schema.map { schema =>
                                         schema.dataType match {
                                             case StringType =>
@@ -108,7 +109,7 @@ class BPSPythonJob(override val id: String,
                                     BPSPy4jServer.server.get.push(
                                         write(Map("metadata" -> lastMetadata, "data" -> data))(DefaultFormats)
                                     )
-                                }
+//                                }
                             }
 
                             override def close(errorOrNull: Throwable): Unit = {
@@ -119,7 +120,7 @@ class BPSPythonJob(override val id: String,
                         .start()
                 outputStream = query :: outputStream
 
-                val rowLength = lastMetadata("length").asInstanceOf[String].tail.init.toLong
+                val rowLength = lastMetadata("length").toString.toLong
 
                 val listener = BPSProgressListenerAndClose(this, spark, rowLength, rowRecordPath)
                 listener.active(null)

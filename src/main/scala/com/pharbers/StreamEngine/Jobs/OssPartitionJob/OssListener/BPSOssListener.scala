@@ -49,7 +49,7 @@ case class BPSOssListener(spark: SparkSession, job: BPStreamJob) extends BPStrea
             case "SandBox-Length" => {
                 BPSHDFSFile.appendLine2HDFS(s"$metaDataPath/${event2JobId(e)}", e.data)
 	            //TODO： 需要改TS的接口,后面改成Kafka
-                post(s"""{"traceId": "${e.traceId}","jobId": "${e.jobId}"}""", "application/json")
+//                post(s"""{"traceId": "${e.traceId}","jobId": "${e.jobId}"}""", "application/json")
                 pollKafka(new FileMetaData(jid.id, e.jobId, metaDataPath, sampleDataPath, ""))
             }
         }
