@@ -42,7 +42,7 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 		
 		notFoundShouldWait(s"${jobParam("parentMetaData")}/${jobParam("parentJobId")}")
 		val metaData = spark.sparkContext.textFile(s"${jobParam("parentMetaData")}/${jobParam("parentJobId")}")
-		val (schemaData, colNames, tabName, length) = writeMetaData(metaData, jobParam("metaDataSavePath"))
+		val (schemaData, colNames, tabName, length) = writeMetaData(metaData, jobParam("metaDataSavePath") + jobParam("currentJobId"))
 		totalRow = length
 		
 		val dfs = new DataSet(Collections.emptyList(),
@@ -50,7 +50,7 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 			colNames.asJava,
 			tabName,
 			length,
-			jobParam("parquetSavePath"),
+			jobParam("parquetSavePath") + jobParam("currentJobId"),
 			jobParam("parentJobId"))
 		BPSBloodJob(jobParam("currentJobId"), "data_set_job", dfs).exec()
 		
@@ -85,7 +85,7 @@ class BPSSandBoxConvertSchemaJob(val id: String,
     					.outputMode("append")
     					.format("parquet")
     					.option("checkpointLocation", jobParam("checkPointSavePath"))
-    					.option("path", jobParam("parquetSavePath"))
+    					.option("path", jobParam("parquetSavePath") + jobParam("currentJobId"))
 					    .start()
 				outputStream = query :: outputStream
 				val listener = ConvertSchemaListener(id, jobParam("parentJobId"), spark, this, query, totalRow)
