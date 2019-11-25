@@ -66,7 +66,6 @@ class BPSPythonJobContainer(override val spark: SparkSession,
 
     override def open(): Unit = {
         notFoundShouldWait(matedataPath + id)
-        //不全是path + jobid， 可能是path + jobid + file
         notFoundShouldWait(filesPath )
         metadata = BPSParseSchema.parseMetadata(matedataPath + id)(spark)
         val loadSchema = BPSParseSchema.parseSchema(metadata("schema").asInstanceOf[List[_]])
@@ -74,7 +73,6 @@ class BPSPythonJobContainer(override val spark: SparkSession,
         val reading = spark.readStream
                 .schema(loadSchema)
                 .option("startingOffsets", "earliest")
-                //不全是path + jobid， 可能是path + jobid + file
                 .parquet(filesPath)
 
         inputStream = Some(reading)

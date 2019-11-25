@@ -56,14 +56,14 @@ class PushJobTest extends FunSuite{
         val traceId = "201910231514"
         val `type` = "addList"
         val jobs =
-//            JobMsg("ossStreamJob", "job", "com.pharbers.StreamEngine.Jobs.OssPartitionJob.OssJobContainer.BPSOssPartitionJobContainer", List("$BPSKfkJobStrategy", "$BPSparkSession"), Nil, Nil, Map.empty, "", "oss job") ::
-//                    JobMsg("sandBoxJob", "job", "com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxJobContainer.BPSSandBoxJobContainer", List("$BPSparkSession"), Nil, Nil, Map.empty, "", "sandbox job") ::
-                JobMsg("pyBoxJob", "job", "com.pharbers.StreamEngine.Jobs.PyJob.PythonJobContainer.BPSPythonJobContainer", List("$BPSparkSession"), Nil, Nil, Map(
-                    "jobId" -> "2bcf28e3-4a7a-4c08-b0c7-6dddee9fb894",
-                    "matedataPath" -> "/test/alex2/a6d8e117-67d7-46f7-b932-4627c6677b0f/metadata/",
-                    "filesPath" -> "/test/alex2/a6d8e117-67d7-46f7-b932-4627c6677b0f/files/2bcf28e3-4a7a-4c08-b0c7-6dddee9fb894",
-                    "resultPath" -> "hdfs:///test/dcs/testPy2"
-                ), "", "py job") ::
+            JobMsg("ossStreamJob", "job", "com.pharbers.StreamEngine.Jobs.OssPartitionJob.OssJobContainer.BPSOssPartitionJobContainer", List("$BPSKfkJobStrategy", "$BPSparkSession"), Nil, Nil, Map.empty, "", "oss job") ::
+                    JobMsg("sandBoxJob", "job", "com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxJobContainer.BPSSandBoxJobContainer", List("$BPSparkSession"), Nil, Nil, Map.empty, "", "sandbox job") ::
+//                JobMsg("pyBoxJob", "job", "com.pharbers.StreamEngine.Jobs.PyJob.PythonJobContainer.BPSPythonJobContainer", List("$BPSparkSession"), Nil, Nil, Map(
+//                    "jobId" -> "20796d42-c177-4838-9a20-79bfba60d036",
+//                    "matedataPath" -> "/test/alex2/b1b6875c-a590-4dfd-9aa7-f852596266ef/metadata/",
+//                    "filesPath" -> "/test/alex2/b1b6875c-a590-4dfd-9aa7-f852596266ef/files/20796d42-c177-4838-9a20-79bfba60d036",
+//                    "resultPath" -> "hdfs:///test/dcs/testPy2"
+//                ), "", "py job") ::
         Nil
 
         val jobMsg = write(jobs)
