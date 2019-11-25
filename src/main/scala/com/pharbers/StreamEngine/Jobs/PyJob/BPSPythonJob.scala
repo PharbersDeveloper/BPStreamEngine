@@ -66,7 +66,7 @@ class BPSPythonJob(override val id: String,
 
         inputStream match {
             case Some(is) =>
-                val query = is.repartition(1).writeStream
+                val query = is.repartition(2).writeStream
                         .option("checkpointLocation", checkpointPath)
                         .foreach(new ForeachWriter[Row]() {
 
@@ -79,7 +79,7 @@ class BPSPythonJob(override val id: String,
                                         //todo：hdfs不支持并行写入，这儿目录一样的话可能抛异常
                                         val server = BPSPy4jServer(Map(
                                             "hdfsAddr" -> hdfsAddr,
-                                            "rowRecordPath" -> rowRecordPath,
+                                            "rowRecordPath" -> genPath(rowRecordPath),
                                             "successPath" -> genPath(successPath),
                                             "errPath" -> genPath(errPath),
                                             "metadataPath" -> genPath(metadataPath)
@@ -120,7 +120,7 @@ class BPSPythonJob(override val id: String,
                         .start()
                 outputStream = query :: outputStream
 
-                val rowLength = lastMetadata("length").toString.toLong
+                val rowLength = lastMetadata("length").asInstanceOf[String].toLong
 
                 val listener = BPSProgressListenerAndClose(this, spark, rowLength, rowRecordPath)
                 listener.active(null)

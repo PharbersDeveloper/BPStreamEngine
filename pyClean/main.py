@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
 
+import os
 import sys
 import json
 
@@ -37,19 +38,23 @@ def facade(message):
 from py4j.java_gateway import JavaGateway, CallbackServerParameters, GatewayParameters
 
 if __name__ == "__main__":
-    py4j_port = sys.argv[1].decode("UTF-8", errors="ignore")
 
-    gateway = JavaGateway(
-        callback_server_parameters=CallbackServerParameters(),
-        gateway_parameters=GatewayParameters(port=int(py4j_port)))
+    try:
+        py4j_port = sys.argv[1].decode("UTF-8", errors="ignore")
 
-    while True:
-        message = gateway.entry_point.pop()
+        gateway = JavaGateway(
+            callback_server_parameters=CallbackServerParameters(),
+            gateway_parameters=GatewayParameters(port=int(py4j_port)))
 
-        if message == "EMPTY":
-            continue
-        elif message == "EOF":
-            gateway.entry_point.stopServer()
-        else:
-            for item in facade(message):
-                gateway.entry_point.writeHdfs(item.toJson())
+        while True:
+            message = gateway.entry_point.pop()
+
+            if message == "EMPTY":
+                continue
+            elif message == "EOF":
+                gateway.entry_point.stopServer()
+            else:
+                for item in facade(message):
+                    gateway.entry_point.writeHdfs(item.toJson())
+    finally:
+        os._exit(0)

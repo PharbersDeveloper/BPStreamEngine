@@ -1,7 +1,8 @@
 package com.pharbers.StreamEngine.Jobs.PyJob.Py4jServer
 
 import java.util.UUID
-import py4j.GatewayServer
+
+import py4j.{GatewayServer, Py4JNetworkException}
 import java.net.ServerSocket
 
 import org.json4s.DefaultFormats
@@ -46,10 +47,9 @@ case class BPSPy4jServer(serverConf: Map[String, Any] = Map().empty) extends Ser
     private def openHdfs(path: String): Option[BufferedWriter] = {
         val configuration: Configuration = new Configuration()
         configuration.set("fs.defaultFS", hdfsAddr)
-
         val fileSystem: FileSystem = FileSystem.get(configuration)
-        val hdfsWritePath = new Path(path)
 
+        val hdfsWritePath = new Path(path)
         val fsDataOutputStream: FSDataOutputStream =
             if (fileSystem.exists(hdfsWritePath))
                 fileSystem.append(hdfsWritePath)
@@ -100,10 +100,16 @@ case class BPSPy4jServer(serverConf: Map[String, Any] = Map().empty) extends Ser
     var server: GatewayServer = _
 
     def startServer(): BPSPy4jServer = {
-        if (server == null) {
-//            val py4jPort = new ServerSocket(0).getLocalPort // 获得一个可用端口
-            server = new GatewayServer(this)
+        try {
+            val socket = new ServerSocket(0)
+            val py4jPort = socket.getLocalPort // 获得一个可用端口
+            socket.close()
+            server = new GatewayServer(this, py4jPort)
             server.start(true)
+        } catch {
+            case _: Py4JNetworkException =>
+                Thread.sleep(500)
+                startServer()
         }
         this
     }
