@@ -58,24 +58,25 @@ class BPSPythonJob(override val id: String,
     }
 
     override def exec(): Unit = {
-        val successPath = resultPath + "/file"
-        val errPath = resultPath + "/err"
-        val metadataPath = resultPath + "/metadata"
         val checkpointPath = resultPath + "/checkpoint"
         val rowRecordPath = resultPath + "/row_record"
+        val metadataPath = resultPath + "/metadata"
+        val successPath = resultPath + "/file"
+        val errPath = resultPath + "/err"
 
         inputStream match {
             case Some(is) =>
-                val query = is.repartition(2).writeStream
+                val query = is.repartition(1).writeStream
                         .option("checkpointLocation", checkpointPath)
                         .foreach(new ForeachWriter[Row]() {
+                            var py4jServer: Option[BPSPy4jServer] = None
 
                             override def open(partitionId: Long, version: Long): Boolean = {
                                 val genPath: String => String =
                                     path => s"$path/part-$partitionId-${UUID.randomUUID().toString}.$fileSuffix"
 
                                 synchronized {
-                                    BPSPy4jServer.server = if (!BPSPy4jServer.isStarted) {
+                                    py4jServer = if (py4jServer.isEmpty) {
                                         val server = BPSPy4jServer(Map(
                                             "hdfsAddr" -> hdfsAddr,
                                             "rowRecordPath" -> genPath(rowRecordPath),
@@ -86,17 +87,17 @@ class BPSPythonJob(override val id: String,
                                         server.startServer()
                                         server.startEndpoint(server.server.getPort.toString)
                                         Some(server)
-                                    } else BPSPy4jServer.server
+                                    } else py4jServer
                                 }
 
                                 true
                             }
 
                             override def process(value: Row): Unit = {
-                                if(lastMetadata.get("label").isEmpty) {
-                                    BPSPy4jServer.server.get.curRow += 1
-                                    BPSPy4jServer.server.get.writeErr(value.toString())
-                                } else {
+//                                if(lastMetadata.get("label").isEmpty) {
+//                                    py4jServer.get.curRow += 1
+//                                    py4jServer.get.writeErr(value.toString())
+//                                } else {
                                     val data = value.schema.map { schema =>
                                         schema.dataType match {
                                             case StringType =>
@@ -105,15 +106,15 @@ class BPSPythonJob(override val id: String,
                                         }
                                     }.toMap
 
-                                    BPSPy4jServer.server.get.push(
+                                    BPSPy4jServer.push(
                                         write(Map("metadata" -> lastMetadata, "data" -> data))(DefaultFormats)
                                     )
-                                }
+//                                }
                             }
 
                             override def close(errorOrNull: Throwable): Unit = {
-                                BPSPy4jServer.server.get.push("EOF")
-                                BPSPy4jServer.server = None
+                                BPSPy4jServer.push("EOF")
+                                py4jServer = None
                             }
                         })
                         .start()

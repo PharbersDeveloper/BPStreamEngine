@@ -1,18 +1,17 @@
 package com.pharbers.StreamEngine.Jobs.PyJob
 
 import java.util.UUID
-
-import com.pharbers.StreamEngine.Jobs.PyJob.Py4jServer.BPSPy4jServer
 import org.scalatest.FunSuite
+import com.pharbers.StreamEngine.Jobs.PyJob.Py4jServer.BPSPy4jServer
 
 class BPSPy4jServerTest extends FunSuite {
     test("test push and pop") {
         val server = BPSPy4jServer()
-        assert(server.pop() == "EMPTY")
-        assert(server.push("abc-1") == ())
-        assert(server.push("abc-2") == ())
-        assert(server.pop() == "abc-1")
-        assert(server.pop() == "abc-2")
+        assert(server.py4j_pop() == "EMPTY")
+        assert(BPSPy4jServer.push("abc-1") == ())
+        assert(BPSPy4jServer.push("abc-2") == ())
+        assert(server.py4j_pop() == "abc-1")
+        assert(server.py4j_pop() == "abc-2")
     }
 
     test("test startServer and startEndpoint") {
@@ -30,17 +29,36 @@ class BPSPy4jServerTest extends FunSuite {
         val genPath: String => String =
             path => s"$path/part-$partitionId-${UUID.randomUUID().toString}.$fileSuffix"
 
-        val server = BPSPy4jServer(Map(
+        BPSPy4jServer.open(Map(
             "hdfsAddr" -> hdfsAddr,
-            "rowRecordPath" -> rowRecordPath,
+            "rowRecordPath" -> genPath(rowRecordPath),
             "successPath" -> genPath(successPath),
             "errPath" -> genPath(errPath),
             "metadataPath" -> genPath(metadataPath)
         ))
-        server.startServer()
-        server.startEndpoint(server.server.getPort.toString)
-        println(server.server.getPort.toString)
+        BPSPy4jServer.open(Map(
+            "hdfsAddr" -> hdfsAddr,
+            "rowRecordPath" -> genPath(rowRecordPath),
+            "successPath" -> genPath(successPath),
+            "errPath" -> genPath(errPath),
+            "metadataPath" -> genPath(metadataPath)
+        ))
 
-        Thread.sleep(10000)
+        for (_ <- 1 to 100) {
+            BPSPy4jServer.push("abc")
+            BPSPy4jServer.push("123")
+            BPSPy4jServer.push("张飒")
+            BPSPy4jServer.push("张飒仨")
+            BPSPy4jServer.push("万宝路")
+            BPSPy4jServer.push("福狼藉")
+        }
+        BPSPy4jServer.push("EOF")
+        BPSPy4jServer.push("EOF")
+
+        for (i <- 1 to 10) {
+            println(BPSPy4jServer.dataQueue)
+            Thread.sleep(5000)
+            println(i)
+        }
     }
 }

@@ -14,9 +14,9 @@ import scala.util.parsing.json.JSON
  * @note
  */
 object ReadParquetScript extends App {
-    val id = "2bcf28e3-4a7a-4c08-b0c7-6dddee9fb894"
-    val matedataPath = "/test/alex2/a6d8e117-67d7-46f7-b932-4627c6677b0f/metadata/"
-    val filesPath = "/test/alex2/a6d8e117-67d7-46f7-b932-4627c6677b0f/files/2bcf28e3-4a7a-4c08-b0c7-6dddee9fb894"
+    val id = "2904e2fc-5b53-41d0-9c42-5b1b6edfb394"
+    val matedataPath = "/test/alex2/487ef941-dc7f-45cb-9fa3-8d52c4d67231/metadata/"
+    val filesPath = "/test/alex2/487ef941-dc7f-45cb-9fa3-8d52c4d67231/files/2904e2fc-5b53-41d0-9c42-5b1b6edfb394/"
 
     val spark = BPSparkSession()
 
