@@ -2,28 +2,23 @@ package com.pharbers.StreamEngine.Jobs.PyJob.Py4jServer
 
 import java.util.UUID
 import java.net.ServerSocket
-
+import java.io.BufferedWriter
 import org.json4s.DefaultFormats
-
 import scala.util.parsing.json.JSON
-import java.nio.charset.StandardCharsets
-
-import org.apache.hadoop.conf.Configuration
 import org.json4s.jackson.Serialization.write
 import py4j.{GatewayServer, Py4JNetworkException}
-import java.io.{BufferedWriter, OutputStreamWriter}
+import com.pharbers.StreamEngine.Utils.HDFS.BPSHDFSFile
 
-import org.apache.hadoop.fs.{FSDataOutputStream, FileSystem, Path}
 
 object BPSPy4jServer extends Serializable {
 
     // 保存当前 JVM 上运行的所有 Py4j 服务
-    private var servers: Map[String, BPSPy4jServer] = Map.empty
+    var servers: Map[String, BPSPy4jServer] = Map.empty
 
     def open(serverConf: Map[String, Any] = Map().empty): Unit = {
-        synchronized {
+        BPSPy4jServer.synchronized {
             val server = BPSPy4jServer(serverConf).openBuffer().startServer().startEndpoint()
-            servers = servers + (server.jobId -> server)
+            servers = servers + (server.threadId -> server)
         }
     }
 
@@ -32,7 +27,7 @@ object BPSPy4jServer extends Serializable {
     var dataQueue: List[String] = Nil
 
     def push(message: String): Unit = {
-        synchronized {
+        BPSPy4jServer.synchronized {
             BPSPy4jServer.dataQueue = BPSPy4jServer.dataQueue ::: message :: Nil
         }
     }
@@ -41,29 +36,28 @@ object BPSPy4jServer extends Serializable {
 /** 实现 Py4j 的 GatewayServer 的实例
  *
  * @author clock
- * @version 0.1
+ * @version 0.0.1
  * @since 2019/11/14 19:04
  * @node 可用的配置参数
  * {{{
- *     id = "jobId" // 默认重新生成UUID
- *     hdfsAddr = "hdfs://spark.master:9000" // 默认
- *     rowRecordPath = "/tmp/pyJob/$jobId/row_record/$threadId" //默认
- *     metadataPath = "/tmp/pyJob/$jobId/metadata/$threadId" //默认
- *     successPath = "/tmp/pyJob/$jobId/success/$threadId" //默认
- *     errPath = "/tmp/pyJob/$jobId/err/$threadId" //默认
+ *     jobId = "jobId" // 默认重新生成UUID
+ *     threadId = "threadId" // 默认重新生成UUID
+ *     rowRecordPath = "./$jobId/row_record/$threadId" //默认
+ *     metadataPath = "./$jobId/metadata/$threadId" //默认
+ *     successPath = "./$jobId/success/$threadId" //默认
+ *     errPath = "./$jobId/err/$threadId" //默认
  * }}}
  */
 case class BPSPy4jServer(serverConf: Map[String, Any] = Map().empty) extends Serializable {
     final val RETRY_COUNT: Int = 3
 
-    val jobId: String = serverConf.getOrElse("id", UUID.randomUUID().toString).toString
-    val hdfsAddr: String = serverConf.getOrElse("hdfsAddr", "hdfs://spark.master:9000").toString
+    val jobId: String = serverConf.getOrElse("jobId", UUID.randomUUID().toString).toString
+    val threadId: String = serverConf.getOrElse("threadId", UUID.randomUUID().toString).toString
 
-    val threadId: String = UUID.randomUUID().toString
-    val rowRecordPath: String = serverConf.getOrElse("rowRecordPath", s"/tmp/pyJob/$jobId/row_record/$threadId").toString
-    val metadataPath: String = serverConf.getOrElse("metadataPath", s"/tmp/pyJob/$jobId/metadata/$threadId").toString
-    val successPath: String = serverConf.getOrElse("successPath", s"/tmp/pyJob/$jobId/success/$threadId").toString
-    val errPath: String = serverConf.getOrElse("errPath", s"/tmp/pyJob/$jobId/err/$threadId").toString
+    val rowRecordPath: String = serverConf.getOrElse("rowRecordPath", s"./$jobId/row_record/$threadId").toString
+    val metadataPath: String = serverConf.getOrElse("metadataPath", s"./$jobId/metadata/$threadId").toString
+    val successPath: String = serverConf.getOrElse("successPath", s"./$jobId/success/$threadId").toString
+    val errPath: String = serverConf.getOrElse("errPath", s"./$jobId/err/$threadId").toString
 
 
     // Buffer 写入处理部分
@@ -72,21 +66,6 @@ case class BPSPy4jServer(serverConf: Map[String, Any] = Map().empty) extends Ser
     var metadataBufferedWriter: Option[BufferedWriter] = None
     var successBufferedWriter: Option[BufferedWriter] = None
     var errBufferedWriter: Option[BufferedWriter] = None
-
-    private def openHdfs(path: String): Option[BufferedWriter] = {
-        val configuration: Configuration = new Configuration()
-        configuration.set("fs.defaultFS", hdfsAddr)
-        val fileSystem: FileSystem = FileSystem.get(configuration)
-
-        val hdfsWritePath = new Path(path)
-        val fsDataOutputStream: FSDataOutputStream =
-            if (fileSystem.exists(hdfsWritePath))
-                fileSystem.append(hdfsWritePath)
-            else
-                fileSystem.create(hdfsWritePath)
-
-        Some(new BufferedWriter(new OutputStreamWriter(fsDataOutputStream, StandardCharsets.UTF_8)))
-    }
 
     def writeRowRecord(row: Long): Unit = {
         rowRecordBufferedWriter.get.write(row.toString)
@@ -113,10 +92,10 @@ case class BPSPy4jServer(serverConf: Map[String, Any] = Map().empty) extends Ser
     }
 
     def openBuffer(): BPSPy4jServer = {
-        if (rowRecordBufferedWriter.isEmpty) rowRecordBufferedWriter = openHdfs(rowRecordPath)
-        if (metadataBufferedWriter.isEmpty) metadataBufferedWriter = openHdfs(metadataPath)
-        if (successBufferedWriter.isEmpty) successBufferedWriter = openHdfs(successPath)
-        if (errBufferedWriter.isEmpty) errBufferedWriter = openHdfs(errPath)
+        if (rowRecordBufferedWriter.isEmpty) rowRecordBufferedWriter = BPSHDFSFile.openHdfsBuffer(rowRecordPath)
+        if (metadataBufferedWriter.isEmpty) metadataBufferedWriter = BPSHDFSFile.openHdfsBuffer(metadataPath)
+        if (successBufferedWriter.isEmpty) successBufferedWriter = BPSHDFSFile.openHdfsBuffer(successPath)
+        if (errBufferedWriter.isEmpty) errBufferedWriter = BPSHDFSFile.openHdfsBuffer(errPath)
         this
     }
 
@@ -172,6 +151,7 @@ case class BPSPy4jServer(serverConf: Map[String, Any] = Map().empty) extends Ser
         this
     }
 
+    var endpoint: Process = _
     //    var startEndpointCount = 0
     def startEndpoint(argv: String*): BPSPy4jServer = {
         val socket = new ServerSocket(0)
@@ -183,7 +163,9 @@ case class BPSPy4jServer(serverConf: Map[String, Any] = Map().empty) extends Ser
                 callbackPort.toString ::
                 argv.toList
 
-        val pr = Runtime.getRuntime.exec(args.toArray)
+        endpoint = Runtime.getRuntime.exec(args.toArray)
+
+/// 关于 Python 子进程启动失败的重试代码
 //        val in = new BufferedReader(new InputStreamReader(pr.getErrorStream))
 //        val result = in.readLine()
 //        in.close()
@@ -204,10 +186,15 @@ case class BPSPy4jServer(serverConf: Map[String, Any] = Map().empty) extends Ser
         this
     }
 
+    def destroyEndpoint(): BPSPy4jServer = {
+        endpoint.destroy()
+        this
+    }
+
 
     // Py4j 提供的 API
     def py4j_pop(): String = {
-        synchronized {
+        BPSPy4jServer.synchronized {
             if (BPSPy4jServer.dataQueue.nonEmpty) {
                 val result = BPSPy4jServer.dataQueue.head
                 BPSPy4jServer.dataQueue = BPSPy4jServer.dataQueue.tail
@@ -223,7 +210,7 @@ case class BPSPy4jServer(serverConf: Map[String, Any] = Map().empty) extends Ser
     def py4j_writeHdfs(str: String): Unit = {
         // python 可能调用多次，即一条数据清洗出多条来
         // 2019-11-26 补充: 这里计数没问题，记录处理后的数据条目，而且只多不少，所以Listener判断输出数据条目大于等于输入数据条数
-        synchronized(curRow += 1)
+        BPSPy4jServer.synchronized(curRow += 1)
         JSON.parseFull(str) match {
             case Some(result: Map[String, AnyRef]) =>
                 if (result("tag").asInstanceOf[Double] == 1) {
@@ -252,6 +239,7 @@ case class BPSPy4jServer(serverConf: Map[String, Any] = Map().empty) extends Ser
         writeRowRecord(curRow) // 写入当前patch的处理条数
         closeBuffer()
         shutdownServer()
-        synchronized(BPSPy4jServer.servers = BPSPy4jServer.servers - jobId)
+        destroyEndpoint()
+        BPSPy4jServer.synchronized(BPSPy4jServer.servers = BPSPy4jServer.servers - threadId)
     }
 }

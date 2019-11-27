@@ -18,7 +18,7 @@ object BPSparkSession {
 /** 创建 SparkSession 实例
  *
  * @author clock
- * @version 0.1
+ * @version 0.0.1
  * @since 2019/11/6 17:37
  * @node 可用的配置参数
  * {{{

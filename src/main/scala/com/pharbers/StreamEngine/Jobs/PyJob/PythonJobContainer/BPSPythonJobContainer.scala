@@ -2,8 +2,7 @@ package com.pharbers.StreamEngine.Jobs.PyJob.PythonJobContainer
 
 import java.util.UUID
 import org.apache.spark.sql.SparkSession
-import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.{FileSystem, Path}
+import com.pharbers.StreamEngine.Utils.HDFS.BPSHDFSFile
 import com.pharbers.StreamEngine.Jobs.PyJob.BPSPythonJob
 import com.pharbers.StreamEngine.Utils.Schema.Spark.BPSParseSchema
 import com.pharbers.StreamEngine.Utils.Event.EventHandler.BPSEventHandler
@@ -21,12 +20,11 @@ object BPSPythonJobContainer {
 /** 执行 Python 的 Job
  *
  * @author clock
- * @version 0.1
+ * @version 0.0.1
  * @since 2019/11/6 17:43
  * @node 可用的配置参数
  * {{{
- *      hdfsAddr = "hdfs://spark.master:9000"
- *      resultPath = "hdfs:///test/sub/"
+ *      resultPath = "/test/sub/"
  *      metadata = Map("jobId" -> "a", "fileName" -> "b")
  * }}}
  */
@@ -37,13 +35,12 @@ class BPSPythonJobContainer(override val spark: SparkSession,
     override val strategy: BPSKfkJobStrategy = null
     type T = BPSKfkJobStrategy
 
-    var metadata: Map[String, Any] = Map.empty
-
-    val id: String = config("jobId").toString
+    val id: String = config.getOrElse("jobId", UUID.randomUUID().toString).toString
     val matedataPath: String = config("matedataPath").toString
     val filesPath: String = config("filesPath").toString
     val resultPath: String = config("resultPath").toString
-    val hdfsAddr: String = config.getOrElse("hdfsAddr", "hdfs://spark.master:9000").toString
+
+    var metadata: Map[String, Any] = Map.empty
     val pyFiles = List(
         "./pyClean/main.py",
         "./pyClean/results.py",
@@ -54,10 +51,7 @@ class BPSPythonJobContainer(override val spark: SparkSession,
 
     // 当所需文件未准备完毕，则等待
     def notFoundShouldWait(path: String): Unit = {
-        val configuration: Configuration = new Configuration
-        configuration.set("fs.defaultFS", hdfsAddr)
-        val fileSystem: FileSystem = FileSystem.get(configuration)
-        if (!fileSystem.exists(new Path(path))) {
+        if (!BPSHDFSFile.checkPath(path)) {
             logger.debug(path + "文件不存在，等待 1s")
             Thread.sleep(1000)
             notFoundShouldWait(path)
@@ -66,15 +60,14 @@ class BPSPythonJobContainer(override val spark: SparkSession,
 
     override def open(): Unit = {
         notFoundShouldWait(matedataPath + id)
-        //不全是path + jobid， 可能是path + jobid + file
-        notFoundShouldWait(filesPath )
-        metadata = BPSParseSchema.parseMetadata(matedataPath + id)(spark)
+        notFoundShouldWait(filesPath)
+
+        metadata = BPSParseSchema.parseMetadata(matedataPath)(spark)
         val loadSchema = BPSParseSchema.parseSchema(metadata("schema").asInstanceOf[List[_]])
 
         val reading = spark.readStream
                 .schema(loadSchema)
                 .option("startingOffsets", "earliest")
-                //不全是path + jobid， 可能是path + jobid + file
                 .parquet(filesPath)
 
         inputStream = Some(reading)
@@ -83,7 +76,7 @@ class BPSPythonJobContainer(override val spark: SparkSession,
     override def exec(): Unit = inputStream match {
         case Some(_) =>
             pyFiles.foreach(spark.sparkContext.addFile)
-            val job = BPSPythonJob("abc001", spark, inputStream, this, Map( //UUID.randomUUID().toString
+            val job = BPSPythonJob(id, spark, inputStream, this, Map(
                 "resultPath" -> resultPath,
                 "lastMetadata" -> metadata
             ))

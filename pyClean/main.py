@@ -61,8 +61,7 @@ if __name__ == "__main__":
             except Py4JNetworkError:
                 break
         else:
-            print(message)
             for item in facade(message):
-                gateway.entry_point.py4j_stopServer(item.toJson())
+                gateway.entry_point.py4j_writeHdfs(item.toJson())
 
     os._exit(0)

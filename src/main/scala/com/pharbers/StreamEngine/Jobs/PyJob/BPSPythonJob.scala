@@ -20,17 +20,15 @@ object BPSPythonJob {
         new BPSPythonJob(id, spark, inputStream, container, jobConf)
 }
 
-// TODO 目前很多功能还没有定制化，如选择执行的 Python 入口
 /** 执行 Python 的 Job
  *
  * @author clock
- * @version 0.1
+ * @version 0.0.1
  * @since 2019/11/6 17:43
  * @node 可用的配置参数
  * {{{
  *     fileSuffix = "csv" // 默认
- *     hdfsAddr = "hdfs://spark.master:9000" // 默认
- *     resultPath = "hdfs:///test/sub/"
+ *     resultPath = "/test/sub/"
  *     lastMetadata = Map("jobId" -> "a", "fileName" -> "b")
  * }}}
  */
@@ -44,7 +42,6 @@ class BPSPythonJob(override val id: String,
     override val strategy: BPSJobStrategy = null
 
     val fileSuffix: String = jobConf.getOrElse("fileSuffix", "csv").toString
-    val hdfsAddr: String = jobConf.getOrElse("hdfsAddr", "hdfs://spark.master:9000").toString
     val resultPath: String = {
         if (jobConf("resultPath").toString.endsWith("/"))
             jobConf("resultPath").toString + id
@@ -75,7 +72,8 @@ class BPSPythonJob(override val id: String,
                                 val genPath: String => String = path => s"$path/part-$partitionId-$threadId.$fileSuffix"
 
                                 BPSPy4jServer.open(Map(
-                                    "hdfsAddr" -> hdfsAddr,
+                                    "jobId" -> id,
+                                    "threadId" -> threadId,
                                     "rowRecordPath" -> genPath(rowRecordPath),
                                     "successPath" -> genPath(successPath),
                                     "errPath" -> genPath(errPath),
@@ -86,22 +84,17 @@ class BPSPythonJob(override val id: String,
                             }
 
                             override def process(value: Row): Unit = {
-//                                if(lastMetadata.get("label").isEmpty) {
-//                                    py4jServer.get.curRow += 1
-//                                    py4jServer.get.writeErr(value.toString())
-//                                } else {
-                                    val data = value.schema.map { schema =>
-                                        schema.dataType match {
-                                            case StringType =>
-                                                schema.name -> value.getAs[String](schema.name)
-                                            case _ => ???
-                                        }
-                                    }.toMap
+                                val data = value.schema.map { schema =>
+                                    schema.dataType match {
+                                        case StringType =>
+                                            schema.name -> value.getAs[String](schema.name)
+                                        case _ => ???
+                                    }
+                                }.toMap
 
-                                    BPSPy4jServer.push(
-                                        write(Map("metadata" -> lastMetadata, "data" -> data))(DefaultFormats)
-                                    )
-//                                }
+                                BPSPy4jServer.push(
+                                    write(Map("metadata" -> lastMetadata, "data" -> data))(DefaultFormats)
+                                )
                             }
 
                             override def close(errorOrNull: Throwable): Unit = {
@@ -109,10 +102,10 @@ class BPSPythonJob(override val id: String,
                             }
                         })
                         .start()
+
                 outputStream = query :: outputStream
 
                 val rowLength = lastMetadata("length").asInstanceOf[String].toLong
-
                 val listener = BPSProgressListenerAndClose(this, spark, rowLength, rowRecordPath)
                 listener.active(null)
                 listeners = listener :: listeners
@@ -121,7 +114,6 @@ class BPSPythonJob(override val id: String,
     }
 
     override def close(): Unit = {
-//        logger.info("end =========>>> alfred test")
         super.close()
         container.finishJobWithId(id)
     }

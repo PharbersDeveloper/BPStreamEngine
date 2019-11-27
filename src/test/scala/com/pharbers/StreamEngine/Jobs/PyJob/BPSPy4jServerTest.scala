@@ -16,33 +16,40 @@ class BPSPy4jServerTest extends FunSuite {
 
     test("test startServer and startEndpoint") {
 
-        val hdfsAddr = "hdfs://spark.master:9000"
+        val jobId = "abc001"
+        val threadId1 = UUID.randomUUID().toString
+        val threadId2 = UUID.randomUUID().toString
+
         val fileSuffix = "csv"
         val partitionId = 0
 
-        val resultPath = "hdfs:///test/qi3/" + "abc001"
+        val resultPath = "./" + jobId
         val rowRecordPath = resultPath + "/row_record"
         val metadataPath = resultPath + "/metadata"
         val successPath = resultPath + "/file"
         val errPath = resultPath + "/err"
 
-        val genPath: String => String =
-            path => s"$path/part-$partitionId-${UUID.randomUUID().toString}.$fileSuffix"
+        val genPath: (String, String) => String =
+            (path, threadId) => s"$path/part-$partitionId-$threadId.$fileSuffix"
 
         BPSPy4jServer.open(Map(
-            "hdfsAddr" -> hdfsAddr,
-            "rowRecordPath" -> genPath(rowRecordPath),
-            "successPath" -> genPath(successPath),
-            "errPath" -> genPath(errPath),
-            "metadataPath" -> genPath(metadataPath)
+            "jobId" -> jobId,
+            "threadId" -> threadId1,
+            "rowRecordPath" -> genPath(rowRecordPath, threadId1),
+            "successPath" -> genPath(successPath, threadId1),
+            "errPath" -> genPath(errPath, threadId1),
+            "metadataPath" -> genPath(metadataPath, threadId1)
         ))
         BPSPy4jServer.open(Map(
-            "hdfsAddr" -> hdfsAddr,
-            "rowRecordPath" -> genPath(rowRecordPath),
-            "successPath" -> genPath(successPath),
-            "errPath" -> genPath(errPath),
-            "metadataPath" -> genPath(metadataPath)
+            "jobId" -> jobId,
+            "threadId" -> threadId2,
+            "rowRecordPath" -> genPath(rowRecordPath, threadId2),
+            "successPath" -> genPath(successPath, threadId2),
+            "errPath" -> genPath(errPath, threadId2),
+            "metadataPath" -> genPath(metadataPath, threadId2)
         ))
+
+        assert(BPSPy4jServer.servers != Map.empty)
 
         for (_ <- 1 to 100) {
             BPSPy4jServer.push("abc")
@@ -55,10 +62,13 @@ class BPSPy4jServerTest extends FunSuite {
         BPSPy4jServer.push("EOF")
         BPSPy4jServer.push("EOF")
 
-        for (i <- 1 to 10) {
-            println(BPSPy4jServer.dataQueue)
-            Thread.sleep(5000)
-            println(i)
+        assert(BPSPy4jServer.dataQueue != Nil)
+
+        for (_ <- 1 to 10) {
+            Thread.sleep(1000)
         }
+
+        assert(BPSPy4jServer.dataQueue == Nil)
+        assert(BPSPy4jServer.servers == Map.empty)
     }
 }
