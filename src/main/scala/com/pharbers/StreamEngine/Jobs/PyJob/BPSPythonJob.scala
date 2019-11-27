@@ -69,26 +69,18 @@ class BPSPythonJob(override val id: String,
                 val query = is.repartition(1).writeStream
                         .option("checkpointLocation", checkpointPath)
                         .foreach(new ForeachWriter[Row]() {
-                            var py4jServer: Option[BPSPy4jServer] = None
 
                             override def open(partitionId: Long, version: Long): Boolean = {
-                                val genPath: String => String =
-                                    path => s"$path/part-$partitionId-${UUID.randomUUID().toString}.$fileSuffix"
+                                val threadId: String = UUID.randomUUID().toString
+                                val genPath: String => String = path => s"$path/part-$partitionId-$threadId.$fileSuffix"
 
-                                synchronized {
-                                    py4jServer = if (py4jServer.isEmpty) {
-                                        val server = BPSPy4jServer(Map(
-                                            "hdfsAddr" -> hdfsAddr,
-                                            "rowRecordPath" -> genPath(rowRecordPath),
-                                            "successPath" -> genPath(successPath),
-                                            "errPath" -> genPath(errPath),
-                                            "metadataPath" -> genPath(metadataPath)
-                                        ))
-                                        server.startServer()
-                                        server.startEndpoint(server.server.getPort.toString)
-                                        Some(server)
-                                    } else py4jServer
-                                }
+                                BPSPy4jServer.open(Map(
+                                    "hdfsAddr" -> hdfsAddr,
+                                    "rowRecordPath" -> genPath(rowRecordPath),
+                                    "successPath" -> genPath(successPath),
+                                    "errPath" -> genPath(errPath),
+                                    "metadataPath" -> genPath(metadataPath)
+                                ))
 
                                 true
                             }
@@ -114,7 +106,6 @@ class BPSPythonJob(override val id: String,
 
                             override def close(errorOrNull: Throwable): Unit = {
                                 BPSPy4jServer.push("EOF")
-                                py4jServer = None
                             }
                         })
                         .start()

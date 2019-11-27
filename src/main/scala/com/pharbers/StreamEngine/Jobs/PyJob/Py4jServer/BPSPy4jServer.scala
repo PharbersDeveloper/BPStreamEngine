@@ -43,6 +43,15 @@ object BPSPy4jServer extends Serializable {
  * @author clock
  * @version 0.1
  * @since 2019/11/14 19:04
+ * @node 可用的配置参数
+ * {{{
+ *     id = "jobId" // 默认重新生成UUID
+ *     hdfsAddr = "hdfs://spark.master:9000" // 默认
+ *     rowRecordPath = "/tmp/pyJob/$jobId/row_record/$threadId" //默认
+ *     metadataPath = "/tmp/pyJob/$jobId/metadata/$threadId" //默认
+ *     successPath = "/tmp/pyJob/$jobId/success/$threadId" //默认
+ *     errPath = "/tmp/pyJob/$jobId/err/$threadId" //默认
+ * }}}
  */
 case class BPSPy4jServer(serverConf: Map[String, Any] = Map().empty) extends Serializable {
     final val RETRY_COUNT: Int = 3

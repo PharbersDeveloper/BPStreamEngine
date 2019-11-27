@@ -35,6 +35,7 @@ def facade(message):
     # print("3. return data to data engine")
 
 
+from py4j.protocol import Py4JNetworkError
 from py4j.java_gateway import JavaGateway, CallbackServerParameters, GatewayParameters
 
 if __name__ == "__main__":
@@ -47,16 +48,21 @@ if __name__ == "__main__":
     )
 
     while True:
-        message = gateway.entry_point.py4j_pop()
+        try:
+            message = gateway.entry_point.py4j_pop()
+        except Py4JNetworkError:
+            break
 
         if message == "EMPTY":
             continue
         elif message == "EOF":
             try:
                 gateway.entry_point.py4j_stopServer()
-            finally:
+            except Py4JNetworkError:
                 break
         else:
             print(message)
             for item in facade(message):
                 gateway.entry_point.py4j_stopServer(item.toJson())
+
+    os._exit(0)
