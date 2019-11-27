@@ -1,17 +1,19 @@
 package com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxConvertSchemaJobContainer
 
+import java.util.concurrent.TimeUnit
 import java.util.{Collections, UUID}
 
 import com.pharbers.StreamEngine.Jobs.SandBoxJob.BloodJob.BPSBloodJob
 import com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxConvertSchemaJobContainer.Listener.ConvertSchemaListener
 import com.pharbers.StreamEngine.Jobs.SandBoxJob.SchemaConverter
-import com.pharbers.StreamEngine.Jobs.SandBoxJob.UploadEndJob.BPSUploadEndJob
+import com.pharbers.StreamEngine.Utils.Component.Dynamic.JobMsg
 import com.pharbers.StreamEngine.Utils.HDFS.BPSHDFSFile
 import com.pharbers.StreamEngine.Utils.Schema.Spark.BPSMetaData2Map
 import com.pharbers.StreamEngine.Utils.Status.BPSJobStatus
 import com.pharbers.StreamEngine.Utils.StreamJob.BPSJobContainer
 import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSKfkJobStrategy
-import com.pharbers.kafka.schema.{DataSet, Job, UploadEnd}
+import com.pharbers.kafka.producer.PharbersKafkaProducer
+import com.pharbers.kafka.schema.{BPJob, DataSet, Job}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.SparkSession
@@ -107,6 +109,12 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 	}
 	
 	override def close(): Unit = {
+		pushPyjob(
+			id,
+			jobParam("metaDataSavePath"),
+			jobParam("parquetSavePath") + jobParam("currentJobId"),
+			jobParam("currentJobId")
+		)
 		val successJob = new Job(jobParam("currentJobId"), BPSJobStatus.Success.toString, "", "")
 		BPSBloodJob(jobParam("currentJobId"), "job_status", successJob).exec()
 		outputStream.foreach(_.stop())
@@ -143,5 +151,49 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 		val colNames =  contentMap("schema").asInstanceOf[List[Map[String, Any]]].map(_("key").toString)
 		val tabName = contentMap.getOrElse("tag", Map.empty).asInstanceOf[Map[String, Any]].getOrElse("sheetName", "").toString
 		(schema, colNames, tabName, contentMap("length").toString.toInt, traceId)
+	}
+
+	private def pushPyjob(runId: String, metadataPath: String, filesPath: String, jobId: String): Unit ={
+		import org.json4s._
+		import org.json4s.jackson.Serialization.write
+		implicit val formats: DefaultFormats.type = DefaultFormats
+		//    val jobId = "201910231514"
+		val traceId = ""
+		val `type` = "add"
+		val jobConfig = Map("jobId" -> jobId,
+			"matedataPath" -> metadataPath,
+			"filesPath" -> filesPath,
+			"resultPath" -> "hdfs:///test/dcs/testPy2"
+		)
+		val job = JobMsg("ossPyJob" + jobId, "job", "com.pharbers.StreamEngine.Jobs.PyJob.PythonJobContainer.BPSPythonJobContainer",
+			List("$BPSparkSession"), Nil, Nil, jobConfig, "", "test job")
+		val jobMsg = write(job)
+		val topic = "stream_job_submit"
+		val pkp = new PharbersKafkaProducer[String, BPJob]
+		val bpJob = new BPJob(jobId, traceId, `type`, jobMsg)
+		val fu = pkp.produce(topic, jobId, bpJob)
+		println(fu.get(10, TimeUnit.SECONDS))
+	}
+
+	private def pushPyjob(runId: String, metadataPath: String, filesPath: String, jobId: String): Unit ={
+		import org.json4s._
+		import org.json4s.jackson.Serialization.write
+		implicit val formats: DefaultFormats.type = DefaultFormats
+		//    val jobId = "201910231514"
+		val traceId = ""
+		val `type` = "add"
+		val jobConfig = Map("jobId" -> jobId,
+			"matedataPath" -> metadataPath,
+			"filesPath" -> filesPath,
+			"resultPath" -> "hdfs:///test/dcs/testPy2"
+		)
+		val job = JobMsg("ossPyJob" + jobId, "job", "com.pharbers.StreamEngine.Jobs.PyJob.PythonJobContainer.BPSPythonJobContainer",
+			List("$BPSparkSession"), Nil, Nil, jobConfig, "", "test job")
+		val jobMsg = write(job)
+		val topic = "stream_job_submit"
+		val pkp = new PharbersKafkaProducer[String, BPJob]
+		val bpJob = new BPJob(jobId, traceId, `type`, jobMsg)
+		val fu = pkp.produce(topic, jobId, bpJob)
+		println(fu.get(10, TimeUnit.SECONDS))
 	}
 }
