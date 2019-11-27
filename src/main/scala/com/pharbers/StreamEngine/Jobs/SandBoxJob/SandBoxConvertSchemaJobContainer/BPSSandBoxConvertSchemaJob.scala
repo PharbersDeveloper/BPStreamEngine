@@ -57,7 +57,7 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 			jobParam("parentJobId"))
 		BPSBloodJob(jobParam("currentJobId"), "data_set_job", dfs).exec()
 		
-		val uploadEnd = new UploadEnd(traceId, jobParam("currentJobId"))
+		val uploadEnd = new UploadEnd(jobParam("currentJobId"), traceId)
 		BPSUploadEndJob(jobParam("currentJobId"), "upload_end_job", uploadEnd).exec()
 		
 		val schema = SchemaConverter.str2SqlType(schemaData)
