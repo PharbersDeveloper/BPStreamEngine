@@ -20,7 +20,7 @@ object BPSOssPartitionJobContainer {
 
 class BPSOssPartitionJobContainer(override val strategy: BPSKfkJobStrategy, val spark: SparkSession, config: Map[String, String]) extends BPSJobContainer with BPDynamicStreamJob{
     val id: String = UUID.randomUUID().toString
-    val jobId: String = UUID.randomUUID().toString
+    val jobId = UUID.randomUUID().toString
     type T = BPSKfkJobStrategy
     import spark.implicits._
 
@@ -54,7 +54,7 @@ class BPSOssPartitionJobContainer(override val strategy: BPSKfkJobStrategy, val 
 
     override def exec(): Unit = inputStream match {
         case Some(is) => {
-            val listener = BPSOssListener(spark, this, id, getJobId)
+            val listener = BPSOssListener(spark, this, jobId)
             listener.active(is)
 
             listeners = listener :: listeners
@@ -64,7 +64,7 @@ class BPSOssPartitionJobContainer(override val strategy: BPSKfkJobStrategy, val 
                 .format("parquet")
                 .outputMode("append")
                 .option("checkpointLocation", "/jobs/" +  this.id + "/checkpoint")
-                .option("path", "/jobs/" + this.id + "/" + getJobId +  "/contents")
+                .option("path", "/jobs/" + this.id + "/" + jobId +  "/contents")
                 .start()
         }
         case None => ???
