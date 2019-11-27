@@ -42,10 +42,10 @@ object BPSPy4jServer extends Serializable {
  * {{{
  *     jobId = "jobId" // 默认重新生成UUID
  *     threadId = "threadId" // 默认重新生成UUID
- *     rowRecordPath = "./$jobId/row_record/$threadId" //默认
- *     metadataPath = "./$jobId/metadata/$threadId" //默认
- *     successPath = "./$jobId/success/$threadId" //默认
- *     errPath = "./$jobId/err/$threadId" //默认
+ *     rowRecordPath = "./jobs/$jobId/row_record/$threadId" //默认
+ *     metadataPath = "./jobs/$jobId/metadata/$threadId" //默认
+ *     successPath = "./jobs/$jobId/success/$threadId" //默认
+ *     errPath = "./jobs/$jobId/err/$threadId" //默认
  * }}}
  */
 case class BPSPy4jServer(serverConf: Map[String, Any] = Map().empty) extends Serializable {
@@ -54,10 +54,10 @@ case class BPSPy4jServer(serverConf: Map[String, Any] = Map().empty) extends Ser
     val jobId: String = serverConf.getOrElse("jobId", UUID.randomUUID().toString).toString
     val threadId: String = serverConf.getOrElse("threadId", UUID.randomUUID().toString).toString
 
-    val rowRecordPath: String = serverConf.getOrElse("rowRecordPath", s"./$jobId/row_record/$threadId").toString
-    val metadataPath: String = serverConf.getOrElse("metadataPath", s"./$jobId/metadata/$threadId").toString
-    val successPath: String = serverConf.getOrElse("successPath", s"./$jobId/success/$threadId").toString
-    val errPath: String = serverConf.getOrElse("errPath", s"./$jobId/err/$threadId").toString
+    val rowRecordPath: String = serverConf.getOrElse("rowRecordPath", s"./jobs/$jobId/row_record/$threadId").toString
+    val metadataPath: String = serverConf.getOrElse("metadataPath", s"./jobs/$jobId/metadata/$threadId").toString
+    val successPath: String = serverConf.getOrElse("successPath", s"./jobs/$jobId/success/$threadId").toString
+    val errPath: String = serverConf.getOrElse("errPath", s"./jobs/$jobId/err/$threadId").toString
 
 
     // Buffer 写入处理部分

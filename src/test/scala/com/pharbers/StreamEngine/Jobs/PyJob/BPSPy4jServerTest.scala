@@ -23,7 +23,7 @@ class BPSPy4jServerTest extends FunSuite {
         val fileSuffix = "csv"
         val partitionId = 0
 
-        val resultPath = "./" + jobId
+        val resultPath = "./jobs/" + jobId
         val rowRecordPath = resultPath + "/row_record"
         val metadataPath = resultPath + "/metadata"
         val successPath = resultPath + "/file"

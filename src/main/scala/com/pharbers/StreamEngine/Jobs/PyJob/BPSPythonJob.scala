@@ -28,7 +28,7 @@ object BPSPythonJob {
  * @node 可用的配置参数
  * {{{
  *     fileSuffix = "csv" // 默认
- *     resultPath = "/test/sub/"
+ *     resultPath = "/users/clock/jobs/"
  *     lastMetadata = Map("jobId" -> "a", "fileName" -> "b")
  * }}}
  */

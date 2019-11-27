@@ -24,7 +24,7 @@ object BPSPythonJobContainer {
  * @since 2019/11/6 17:43
  * @node 可用的配置参数
  * {{{
- *      resultPath = "/test/sub/"
+ *      resultPath = "/user/clock/jobs/"
  *      metadata = Map("jobId" -> "a", "fileName" -> "b")
  * }}}
  */
