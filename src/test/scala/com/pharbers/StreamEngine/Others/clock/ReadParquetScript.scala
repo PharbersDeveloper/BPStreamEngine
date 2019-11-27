@@ -14,35 +14,41 @@ import scala.util.parsing.json.JSON
  * @note
  */
 object ReadParquetScript extends App {
-    val id = "57fe0-2bda-4880-8301-dc55a0"
-    val matedataPath = "hdfs:///test/alex/07b8411a-5064-4271-bfd3-73079f2b42b2/metadata/"
-    val filesPath = "hdfs:///test/alex/07b8411a-5064-4271-bfd3-73079f2b42b2/files/"
+    val id = "2bcf28e3-4a7a-4c08-b0c7-6dddee9fb894"
+    val matedataPath = "/test/alex2/a6d8e117-67d7-46f7-b932-4627c6677b0f/metadata/"
+    val filesPath = "/test/alex2/a6d8e117-67d7-46f7-b932-4627c6677b0f/files/2bcf28e3-4a7a-4c08-b0c7-6dddee9fb894"
 
     val spark = BPSparkSession()
 
     def byBatchForCsv(): Unit = {
+//        val path = "hdfs:///test/qi3/abc001/metadata"
+        val path = "hdfs:///test/qi3/abc001/file"
+//        val path = "hdfs:///test/qi3/abc001/err"
         val reading = spark.read
                 .format("com.databricks.spark.csv")
                 .option("header", "true") //这里如果在csv第一行有属性的话，没有就是"false"
                 .option("inferSchema", true.toString)//这是自动推断属性列的数据类型。
-                .load("hdfs:///test/qi/57fe0-2bda-4880-8301-dc55a0/file") //文件的路径
+                .load(path) //文件的路径
         reading.show(false)
+        println(reading.count())
     }
     byBatchForCsv()
 
     def byBatch(): Unit = {
-        val reading = spark.read.parquet(filesPath)
+        val loadSchema = BPSParseSchema.parseSchemaByMetadata(matedataPath + id)(spark)
+        val reading = spark.read.schema(loadSchema).parquet(filesPath)
         reading.show(false)
     }
+//    byBatch()
 
     def byStream(): Unit = {
         val loadSchema = BPSParseSchema.parseSchemaByMetadata(matedataPath + id)(spark)
         val reading = spark.readStream
                 .schema(loadSchema)
                 .option("startingOffsets", "earliest")
-                .parquet(filesPath + id)
+                .parquet(filesPath)
 
-        val wordCounts = reading.groupBy("Year").count()
+        val wordCounts = reading.groupBy("1#Year").count()
 
         val query = wordCounts.writeStream
                 .outputMode("complete")
@@ -50,4 +56,5 @@ object ReadParquetScript extends App {
                 .start()
         query.awaitTermination()
     }
+//    byStream()
 }

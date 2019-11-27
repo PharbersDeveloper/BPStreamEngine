@@ -122,7 +122,6 @@
                     <version>1.0</version>
                 </dependency>
 
-
                 <!-- hadoop -->
                 <dependency>
                     <groupId>org.apache.hadoop</groupId>
@@ -133,6 +132,12 @@
                     <groupId>org.apache.hadoop</groupId>
                     <artifactId>hadoop-hdfs</artifactId>
                     <version>${hadoop.version}</version>
+                </dependency>
+                <!--elasticsearch-->
+                <dependency>
+                    <groupId>org.elasticsearch</groupId>
+                    <artifactId>elasticsearch-spark-20_2.11</artifactId>
+                    <version>7.2.0</version>
                 </dependency>
 
                 <!--log4j-->
@@ -197,13 +202,6 @@
                     <groupId>org.json4s</groupId>
                     <artifactId>json4s-jackson_2.11</artifactId>
                     <version>3.2.11</version>
-                </dependency>
-
-                <!-- Kafka_client-->
-                <dependency>
-                    <groupId>com.pharbers</groupId>
-                    <artifactId>pharbers-kafka</artifactId>
-                    <version>1.0</version>
                 </dependency>
             </dependencies>
         </profile>

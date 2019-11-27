@@ -5,13 +5,12 @@ import java.util.{Collections, UUID}
 import com.pharbers.StreamEngine.Jobs.SandBoxJob.BloodJob.BPSBloodJob
 import com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxConvertSchemaJobContainer.Listener.ConvertSchemaListener
 import com.pharbers.StreamEngine.Jobs.SandBoxJob.SchemaConverter
-import com.pharbers.StreamEngine.Utils.Convert.BPSMetaData2Map
 import com.pharbers.StreamEngine.Utils.HDFS.BPSHDFSFile
+import com.pharbers.StreamEngine.Utils.Schema.Spark.BPSMetaData2Map
 import com.pharbers.StreamEngine.Utils.Status.BPSJobStatus
 import com.pharbers.StreamEngine.Utils.StreamJob.BPSJobContainer
 import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSKfkJobStrategy
 import com.pharbers.kafka.schema.{DataSet, Job}
-
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.SparkSession
@@ -73,7 +72,7 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 				from_json($"data", schema).as("data")
 			).select("data.*")
 		)
-		
+
 		val pendingJob = new Job(jobParam("currentJobId"), BPSJobStatus.Pending.toString, "", "")
 		BPSBloodJob(jobParam("currentJobId"), "job_status", pendingJob).exec()
 	}
@@ -137,7 +136,7 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 			BPSHDFSFile.appendLine2HDFS(path, line)
 		}
 		val colNames =  contentMap("schema").asInstanceOf[List[Map[String, Any]]].map(_("key").toString)
-		val tabName = contentMap("tag").asInstanceOf[Map[String, Any]]("sheetName").toString
+		val tabName = contentMap.getOrElse("tag", Map.empty).asInstanceOf[Map[String, Any]].getOrElse("sheetName", "").toString
 		(schema, colNames, tabName, contentMap("length").toString.toInt)
 	}
 }

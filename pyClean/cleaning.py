@@ -24,7 +24,8 @@ def process(event):
     for m in mapping:
         value = None
         for old_key in old_data.keys():
-            if old_key.upper() in m["Candidate"]:
+            compare_key = string.split(old_key, "#")[1]
+            if compare_key.upper() in m["Candidate"]:
                 value = old_data[old_key]
                 break
 

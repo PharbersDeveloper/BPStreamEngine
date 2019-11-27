@@ -28,7 +28,7 @@ object BPSLocalChannel {
     }
 }
 
-// TODO 希望可以补全注释，因为我不知道这是干什么的
+// TODO 希望可以补全注释
 @Component(name = "BPSLocalChannel", `type` = "BPSLocalChannel")
 class BPSLocalChannel extends Runnable with PhLogable {
 
