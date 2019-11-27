@@ -27,20 +27,20 @@ import org.json4s.jackson.Serialization.write
   * @since 2019/10/11 13:30
   * @note 一些值得注意的地方
   */
-case class BPSOssListener(spark: SparkSession, job: BPStreamJob) extends BPStreamRemoteListener {
+case class BPSOssListener(spark: SparkSession, job: BPStreamJob, jobId: String) extends BPStreamRemoteListener {
     import spark.implicits._
     def event2JobId(e: BPSEvents): String = e.jobId
 
     override def trigger(e: BPSEvents): Unit = {
-        val jid = job.asInstanceOf[BPSJobContainer]
+        val runId = job.asInstanceOf[BPSJobContainer].id
         // TODO: 后面可变配置化
-        val genPath = s"/workData/streamingV2"
-	    val metaDataPath = s"$genPath/${jid.id}/metadata"
-        val sampleDataPath = s"$genPath/files/${jid.id}/files"
+        val genPath = s"/jobs/$runId/$jobId"
+	    val metaDataPath = s"$genPath/metadata"
+        val sampleDataPath = s"$genPath/contents"
         
         e.`type` match {
             case "SandBox-Schema" => {
-//                BPSOssPartitionMeta.pushLineToHDFS(jid.id, event2JobId(e), e.data)
+//                BPSOssPartitionMeta.pushLineToHDFS(runId.id, event2JobId(e), e.data)
                 BPSHDFSFile.appendLine2HDFS(s"$metaDataPath/${event2JobId(e)}", e.data)
             }
             case "SandBox-Labels" => {
@@ -50,7 +50,7 @@ case class BPSOssListener(spark: SparkSession, job: BPStreamJob) extends BPStrea
                 BPSHDFSFile.appendLine2HDFS(s"$metaDataPath/${event2JobId(e)}", e.data)
 	            //TODO： 需要改TS的接口,后面改成Kafka
 //                post(s"""{"traceId": "${e.traceId}","jobId": "${e.jobId}"}""", "application/json")
-                pollKafka(new FileMetaData(jid.id, e.jobId, metaDataPath, sampleDataPath, ""))
+                pollKafka(new FileMetaData(runId, e.jobId, metaDataPath, sampleDataPath, ""))
             }
         }
     }
@@ -88,7 +88,7 @@ case class BPSOssListener(spark: SparkSession, job: BPStreamJob) extends BPStrea
                         def close(errorOrNull: scala.Throwable): Unit = {}//channel.get.close()
                     }
                 )
-                .option("checkpointLocation", "/test/streamingV2/" + UUID.randomUUID().toString + "/checkpoint")
+                .option("checkpointLocation", "/jobs/" + UUID.randomUUID().toString + "/checkpoint")
                 .start() :: job.outputStream
     }
 
