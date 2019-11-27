@@ -5,12 +5,13 @@ import java.util.{Collections, UUID}
 import com.pharbers.StreamEngine.Jobs.SandBoxJob.BloodJob.BPSBloodJob
 import com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxConvertSchemaJobContainer.Listener.ConvertSchemaListener
 import com.pharbers.StreamEngine.Jobs.SandBoxJob.SchemaConverter
+import com.pharbers.StreamEngine.Jobs.SandBoxJob.UploadEndJob.BPSUploadEndJob
 import com.pharbers.StreamEngine.Utils.HDFS.BPSHDFSFile
 import com.pharbers.StreamEngine.Utils.Schema.Spark.BPSMetaData2Map
 import com.pharbers.StreamEngine.Utils.Status.BPSJobStatus
 import com.pharbers.StreamEngine.Utils.StreamJob.BPSJobContainer
 import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSKfkJobStrategy
-import com.pharbers.kafka.schema.{DataSet, Job}
+import com.pharbers.kafka.schema.{DataSet, Job, UploadEnd}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.SparkSession
@@ -41,7 +42,7 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 		
 		notFoundShouldWait(s"${jobParam("parentMetaData")}/${jobParam("parentJobId")}")
 		val metaData = spark.sparkContext.textFile(s"${jobParam("parentMetaData")}/${jobParam("parentJobId")}")
-		val (schemaData, colNames, tabName, length) = writeMetaData(metaData, jobParam("metaDataSavePath") + jobParam("currentJobId"))
+		val (schemaData, colNames, tabName, length, traceId) = writeMetaData(metaData, jobParam("metaDataSavePath") + jobParam("currentJobId"))
 		totalRow = length
 		
 		val dfs = new DataSet(Collections.emptyList(),
@@ -52,6 +53,9 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 			jobParam("parquetSavePath") + jobParam("currentJobId"),
 			jobParam("parentJobId"))
 		BPSBloodJob(jobParam("currentJobId"), "data_set_job", dfs).exec()
+		
+		val uploadEnd = new UploadEnd(traceId, jobParam("currentJobId"))
+		BPSUploadEndJob("upload_end_job", jobParam("currentJobId"), uploadEnd)
 		
 		val schema = SchemaConverter.str2SqlType(schemaData)
 		
@@ -117,7 +121,7 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 		}
 	}
 	
-	def writeMetaData(metaData: RDD[String], path: String): (String, List[CharSequence], String, Int) = {
+	def writeMetaData(metaData: RDD[String], path: String): (String, List[CharSequence], String, Int, String) = {
 		val contentMap = BPSMetaData2Map.list2Map(metaData.collect().toList.map(_.replaceAll("""\\"""", "")))
 		implicit val formats: DefaultFormats.type = DefaultFormats
 		val schema  = write(contentMap("schema").asInstanceOf[List[Map[String, Any]]])
@@ -126,8 +130,9 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 		
 		val jobIdRow = metaDataDF.withColumn("MetaData",
 			lit(s"""{"jobId":"${jobParam("parentJobId")}"}"""))
+		val traceId = jobParam("parentJobId").substring(0, jobParam("parentJobId").length-1)
 		val traceIdRow = jobIdRow.withColumn("MetaData",
-			lit(s"""{"traceId":"${jobParam("parentJobId").substring(0, jobParam("parentJobId").length-1)}"}"""))
+			lit(s"""{"traceId":"$traceId"}"""))
 		
 		val metaDataDis = metaDataDF.union(jobIdRow).union(traceIdRow).distinct()
 		
@@ -137,6 +142,6 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 		}
 		val colNames =  contentMap("schema").asInstanceOf[List[Map[String, Any]]].map(_("key").toString)
 		val tabName = contentMap.getOrElse("tag", Map.empty).asInstanceOf[Map[String, Any]].getOrElse("sheetName", "").toString
-		(schema, colNames, tabName, contentMap("length").toString.toInt)
+		(schema, colNames, tabName, contentMap("length").toString.toInt, traceId)
 	}
 }

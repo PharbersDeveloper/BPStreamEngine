@@ -32,9 +32,9 @@ class BPKafkaJobListener(val id: String,
 			val jobId: String = UUID.randomUUID().toString
 			val id: String = UUID.randomUUID().toString
 			// TODO 路径配置化
-			val metaDataSavePath: String = s"/test/alex2/$id/metadata/"
-			val checkPointSavePath: String = s"/test/alex2/$id/files/$jobId/checkpoint"
-			val parquetSavePath: String =  s"/test/alex2/$id/files/"
+			val metaDataSavePath: String = s"/jobs/$id/$jobId/metadata/"
+			val checkPointSavePath: String = s"/jobs/$id/$jobId/checkpoint"
+			val parquetSavePath: String =  s"/jobs/$id/$jobId/contents/"
 			hisJobId = record.value().getJobId.toString
 			
 			val jobParam = Map(
