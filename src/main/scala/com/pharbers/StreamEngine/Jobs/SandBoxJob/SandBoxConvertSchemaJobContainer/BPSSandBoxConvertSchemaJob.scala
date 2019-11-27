@@ -6,6 +6,7 @@ import java.util.{Collections, UUID}
 import com.pharbers.StreamEngine.Jobs.SandBoxJob.BloodJob.BPSBloodJob
 import com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxConvertSchemaJobContainer.Listener.ConvertSchemaListener
 import com.pharbers.StreamEngine.Jobs.SandBoxJob.SchemaConverter
+import com.pharbers.StreamEngine.Jobs.SandBoxJob.UploadEndJob.BPSUploadEndJob
 import com.pharbers.StreamEngine.Utils.Component.Dynamic.JobMsg
 import com.pharbers.StreamEngine.Utils.HDFS.BPSHDFSFile
 import com.pharbers.StreamEngine.Utils.Schema.Spark.BPSMetaData2Map
@@ -13,7 +14,7 @@ import com.pharbers.StreamEngine.Utils.Status.BPSJobStatus
 import com.pharbers.StreamEngine.Utils.StreamJob.BPSJobContainer
 import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSKfkJobStrategy
 import com.pharbers.kafka.producer.PharbersKafkaProducer
-import com.pharbers.kafka.schema.{BPJob, DataSet, Job}
+import com.pharbers.kafka.schema.{BPJob, DataSet, Job, UploadEnd}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.SparkSession
@@ -57,7 +58,7 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 		BPSBloodJob(jobParam("currentJobId"), "data_set_job", dfs).exec()
 		
 		val uploadEnd = new UploadEnd(traceId, jobParam("currentJobId"))
-		BPSUploadEndJob("upload_end_job", jobParam("currentJobId"), uploadEnd)
+		BPSUploadEndJob(jobParam("currentJobId"), "upload_end_job", uploadEnd).exec()
 		
 		val schema = SchemaConverter.str2SqlType(schemaData)
 		

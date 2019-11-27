@@ -52,12 +52,12 @@ class BPKafkaJobListener(val id: String,
 			convertJob.open()
 			convertJob.exec()
 			
-			pushPyjob(
-				id,
-				s"$metaDataSavePath",
-				s"$parquetSavePath" + jobId,
-				jobId
-			)
+//			pushPyjob(
+//				id,
+//				s"$metaDataSavePath",
+//				s"$parquetSavePath" + jobId,
+//				jobId
+//			)
 		} else {
 			logger.error("咋还重复传递JobID呢", hisJobId)
 		}
