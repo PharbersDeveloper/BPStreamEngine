@@ -109,12 +109,6 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 	}
 	
 	override def close(): Unit = {
-		pushPyjob(
-			id,
-			jobParam("metaDataSavePath"),
-			jobParam("parquetSavePath") + jobParam("currentJobId"),
-			jobParam("currentJobId")
-		)
 		val successJob = new Job(jobParam("currentJobId"), BPSJobStatus.Success.toString, "", "")
 		BPSBloodJob(jobParam("currentJobId"), "job_status", successJob).exec()
 		outputStream.foreach(_.stop())
@@ -153,47 +147,5 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 		(schema, colNames, tabName, contentMap("length").toString.toInt, traceId)
 	}
 
-	private def pushPyjob(runId: String, metadataPath: String, filesPath: String, jobId: String): Unit ={
-		import org.json4s._
-		import org.json4s.jackson.Serialization.write
-		implicit val formats: DefaultFormats.type = DefaultFormats
-		//    val jobId = "201910231514"
-		val traceId = ""
-		val `type` = "add"
-		val jobConfig = Map("jobId" -> jobId,
-			"matedataPath" -> metadataPath,
-			"filesPath" -> filesPath,
-			"resultPath" -> "hdfs:///test/dcs/testPy2"
-		)
-		val job = JobMsg("ossPyJob" + jobId, "job", "com.pharbers.StreamEngine.Jobs.PyJob.PythonJobContainer.BPSPythonJobContainer",
-			List("$BPSparkSession"), Nil, Nil, jobConfig, "", "test job")
-		val jobMsg = write(job)
-		val topic = "stream_job_submit"
-		val pkp = new PharbersKafkaProducer[String, BPJob]
-		val bpJob = new BPJob(jobId, traceId, `type`, jobMsg)
-		val fu = pkp.produce(topic, jobId, bpJob)
-		println(fu.get(10, TimeUnit.SECONDS))
-	}
 
-	private def pushPyjob(runId: String, metadataPath: String, filesPath: String, jobId: String): Unit ={
-		import org.json4s._
-		import org.json4s.jackson.Serialization.write
-		implicit val formats: DefaultFormats.type = DefaultFormats
-		//    val jobId = "201910231514"
-		val traceId = ""
-		val `type` = "add"
-		val jobConfig = Map("jobId" -> jobId,
-			"matedataPath" -> metadataPath,
-			"filesPath" -> filesPath,
-			"resultPath" -> "hdfs:///test/dcs/testPy2"
-		)
-		val job = JobMsg("ossPyJob" + jobId, "job", "com.pharbers.StreamEngine.Jobs.PyJob.PythonJobContainer.BPSPythonJobContainer",
-			List("$BPSparkSession"), Nil, Nil, jobConfig, "", "test job")
-		val jobMsg = write(job)
-		val topic = "stream_job_submit"
-		val pkp = new PharbersKafkaProducer[String, BPJob]
-		val bpJob = new BPJob(jobId, traceId, `type`, jobMsg)
-		val fu = pkp.produce(topic, jobId, bpJob)
-		println(fu.get(10, TimeUnit.SECONDS))
-	}
 }
