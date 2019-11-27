@@ -38,13 +38,14 @@ class BPSparkSession(config: Map[String, String]) extends BPSparkSessionConfig {
 
     private val conf = new SparkConf()
             .setAll(pops.asScala)
+//            .set("spark.extraListeners", "com.pharbers.StreamEngine.Utils.Session.Spark.BPSparkListener")
             .setAppName(sparkConfigs.getString(APP_NAME_KEY))
             .setMaster(sparkConfigs.getString(MASTER_KEY))
 
     val spark: SparkSession = SparkSession.builder().config(conf).getOrCreate()
     spark.sparkContext.setLogLevel(sparkConfigs.getString(LOG_LEVEL_KEY))
     spark.sparkContext.setLocalProperty("host", InetAddress.getLocalHost.getHostAddress)
-
+//    spark.streams.addListener(new SparkQueryListener)
     // 初始环境设置
     sparkConfigs.getString(RUN_MODEL_KEY) match {
         case "client" =>
@@ -56,7 +57,7 @@ class BPSparkSession(config: Map[String, String]) extends BPSparkSessionConfig {
             spark.sparkContext.addJar("./jars/common-config-5.2.1.jar")
             spark.sparkContext.addJar("./jars/common-utils-5.2.1.jar")
             spark.sparkContext.addJar("./jars/logs-1.0.jar")
-            spark.sparkContext.addJar("./jars/elasticsearch-spark-20_2.11-7.2.0.jar")
+//            spark.sparkContext.addJar("./jars/elasticsearch-spark-20_2.11-7.2.0.jar")
         case _ =>
     }
 }

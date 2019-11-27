@@ -29,21 +29,22 @@ class BPKafkaJobListener(val id: String,
 	var hisJobId = ""
 	val process: ConsumerRecord[String, FileMetaData] => Unit = (record: ConsumerRecord[String, FileMetaData]) => {
 		if (record.value().getJobId.toString != hisJobId) {
-			val JOBID: String = UUID.randomUUID().toString
-			val ID: String = UUID.randomUUID().toString
-			val METADATASAVEPATH: String = s"/test/alex2/$ID/metadata/$JOBID"
-			val CHECKPOINTSAVEPATH: String = s"/test/alex2/$ID/files/$JOBID/checkpoint"
-			val PARQUETSAVEPATH: String =  s"/test/alex2/$ID/files/$JOBID"
+			val jobId: String = UUID.randomUUID().toString
+			val id: String = UUID.randomUUID().toString
+			// TODO 路径配置化
+			val metaDataSavePath: String = s"/jobs/$id/$jobId/metadata/"
+			val checkPointSavePath: String = s"/jobs/$id/$jobId/checkpoint"
+			val parquetSavePath: String =  s"/jobs/$id/$jobId/contents/"
 			hisJobId = record.value().getJobId.toString
 			
 			val jobParam = Map(
 				"parentJobId" -> record.value().getJobId.toString,
 				"parentMetaData" -> record.value().getMetaDataPath.toString,
 				"parentSampleData" -> record.value().getSampleDataPath.toString,
-				"currentJobId" -> JOBID,
-				"metaDataSavePath" -> METADATASAVEPATH,
-				"checkPointSavePath" -> CHECKPOINTSAVEPATH,
-				"parquetSavePath" -> PARQUETSAVEPATH
+				"currentJobId" -> jobId,
+				"metaDataSavePath" -> metaDataSavePath,
+				"checkPointSavePath" -> checkPointSavePath,
+				"parquetSavePath" -> parquetSavePath
 			)
 			
 			val convertJob: BPSSandBoxConvertSchemaJob = BPSSandBoxConvertSchemaJob(
@@ -51,12 +52,12 @@ class BPKafkaJobListener(val id: String,
 			convertJob.open()
 			convertJob.exec()
 			
-//			pushPyjob(
-//				record.value().getRunId.toString,
-//				s"/test/alex/${record.value().getRunId.toString}/metadata/",
-//				s"/test/alex/${record.value().getRunId.toString}/files/",
-//				record.value().getJobId.toString
-//			)
+			pushPyjob(
+				id,
+				s"$metaDataSavePath",
+				s"$parquetSavePath" + jobId,
+				jobId
+			)
 		} else {
 			logger.error("咋还重复传递JobID呢", hisJobId)
 		}
@@ -87,7 +88,7 @@ class BPKafkaJobListener(val id: String,
 		val jobConfig = Map("jobId" -> jobId,
 			"matedataPath" -> metadataPath,
 			"filesPath" -> filesPath,
-			"resultPath" -> "hdfs:///test/qi/"
+			"resultPath" -> "hdfs:///test/dcs/testPy2"
 		)
 		val job = JobMsg("ossPyJob" + jobId, "job", "com.pharbers.StreamEngine.Jobs.PyJob.PythonJobContainer.BPSPythonJobContainer",
 			List("$BPSparkSession"), Nil, Nil, jobConfig, "", "test job")

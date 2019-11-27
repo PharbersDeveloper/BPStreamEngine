@@ -8,6 +8,9 @@ import com.pharbers.StreamEngine.Utils.Session.Spark.BPSparkSession
 import org.scalatest.FunSuite
 import java.util.jar.JarFile
 
+import com.pharbers.StreamEngine.Utils.ThreadExecutor.ThreadExecutor
+import org.apache.spark.sql.types.StructType
+
 import collection.JavaConverters._
 import scala.io.Source
 import scala.reflect.runtime.universe._
@@ -74,4 +77,40 @@ class BPSStreamingTest extends FunSuite {
         }
     }
 
+    test("test file stream"){
+        val spark = BPSparkSession()
+        val df = spark.read.csv("/test/dcs/testFile")
+        val schema = df.schema
+        df.write.mode("overwrite").parquet("/test/dcs/testFile/parquet")
+        val reading = spark.readStream
+                        .schema(schema)
+//                        .csv("/test/dcs/testFile/csv")
+                        .parquet("/test/dcs/testFile/parquet")
+
+//        reading.writeStream
+//                .format("console")
+//                .option("checkpointLocation", "/test/dcs/checkpointLocation/" + UUID.randomUUID().toString)
+//                .start()
+
+        reading.writeStream
+                .format("parquet")
+                .option("path", "/test/dcs/testFile/StreamParquet")
+                .option("checkpointLocation", "/test/dcs/checkpointLocation/" + UUID.randomUUID().toString)
+                .start()
+
+        spark.readStream
+                .schema(schema)
+                .parquet("/test/dcs/testFile/StreamParquet")
+                .writeStream
+                .format("console")
+                .option("checkpointLocation", "/test/dcs/checkpointLocation/" + UUID.randomUUID().toString)
+                .start()
+
+        while (true){
+            df.write.mode("append").parquet("/test/dcs/testFile/parquet")
+            Thread.sleep(1000)
+        }
+
+        ThreadExecutor.waitForShutdown()
+    }
 }
