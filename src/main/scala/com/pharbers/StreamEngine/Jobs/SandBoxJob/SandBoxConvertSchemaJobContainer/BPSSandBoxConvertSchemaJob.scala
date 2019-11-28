@@ -68,35 +68,35 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 				from_json($"data", schema).as("data")
 			).select("data.*")
 		)
-		
-		// MetaData DataSet
-		BPSBloodJob(
-			"data_set_job",
-			new DataSet(
-				Collections.emptyList(),
-				metaDataSetId,
-				jobParam("jobContainerId"),
-				colNames.asJava,
-				tabName,
-				length,
-				jobParam("metaDataSavePath") + jobParam("currentJobId"),
-				"")).exec()
-		
-		// SampleData DataSet
-		BPSBloodJob(
-			"data_set_job",
-			new DataSet(
-				Collections.emptyList(),
-				sampleDataSetId,
-				jobParam("jobContainerId"),
-				colNames.asJava,
-				tabName,
-				length,
-				jobParam("parquetSavePath") + jobParam("currentJobId"),
-				"")).exec()
-		
-		val uploadEnd = new UploadEnd(sampleDataSetId, traceId)
-		BPSUploadEndJob("upload_end_job", uploadEnd).exec()
+		// 暂时注释
+//		// MetaData DataSet
+//		BPSBloodJob(
+//			"data_set_job",
+//			new DataSet(
+//				Collections.emptyList(),
+//				metaDataSetId,
+//				jobParam("jobContainerId"),
+//				colNames.asJava,
+//				tabName,
+//				length,
+//				jobParam("metaDataSavePath") + jobParam("currentJobId"),
+//				"")).exec()
+//
+//		// SampleData DataSet
+//		BPSBloodJob(
+//			"data_set_job",
+//			new DataSet(
+//				Collections.emptyList(),
+//				sampleDataSetId,
+//				jobParam("jobContainerId"),
+//				colNames.asJava,
+//				tabName,
+//				length,
+//				jobParam("parquetSavePath") + jobParam("currentJobId"),
+//				"")).exec()
+//
+//		val uploadEnd = new UploadEnd(sampleDataSetId, traceId)
+//		BPSUploadEndJob("upload_end_job", uploadEnd).exec()
 		
 	}
 	

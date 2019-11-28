@@ -72,10 +72,11 @@ object BPSHDFSFile {
                 result = result ::: line :: Nil
                 line = inReader.readLine()
             }
-
+            inBuf.close()
+            inReader.close()
             result
         }
-
+        fs.close()
         result
     }
 }
