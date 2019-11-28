@@ -59,7 +59,7 @@ class BPSPythonJobContainer(override val spark: SparkSession,
     }
 
     override def open(): Unit = {
-        notFoundShouldWait(matedataPath + id)
+        notFoundShouldWait(matedataPath)
         notFoundShouldWait(filesPath)
 
         metadata = BPSParseSchema.parseMetadata(matedataPath)(spark)
