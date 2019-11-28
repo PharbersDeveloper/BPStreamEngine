@@ -17,7 +17,6 @@ import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.types.{StringType, StructField, StructType, TimestampType}
 import org.json4s.DefaultFormats
 import org.json4s.jackson.Serialization._
-import org.mongodb.scala.bson.ObjectId
 
 import collection.JavaConverters._
 
@@ -98,6 +97,7 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 		
 		val uploadEnd = new UploadEnd(sampleDataSetId, traceId)
 		BPSUploadEndJob("upload_end_job", uploadEnd).exec()
+		
 	}
 	
 	override def exec(): Unit = {
@@ -153,6 +153,4 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 		val tabName = contentMap.getOrElse("tag", Map.empty).asInstanceOf[Map[String, Any]].getOrElse("sheetName", "").toString
 		(schema, colNames, tabName, contentMap("length").toString.toInt, traceId)
 	}
-
-
 }

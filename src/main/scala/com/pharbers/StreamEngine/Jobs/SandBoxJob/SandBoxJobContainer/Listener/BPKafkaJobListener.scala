@@ -63,12 +63,12 @@ class BPKafkaJobListener(val id: String,
 			convertJob.open()
 			convertJob.exec()
 			
-//			pushPyjob(
-//				record.value().getRunId.toString,
-//				s"$metaDataSavePath",
-//				s"$parquetSavePath" + jobId,
-//				jobId
-//			)
+			pushPyjob(
+				id,
+				s"$metaDataSavePath" + jobId,
+				s"$parquetSavePath" + jobId,
+				jobId
+			)
 		} else {
 			logger.error("咋还重复传递JobID呢", hisJobId)
 		}
@@ -99,7 +99,7 @@ class BPKafkaJobListener(val id: String,
 		val jobConfig = Map("jobId" -> jobId,
 			"matedataPath" -> metadataPath,
 			"filesPath" -> filesPath,
-			"resultPath" -> "hdfs:///test/dcs/testPy2"
+			"resultPath" -> s"hdfs:///jobs/$id/${UUID.randomUUID().toString}/contents/"
 		)
 		val job = JobMsg("ossPyJob" + jobId, "job", "com.pharbers.StreamEngine.Jobs.PyJob.PythonJobContainer.BPSPythonJobContainer",
 			List("$BPSparkSession"), Nil, Nil, jobConfig, "", "test job")
