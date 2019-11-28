@@ -30,14 +30,14 @@ object RunPyJob extends App {
         val clazz = "com.pharbers.StreamEngine.Jobs.PyJob.PythonJobContainer.BPSPythonJobContainer"
 //        val jobs = JobMsg("pyBoxJob", "job", clazz, List("$BPSparkSession"), Nil, Nil, Map(
 //            "jobId" -> UUID.randomUUID().toString,
-//            "matedataPath" -> "hdfs:///test/alex2/ba6e2dca-629c-4df5-a1fc-1c41314ad185/metadata/ee2a659d-03f5-4004-98ae-87ee65bb4b3b/",
-//            "filesPath" -> "hdfs:///test/alex2/ba6e2dca-629c-4df5-a1fc-1c41314ad185/files/ee2a659d-03f5-4004-98ae-87ee65bb4b3b/",
-//            "resultPath" -> "hdfs:///test/qi3/"
+//            "matedataPath" -> "hdfs:///jobs/1d157501-3b43-486a-88e6-fbfbe02a0c84/5344a3fe-2b18-448f-a82f-04d917e05ad1/metadata",
+//            "filesPath" -> "hdfs:///jobs/1d157501-3b43-486a-88e6-fbfbe02a0c84/5344a3fe-2b18-448f-a82f-04d917e05ad1/contents/5344a3fe-2b18-448f-a82f-04d917e05ad1",
+//            "resultPath" -> "."
 //        ), "", "py job") :: Nil
         val jobs = JobMsg("pyBoxJob", "job", clazz, List("$BPSparkSession"), Nil, Nil, Map(
             "jobId" -> UUID.randomUUID().toString,
-            "matedataPath" -> "hdfs:///test/alex2/487ef941-dc7f-45cb-9fa3-8d52c4d67231/metadata/2904e2fc-5b53-41d0-9c42-5b1b6edfb394/",
-            "filesPath" -> "hdfs:///test/alex2/487ef941-dc7f-45cb-9fa3-8d52c4d67231/files/2904e2fc-5b53-41d0-9c42-5b1b6edfb394/",
+            "matedataPath" -> "hdfs:///jobs/83ee0f2a-360a-4236-ba26-afa09d58e01d/ea293f1b-a66d-44fb-95ff-49a009840ed4/metadata",
+            "filesPath" -> "hdfs:///jobs/83ee0f2a-360a-4236-ba26-afa09d58e01d/ea293f1b-a66d-44fb-95ff-49a009840ed4/contents/ea293f1b-a66d-44fb-95ff-49a009840ed4",
             "resultPath" -> "."
         ), "", "py job") :: Nil
 

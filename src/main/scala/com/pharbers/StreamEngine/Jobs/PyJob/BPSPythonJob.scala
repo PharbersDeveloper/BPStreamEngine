@@ -66,7 +66,7 @@ class BPSPythonJob(override val id: String,
 
         inputStream match {
             case Some(is) =>
-                val query = is.repartition(1).writeStream
+                val query = is.repartition(4).writeStream
                         .option("checkpointLocation", checkpointPath)
                         .foreach(new ForeachWriter[Row]() {
 
