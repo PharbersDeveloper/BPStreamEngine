@@ -10,15 +10,14 @@ import org.apache.spark.sql
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
 object BPSUploadEndJob {
-	def apply(jobId: String,
-	          topic: String,
+	def apply(topic: String,
 	          msg: SpecificRecord): BPSUploadEndJob =
-		new BPSUploadEndJob(jobId, topic, msg)
+		new BPSUploadEndJob(topic, msg)
 }
 
-class BPSUploadEndJob(val id: String,
-                  topic: String,
+class BPSUploadEndJob(topic: String,
                   msg: SpecificRecord) extends BPStreamJob {
+	val id: String = ""
 	type T = BPSJobStrategy
 	override val strategy = null
 	val is: Option[sql.DataFrame] = None
