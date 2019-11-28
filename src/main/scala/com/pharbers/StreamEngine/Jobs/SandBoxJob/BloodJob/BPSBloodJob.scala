@@ -10,15 +10,14 @@ import org.apache.spark.sql
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
 object BPSBloodJob {
-	def apply(jobId: String,
-	          topic: String,
+	def apply(topic: String,
 	          msg: SpecificRecord): BPSBloodJob =
-		new BPSBloodJob(jobId, topic, msg)
+		new BPSBloodJob(topic, msg)
 }
 
-class BPSBloodJob(val id: String,
-                  topic: String,
+class BPSBloodJob(topic: String,
                   msg: SpecificRecord) extends BPStreamJob {
+	val id: String = ""
 	type T = BPSJobStrategy
 	override val strategy = null
 	val is: Option[sql.DataFrame] = None

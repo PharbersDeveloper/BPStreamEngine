@@ -10,10 +10,10 @@ import org.apache.avro.specific.SpecificData;
 @SuppressWarnings("all")
 @org.apache.avro.specific.AvroGenerated
 public class UploadEnd extends org.apache.avro.specific.SpecificRecordBase implements org.apache.avro.specific.SpecificRecord {
-  private static final long serialVersionUID = 5324315549080950969L;
-  public static final org.apache.avro.Schema SCHEMA$ = new org.apache.avro.Schema.Parser().parse("{\"type\":\"record\",\"name\":\"UploadEnd\",\"namespace\":\"com.pharbers.kafka.schema\",\"fields\":[{\"name\":\"jobId\",\"type\":\"string\"},{\"name\":\"traceId\",\"type\":\"string\"}]}");
+  private static final long serialVersionUID = 4816906545085536513L;
+  public static final org.apache.avro.Schema SCHEMA$ = new org.apache.avro.Schema.Parser().parse("{\"type\":\"record\",\"name\":\"UploadEnd\",\"namespace\":\"com.pharbers.kafka.schema\",\"fields\":[{\"name\":\"dataSetId\",\"type\":\"string\"},{\"name\":\"traceId\",\"type\":\"string\"}]}");
   public static org.apache.avro.Schema getClassSchema() { return SCHEMA$; }
-  @Deprecated public java.lang.CharSequence jobId;
+  @Deprecated public java.lang.CharSequence dataSetId;
   @Deprecated public java.lang.CharSequence traceId;
 
   /**
@@ -25,11 +25,11 @@ public class UploadEnd extends org.apache.avro.specific.SpecificRecordBase imple
 
   /**
    * All-args constructor.
-   * @param jobId The new value for jobId
+   * @param dataSetId The new value for dataSetId
    * @param traceId The new value for traceId
    */
-  public UploadEnd(java.lang.CharSequence jobId, java.lang.CharSequence traceId) {
-    this.jobId = jobId;
+  public UploadEnd(java.lang.CharSequence dataSetId, java.lang.CharSequence traceId) {
+    this.dataSetId = dataSetId;
     this.traceId = traceId;
   }
 
@@ -37,7 +37,7 @@ public class UploadEnd extends org.apache.avro.specific.SpecificRecordBase imple
   // Used by DatumWriter.  Applications should not call.
   public java.lang.Object get(int field$) {
     switch (field$) {
-    case 0: return jobId;
+    case 0: return dataSetId;
     case 1: return traceId;
     default: throw new org.apache.avro.AvroRuntimeException("Bad index");
     }
@@ -47,26 +47,26 @@ public class UploadEnd extends org.apache.avro.specific.SpecificRecordBase imple
   @SuppressWarnings(value="unchecked")
   public void put(int field$, java.lang.Object value$) {
     switch (field$) {
-    case 0: jobId = (java.lang.CharSequence)value$; break;
+    case 0: dataSetId = (java.lang.CharSequence)value$; break;
     case 1: traceId = (java.lang.CharSequence)value$; break;
     default: throw new org.apache.avro.AvroRuntimeException("Bad index");
     }
   }
 
   /**
-   * Gets the value of the 'jobId' field.
-   * @return The value of the 'jobId' field.
+   * Gets the value of the 'dataSetId' field.
+   * @return The value of the 'dataSetId' field.
    */
-  public java.lang.CharSequence getJobId() {
-    return jobId;
+  public java.lang.CharSequence getDataSetId() {
+    return dataSetId;
   }
 
   /**
-   * Sets the value of the 'jobId' field.
+   * Sets the value of the 'dataSetId' field.
    * @param value the value to set.
    */
-  public void setJobId(java.lang.CharSequence value) {
-    this.jobId = value;
+  public void setDataSetId(java.lang.CharSequence value) {
+    this.dataSetId = value;
   }
 
   /**
@@ -117,7 +117,7 @@ public class UploadEnd extends org.apache.avro.specific.SpecificRecordBase imple
   public static class Builder extends org.apache.avro.specific.SpecificRecordBuilderBase<UploadEnd>
     implements org.apache.avro.data.RecordBuilder<UploadEnd> {
 
-    private java.lang.CharSequence jobId;
+    private java.lang.CharSequence dataSetId;
     private java.lang.CharSequence traceId;
 
     /** Creates a new Builder */
@@ -131,8 +131,8 @@ public class UploadEnd extends org.apache.avro.specific.SpecificRecordBase imple
      */
     private Builder(com.pharbers.kafka.schema.UploadEnd.Builder other) {
       super(other);
-      if (isValidValue(fields()[0], other.jobId)) {
-        this.jobId = data().deepCopy(fields()[0].schema(), other.jobId);
+      if (isValidValue(fields()[0], other.dataSetId)) {
+        this.dataSetId = data().deepCopy(fields()[0].schema(), other.dataSetId);
         fieldSetFlags()[0] = true;
       }
       if (isValidValue(fields()[1], other.traceId)) {
@@ -147,8 +147,8 @@ public class UploadEnd extends org.apache.avro.specific.SpecificRecordBase imple
      */
     private Builder(com.pharbers.kafka.schema.UploadEnd other) {
             super(SCHEMA$);
-      if (isValidValue(fields()[0], other.jobId)) {
-        this.jobId = data().deepCopy(fields()[0].schema(), other.jobId);
+      if (isValidValue(fields()[0], other.dataSetId)) {
+        this.dataSetId = data().deepCopy(fields()[0].schema(), other.dataSetId);
         fieldSetFlags()[0] = true;
       }
       if (isValidValue(fields()[1], other.traceId)) {
@@ -158,40 +158,40 @@ public class UploadEnd extends org.apache.avro.specific.SpecificRecordBase imple
     }
 
     /**
-      * Gets the value of the 'jobId' field.
+      * Gets the value of the 'dataSetId' field.
       * @return The value.
       */
-    public java.lang.CharSequence getJobId() {
-      return jobId;
+    public java.lang.CharSequence getDataSetId() {
+      return dataSetId;
     }
 
     /**
-      * Sets the value of the 'jobId' field.
-      * @param value The value of 'jobId'.
+      * Sets the value of the 'dataSetId' field.
+      * @param value The value of 'dataSetId'.
       * @return This builder.
       */
-    public com.pharbers.kafka.schema.UploadEnd.Builder setJobId(java.lang.CharSequence value) {
+    public com.pharbers.kafka.schema.UploadEnd.Builder setDataSetId(java.lang.CharSequence value) {
       validate(fields()[0], value);
-      this.jobId = value;
+      this.dataSetId = value;
       fieldSetFlags()[0] = true;
       return this;
     }
 
     /**
-      * Checks whether the 'jobId' field has been set.
-      * @return True if the 'jobId' field has been set, false otherwise.
+      * Checks whether the 'dataSetId' field has been set.
+      * @return True if the 'dataSetId' field has been set, false otherwise.
       */
-    public boolean hasJobId() {
+    public boolean hasDataSetId() {
       return fieldSetFlags()[0];
     }
 
 
     /**
-      * Clears the value of the 'jobId' field.
+      * Clears the value of the 'dataSetId' field.
       * @return This builder.
       */
-    public com.pharbers.kafka.schema.UploadEnd.Builder clearJobId() {
-      jobId = null;
+    public com.pharbers.kafka.schema.UploadEnd.Builder clearDataSetId() {
+      dataSetId = null;
       fieldSetFlags()[0] = false;
       return this;
     }
@@ -239,7 +239,7 @@ public class UploadEnd extends org.apache.avro.specific.SpecificRecordBase imple
     public UploadEnd build() {
       try {
         UploadEnd record = new UploadEnd();
-        record.jobId = fieldSetFlags()[0] ? this.jobId : (java.lang.CharSequence) defaultValue(fields()[0]);
+        record.dataSetId = fieldSetFlags()[0] ? this.dataSetId : (java.lang.CharSequence) defaultValue(fields()[0]);
         record.traceId = fieldSetFlags()[1] ? this.traceId : (java.lang.CharSequence) defaultValue(fields()[1]);
         return record;
       } catch (Exception e) {

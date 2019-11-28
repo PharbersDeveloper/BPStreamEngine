@@ -14,6 +14,7 @@ import com.pharbers.kafka.schema.{BPJob, FileMetaData}
 import org.apache.avro.specific.SpecificRecord
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.spark.sql.SparkSession
+import org.mongodb.scala.bson.ObjectId
 
 object BPKafkaJobListener {
 	def apply(id: String, spark: SparkSession, container: BPSJobContainer): BPKafkaJobListener =
@@ -29,18 +30,28 @@ class BPKafkaJobListener(val id: String,
 	var hisJobId = ""
 	val process: ConsumerRecord[String, FileMetaData] => Unit = (record: ConsumerRecord[String, FileMetaData]) => {
 		if (record.value().getJobId.toString != hisJobId) {
+			val jobContainerId: String = UUID.randomUUID().toString
+			// TODO:现在没有调度，只能先在这里创建我任务执行的DataSet传递给齐
 			val jobId: String = UUID.randomUUID().toString
-			val id: String = UUID.randomUUID().toString
-			// TODO 路径配置化
-			val metaDataSavePath: String = s"/jobs/$id/$jobId/metadata/"
-			val checkPointSavePath: String = s"/jobs/$id/$jobId/checkpoint"
-			val parquetSavePath: String =  s"/jobs/$id/$jobId/contents/"
+			val sampleDataSetId = new ObjectId().toString
+			val metaDataSetId = new ObjectId().toString
 			hisJobId = record.value().getJobId.toString
+			
+			// TODO 路径配置化
+//			val metaDataSavePath: String = s"/jobs/${record.value().getRunId.toString}/$jobContainerId/metadata/"
+//			val checkPointSavePath: String = s"/jobs/${record.value().getRunId.toString}/$jobContainerId/checkpoint"
+//			val parquetSavePath: String =  s"/jobs/${record.value().getRunId.toString}/$jobContainerId/contents/"
+			
+			val metaDataSavePath: String = s"/users/alex/jobs/${record.value().getRunId.toString}/$jobContainerId/metadata/"
+			val checkPointSavePath: String = s"/users/alex/jobs/${record.value().getRunId.toString}/$jobContainerId/checkpoint"
+			val parquetSavePath: String =  s"/users/alex/jobs/${record.value().getRunId.toString}/$jobContainerId/contents/"
+			
 			
 			val jobParam = Map(
 				"parentJobId" -> record.value().getJobId.toString,
 				"parentMetaData" -> record.value().getMetaDataPath.toString,
 				"parentSampleData" -> record.value().getSampleDataPath.toString,
+				"jobContainerId" -> jobContainerId,
 				"currentJobId" -> jobId,
 				"metaDataSavePath" -> metaDataSavePath,
 				"checkPointSavePath" -> checkPointSavePath,
@@ -48,7 +59,7 @@ class BPKafkaJobListener(val id: String,
 			)
 			
 			val convertJob: BPSSandBoxConvertSchemaJob = BPSSandBoxConvertSchemaJob(
-				record.value().getRunId.toString, jobParam, spark)
+				record.value().getRunId.toString, jobParam, spark, sampleDataSetId, metaDataSetId)
 			convertJob.open()
 			convertJob.exec()
 			
