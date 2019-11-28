@@ -31,9 +31,10 @@ class BPKafkaJobListener(val id: String,
 	val process: ConsumerRecord[String, FileMetaData] => Unit = (record: ConsumerRecord[String, FileMetaData]) => {
 		if (record.value().getJobId.toString != hisJobId) {
 			val jobContainerId: String = UUID.randomUUID().toString
-			// TODO:现在没有调度，只能先在这里创建我任务执行的jobid传递给齐
+			// TODO:现在没有调度，只能先在这里创建我任务执行的DataSet传递给齐
 			val jobId: String = UUID.randomUUID().toString
-			val dataSetId = new ObjectId().toString
+			val sampleDataSetId = new ObjectId().toString
+			val metaDataSetId = new ObjectId().toString
 			hisJobId = record.value().getJobId.toString
 			
 			// TODO 路径配置化
@@ -58,7 +59,7 @@ class BPKafkaJobListener(val id: String,
 			)
 			
 			val convertJob: BPSSandBoxConvertSchemaJob = BPSSandBoxConvertSchemaJob(
-				record.value().getRunId.toString, jobParam, spark, dataSetId)
+				record.value().getRunId.toString, jobParam, spark, sampleDataSetId, metaDataSetId)
 			convertJob.open()
 			convertJob.exec()
 			

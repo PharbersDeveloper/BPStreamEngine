@@ -24,13 +24,17 @@ import collection.JavaConverters._
 object BPSSandBoxConvertSchemaJob {
     def apply(id: String,
               jobParam: Map[String, String],
-              spark: SparkSession, dataSetId: String): BPSSandBoxConvertSchemaJob =
-        new BPSSandBoxConvertSchemaJob(id, jobParam, spark, dataSetId)
+              spark: SparkSession,
+              sampleDataSetId: String,
+              metaDataSetId: String): BPSSandBoxConvertSchemaJob =
+        new BPSSandBoxConvertSchemaJob(id, jobParam, spark, sampleDataSetId, metaDataSetId)
 }
 
 class BPSSandBoxConvertSchemaJob(val id: String,
                                  jobParam: Map[String, String],
-                                 val spark: SparkSession, dataSetId: String) extends BPSJobContainer {
+                                 val spark: SparkSession,
+                                 sampleDataSetId: String,
+                                 metaDataSetId: String) extends BPSJobContainer {
 	
 	type T = BPSKfkJobStrategy
 	val strategy: Null = null
@@ -45,19 +49,6 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 		val (schemaData, colNames, tabName, length, traceId) =
 			writeMetaData(metaData, jobParam("metaDataSavePath") + jobParam("currentJobId"))
 		totalRow = length
-		
-		val dfs = new DataSet(Collections.emptyList(),
-			dataSetId,
-			jobParam("jobContainerId"),
-			colNames.asJava,
-			tabName,
-			length,
-			jobParam("parquetSavePath") + jobParam("currentJobId"),
-			"")
-		BPSBloodJob(jobParam("jobContainerId"), "data_set_job", dfs).exec()
-		
-		val uploadEnd = new UploadEnd(dataSetId, traceId)
-		BPSUploadEndJob(jobParam("jobContainerId"), "upload_end_job", uploadEnd).exec()
 		
 		val schema = SchemaConverter.str2SqlType(schemaData)
 		
@@ -78,6 +69,35 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 				from_json($"data", schema).as("data")
 			).select("data.*")
 		)
+		
+		// MetaData DataSet
+		BPSBloodJob(
+			"data_set_job",
+			new DataSet(
+				Collections.emptyList(),
+				metaDataSetId,
+				jobParam("jobContainerId"),
+				colNames.asJava,
+				tabName,
+				length,
+				jobParam("metaDataSavePath") + jobParam("currentJobId"),
+				"")).exec()
+		
+		// SampleData DataSet
+		BPSBloodJob(
+			"data_set_job",
+			new DataSet(
+				Collections.emptyList(),
+				sampleDataSetId,
+				jobParam("jobContainerId"),
+				colNames.asJava,
+				tabName,
+				length,
+				jobParam("parquetSavePath") + jobParam("currentJobId"),
+				"")).exec()
+		
+		val uploadEnd = new UploadEnd(sampleDataSetId, traceId)
+		BPSUploadEndJob("upload_end_job", uploadEnd).exec()
 	}
 	
 	override def exec(): Unit = {
