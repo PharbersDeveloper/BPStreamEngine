@@ -38,7 +38,7 @@ object RunPyJob extends App {
             "jobId" -> UUID.randomUUID().toString,
             "matedataPath" -> "hdfs:///jobs/83ee0f2a-360a-4236-ba26-afa09d58e01d/ea293f1b-a66d-44fb-95ff-49a009840ed4/metadata",
             "filesPath" -> "hdfs:///jobs/83ee0f2a-360a-4236-ba26-afa09d58e01d/ea293f1b-a66d-44fb-95ff-49a009840ed4/contents/ea293f1b-a66d-44fb-95ff-49a009840ed4",
-            "resultPath" -> "."
+            "resultPath" -> "./jobs/"
         ), "", "py job") :: Nil
 
         val jobMsg = write(jobs)

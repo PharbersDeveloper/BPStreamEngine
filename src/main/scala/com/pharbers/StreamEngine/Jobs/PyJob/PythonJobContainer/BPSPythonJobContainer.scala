@@ -40,7 +40,7 @@ class BPSPythonJobContainer(override val spark: SparkSession,
     val id: String = config.getOrElse("jobId", UUID.randomUUID().toString).toString
     val matedataPath: String = config("matedataPath").toString
     val filesPath: String = config("filesPath").toString
-    val resultPath: String = config("resultPath").toString
+    val resultPath: String = config.getOrElse("resultPath", "./jobs/").toString
 
     var metadata: Map[String, Any] = Map.empty
     val pyFiles = List(
