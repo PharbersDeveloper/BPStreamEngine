@@ -25,4 +25,12 @@
         <name>hadoop.tmp.dir</name>  
         <value>/home/spark/data/tmp</value>
     </property>
+    <property>
+        <name>hadoop.proxyuser.super.hosts</name>
+        <value>*</value>
+    </property>
+    <property>
+        <name>hadoop.proxyuser.super.groups</name>
+        <value>*</value>
+    </property>
 </configuration>

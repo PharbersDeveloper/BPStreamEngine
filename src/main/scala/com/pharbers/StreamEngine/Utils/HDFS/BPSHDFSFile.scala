@@ -2,15 +2,28 @@ package com.pharbers.StreamEngine.Utils.HDFS
 
 import java.net.URI
 import java.nio.charset.StandardCharsets
-
 import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.fs.{FSDataOutputStream, FileSystem, Path}
 import java.io.{BufferedReader, BufferedWriter, InputStreamReader, OutputStreamWriter}
 
-import org.apache.hadoop.fs.{FSDataOutputStream, FileSystem, Path}
-
 object BPSHDFSFile {
+    val hdfsAddr: String = "hdfs://spark.master:8020"
+
     val configuration: Configuration = new Configuration
-    configuration.set("fs.defaultFS", "hdfs://192.168.100.137:8020")
+    configuration.set("fs.defaultFS", hdfsAddr)
+
+    def openHdfsBuffer(path: String): Option[BufferedWriter] = {
+        val fileSystem: FileSystem = FileSystem.get(configuration)
+
+        val hdfsWritePath = new Path(path)
+        val fsDataOutputStream: FSDataOutputStream =
+            if (fileSystem.exists(hdfsWritePath))
+                fileSystem.append(hdfsWritePath)
+            else
+                fileSystem.create(hdfsWritePath)
+
+        Some(new BufferedWriter(new OutputStreamWriter(fsDataOutputStream, StandardCharsets.UTF_8)))
+    }
 
     def checkPath(path: String): Boolean = {
         val fileSystem: FileSystem = FileSystem.get(configuration)

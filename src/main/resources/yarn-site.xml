@@ -26,15 +26,7 @@
         <value>false</value>
     </property>
     <property>
-        <name>yarn.resourcemanager.address</name>
-        <value>spark.master:8032</value>
-    </property>
-    <property>
         <name>yarn.nodemanager.vmem-pmem-ratio</name>
         <value>4</value>
-    </property>
-    <property>
-        <name>yarn.scheduler.minimum-allocation-mb</name>
-        <value>1024</value>
     </property>
 </configuration>

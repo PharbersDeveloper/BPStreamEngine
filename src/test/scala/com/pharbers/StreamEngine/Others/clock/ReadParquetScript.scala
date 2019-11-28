@@ -14,16 +14,18 @@ import scala.util.parsing.json.JSON
  * @note
  */
 object ReadParquetScript extends App {
-    val id = "2bcf28e3-4a7a-4c08-b0c7-6dddee9fb894"
-    val matedataPath = "/test/alex2/a6d8e117-67d7-46f7-b932-4627c6677b0f/metadata/"
-    val filesPath = "/test/alex2/a6d8e117-67d7-46f7-b932-4627c6677b0f/files/2bcf28e3-4a7a-4c08-b0c7-6dddee9fb894"
+    val id = "2904e2fc-5b53-41d0-9c42-5b1b6edfb394"
+    val matedataPath = "/test/alex2/487ef941-dc7f-45cb-9fa3-8d52c4d67231/metadata/"
+    val filesPath = "/test/alex2/487ef941-dc7f-45cb-9fa3-8d52c4d67231/files/2904e2fc-5b53-41d0-9c42-5b1b6edfb394/"
 
     val spark = BPSparkSession()
 
     def byBatchForCsv(): Unit = {
-//        val path = "hdfs:///test/qi3/abc001/metadata"
-        val path = "hdfs:///test/qi3/abc001/file"
-//        val path = "hdfs:///test/qi3/abc001/err"
+        val jobId = "8ee7d0f3-3ae3-4e28-91f2-0443f7b6542b"
+//        val path = s"hdfs:///user/clock/$jobId/metadata"
+//        val path = s"hdfs:///user/clock/$jobId/file"
+//        val path = s"hdfs:///user/clock/$jobId/err"
+        val path = s"hdfs:///user/clock/$jobId/row_record"
         val reading = spark.read
                 .format("com.databricks.spark.csv")
                 .option("header", "true") //这里如果在csv第一行有属性的话，没有就是"false"
