@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
 
+import os
 import sys
 import json
 
@@ -34,22 +35,33 @@ def facade(message):
     # print("3. return data to data engine")
 
 
+from py4j.protocol import Py4JNetworkError
 from py4j.java_gateway import JavaGateway, CallbackServerParameters, GatewayParameters
 
 if __name__ == "__main__":
     py4j_port = sys.argv[1].decode("UTF-8", errors="ignore")
+    callback_port = sys.argv[2].decode("UTF-8", errors="ignore")
 
     gateway = JavaGateway(
-        callback_server_parameters=CallbackServerParameters(),
-        gateway_parameters=GatewayParameters(port=int(py4j_port)))
+        callback_server_parameters=CallbackServerParameters(port=int(callback_port)),
+        gateway_parameters=GatewayParameters(port=int(py4j_port))
+    )
 
     while True:
-        message = gateway.entry_point.pop()
+        try:
+            message = gateway.entry_point.py4j_pop()
+        except Py4JNetworkError:
+            break
 
         if message == "EMPTY":
             continue
         elif message == "EOF":
-            gateway.entry_point.stopServer()
+            try:
+                gateway.entry_point.py4j_stopServer()
+            except Py4JNetworkError:
+                break
         else:
             for item in facade(message):
-                gateway.entry_point.writeHdfs(item.toJson())
+                gateway.entry_point.py4j_writeHdfs(item.toJson())
+
+    os._exit(0)

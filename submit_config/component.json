@@ -7,7 +7,7 @@
       "app.name": "bp-stream-engine",
       "master": "yarn",
       "spark.configs.path": "sparkConfig.properties",
-      "log.level": "INFO",
+      "log.level": "ERROR",
       "run.model": "cluster"
     }
   },
@@ -50,7 +50,7 @@
     "name": "BaseJobHandler",
     "args": ["$NodeMsgHandler", "$BPDynamicStreamJobBuilder"],
     "config": {
-      "topic": "stream_job_submit"
+      "topic": "stream_job_submit_online"
     }
   },
   {

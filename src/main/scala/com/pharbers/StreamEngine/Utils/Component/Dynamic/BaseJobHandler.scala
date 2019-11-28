@@ -104,7 +104,14 @@ private[Component] class BaseJobHandler(nodeHandler: NodeMsgHandler,
                                 val exception = new Exception(s"jobId: ${x.value().getJob}, traceId: ${x.value().getTraceId}", e)
                                 logger.error("add job error", exception)
                         }
-                    case "addList" => read[List[JobMsg]](x.value().getJob.toString).foreach(x => add(x))
+                    case "addList" =>
+                        try {
+                            read[List[JobMsg]](x.value().getJob.toString).foreach(x => add(x))
+                        } catch {
+                            case e: Exception =>
+                                val exception = new Exception(s"jobId: ${x.value().getJob}, traceId: ${x.value().getTraceId}", e)
+                                logger.error("add job error", exception)
+                        }
                     case "stop" => finish(x.value().getJob.toString)
                     case _ =>
                 }

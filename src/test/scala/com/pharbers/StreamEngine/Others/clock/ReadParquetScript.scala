@@ -14,9 +14,9 @@ import scala.util.parsing.json.JSON
  * @note
  */
 object ReadParquetScript extends App {
-    val id = "03586-4810-48ba-bb9e-be6680"
-    val matedataPath = "hdfs:///test/alex/0829b025-48ac-450c-843c-6d4ee91765ca/metadata/"
-    val filesPath = "hdfs:///test/alex/0829b025-48ac-450c-843c-6d4ee91765ca/files/"
+    val id = "2904e2fc-5b53-41d0-9c42-5b1b6edfb394"
+    val matedataPath = "/test/alex2/487ef941-dc7f-45cb-9fa3-8d52c4d67231/metadata/"
+    val filesPath = "/test/alex2/487ef941-dc7f-45cb-9fa3-8d52c4d67231/files/2904e2fc-5b53-41d0-9c42-5b1b6edfb394/"
 
     val spark = BPSparkSession()
 
@@ -46,9 +46,9 @@ object ReadParquetScript extends App {
         val reading = spark.readStream
                 .schema(loadSchema)
                 .option("startingOffsets", "earliest")
-                .parquet(filesPath + id)
+                .parquet(filesPath)
 
-        val wordCounts = reading.groupBy("Year").count()
+        val wordCounts = reading.groupBy("1#Year").count()
 
         val query = wordCounts.writeStream
                 .outputMode("complete")
@@ -56,4 +56,5 @@ object ReadParquetScript extends App {
                 .start()
         query.awaitTermination()
     }
+//    byStream()
 }
