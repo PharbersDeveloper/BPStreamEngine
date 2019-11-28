@@ -1,6 +1,8 @@
 package com.pharbers.StreamEngine.Jobs.PyJob
 
 import java.util.UUID
+import java.util.concurrent.TimeUnit
+
 import org.apache.spark.sql
 import org.json4s.DefaultFormats
 import org.apache.spark.sql.types.StringType
@@ -10,6 +12,7 @@ import com.pharbers.StreamEngine.Jobs.PyJob.Py4jServer.BPSPy4jServer
 import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSJobStrategy
 import com.pharbers.StreamEngine.Utils.StreamJob.{BPSJobContainer, BPStreamJob}
 import com.pharbers.StreamEngine.Jobs.PyJob.Listener.BPSProgressListenerAndClose
+import com.pharbers.kafka.producer.PharbersKafkaProducer
 
 object BPSPythonJob {
     def apply(id: String,
@@ -115,8 +118,15 @@ class BPSPythonJob(override val id: String,
     }
 
     override def close(): Unit = {
+        pushClose()
         super.close()
         container.finishJobWithId(id)
+    }
+
+    def pushClose(): Unit ={
+        val pkp = new PharbersKafkaProducer[String, String]
+        val fu = pkp.produce("oss_test_dcs", "dcs", "ok")
+        println(fu.get(10, TimeUnit.SECONDS))
     }
 
 }
