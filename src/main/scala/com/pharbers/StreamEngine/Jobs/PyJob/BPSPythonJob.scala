@@ -49,6 +49,7 @@ class BPSPythonJob(override val id: String,
             jobConf("resultPath").toString + "/" + id
     }
     val lastMetadata: Map[String, Any] = jobConf("lastMetadata").asInstanceOf[Map[String, Any]]
+    val partition: Int = jobConf.getOrElse("partition", "4").asInstanceOf[String].toInt
 
     override def open(): Unit = {
         inputStream = is
@@ -63,7 +64,7 @@ class BPSPythonJob(override val id: String,
 
         inputStream match {
             case Some(is) =>
-                val query = is.repartition(4).writeStream
+                val query = is.repartition(partition).writeStream
                         .option("checkpointLocation", checkpointPath)
                         .foreach(new ForeachWriter[Row]() {
 

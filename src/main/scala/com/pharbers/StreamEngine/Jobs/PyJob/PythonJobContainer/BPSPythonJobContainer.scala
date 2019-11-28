@@ -41,6 +41,7 @@ class BPSPythonJobContainer(override val spark: SparkSession,
     val matedataPath: String = config("matedataPath").toString
     val filesPath: String = config("filesPath").toString
     val resultPath: String = config.getOrElse("resultPath", "./jobs/").toString
+    val partition: String = config.getOrElse("partition", "4").toString
 
     var metadata: Map[String, Any] = Map.empty
     val pyFiles = List(
@@ -81,7 +82,8 @@ class BPSPythonJobContainer(override val spark: SparkSession,
             pyFiles.foreach(spark.sparkContext.addFile)
             val job = BPSPythonJob(id, spark, inputStream, this, Map(
                 "resultPath" -> resultPath,
-                "lastMetadata" -> metadata
+                "lastMetadata" -> metadata,
+                "partition" -> partition
             ))
             job.open()
             job.exec()
