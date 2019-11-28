@@ -24,8 +24,10 @@ object BPSPythonJobContainer {
  * @since 2019/11/6 17:43
  * @node 可用的配置参数
  * {{{
- *      resultPath = "/user/clock/jobs/"
- *      metadata = Map("jobId" -> "a", "fileName" -> "b")
+ *      jobId = UUID // 默认
+ *      matedataPath = "/user/clock/jobs/matedataPath/$lastJobID"
+ *      filesPath = "/user/clock/jobs/filesPath/$lastJobID"
+ *      resultPath = "/user/clock/jobs/resultPath" // 后面会自动加上当前的 jobId
  * }}}
  */
 class BPSPythonJobContainer(override val spark: SparkSession,
