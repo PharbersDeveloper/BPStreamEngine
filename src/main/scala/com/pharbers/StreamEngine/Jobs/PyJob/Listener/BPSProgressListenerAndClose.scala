@@ -1,22 +1,20 @@
 package com.pharbers.StreamEngine.Jobs.PyJob.Listener
 
 import org.apache.spark.sql.{DataFrame, SparkSession}
-import org.apache.spark.sql.streaming.StreamingQuery
 import com.pharbers.StreamEngine.Utils.Event.BPSEvents
+import com.pharbers.StreamEngine.Utils.HDFS.BPSHDFSFile
 import com.pharbers.StreamEngine.Jobs.PyJob.BPSPythonJob
-import com.pharbers.StreamEngine.Jobs.PyJob.Py4jServer.BPSPy4jServer
 import com.pharbers.StreamEngine.Utils.Channel.Local.BPSLocalChannel
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamListener
-import com.pharbers.StreamEngine.Utils.HDFS.BPSHDFSFile
 
 /** 监控 PythonJob 的执行进度, 并在完成后关闭 PythonJob
  *
  * @param job           要监控的 PythonJob
- * @param spark         可能会处理的总行数
+ * @param spark         Spark Session 实例
  * @param rowLength     可能会处理的总行数
- * @param rowRecordPath 可能会处理的总行数
+ * @param rowRecordPath 当前处理的行数记录位置
  * @author clock
- * @version 0.1
+ * @version 0.0.1
  * @since 2019/11/08 13:40
  */
 case class BPSProgressListenerAndClose(override val job: BPSPythonJob,
