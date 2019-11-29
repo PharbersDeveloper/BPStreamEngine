@@ -19,7 +19,8 @@ if __name__ == "__main__":
     except:
         import traceback
         exType, exValue, exTrace = sys.exc_info()
-        print(exValue)
+        errMsg = {"exType": str(exType), "exValue": str(exValue), "exTrace": str(traceback.format_exc(exTrace))}
+        print(json.dumps(errMsg, ensure_ascii=False))
         # print(ResultModel(
         #     data=message,
         #     tag=ResultTag.Error,

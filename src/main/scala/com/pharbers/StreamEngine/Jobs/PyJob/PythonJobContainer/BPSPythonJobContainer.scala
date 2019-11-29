@@ -94,7 +94,7 @@ class BPSPythonJobContainer(override val spark: SparkSession,
 //            id,
 //            Collections.emptyList(),
 //            "",
-//            metadata("length").asInstanceOf[String].toInt,
+//            metadata("length").asInstanceOf[Double].toInt,
 //            resultPath,
 //            "description")
 //        BPSBloodJob("data_set_job", dfs).exec()

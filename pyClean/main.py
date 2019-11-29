@@ -26,10 +26,11 @@ def facade(message):
     except:
         import traceback
         exType, exValue, exTrace = sys.exc_info()
+        errMsg = {"exType": str(exType), "exValue": str(exValue), "exTrace": str(traceback.format_exc(exTrace))}
         return [ResultModel(
             data=event,
             tag=ResultTag.Error,
-            errMsg=str(repr(traceback.format_exception(exType, exValue, exTrace)))
+            errMsg=json.dumps(errMsg, ensure_ascii=False)
         )]
 
     # print("3. return data to data engine")

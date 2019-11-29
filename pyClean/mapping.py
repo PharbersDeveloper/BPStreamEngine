@@ -27,14 +27,12 @@ def cpa_gyc_mapping():
             "Type": "String",
             "Candidate": ["省", "省份", "省/自治区/直辖市", "PROVINCE", "Province", "PROVINCES",
                           "PROVINCE_NAME"],
-            "NotNull": True
         },
         {
             "ColName": "CITY_NAME",
             "ColDesc": "城市名",
             "Type": "String",
             "Candidate": ["城市", "CITY", "City", "CITY_NAME"],
-            "NotNull": True
         },
         {
             "ColName": "PREFECTURE_NAME",
@@ -67,7 +65,7 @@ def cpa_gyc_mapping():
             "Type": "String",
             "Candidate": ["LILLY_HSPTL_NAME", "医院名称", "HOSPITAL NAME", "HOSPITAL", "Hospital",
                           "HOSPITAL.NAME", "HOSNAME", "HOSPITAL_NAME", "医院"],
-            "NotNull": True
+            # "NotNull": True
         },
         {
             "ColName": "HOSP_CODE",
@@ -118,7 +116,7 @@ def cpa_gyc_mapping():
             "ColDesc": "包装",
             "Type": "String",
             "Candidate": ["包装", "包装单位", "PACK", "Pack", "PACKAGE", "包装.单位", "包.装"],
-            "NotNull": True
+            # "NotNull": True
         },
         {
             "ColName": "SPEC",
@@ -132,7 +130,7 @@ def cpa_gyc_mapping():
             "ColName": "DOSAGE",
             "ColDesc": "剂型",
             "Type": "String",
-            "Candidate": ["剂型", "FORM", "Form", "DOSAGE", "FORMULATION_NAME"],
+            "Candidate": ["剂型", "FORM", "Form", "DOSAGE", "FORMULATION_NAME", "APP2_COD"],
             "NotNull": True
         },
         {
@@ -178,7 +176,8 @@ def cpa_gyc_mapping():
             "ColName": "MKT",
             "ColDesc": "所属市场",
             "Type": "String",
-            "Candidate": ["竞品市场", "MARKET", "Market", "定义市场", "市场定义", "市场"]
+            "Candidate": ["竞品市场", "MARKET", "Market", "定义市场", "市场定义", "市场"],
+            # "NotNull": True
         }
     ]
 
@@ -224,14 +223,12 @@ def chc_mapping():
             "Type": "String",
             "Candidate": ["省", "省份", "省/自治区/直辖市", "PROVINCE", "Province", "PROVINCES",
                           "PROVINCE_NAME"],
-            "NotNull": True
         },
         {
             "ColName": "CITY_NAME",
             "ColDesc": "城市名",
             "Type": "String",
             "Candidate": ["城市", "CITY", "City", "CITY_NAME"],
-            "NotNull": True
         },
         {
             "ColName": "DISTRICT",
@@ -298,14 +295,14 @@ def chc_mapping():
             "Type": "String",
             "Candidate": ["药品规格", "包装规格", "规格", "统一规格", "SPECIFICAT", "PACK_DES", "品规",
                           "PACK_DESCRIPTION"],
-            "NotNull": True
+            # "NotNull": True
         },
         {
             "ColName": "DOSAGE",
             "ColDesc": "剂型",
             "Type": "String",
             "Candidate": ["剂型", "FORM", "Form", "DOSAGE", "FORMULATION_NAME"],
-            "NotNull": True
+            # "NotNull": True
         },
         {
             "ColName": "PACK_NUMBER",

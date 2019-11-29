@@ -32,9 +32,16 @@ def process(event):
     providers = metadata.get("providers", [])
 
     source = providers[1:2]
-    if not len(source): source = "DEFAULT_COMPANY"
+    if not len(source):
+        source = "DEFAULT_COMPANY"
+    else:
+        source = source[0]
+
     company = providers[0:1]
-    if not len(company): company = "DEFAULT_SOURCE"
+    if not len(company):
+        company = "DEFAULT_SOURCE"
+    else:
+        company = company[0]
 
     reval["COMPANY"] = company
     reval["SOURCE"] = source
