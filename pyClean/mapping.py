@@ -81,7 +81,7 @@ def cpa_gyc_mapping():
             "ColName": "HOSP_LEVEL",
             "ColDesc": "医院等级",
             "Type": "String",
-            "Candidate": ["医院等级", "HOSPITAL DEGREE", "LEVEL", "Level", "级别", "等级"]
+            "Candidate": ["医院等级", "HOSPITAL DEGREE", "LEVEL", "Level", "级别", "等级", "医院级别"]
         },
         {
             "ColName": "ATC",
@@ -198,5 +198,161 @@ def chc_mapping():
             "Type": "String",
             "Candidate": ["数据来源"],
             "NotNull": True
+        },
+        {
+            "ColName": "YEAR",
+            "ColDesc": "年份",
+            "Type": "Integer",
+            "Candidate": ["年", "YEARID", "YEAR", "Year"],
+            "NotNull": True
+        },
+        {
+            "ColName": "QUARTER",
+            "ColDesc": "季度",
+            "Type": "String",  # "Integer", TODO 月份里有个是2018Q1
+            "Candidate": ["季度", "年季", "QUARTER", "季.度"]
+        },
+        {
+            "ColName": "MONTH",
+            "ColDesc": "月份",
+            "Type": "Integer",
+            "Candidate": ["月", "YYYYMM", "年月", "PERIOD", "月份", "MONTH", "Month", "YEAR_MONTH"]
+        },
+        {
+            "ColName": "PROVINCE_NAME",
+            "ColDesc": "省份名",
+            "Type": "String",
+            "Candidate": ["省", "省份", "省/自治区/直辖市", "PROVINCE", "Province", "PROVINCES",
+                          "PROVINCE_NAME"],
+            "NotNull": True
+        },
+        {
+            "ColName": "CITY_NAME",
+            "ColDesc": "城市名",
+            "Type": "String",
+            "Candidate": ["城市", "CITY", "City", "CITY_NAME"],
+            "NotNull": True
+        },
+        {
+            "ColName": "DISTRICT",
+            "ColDesc": "区县名",
+            "Type": "String",
+            "Candidate": ["区县"]
+        },
+        {
+            "ColName": "HOSP_NAME",
+            "ColDesc": "医院名称",
+            "Type": "String",
+            "Candidate": ["医院名称"],
+            "NotNull": True
+        },
+        {
+            "ColName": "HOSP_CODE",
+            "ColDesc": "医院编码",
+            "Type": "String",
+            "Candidate": ["医院编码", "VEEVA_CUSTOMER_ID", "HOSP_ID", "Hospital Code", "CODE",
+                          "HOSPITAL.CODE", "HOSPITAL_CODE", "Code", "医院.代码", "UCBHOSCODE",
+                          "HOSCODE", "医院.编码", "ID", "DSCN医院编码"]
+        },
+        {
+            "ColName": "HOSP_LEVEL",
+            "ColDesc": "医院等级",
+            "Type": "String",
+            "Candidate": ["医院等级", "HOSPITAL DEGREE", "LEVEL", "Level", "级别", "等级", "医院级别"]
+        },
+        {
+            "ColName": "HOSP_TYPE",
+            "ColDesc": "医院类型",
+            "Type": "String",
+            "Candidate": ["医院类型"]
+        },
+        {
+            "ColName": "HOSP_LIBRARY_TYPE",
+            "ColDesc": "医院库类型",
+            "Type": "String",
+            "Candidate": ["医院库类型"]
+        },
+        {
+            "ColName": "HOSP_REGION_TYPE",
+            "ColDesc": "医院区域类型",
+            "Type": "String",
+            "Candidate": ["医院区域类型"]
+        },
+        {
+            "ColName": "KEY_BRAND",
+            "ColDesc": "通用名",
+            "Type": "String",
+            "Candidate": ["通用名"]
+        },
+        {
+            "ColName": "PRODUCT_NAME",
+            "ColDesc": "商品名",
+            "Type": "String",
+            "Candidate": ["商品名", "药品商品名", "PRODUCT", "Product", "PRODUCT_NAME",
+                          "PRODUCT.NAME", "PRODUCTNAME", "商品名称"],
+            "NotNull": True
+        },
+        {
+            "ColName": "SPEC",
+            "ColDesc": "规格",
+            "Type": "String",
+            "Candidate": ["药品规格", "包装规格", "规格", "统一规格", "SPECIFICAT", "PACK_DES", "品规",
+                          "PACK_DESCRIPTION"],
+            "NotNull": True
+        },
+        {
+            "ColName": "DOSAGE",
+            "ColDesc": "剂型",
+            "Type": "String",
+            "Candidate": ["剂型", "FORM", "Form", "DOSAGE", "FORMULATION_NAME"],
+            "NotNull": True
+        },
+        {
+            "ColName": "PACK_NUMBER",
+            "ColDesc": "价格转换比",
+            "Type": "String",
+            "Candidate": ["价格转换比"]
+        },
+        {
+            "ColName": "PACK_UNIT",
+            "ColDesc": "包装单位",
+            "Type": "String",
+            "Candidate": ["包装单位"]
+        },
+        {
+            "ColName": "MANUFACTURER_NAME",
+            "ColDesc": "生产厂商",
+            "Type": "String",
+            "Candidate": ["生产厂商", "生产厂家", "企业名称", "CORP_NAME", "生产企业",
+                          "CORPORATIO", "Corporatio", "MANUFACTUER_NAME", "CORPORATION",
+                          "药厂名称", "集团名称", "COMPANY_NAME", "集团"],
+            "NotNull": True
+        },
+        {
+            "ColName": "PRICE",
+            "ColDesc": "价格",
+            "Type": "Double",
+            "Candidate": ["价格"],
+            "NotNull": True
+        },
+        {
+            "ColName": "VOLUME",
+            "ColDesc": "数量",
+            "Type": "Double",
+            "Candidate": ["数量"],
+            "NotNull": True
+        },
+        {
+            "ColName": "VALUE",
+            "ColDesc": "金额",
+            "Type": "Double",
+            "Candidate": ["金额"],
+            "NotNull": True
+        },
+        {
+            "ColName": "PIECE",
+            "ColDesc": "最小使用单位数量",
+            "Type": "Double",
+            "Candidate": ["最小使用单位数量"]
         }
     ]
