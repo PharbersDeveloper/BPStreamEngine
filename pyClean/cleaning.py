@@ -7,6 +7,7 @@ from results import ResultModel
 from results import ResultTag
 
 import sys
+
 reload(sys)
 sys.setdefaultencoding('utf8')
 
@@ -28,10 +29,14 @@ def process(event):
     # 1. Simple Conversion
     old_data = event["data"]
     metadata = event["metadata"]
-    providers = metadata.get("providers", ["DEFAULT_COMPANY", "DEFAULT_SOURCE"])
-    source = providers[1]
+    providers = metadata.get("providers", [])
 
-    reval["COMPANY"] = providers[0]
+    source = providers[1:2]
+    if not len(source): source = "DEFAULT_COMPANY"
+    company = providers[0:1]
+    if not len(company): company = "DEFAULT_SOURCE"
+
+    reval["COMPANY"] = company
     reval["SOURCE"] = source
 
     # 2. Create an col name mapping table
