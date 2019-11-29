@@ -109,7 +109,7 @@ class BPSPythonJob(override val id: String,
 
                 outputStream = query :: outputStream
 
-                val rowLength = lastMetadata("length").asInstanceOf[String].toLong
+                val rowLength = lastMetadata("length").asInstanceOf[Double].toLong
                 val listener = BPSProgressListenerAndClose(this, spark, rowLength, rowRecordPath)
                 listener.active(null)
                 listeners = listener :: listeners

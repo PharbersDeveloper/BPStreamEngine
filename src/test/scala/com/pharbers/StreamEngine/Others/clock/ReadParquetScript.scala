@@ -14,18 +14,19 @@ import scala.util.parsing.json.JSON
  * @note
  */
 object ReadParquetScript extends App {
-    val id = "2904e2fc-5b53-41d0-9c42-5b1b6edfb394"
-    val matedataPath = "/test/alex2/487ef941-dc7f-45cb-9fa3-8d52c4d67231/metadata/"
-    val filesPath = "/test/alex2/487ef941-dc7f-45cb-9fa3-8d52c4d67231/files/2904e2fc-5b53-41d0-9c42-5b1b6edfb394/"
+    val runId = "83ee0f2a-360a-4236-ba26-afa09d58e01d"
+    val jobId = "ea293f1b-a66d-44fb-95ff-49a009840ed4"
+    val matedataPath = s"/jobs/$runId/$jobId/metadata"
+    val filesPath = s"/jobs/$runId/$jobId/contents/$jobId"
 
     val spark = BPSparkSession()
 
     def byBatchForCsv(): Unit = {
-        val jobId = "8ee7d0f3-3ae3-4e28-91f2-0443f7b6542b"
-//        val path = s"hdfs:///user/clock/$jobId/metadata"
-//        val path = s"hdfs:///user/clock/$jobId/file"
-//        val path = s"hdfs:///user/clock/$jobId/err"
-        val path = s"hdfs:///user/clock/$jobId/row_record"
+        val jobId = "9bb93bd0-9ea7-47ee-bf0b-1465a30e1411"
+//        val path = s"hdfs:///user/clock/jobs/$jobId/metadata"
+        val path = s"hdfs:///user/clock/jobs/$jobId/file"
+//        val path = s"hdfs:///user/clock/jobs/$jobId/err"
+//        val path = s"hdfs:///user/clock/jobs/$jobId/row_record"
         val reading = spark.read
                 .format("com.databricks.spark.csv")
                 .option("header", "true") //这里如果在csv第一行有属性的话，没有就是"false"
@@ -37,14 +38,14 @@ object ReadParquetScript extends App {
     byBatchForCsv()
 
     def byBatch(): Unit = {
-        val loadSchema = BPSParseSchema.parseSchemaByMetadata(matedataPath + id)(spark)
+        val loadSchema = BPSParseSchema.parseSchemaByMetadata(matedataPath)(spark)
         val reading = spark.read.schema(loadSchema).parquet(filesPath)
         reading.show(false)
     }
 //    byBatch()
 
     def byStream(): Unit = {
-        val loadSchema = BPSParseSchema.parseSchemaByMetadata(matedataPath + id)(spark)
+        val loadSchema = BPSParseSchema.parseSchemaByMetadata(matedataPath)(spark)
         val reading = spark.readStream
                 .schema(loadSchema)
                 .option("startingOffsets", "earliest")

@@ -64,7 +64,7 @@ class BPKafkaJobListener(val id: String,
 			convertJob.exec()
 			
 			pushPyjob(
-				id,
+				record.value().getRunId.toString,
 				s"$metaDataSavePath" + jobId,
 				s"$parquetSavePath" + jobId,
 				jobId

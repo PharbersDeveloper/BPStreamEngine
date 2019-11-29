@@ -12,14 +12,15 @@ import com.pharbers.StreamEngine.Utils.Session.Spark.BPSparkSession
  * @since 2019/11/06 15:43
  */
 class BPSParseSchemaTest extends FunSuite {
-    val id = "57fe0-2bda-4880-8301-dc55a0"
-    val matedataPath = "hdfs:///test/alex/07b8411a-5064-4271-bfd3-73079f2b42b2/metadata/"
+    val id = ""
+    val matedataPath = "hdfs:///jobs/83ee0f2a-360a-4236-ba26-afa09d58e01d/ea293f1b-a66d-44fb-95ff-49a009840ed4/metadata"
 
     test("解析在 Parquet 中 Metadata 的 Schema") {
         implicit val spark: SparkSession = BPSparkSession()
+        val metadata = BPSParseSchema.parseMetadata(matedataPath)
+        assert(metadata.isDefinedAt("schema"))
 
-        val st: StructType = BPSParseSchema.parseSchemaByMetadata(matedataPath + id)
+        val st: StructType = BPSParseSchema.parseSchema(metadata("schema").asInstanceOf[List[_]])
         assert(st != null)
-        st.foreach(x => println(x))
     }
 }
