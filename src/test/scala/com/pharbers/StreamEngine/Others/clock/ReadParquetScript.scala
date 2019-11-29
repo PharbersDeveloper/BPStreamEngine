@@ -21,11 +21,11 @@ object ReadParquetScript extends App {
     val spark = BPSparkSession()
 
     def byBatchForCsv(): Unit = {
-        val jobId = "8ee7d0f3-3ae3-4e28-91f2-0443f7b6542b"
-//        val path = s"hdfs:///user/clock/$jobId/metadata"
-//        val path = s"hdfs:///user/clock/$jobId/file"
-//        val path = s"hdfs:///user/clock/$jobId/err"
-        val path = s"hdfs:///user/clock/$jobId/row_record"
+        val jobId = "15a134cc-88c8-437a-8b33-6ea5595efed7"
+        val path = s"hdfs:///user/clock/jobs/$jobId/metadata"
+//        val path = s"hdfs:///user/clock/jobs/$jobId/file"
+//        val path = s"hdfs:///user/clock/jobs/$jobId/err"
+//        val path = s"hdfs:///user/clock/jobs/$jobId/row_record"
         val reading = spark.read
                 .format("com.databricks.spark.csv")
                 .option("header", "true") //这里如果在csv第一行有属性的话，没有就是"false"
