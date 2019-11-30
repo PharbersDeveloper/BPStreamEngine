@@ -2,52 +2,93 @@
 # -*- coding: UTF-8 -*-
 
 import string
-from mapping import create_mapping
+import mapping
 from results import ResultModel
 from results import ResultTag
 
+import sys
+
+reload(sys)
+sys.setdefaultencoding('utf8')
+
+
+def create_mapping(source):
+    if source.upper() == "CPA":
+        return mapping.cpa_gyc_mapping()
+    elif source.upper() == "GYCX" or source.upper() == "GYC":
+        return mapping.cpa_gyc_mapping()
+    elif source.upper() == "CHC":
+        return mapping.chc_mapping()
+    else:
+        return mapping.cpa_gyc_mapping()
+
 
 def process(event):
-    # 0. Create an col name mapping table
-    mapping = create_mapping()
+    reval = {}  # 保存结果
 
+    # 1. Simple Conversion
     old_data = event["data"]
     metadata = event["metadata"]
+    providers = metadata.get("providers", [])
 
-    file_name = "Pfizer_1701_1712_CPA" #string.split(metadata["fileName"], ".")[0]
-    file_name = string.split(file_name, "_")
-    file_company = file_name[0]
-    file_source = file_name[len(file_name)-1]
+    source = providers[1:2]
+    if not len(source):
+        source = "DEFAULT_COMPANY"
+    else:
+        source = source[0]
 
-    # 1. Change data col name
-    reval = {}
+    company = providers[0:1]
+    if not len(company):
+        company = "DEFAULT_SOURCE"
+    else:
+        company = company[0]
+
+    reval["COMPANY"] = company
+    reval["SOURCE"] = source
+
+    # 2. Create an col name mapping table
+    mapping = create_mapping(source)
+
+    # 3. Change data col name
     for m in mapping:
-        value = None
         for old_key in old_data.keys():
             compare_key = string.split(old_key, "#")[1]
-            if compare_key.upper() in m["Candidate"]:
-                value = old_data[old_key]
+            if compare_key.upper().strip() in m["Candidate"]:
+                reval[m["ColName"]] = old_data[old_key]
                 break
+            elif reval.get(m["ColName"], None) is not None:
+                break
+            else:
+                reval[m["ColName"]] = None
 
+    # 4. Check Reval Completeness
+    def get_true_value(m, value):
         if m["Type"] is "String":
             if value is None:
-                reval[m["ColName"]] = ""
+                return ""
             else:
-                reval[m["ColName"]] = value
+                return value
         elif m["Type"] is "Integer":
             if value is None:
-                reval[m["ColName"]] = 0
+                return 0
             else:
-                reval[m["ColName"]] = int(value)
+                return int(value)
         elif m["Type"] is "Double":
             if value is None:
-                reval[m["ColName"]] = 0.0
+                return 0.0
             else:
-                reval[m["ColName"]] = float(value)
-    reval["COMPANY"] = file_company
-    reval["SOURCE"] = file_source
+                return float(value)
 
-    # 2. Change metadata schema
+    for m in mapping:
+        value = reval[m["ColName"]]
+        if m.get("NotNull", False) is False:
+            reval[m["ColName"]] = get_true_value(m, value)
+        elif m.get("NotNull", False) is True and value is not None:
+            reval[m["ColName"]] = get_true_value(m, value)
+        else:
+            raise Exception(m["ColName"] + " is None，Please check the file or completion mapping rules")
+
+    # 5. Change metadata schema
     schema = []
     for m in mapping:
         schema.append({"key": m["ColName"], "type": m["Type"]})

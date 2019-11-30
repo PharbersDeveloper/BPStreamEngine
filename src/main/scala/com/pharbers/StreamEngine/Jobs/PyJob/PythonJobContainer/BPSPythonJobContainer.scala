@@ -1,10 +1,13 @@
 package com.pharbers.StreamEngine.Jobs.PyJob.PythonJobContainer
 
-import java.util.UUID
+import java.util.{Collections, UUID}
+import org.mongodb.scala.bson.ObjectId
+import com.pharbers.kafka.schema.DataSet
 import org.apache.spark.sql.SparkSession
 import com.pharbers.StreamEngine.Utils.HDFS.BPSHDFSFile
 import com.pharbers.StreamEngine.Jobs.PyJob.BPSPythonJob
 import com.pharbers.StreamEngine.Utils.Schema.Spark.BPSParseSchema
+import com.pharbers.StreamEngine.Jobs.SandBoxJob.BloodJob.BPSBloodJob
 import com.pharbers.StreamEngine.Utils.Event.EventHandler.BPSEventHandler
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamListener
 import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSKfkJobStrategy
@@ -28,6 +31,10 @@ object BPSPythonJobContainer {
  *      matedataPath = "/user/clock/jobs/matedataPath/$lastJobID"
  *      filesPath = "/user/clock/jobs/filesPath/$lastJobID"
  *      resultPath = "/user/clock/jobs/resultPath" // 后面会自动加上当前的 jobId
+ *      partition = "4" // 默认4
+ *
+ *      parentsOId = "List(parent1, parent2)" // 默认 Nil
+ *      mongoOId = "oid" // 默认 new ObjectId().toString
  * }}}
  */
 class BPSPythonJobContainer(override val spark: SparkSession,
@@ -42,6 +49,10 @@ class BPSPythonJobContainer(override val spark: SparkSession,
     val filesPath: String = config("filesPath").toString
     val resultPath: String = config.getOrElse("resultPath", "./jobs/").toString
     val partition: String = config.getOrElse("partition", "4").toString
+
+    val parentsOId: List[CharSequence] =
+        config.getOrElse("parentsOId", Nil).asInstanceOf[List[String]].map(_.asInstanceOf[CharSequence])
+    val mongoOId: String = config.getOrElse("mongoOId", new ObjectId().toString).toString
 
     var metadata: Map[String, Any] = Map.empty
     val pyFiles = List(
@@ -74,6 +85,19 @@ class BPSPythonJobContainer(override val spark: SparkSession,
                 .parquet(filesPath)
 
         inputStream = Some(reading)
+
+        // 注册血统
+//        import collection.JavaConverters._
+//        val dfs = new DataSet(
+//            parentsOId.asJava,
+//            mongoOId,
+//            id,
+//            Collections.emptyList(),
+//            "",
+//            metadata("length").asInstanceOf[Double].toInt,
+//            resultPath,
+//            "description")
+//        BPSBloodJob("data_set_job", dfs).exec()
     }
 
     override def exec(): Unit = inputStream match {
