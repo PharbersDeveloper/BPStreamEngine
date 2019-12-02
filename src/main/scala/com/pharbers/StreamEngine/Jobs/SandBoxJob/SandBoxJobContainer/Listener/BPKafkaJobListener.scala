@@ -42,9 +42,9 @@ class BPKafkaJobListener(val id: String,
 //			val checkPointSavePath: String = s"/jobs/${record.value().getRunId.toString}/$jobContainerId/checkpoint"
 //			val parquetSavePath: String =  s"/jobs/${record.value().getRunId.toString}/$jobContainerId/contents/"
 			
-			val metaDataSavePath: String = s"/users/alex/jobs/${record.value().getRunId.toString}/$jobContainerId/metadata/"
-			val checkPointSavePath: String = s"/users/alex/jobs/${record.value().getRunId.toString}/$jobContainerId/checkpoint"
-			val parquetSavePath: String =  s"/users/alex/jobs/${record.value().getRunId.toString}/$jobContainerId/contents/"
+			val metaDataSavePath: String = s"/user/alex/jobs/${record.value().getRunId.toString}/$jobContainerId/metadata/"
+			val checkPointSavePath: String = s"/user/alex/jobs/${record.value().getRunId.toString}/$jobContainerId/checkpoint"
+			val parquetSavePath: String =  s"/user/alex/jobs/${record.value().getRunId.toString}/$jobContainerId/contents/"
 			
 			
 			val jobParam = Map(
@@ -68,13 +68,13 @@ class BPKafkaJobListener(val id: String,
 			convertJob.open()
 			convertJob.exec()
 			
-			pushPyjob(
-				record.value().getRunId.toString,
-				s"$metaDataSavePath" + jobId,
-				s"$parquetSavePath" + jobId,
-				jobId,
-				(metaDataSetId :: sampleDataSetId :: Nil).mkString(",")
-			)
+//			pushPyjob(
+//				record.value().getRunId.toString,
+//				s"$metaDataSavePath" + jobId,
+//				s"$parquetSavePath" + jobId,
+//				jobId,
+//				(metaDataSetId :: sampleDataSetId :: Nil).mkString(",")
+//			)
 		} else {
 			logger.error("咋还重复传递JobID呢", hisJobId)
 		}
@@ -101,7 +101,7 @@ class BPKafkaJobListener(val id: String,
 	                      parentJobId: String,
 	                      dsIds: String): Unit = {
 //		val resultPath = s"hdfs://jobs/$runId/${UUID.randomUUID().toString}/contents/"
-		val resultPath = s"hdfs:///users/alex/jobs/$runId/${UUID.randomUUID().toString}/contents/"
+		val resultPath = s"hdfs:///user/alex/jobs/$runId/${UUID.randomUUID().toString}/contents/"
 		import org.json4s._
 		import org.json4s.jackson.Serialization.write
 		implicit val formats: DefaultFormats.type = DefaultFormats

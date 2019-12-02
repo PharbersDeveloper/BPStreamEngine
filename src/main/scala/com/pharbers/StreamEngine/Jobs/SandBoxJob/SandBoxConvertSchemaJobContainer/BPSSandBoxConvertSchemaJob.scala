@@ -49,55 +49,58 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 			writeMetaData(metaData, jobParam("metaDataSavePath") + jobParam("currentJobId"))
 		totalRow = length
 		
-		val schema = SchemaConverter.str2SqlType(schemaData)
-		
-		notFoundShouldWait(jobParam("parentSampleData"))
-		
-		val reading = spark.readStream.schema(StructType(
+		if (schemaData != "") {
+			val schema = SchemaConverter.str2SqlType(schemaData)
+			
+			notFoundShouldWait(jobParam("parentSampleData"))
+			
+			val reading = spark.readStream.schema(StructType(
 				StructField("traceId", StringType) ::
 				StructField("type", StringType) ::
 				StructField("data", StringType) ::
 				StructField("timestamp", TimestampType) ::
 				StructField("jobId", StringType) :: Nil
-			))
-			.parquet(s"${jobParam("parentSampleData")}")
-			.filter($"jobId" === jobParam("parentJobId") and $"type" === "SandBox")
+			)).parquet(s"${jobParam("parentSampleData")}")
+				.filter($"jobId" === jobParam("parentJobId") and $"type" === "SandBox")
 
-		inputStream = Some(
-			SchemaConverter.column2legal("data", reading).select(
-				from_json($"data", schema).as("data")
-			).select("data.*")
-		)
-		// 暂时注释
-		// MetaData DataSet
-		BPSBloodJob(
-			"data_set_job",
-			new DataSet(
-				Collections.emptyList(),
-				metaDataSetId,
-				jobParam("jobContainerId"),
-				colNames.asJava,
-				tabName,
-				length,
-				jobParam("metaDataSavePath") + jobParam("currentJobId"),
-				"")).exec()
-
-		// SampleData DataSet
-		BPSBloodJob(
-			"data_set_job",
-			new DataSet(
-				Collections.emptyList(),
-				sampleDataSetId,
-				jobParam("jobContainerId"),
-				colNames.asJava,
-				tabName,
-				length,
-				jobParam("parquetSavePath") + jobParam("currentJobId"),
-				"")).exec()
-		
-		val uploadEnd = new UploadEnd(sampleDataSetId, traceId)
-		BPSUploadEndJob("upload_end_job", uploadEnd).exec()
-		
+			inputStream = Some(
+				SchemaConverter.column2legal("data", reading)
+				.select(
+					from_json($"data", schema).as("data")
+				).select("data.*")
+			)
+			
+			// 暂时注释
+			// MetaData DataSet
+			BPSBloodJob(
+				"data_set_job",
+				new DataSet(
+					Collections.emptyList(),
+					metaDataSetId,
+					jobParam("jobContainerId"),
+					Collections.emptyList(),
+					"",
+					0,
+					jobParam("metaDataSavePath") + jobParam("currentJobId"),
+					"MetaData")).exec()
+			
+			// SampleData DataSet
+			BPSBloodJob(
+				"data_set_job",
+				new DataSet(
+					Collections.emptyList(),
+					sampleDataSetId,
+					jobParam("jobContainerId"),
+					colNames.asJava,
+					tabName,
+					length,
+					jobParam("parquetSavePath") + jobParam("currentJobId"),
+					"SampleData")).exec()
+			
+			val uploadEnd = new UploadEnd(sampleDataSetId, traceId)
+			BPSUploadEndJob("upload_end_job", uploadEnd).exec()
+			
+		}
 	}
 	
 	override def exec(): Unit = {
@@ -134,11 +137,13 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 	
 	def writeMetaData(metaData: RDD[String], path: String): (String, List[CharSequence], String, Int, String) = {
 		try {
-			val contentMap = BPSMetaData2Map.list2Map(metaData.collect().toList.map(_.replaceAll("""\\"""", "")))
-			implicit val formats: DefaultFormats.type = DefaultFormats
-			val schema  = write(contentMap("schema").asInstanceOf[List[Map[String, Any]]])
 			
 			val metaDataDF = SchemaConverter.column2legal("MetaData", metaData.toDF("MetaData"))
+			
+			
+			val contentMap = BPSMetaData2Map.list2Map(metaDataDF.select("MetaData").collect().toList.map(_.getAs[String]("MetaData")))
+			implicit val formats: DefaultFormats.type = DefaultFormats
+			val schema  = write(contentMap("schema").asInstanceOf[List[Map[String, Any]]])
 			
 			val jobIdRow = metaDataDF.withColumn("MetaData",
 				lit(s"""{"jobId":"${jobParam("currentJobId")}"}"""))
