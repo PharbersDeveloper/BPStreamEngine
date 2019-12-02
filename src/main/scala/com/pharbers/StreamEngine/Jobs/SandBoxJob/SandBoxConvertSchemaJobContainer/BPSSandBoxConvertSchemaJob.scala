@@ -1,6 +1,6 @@
 package com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxConvertSchemaJobContainer
 
-import java.util.{Collections, UUID}
+import java.util.Collections
 
 import com.pharbers.StreamEngine.Jobs.SandBoxJob.BloodJob.BPSBloodJob
 import com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxConvertSchemaJobContainer.Listener.ConvertSchemaListener
@@ -69,34 +69,34 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 			).select("data.*")
 		)
 		// 暂时注释
-//		// MetaData DataSet
-//		BPSBloodJob(
-//			"data_set_job",
-//			new DataSet(
-//				Collections.emptyList(),
-//				metaDataSetId,
-//				jobParam("jobContainerId"),
-//				colNames.asJava,
-//				tabName,
-//				length,
-//				jobParam("metaDataSavePath") + jobParam("currentJobId"),
-//				"")).exec()
-//
-//		// SampleData DataSet
-//		BPSBloodJob(
-//			"data_set_job",
-//			new DataSet(
-//				Collections.emptyList(),
-//				sampleDataSetId,
-//				jobParam("jobContainerId"),
-//				colNames.asJava,
-//				tabName,
-//				length,
-//				jobParam("parquetSavePath") + jobParam("currentJobId"),
-//				"")).exec()
-//
-//		val uploadEnd = new UploadEnd(sampleDataSetId, traceId)
-//		BPSUploadEndJob("upload_end_job", uploadEnd).exec()
+		// MetaData DataSet
+		BPSBloodJob(
+			"data_set_job",
+			new DataSet(
+				Collections.emptyList(),
+				metaDataSetId,
+				jobParam("jobContainerId"),
+				colNames.asJava,
+				tabName,
+				length,
+				jobParam("metaDataSavePath") + jobParam("currentJobId"),
+				"")).exec()
+
+		// SampleData DataSet
+		BPSBloodJob(
+			"data_set_job",
+			new DataSet(
+				Collections.emptyList(),
+				sampleDataSetId,
+				jobParam("jobContainerId"),
+				colNames.asJava,
+				tabName,
+				length,
+				jobParam("parquetSavePath") + jobParam("currentJobId"),
+				"")).exec()
+		
+		val uploadEnd = new UploadEnd(sampleDataSetId, traceId)
+		BPSUploadEndJob("upload_end_job", uploadEnd).exec()
 		
 	}
 	
@@ -118,6 +118,8 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 	}
 	
 	override def close(): Unit = {
+		// TODO 将处理好的Schema发送邮件
+		
 		outputStream.foreach(_.stop())
 		listeners.foreach(_.deActive())
 	}
@@ -131,26 +133,33 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 	}
 	
 	def writeMetaData(metaData: RDD[String], path: String): (String, List[CharSequence], String, Int, String) = {
-		val contentMap = BPSMetaData2Map.list2Map(metaData.collect().toList.map(_.replaceAll("""\\"""", "")))
-		implicit val formats: DefaultFormats.type = DefaultFormats
-		val schema  = write(contentMap("schema").asInstanceOf[List[Map[String, Any]]])
-		
-		val metaDataDF = SchemaConverter.column2legal("MetaData", metaData.toDF("MetaData"))
-		
-		val jobIdRow = metaDataDF.withColumn("MetaData",
-			lit(s"""{"jobId":"${jobParam("parentJobId")}"}"""))
-		val traceId = jobParam("parentJobId").substring(0, jobParam("parentJobId").length-1)
-		val traceIdRow = jobIdRow.withColumn("MetaData",
-			lit(s"""{"traceId":"$traceId"}"""))
-		
-		val metaDataDis = metaDataDF.union(jobIdRow).union(traceIdRow).distinct()
-		
-		metaDataDis.collect().foreach { x =>
-			val line = x.getAs[String]("MetaData")
-			BPSHDFSFile.appendLine2HDFS(path, line)
+		try {
+			val contentMap = BPSMetaData2Map.list2Map(metaData.collect().toList.map(_.replaceAll("""\\"""", "")))
+			implicit val formats: DefaultFormats.type = DefaultFormats
+			val schema  = write(contentMap("schema").asInstanceOf[List[Map[String, Any]]])
+			
+			val metaDataDF = SchemaConverter.column2legal("MetaData", metaData.toDF("MetaData"))
+			
+			val jobIdRow = metaDataDF.withColumn("MetaData",
+				lit(s"""{"jobId":"${jobParam("currentJobId")}"}"""))
+			val traceId = jobParam("parentJobId").substring(0, jobParam("parentJobId").length-1)
+			val traceIdRow = jobIdRow.withColumn("MetaData",
+				lit(s"""{"traceId":"$traceId"}"""))
+			
+			val metaDataDis = metaDataDF.union(jobIdRow).union(traceIdRow).distinct()
+			
+			metaDataDis.collect().foreach(x => BPSHDFSFile.appendLine2HDFS(path, x.getAs[String]("MetaData")))
+			val colNames =  contentMap("schema").asInstanceOf[List[Map[String, Any]]].map(_("key").toString)
+			val tabName = contentMap.getOrElse("tag", Map.empty).
+				asInstanceOf[Map[String, Any]].
+				getOrElse("sheetName", "").toString
+			(schema, colNames, tabName, contentMap("length").toString.toInt, traceId)
+		} catch {
+			case e: Exception =>
+				// TODO: 处理不了发送重试
+				logger.error(e.getMessage)
+				("", Nil, "", 0, "")
 		}
-		val colNames =  contentMap("schema").asInstanceOf[List[Map[String, Any]]].map(_("key").toString)
-		val tabName = contentMap.getOrElse("tag", Map.empty).asInstanceOf[Map[String, Any]].getOrElse("sheetName", "").toString
-		(schema, colNames, tabName, contentMap("length").toString.toInt, traceId)
+		
 	}
 }

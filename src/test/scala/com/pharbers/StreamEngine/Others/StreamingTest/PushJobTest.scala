@@ -56,7 +56,7 @@ class PushJobTest extends FunSuite{
         val `type` = "addList"
         val jobs =
             JobMsg("ossStreamJob", "job", "com.pharbers.StreamEngine.Jobs.OssPartitionJob.OssJobContainer.BPSOssPartitionJobContainer", List("$BPSKfkJobStrategy", "$BPSparkSession"), Nil, Nil, Map.empty, "", "oss job") ::
-                    JobMsg("sandBoxJob", "job", "com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxJobContainer.BPSSandBoxJobContainer", List("$BPSparkSession"), Nil, Nil, Map.empty, "", "sandbox job") ::
+            JobMsg("sandBoxJob", "job", "com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxJobContainer.BPSSandBoxJobContainer", List("$BPSparkSession"), Nil, Nil, Map.empty, "", "sandbox job") ::
 //                JobMsg("pyBoxJob", "job", "com.pharbers.StreamEngine.Jobs.PyJob.PythonJobContainer.BPSPythonJobContainer", List("$BPSparkSession"), Nil, Nil, Map(
 //                    "jobId" -> "20796d42-c177-4838-9a20-79bfba60d036",
 //                    "matedataPath" -> "/test/alex2/b1b6875c-a590-4dfd-9aa7-f852596266ef/metadata/",
