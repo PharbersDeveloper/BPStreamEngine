@@ -87,17 +87,17 @@ class BPSPythonJobContainer(override val spark: SparkSession,
         inputStream = Some(reading)
 
         // 注册血统
-//        import collection.JavaConverters._
-//        val dfs = new DataSet(
-//            parentsOId.asJava,
-//            mongoOId,
-//            id,
-//            Collections.emptyList(),
-//            "",
-//            metadata("length").asInstanceOf[Double].toInt,
-//            resultPath,
-//            "description")
-//        BPSBloodJob("data_set_job", dfs).exec()
+        import collection.JavaConverters._
+        val dfs = new DataSet(
+            parentsOId.asJava,
+            mongoOId,
+            id,
+            Collections.emptyList(),
+            "",
+            metadata("length").asInstanceOf[Double].toInt,
+            resultPath,
+            "description")
+        BPSBloodJob("data_set_job", dfs).exec()
     }
 
     override def exec(): Unit = inputStream match {
