@@ -94,12 +94,14 @@ class BPKafkaJobListener(val id: String,
 		container.finishJobWithId(id)
 	}
 	
-	// TODO: 老齐那边应该起一个kafka Listening，先暂时这样跑通
+	// TODO:  临时老齐那边应该起一个kafka Listening，先暂时这样跑通
 	private def pushPyjob(runId: String,
 	                      metadataPath: String,
 	                      filesPath: String,
 	                      parentJobId: String,
-	                      dsIds: String): Unit ={
+	                      dsIds: String): Unit = {
+//		val resultPath = s"hdfs://jobs/$runId/${UUID.randomUUID().toString}/contents/"
+		val resultPath = s"hdfs:///users/alex/jobs/$runId/${UUID.randomUUID().toString}/contents/"
 		import org.json4s._
 		import org.json4s.jackson.Serialization.write
 		implicit val formats: DefaultFormats.type = DefaultFormats
@@ -110,7 +112,7 @@ class BPKafkaJobListener(val id: String,
 			"parentsOId" -> dsIds,
 			"metadataPath" -> metadataPath,
 			"filesPath" -> filesPath,
-			"resultPath" -> s"hdfs:///users/alex/jobs/$runId/${UUID.randomUUID().toString}/contents/"
+			"resultPath" -> resultPath
 		)
 		val job = JobMsg(
 			s"ossPyJob$parentJobId",
