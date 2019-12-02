@@ -51,7 +51,7 @@ class BPSPythonJobContainer(override val spark: SparkSession,
     val partition: String = config.getOrElse("partition", "4")
 
     val parentsOId: List[CharSequence] =
-        config.getOrElse("parentsOId", Nil).asInstanceOf[List[String]].map(_.asInstanceOf[CharSequence])
+        config.getOrElse("parentsOId", "").split(",").toList.map(_.asInstanceOf[CharSequence])
     val mongoOId: String = config.getOrElse("mongoOId", new ObjectId().toString)
 
     var metadata: Map[String, Any] = Map.empty
