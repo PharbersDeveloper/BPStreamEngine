@@ -68,13 +68,13 @@ class BPKafkaJobListener(val id: String,
 			convertJob.open()
 			convertJob.exec()
 			
-//			pushPyjob(
-//				record.value().getRunId.toString,
-//				s"$metaDataSavePath" + jobId,
-//				s"$parquetSavePath" + jobId,
-//				jobId,
-//				(metaDataSetId :: sampleDataSetId :: Nil).mkString(",")
-//			)
+			pushPyjob(
+				record.value().getRunId.toString,
+				s"$metaDataSavePath" + jobId,
+				s"$parquetSavePath" + jobId,
+				jobId,
+				(metaDataSetId :: sampleDataSetId :: Nil).mkString(",")
+			)
 		} else {
 			logger.error("咋还重复传递JobID呢", hisJobId)
 		}
@@ -132,10 +132,10 @@ class BPKafkaJobListener(val id: String,
 		logger.debug(fu.get(10, TimeUnit.SECONDS))
 	}
 	
-	def pollKafka(topic: String, msg: SpecificRecord, jobId: String): Unit ={
-		//TODO: 参数化
-		val pkp = new PharbersKafkaProducer[String, SpecificRecord]
-		val fu = pkp.produce(topic, jobId, msg)
-		logger.info(fu.get(10, TimeUnit.SECONDS))
-	}
+//	def pollKafka(topic: String, msg: SpecificRecord, jobId: String): Unit ={
+//		//TODO: 参数化
+//		val pkp = new PharbersKafkaProducer[String, SpecificRecord]
+//		val fu = pkp.produce(topic, jobId, msg)
+//		logger.info(fu.get(10, TimeUnit.SECONDS))
+//	}
 }
