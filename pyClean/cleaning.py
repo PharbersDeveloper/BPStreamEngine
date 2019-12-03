@@ -33,13 +33,13 @@ def process(event):
 
     source = providers[1:2]
     if not len(source):
-        source = "DEFAULT_COMPANY"
+        source = "DEFAULT_SOURCE"
     else:
         source = source[0]
 
     company = providers[0:1]
     if not len(company):
-        company = "DEFAULT_SOURCE"
+        company = "DEFAULT_COMPANY"
     else:
         company = company[0]
 
