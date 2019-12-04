@@ -118,7 +118,7 @@ class BPSPythonJob(override val id: String,
     }
 
     override def close(): Unit = {
-        pushClose()
+//        pushClose()
         super.close()
         container.finishJobWithId(id)
     }
