@@ -44,7 +44,7 @@ object BPSPy4jServer extends Serializable {
  *     threadId = "threadId" // 默认重新生成UUID
  *     rowRecordPath = "./jobs/$jobId/row_record/$threadId" //默认
  *     metadataPath = "./jobs/$jobId/metadata/$threadId" //默认
- *     successPath = "./jobs/$jobId/success/$threadId" //默认
+ *     successPath = "./jobs/$jobId/contents/$threadId" //默认
  *     errPath = "./jobs/$jobId/err/$threadId" //默认
  * }}}
  */
@@ -56,7 +56,7 @@ case class BPSPy4jServer(serverConf: Map[String, Any] = Map().empty) extends Ser
 
     val rowRecordPath: String = serverConf.getOrElse("rowRecordPath", s"./jobs/$jobId/row_record/$threadId").toString
     val metadataPath: String = serverConf.getOrElse("metadataPath", s"./jobs/$jobId/metadata/$threadId").toString
-    val successPath: String = serverConf.getOrElse("successPath", s"./jobs/$jobId/success/$threadId").toString
+    val successPath: String = serverConf.getOrElse("successPath", s"./jobs/$jobId/contents/$threadId").toString
     val errPath: String = serverConf.getOrElse("errPath", s"./jobs/$jobId/err/$threadId").toString
 
 
