@@ -62,7 +62,7 @@ class BPSPythonJob(override val id: String,
         val checkpointPath = resultPath + "/checkpoint"
         val rowRecordPath = resultPath + "/row_record"
         val metadataPath = resultPath + "/metadata"
-        val successPath = resultPath + "/file"
+        val successPath = resultPath + "/contents"
         val errPath = resultPath + "/err"
 
         inputStream match {
