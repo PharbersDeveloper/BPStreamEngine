@@ -2,14 +2,15 @@ package com.pharbers.StreamEngine.Jobs.PyJob
 
 import java.util.UUID
 import org.scalatest.FunSuite
-import com.pharbers.StreamEngine.Jobs.PyJob.Py4jServer.BPSPy4jServer
+import com.pharbers.StreamEngine.Jobs.PyJob.Py4jServer.{BPSPy4jManager, BPSPy4jServer}
 
 class BPSPy4jServerTest extends FunSuite {
     test("test push and pop") {
+        implicit val manager: BPSPy4jManager = BPSPy4jManager()
         val server = BPSPy4jServer()
         assert(server.py4j_pop() == "EMPTY")
-        assert(BPSPy4jServer.push("abc-1") == ())
-        assert(BPSPy4jServer.push("abc-2") == ())
+        assert(manager.push("abc-1") == ())
+        assert(manager.push("abc-2") == ())
         assert(server.py4j_pop() == "abc-1")
         assert(server.py4j_pop() == "abc-2")
     }
@@ -32,7 +33,10 @@ class BPSPy4jServerTest extends FunSuite {
         val genPath: (String, String) => String =
             (path, threadId) => s"$path/part-$partitionId-$threadId.$fileSuffix"
 
-        BPSPy4jServer.open(Map(
+        implicit val manager: BPSPy4jManager = BPSPy4jManager()
+
+        // TODO 执行测试要修改 startEndpoint 中，python script 的路径
+        manager.open(Map(
             "jobId" -> jobId,
             "threadId" -> threadId1,
             "rowRecordPath" -> genPath(rowRecordPath, threadId1),
@@ -40,7 +44,7 @@ class BPSPy4jServerTest extends FunSuite {
             "errPath" -> genPath(errPath, threadId1),
             "metadataPath" -> genPath(metadataPath, threadId1)
         ))
-        BPSPy4jServer.open(Map(
+        manager.open(Map(
             "jobId" -> jobId,
             "threadId" -> threadId2,
             "rowRecordPath" -> genPath(rowRecordPath, threadId2),
@@ -49,26 +53,27 @@ class BPSPy4jServerTest extends FunSuite {
             "metadataPath" -> genPath(metadataPath, threadId2)
         ))
 
-        assert(BPSPy4jServer.servers != Map.empty)
+        assert(manager.servers != Map.empty)
 
         for (_ <- 1 to 100) {
-            BPSPy4jServer.push("abc")
-            BPSPy4jServer.push("123")
-            BPSPy4jServer.push("张飒")
-            BPSPy4jServer.push("张飒仨")
-            BPSPy4jServer.push("万宝路")
-            BPSPy4jServer.push("福狼藉")
+            manager.push("abc")
+            manager.push("123")
+            manager.push("张飒")
+            manager.push("张飒仨")
+            manager.push("万宝路")
+            manager.push("福狼藉")
         }
-        BPSPy4jServer.push("EOF")
-        BPSPy4jServer.push("EOF")
+        manager.push("EOF")
+        manager.push("EOF")
 
-        assert(BPSPy4jServer.dataQueue != Nil)
+        assert(manager.dataQueue != Nil)
 
         for (_ <- 1 to 10) {
-            Thread.sleep(1000)
+            println(manager.dataQueue)
+            Thread.sleep(2000)
         }
 
-        assert(BPSPy4jServer.dataQueue == Nil)
-        assert(BPSPy4jServer.servers == Map.empty)
+        assert(manager.dataQueue == Nil)
+        assert(manager.servers == Map.empty)
     }
 }

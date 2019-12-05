@@ -147,7 +147,7 @@ def cpa_gyc_mapping():
             "Type": "Double",
             "Candidate": ["数量", "STANDARD_UNIT", "最小包装单位数量", "最小制剂单位数量", "QUANTITY",
                           "销售数量", "Quantity", "TOTAL_UNITS", "UNIT", "SALES_QTY"],
-            "NotNull": True
+            # "NotNull": True
         },
         {
             "ColName": "SALES_VALUE",

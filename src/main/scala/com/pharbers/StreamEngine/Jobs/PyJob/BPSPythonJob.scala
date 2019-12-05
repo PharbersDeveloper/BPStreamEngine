@@ -1,18 +1,17 @@
 package com.pharbers.StreamEngine.Jobs.PyJob
 
 import java.util.UUID
-import java.util.concurrent.TimeUnit
-
 import org.apache.spark.sql
 import org.json4s.DefaultFormats
+import java.util.concurrent.TimeUnit
 import org.apache.spark.sql.types.StringType
 import org.json4s.jackson.Serialization.write
+import com.pharbers.kafka.producer.PharbersKafkaProducer
 import org.apache.spark.sql.{ForeachWriter, Row, SparkSession}
-import com.pharbers.StreamEngine.Jobs.PyJob.Py4jServer.BPSPy4jServer
+import com.pharbers.StreamEngine.Jobs.PyJob.Py4jServer.BPSPy4jManager
 import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSJobStrategy
 import com.pharbers.StreamEngine.Utils.StreamJob.{BPSJobContainer, BPStreamJob}
 import com.pharbers.StreamEngine.Jobs.PyJob.Listener.BPSProgressListenerAndClose
-import com.pharbers.kafka.producer.PharbersKafkaProducer
 
 object BPSPythonJob {
     def apply(id: String,
@@ -65,6 +64,8 @@ class BPSPythonJob(override val id: String,
         val successPath = resultPath + "/contents"
         val errPath = resultPath + "/err"
 
+        implicit val py4jManager: BPSPy4jManager = BPSPy4jManager()
+
         inputStream match {
             case Some(is) =>
                 val query = is.repartition(partition).writeStream
@@ -75,7 +76,8 @@ class BPSPythonJob(override val id: String,
                                 val threadId: String = UUID.randomUUID().toString
                                 val genPath: String => String = path => s"$path/part-$partitionId-$threadId.$fileSuffix"
 
-                                BPSPy4jServer.open(Map(
+                                py4jManager.open(Map(
+                                    "py4jManager" -> py4jManager,
                                     "jobId" -> id,
                                     "threadId" -> threadId,
                                     "rowRecordPath" -> genPath(rowRecordPath),
@@ -96,13 +98,13 @@ class BPSPythonJob(override val id: String,
                                     }
                                 }.toMap
 
-                                BPSPy4jServer.push(
+                                py4jManager.push(
                                     write(Map("metadata" -> lastMetadata, "data" -> data))(DefaultFormats)
                                 )
                             }
 
                             override def close(errorOrNull: Throwable): Unit = {
-                                BPSPy4jServer.push("EOF")
+                                py4jManager.push("EOF")
                             }
                         })
                         .start()
