@@ -99,7 +99,7 @@ class BPKafkaJobListener(val id: String,
 		val jobConfig = Map("jobId" -> jobId,
 			"matedataPath" -> metadataPath,
 			"filesPath" -> filesPath,
-			"resultPath" -> s"hdfs:///jobs/$id/${UUID.randomUUID().toString}/contents/"
+			"resultPath" -> s"hdfs:///jobs/$runId/${UUID.randomUUID().toString}/contents/"
 		)
 		val job = JobMsg("ossPyJob" + jobId, "job", "com.pharbers.StreamEngine.Jobs.PyJob.PythonJobContainer.BPSPythonJobContainer",
 			List("$BPSparkSession"), Nil, Nil, jobConfig, "", "test job")
