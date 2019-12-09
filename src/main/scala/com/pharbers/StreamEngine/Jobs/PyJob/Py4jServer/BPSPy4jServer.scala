@@ -9,38 +9,15 @@ import org.json4s.jackson.Serialization.write
 import py4j.{GatewayServer, Py4JNetworkException}
 import com.pharbers.StreamEngine.Utils.HDFS.BPSHDFSFile
 
-
-//object BPSPy4jServer extends Serializable {
-//
-//    // 保存当前 JVM 上运行的所有 Py4j 服务
-//    var servers: Map[String, BPSPy4jServer] = Map.empty
-//
-//    def open(serverConf: Map[String, Any] = Map().empty): Unit = {
-//        BPSPy4jServer.synchronized {
-//            val server = BPSPy4jServer(serverConf).openBuffer().startServer().startEndpoint()
-//            servers = servers + (server.threadId -> server)
-//        }
-//    }
-//
-//
-//    // 保存流中的数据，并可以给 Python 访问
-//    var dataQueue: List[String] = Nil
-//
-//    def push(message: String): Unit = {
-//        BPSPy4jServer.synchronized {
-//            BPSPy4jServer.dataQueue = BPSPy4jServer.dataQueue ::: message :: Nil
-//        }
-//    }
-//}
-
 // TODO 这种实现是 “依赖倒置”
 /** 实现 Py4j 的 GatewayServer 的实例
  *
  * @author clock
  * @version 0.0.1
  * @since 2019/11/14 19:04
- * @node 可用的配置参数
+ * @node serverConf 可用的配置参数
  * {{{
+ *     retryCount = "3" // 出错的重试次数
  *     jobId = "jobId" // 默认重新生成UUID
  *     threadId = "threadId" // 默认重新生成UUID
  *     rowRecordPath = "./jobs/$jobId/row_record/$threadId" //默认
@@ -51,8 +28,8 @@ import com.pharbers.StreamEngine.Utils.HDFS.BPSHDFSFile
  */
 case class BPSPy4jServer(serverConf: Map[String, Any] = Map().empty)
                         (implicit py4jManager: BPSPy4jManager) extends Serializable {
-    final val RETRY_COUNT: Int = 3
 
+    final val RETRY_COUNT: Int = serverConf.getOrElse("retryCount", "3").toString.toInt
     val jobId: String = serverConf.getOrElse("jobId", UUID.randomUUID().toString).toString
     val threadId: String = serverConf.getOrElse("threadId", UUID.randomUUID().toString).toString
 
