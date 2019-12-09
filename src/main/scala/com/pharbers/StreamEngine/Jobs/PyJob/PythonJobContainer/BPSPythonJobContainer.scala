@@ -28,7 +28,7 @@ object BPSPythonJobContainer {
  * @node 可用的配置参数
  * {{{
  *      jobId = UUID // 默认
- *      matedataPath = "/user/clock/jobs/matedataPath/$lastJobID"
+ *      metadataPath = "/user/clock/jobs/metadataPath/$lastJobID"
  *      filesPath = "/user/clock/jobs/filesPath/$lastJobID"
  *      resultPath = "/user/clock/jobs/resultPath" // 后面会自动加上当前的 jobId
  *      partition = "4" // 默认4
@@ -44,15 +44,15 @@ class BPSPythonJobContainer(override val spark: SparkSession,
     override val strategy: BPSKfkJobStrategy = null
     type T = BPSKfkJobStrategy
 
-    val id: String = config.getOrElse("jobId", UUID.randomUUID().toString).toString
-    val matedataPath: String = config("matedataPath").toString
-    val filesPath: String = config("filesPath").toString
-    val resultPath: String = config.getOrElse("resultPath", "./jobs/").toString
-    val partition: String = config.getOrElse("partition", "4").toString
+    val id: String = config.getOrElse("jobId", UUID.randomUUID().toString)
+    val metadataPath: String = config("metadataPath")
+    val filesPath: String = config("filesPath")
+    val resultPath: String = config.getOrElse("resultPath", "./jobs/")
+    val partition: String = config.getOrElse("partition", "4")
 
     val parentsOId: List[CharSequence] =
-        config.getOrElse("parentsOId", Nil).asInstanceOf[List[String]].map(_.asInstanceOf[CharSequence])
-    val mongoOId: String = config.getOrElse("mongoOId", new ObjectId().toString).toString
+        config.getOrElse("parentsOId", "").split(",").toList.map(_.asInstanceOf[CharSequence])
+    val mongoOId: String = config.getOrElse("mongoOId", new ObjectId().toString)
 
     var metadata: Map[String, Any] = Map.empty
     val pyFiles = List(
@@ -73,10 +73,10 @@ class BPSPythonJobContainer(override val spark: SparkSession,
     }
 
     override def open(): Unit = {
-        notFoundShouldWait(matedataPath)
+        notFoundShouldWait(metadataPath)
         notFoundShouldWait(filesPath)
 
-        metadata = BPSParseSchema.parseMetadata(matedataPath)(spark)
+        metadata = BPSParseSchema.parseMetadata(metadataPath)(spark)
         val loadSchema = BPSParseSchema.parseSchema(metadata("schema").asInstanceOf[List[_]])
 
         val reading = spark.readStream
@@ -87,17 +87,17 @@ class BPSPythonJobContainer(override val spark: SparkSession,
         inputStream = Some(reading)
 
         // 注册血统
-//        import collection.JavaConverters._
-//        val dfs = new DataSet(
-//            parentsOId.asJava,
-//            mongoOId,
-//            id,
-//            Collections.emptyList(),
-//            "",
-//            metadata("length").asInstanceOf[Double].toInt,
-//            resultPath,
-//            "description")
-//        BPSBloodJob("data_set_job", dfs).exec()
+        import collection.JavaConverters._
+        val dfs = new DataSet(
+            parentsOId.asJava,
+            mongoOId,
+            id,
+            Collections.emptyList(),
+            "",
+            metadata("length").asInstanceOf[Double].toInt,
+            resultPath,
+            "description")
+        BPSBloodJob("data_set_job", dfs).exec()
     }
 
     override def exec(): Unit = inputStream match {

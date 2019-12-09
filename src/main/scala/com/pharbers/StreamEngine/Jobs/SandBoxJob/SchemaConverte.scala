@@ -62,7 +62,7 @@ object SchemaConverter {
 			.withColumn(colu, regexp_replace(col(colu) , "\\(", ""))
 			.withColumn(colu, regexp_replace(col(colu) , "\\)", ""))
 			.withColumn(colu, regexp_replace(col(colu) , "=", ""))
-    		.withColumn(colu, regexp_replace(col(colu) , "\\\\n|\\\\\t", ""))
+    		.withColumn(colu, regexp_replace(col(colu) , "\\\\n|\\\\t", ""))
 	}
 }
 
