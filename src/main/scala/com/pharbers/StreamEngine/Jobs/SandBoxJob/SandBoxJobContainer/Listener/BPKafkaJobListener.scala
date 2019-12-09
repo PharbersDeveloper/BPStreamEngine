@@ -89,6 +89,7 @@ class BPKafkaJobListener(val id: String,
 	
 	override def close(): Unit = {
 		super.close()
+		// TODO: Consumer关闭
 		container.finishJobWithId(id)
 	}
 	
