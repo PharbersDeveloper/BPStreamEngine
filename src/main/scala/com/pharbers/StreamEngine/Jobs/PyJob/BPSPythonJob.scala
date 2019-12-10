@@ -3,13 +3,12 @@ package com.pharbers.StreamEngine.Jobs.PyJob
 import java.util.UUID
 import org.apache.spark.sql
 import org.json4s.DefaultFormats
-import java.util.concurrent.TimeUnit
 import org.apache.spark.sql.types.StringType
 import org.json4s.jackson.Serialization.write
-import com.pharbers.kafka.producer.PharbersKafkaProducer
 import org.apache.spark.sql.{ForeachWriter, Row, SparkSession}
 import com.pharbers.StreamEngine.Jobs.PyJob.Py4jServer.BPSPy4jManager
 import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSJobStrategy
+import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamListener
 import com.pharbers.StreamEngine.Utils.StreamJob.{BPSJobContainer, BPStreamJob}
 import com.pharbers.StreamEngine.Jobs.PyJob.Listener.BPSProgressListenerAndClose
 
@@ -18,8 +17,9 @@ object BPSPythonJob {
               spark: SparkSession,
               inputStream: Option[sql.DataFrame],
               container: BPSJobContainer,
+              noticeFunc: Map[String, Any] => Unit,
               jobConf: Map[String, Any]): BPSPythonJob =
-        new BPSPythonJob(id, spark, inputStream, container, jobConf)
+        new BPSPythonJob(id, spark, inputStream, container, noticeFunc, jobConf)
 }
 
 /** 执行 Python 的 Job
@@ -27,23 +27,28 @@ object BPSPythonJob {
  * @author clock
  * @version 0.0.1
  * @since 2019/11/6 17:43
- * @node 可用的配置参数
+ * @node jobConf 可用的配置参数
  * {{{
- *     fileSuffix = "csv" // 默认
+ *     noticeTopic = "topic" //job完成后的通知位置
  *     resultPath = "/users/clock/jobs/"
  *     lastMetadata = Map("jobId" -> "a", "fileName" -> "b")
+ *
+ *     fileSuffix = "csv" // 默认
+ *     partition = "4" //默认 “4”，表示每个 Job 可使用的 spark 分区数，也是可用 Python 的线程数，默认 4 线程
+ *     retryCount = "3" // 默认, 重试次数
  * }}}
  */
 class BPSPythonJob(override val id: String,
                    override val spark: SparkSession,
                    is: Option[sql.DataFrame],
                    container: BPSJobContainer,
+                   noticeFunc: Map[String, Any] => Unit,
                    jobConf: Map[String, Any]) extends BPStreamJob with Serializable {
 
     type T = BPSJobStrategy
     override val strategy: BPSJobStrategy = null
 
-    val fileSuffix: String = jobConf.getOrElse("fileSuffix", "csv").toString
+    val noticeTopic: String = jobConf("noticeTopic").toString
     val resultPath: String = {
         if (jobConf("resultPath").toString.endsWith("/"))
             jobConf("resultPath").toString + id
@@ -51,18 +56,22 @@ class BPSPythonJob(override val id: String,
             jobConf("resultPath").toString + "/" + id
     }
     val lastMetadata: Map[String, Any] = jobConf("lastMetadata").asInstanceOf[Map[String, Any]]
+
+    val fileSuffix: String = jobConf.getOrElse("fileSuffix", "csv").toString
     val partition: Int = jobConf.getOrElse("partition", "4").asInstanceOf[String].toInt
+    val retryCount: String = jobConf.getOrElse("retryCount", "3").toString
+
+    val checkpointPath: String = resultPath + "/checkpoint"
+    val rowRecordPath: String = resultPath + "/row_record"
+    val metadataPath: String = resultPath + "/metadata"
+    val successPath: String = resultPath + "/contents"
+    val errPath: String = resultPath + "/err"
 
     override def open(): Unit = {
         inputStream = is
     }
 
     override def exec(): Unit = {
-        val checkpointPath = resultPath + "/checkpoint"
-        val rowRecordPath = resultPath + "/row_record"
-        val metadataPath = resultPath + "/metadata"
-        val successPath = resultPath + "/contents"
-        val errPath = resultPath + "/err"
 
         implicit val py4jManager: BPSPy4jManager = BPSPy4jManager()
 
@@ -71,13 +80,12 @@ class BPSPythonJob(override val id: String,
                 val query = is.repartition(partition).writeStream
                         .option("checkpointLocation", checkpointPath)
                         .foreach(new ForeachWriter[Row]() {
-
                             override def open(partitionId: Long, version: Long): Boolean = {
                                 val threadId: String = UUID.randomUUID().toString
                                 val genPath: String => String = path => s"$path/part-$partitionId-$threadId.$fileSuffix"
 
                                 py4jManager.open(Map(
-                                    "py4jManager" -> py4jManager,
+                                    "retryCount" -> retryCount,
                                     "jobId" -> id,
                                     "threadId" -> threadId,
                                     "rowRecordPath" -> genPath(rowRecordPath),
@@ -110,25 +118,29 @@ class BPSPythonJob(override val id: String,
                         .start()
 
                 outputStream = query :: outputStream
-
-                val rowLength = lastMetadata("length").asInstanceOf[Double].toLong
-                val listener = BPSProgressListenerAndClose(this, spark, rowLength, rowRecordPath)
-                listener.active(null)
-                listeners = listener :: listeners
+                listeners = listeners ::: addListener(rowRecordPath) :: Nil
             case None => ???
         }
     }
 
     override def close(): Unit = {
-//        pushClose()
+        noticeFunc(Map(
+            "noticeTopic" -> noticeTopic,
+            "id" -> id,
+            "resultPath" -> resultPath,
+            "rowRecordPath" -> rowRecordPath,
+            "metadataPath" -> metadataPath,
+            "successPath" -> successPath,
+            "errPath" -> errPath
+        ))
         super.close()
         container.finishJobWithId(id)
     }
 
-    def pushClose(): Unit ={
-        val pkp = new PharbersKafkaProducer[String, String]
-        val fu = pkp.produce("oss_test_dcs", "dcs", "ok")
-        println(fu.get(10, TimeUnit.SECONDS))
+    def addListener(rowRecordPath: String): BPStreamListener = {
+        val rowLength = lastMetadata("length").asInstanceOf[Double].toLong
+        val listener = BPSProgressListenerAndClose(this, spark, rowLength, rowRecordPath)
+        listener.active(null)
+        listener
     }
-
 }
