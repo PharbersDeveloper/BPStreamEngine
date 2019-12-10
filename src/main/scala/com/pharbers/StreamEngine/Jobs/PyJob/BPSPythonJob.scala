@@ -2,28 +2,28 @@ package com.pharbers.StreamEngine.Jobs.PyJob
 
 import java.util.{Collections, UUID}
 
+import com.pharbers.StreamEngine.Jobs.PyJob.ForeachWriter.PyCleanSinkHDFS
 import org.apache.spark.sql
 import org.json4s.DefaultFormats
+import com.pharbers.kafka.schema.DataSet
 import org.apache.spark.sql.types.StringType
 import org.json4s.jackson.Serialization.write
+import com.pharbers.StreamEngine.Utils.StreamJob.BPStreamJob
 import org.apache.spark.sql.{ForeachWriter, Row, SparkSession}
+import com.pharbers.StreamEngine.Jobs.SandBoxJob.BloodJob.BPSBloodJob
 import com.pharbers.StreamEngine.Jobs.PyJob.Py4jServer.BPSPy4jManager
 import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSJobStrategy
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamListener
-import com.pharbers.StreamEngine.Utils.StreamJob.{BPSJobContainer, BPStreamJob}
 import com.pharbers.StreamEngine.Jobs.PyJob.Listener.BPSProgressListenerAndClose
-import com.pharbers.StreamEngine.Jobs.SandBoxJob.BloodJob.BPSBloodJob
-import com.pharbers.kafka.schema.DataSet
-import org.bson.types.ObjectId
 
 object BPSPythonJob {
     def apply(id: String,
               spark: SparkSession,
               inputStream: Option[sql.DataFrame],
-              container: BPSJobContainer,
               noticeFunc: (String, Map[String, Any]) => Unit,
+              jobCloseFunc: String => Unit,
               jobConf: Map[String, Any]): BPSPythonJob =
-        new BPSPythonJob(id, spark, inputStream, container, noticeFunc, jobConf)
+        new BPSPythonJob(id, spark, inputStream, noticeFunc, jobCloseFunc, jobConf)
 }
 
 /** 执行 Python 的 Job
@@ -45,8 +45,8 @@ object BPSPythonJob {
 class BPSPythonJob(override val id: String,
                    override val spark: SparkSession,
                    is: Option[sql.DataFrame],
-                   container: BPSJobContainer,
                    noticeFunc: (String, Map[String, Any]) => Unit,
+                   jobCloseFunc: String => Unit,
                    jobConf: Map[String, Any]) extends BPStreamJob with Serializable {
 
     type T = BPSJobStrategy
@@ -83,42 +83,17 @@ class BPSPythonJob(override val id: String,
             case Some(is) =>
                 val query = is.repartition(partition).writeStream
                         .option("checkpointLocation", checkpointPath)
-                        .foreach(new ForeachWriter[Row]() {
-                            override def open(partitionId: Long, version: Long): Boolean = {
-                                val threadId: String = UUID.randomUUID().toString
-                                val genPath: String => String = path => s"$path/part-$partitionId-$threadId.$fileSuffix"
-
-                                py4jManager.open(Map(
-                                    "retryCount" -> retryCount,
-                                    "jobId" -> id,
-                                    "threadId" -> threadId,
-                                    "rowRecordPath" -> genPath(rowRecordPath),
-                                    "successPath" -> genPath(successPath),
-                                    "errPath" -> genPath(errPath),
-                                    "metadataPath" -> genPath(metadataPath)
-                                ))
-
-                                true
-                            }
-
-                            override def process(value: Row): Unit = {
-                                val data = value.schema.map { schema =>
-                                    schema.dataType match {
-                                        case StringType =>
-                                            schema.name -> value.getAs[String](schema.name)
-                                        case _ => ???
-                                    }
-                                }.toMap
-
-                                py4jManager.push(
-                                    write(Map("metadata" -> lastMetadata, "data" -> data))(DefaultFormats)
-                                )
-                            }
-
-                            override def close(errorOrNull: Throwable): Unit = {
-                                py4jManager.push("EOF")
-                            }
-                        })
+                        .foreach(PyCleanSinkHDFS(
+                            fileSuffix = fileSuffix,
+                            retryCount = retryCount,
+                            jobId = id,
+                            rowRecordPath = rowRecordPath,
+                            successPath = successPath,
+                            errPath = errPath,
+                            metadataPath = metadataPath,
+                            lastMetadata = lastMetadata,
+                            py4jManager = py4jManager
+                        ))
                         .start()
 
                 outputStream = query :: outputStream
@@ -128,7 +103,7 @@ class BPSPythonJob(override val id: String,
     }
 
     override def close(): Unit = {
-        regPedigree()
+//        regPedigree()
         noticeFunc(noticeTopic, Map(
             "id" -> id,
             "resultPath" -> resultPath,
@@ -138,7 +113,7 @@ class BPSPythonJob(override val id: String,
             "errPath" -> errPath
         ))
         super.close()
-        container.finishJobWithId(id)
+        jobCloseFunc(id)
     }
 
     // 注册血统

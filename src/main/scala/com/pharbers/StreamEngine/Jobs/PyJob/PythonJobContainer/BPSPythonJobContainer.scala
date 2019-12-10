@@ -66,10 +66,15 @@ class BPSPythonJobContainer(override val spark: SparkSession, config: Map[String
     pyFiles.foreach(spark.sparkContext.addFile)
 
     // open kafka consumer
+    var pyConsumer: Option[PharbersKafkaConsumer[String, BPJob]] = None
+
     override def open(): Unit = {
-        logger.info(s"open kafka consumer, listener topic is `$listenerTopic`")
-        val pkc = new PharbersKafkaConsumer(topics = List(listenerTopic), process = consumerFunc)
-        ThreadExecutor().execute(pkc)
+        if (pyConsumer.isEmpty) {
+            logger.info(s"open kafka consumer, listener topic is `$listenerTopic`")
+            val pkc = new PharbersKafkaConsumer(topics = List(listenerTopic), process = consumerFunc)
+            ThreadExecutor().execute(pkc)
+            pyConsumer = Some(pkc)
+        }
     }
 
     import org.json4s._
@@ -106,15 +111,19 @@ class BPSPythonJobContainer(override val spark: SparkSession, config: Map[String
                 .parquet(filesPath)
 
         // 真正执行 Job
-        val job = BPSPythonJob(jobId, spark, Some(reading), this, noticeFunc, Map(
-            "noticeTopic" -> noticeTopic,
-            "resultPath" -> resultPath,
-            "lastMetadata" -> metadata,
-            "partition" -> partition,
-            "retryCount" -> retryCount,
-            "parentsOId" -> parentsOId,
-            "mongoOId" -> mongoOId
-        ))
+        val job = BPSPythonJob(
+            jobId, spark, Some(reading),
+            noticeFunc = noticeFunc,
+            jobCloseFunc = finishJobWithId,
+            jobConf = Map(
+                "noticeTopic" -> noticeTopic,
+                "resultPath" -> resultPath,
+                "lastMetadata" -> metadata,
+                "partition" -> partition,
+                "retryCount" -> retryCount,
+                "parentsOId" -> parentsOId,
+                "mongoOId" -> mongoOId
+            ))
         job.open()
         job.exec()
     }
@@ -137,8 +146,8 @@ class BPSPythonJobContainer(override val spark: SparkSession, config: Map[String
         logger.debug(fu.get(10, TimeUnit.SECONDS))
     }
 
-    // TODO 需要关闭 Consumer
     override def close(): Unit = {
+        pyConsumer.get.close()
         helper.delDir(id)
         super.close()
     }
