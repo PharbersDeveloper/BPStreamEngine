@@ -1,22 +1,18 @@
 {
   "type": "record",
-  "name": "Job",
+  "name": "EsSinkJobSubmit",
   "namespace": "com.pharbers.kafka.schema",
   "fields": [
     {
-      "name": "jobId",
+      "name": "indexName",
       "type": "string"
     },
     {
-      "name": "status",
+      "name": "metadataPath",
       "type": "string"
     },
     {
-      "name": "error",
-      "type": "string"
-    },
-    {
-      "name": "description",
+      "name": "filesPath",
       "type": "string"
     }
   ]

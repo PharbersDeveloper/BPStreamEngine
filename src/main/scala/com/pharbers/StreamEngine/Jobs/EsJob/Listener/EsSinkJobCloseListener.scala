@@ -7,17 +7,17 @@ import com.pharbers.StreamEngine.Utils.StreamJob.BPStreamJob
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.streaming.StreamingQuery
 
-case class EsSinkJobListener(id: String,
-                                 jobId: String,
-                                 spark: SparkSession,
-                                 job: BPStreamJob,
-                                 query: StreamingQuery,
-                                 sumRow: Long) extends BPStreamListener {
+case class EsSinkJobCloseListener(id: String,
+								  jobId: String,
+								  spark: SparkSession,
+								  job: BPStreamJob,
+								  query: StreamingQuery,
+								  sumRow: Long) extends BPStreamListener {
 	override def trigger(e: BPSEvents): Unit = {
 		val cumulative = query.recentProgress.map(_.numInputRows).sum
 
 		if (cumulative >= sumRow) {
-			logger.debug("EsSinkJob done with offset at " + cumulative)
+			logger.info(s"EsSinkJob(${jobId}) done with count = " + cumulative)
 			// TODO 其他操作
 			job.close()
 		}

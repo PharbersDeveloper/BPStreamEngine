@@ -10,11 +10,11 @@ import org.apache.avro.specific.SpecificData;
 @SuppressWarnings("all")
 @org.apache.avro.specific.AvroGenerated
 public class UploadEnd extends org.apache.avro.specific.SpecificRecordBase implements org.apache.avro.specific.SpecificRecord {
-  private static final long serialVersionUID = 4816906545085536513L;
-  public static final org.apache.avro.Schema SCHEMA$ = new org.apache.avro.Schema.Parser().parse("{\"type\":\"record\",\"name\":\"UploadEnd\",\"namespace\":\"com.pharbers.kafka.schema\",\"fields\":[{\"name\":\"dataSetId\",\"type\":\"string\"},{\"name\":\"traceId\",\"type\":\"string\"}]}");
+  private static final long serialVersionUID = 6937969824602262168L;
+  public static final org.apache.avro.Schema SCHEMA$ = new org.apache.avro.Schema.Parser().parse("{\"type\":\"record\",\"name\":\"UploadEnd\",\"namespace\":\"com.pharbers.kafka.schema\",\"fields\":[{\"name\":\"dataSetId\",\"type\":\"string\"},{\"name\":\"assetId\",\"type\":\"string\"}]}");
   public static org.apache.avro.Schema getClassSchema() { return SCHEMA$; }
   @Deprecated public java.lang.CharSequence dataSetId;
-  @Deprecated public java.lang.CharSequence traceId;
+  @Deprecated public java.lang.CharSequence assetId;
 
   /**
    * Default constructor.  Note that this does not initialize fields
@@ -26,11 +26,11 @@ public class UploadEnd extends org.apache.avro.specific.SpecificRecordBase imple
   /**
    * All-args constructor.
    * @param dataSetId The new value for dataSetId
-   * @param traceId The new value for traceId
+   * @param assetId The new value for assetId
    */
-  public UploadEnd(java.lang.CharSequence dataSetId, java.lang.CharSequence traceId) {
+  public UploadEnd(java.lang.CharSequence dataSetId, java.lang.CharSequence assetId) {
     this.dataSetId = dataSetId;
-    this.traceId = traceId;
+    this.assetId = assetId;
   }
 
   public org.apache.avro.Schema getSchema() { return SCHEMA$; }
@@ -38,7 +38,7 @@ public class UploadEnd extends org.apache.avro.specific.SpecificRecordBase imple
   public java.lang.Object get(int field$) {
     switch (field$) {
     case 0: return dataSetId;
-    case 1: return traceId;
+    case 1: return assetId;
     default: throw new org.apache.avro.AvroRuntimeException("Bad index");
     }
   }
@@ -48,7 +48,7 @@ public class UploadEnd extends org.apache.avro.specific.SpecificRecordBase imple
   public void put(int field$, java.lang.Object value$) {
     switch (field$) {
     case 0: dataSetId = (java.lang.CharSequence)value$; break;
-    case 1: traceId = (java.lang.CharSequence)value$; break;
+    case 1: assetId = (java.lang.CharSequence)value$; break;
     default: throw new org.apache.avro.AvroRuntimeException("Bad index");
     }
   }
@@ -70,19 +70,19 @@ public class UploadEnd extends org.apache.avro.specific.SpecificRecordBase imple
   }
 
   /**
-   * Gets the value of the 'traceId' field.
-   * @return The value of the 'traceId' field.
+   * Gets the value of the 'assetId' field.
+   * @return The value of the 'assetId' field.
    */
-  public java.lang.CharSequence getTraceId() {
-    return traceId;
+  public java.lang.CharSequence getAssetId() {
+    return assetId;
   }
 
   /**
-   * Sets the value of the 'traceId' field.
+   * Sets the value of the 'assetId' field.
    * @param value the value to set.
    */
-  public void setTraceId(java.lang.CharSequence value) {
-    this.traceId = value;
+  public void setAssetId(java.lang.CharSequence value) {
+    this.assetId = value;
   }
 
   /**
@@ -118,7 +118,7 @@ public class UploadEnd extends org.apache.avro.specific.SpecificRecordBase imple
     implements org.apache.avro.data.RecordBuilder<UploadEnd> {
 
     private java.lang.CharSequence dataSetId;
-    private java.lang.CharSequence traceId;
+    private java.lang.CharSequence assetId;
 
     /** Creates a new Builder */
     private Builder() {
@@ -135,8 +135,8 @@ public class UploadEnd extends org.apache.avro.specific.SpecificRecordBase imple
         this.dataSetId = data().deepCopy(fields()[0].schema(), other.dataSetId);
         fieldSetFlags()[0] = true;
       }
-      if (isValidValue(fields()[1], other.traceId)) {
-        this.traceId = data().deepCopy(fields()[1].schema(), other.traceId);
+      if (isValidValue(fields()[1], other.assetId)) {
+        this.assetId = data().deepCopy(fields()[1].schema(), other.assetId);
         fieldSetFlags()[1] = true;
       }
     }
@@ -151,8 +151,8 @@ public class UploadEnd extends org.apache.avro.specific.SpecificRecordBase imple
         this.dataSetId = data().deepCopy(fields()[0].schema(), other.dataSetId);
         fieldSetFlags()[0] = true;
       }
-      if (isValidValue(fields()[1], other.traceId)) {
-        this.traceId = data().deepCopy(fields()[1].schema(), other.traceId);
+      if (isValidValue(fields()[1], other.assetId)) {
+        this.assetId = data().deepCopy(fields()[1].schema(), other.assetId);
         fieldSetFlags()[1] = true;
       }
     }
@@ -197,40 +197,40 @@ public class UploadEnd extends org.apache.avro.specific.SpecificRecordBase imple
     }
 
     /**
-      * Gets the value of the 'traceId' field.
+      * Gets the value of the 'assetId' field.
       * @return The value.
       */
-    public java.lang.CharSequence getTraceId() {
-      return traceId;
+    public java.lang.CharSequence getAssetId() {
+      return assetId;
     }
 
     /**
-      * Sets the value of the 'traceId' field.
-      * @param value The value of 'traceId'.
+      * Sets the value of the 'assetId' field.
+      * @param value The value of 'assetId'.
       * @return This builder.
       */
-    public com.pharbers.kafka.schema.UploadEnd.Builder setTraceId(java.lang.CharSequence value) {
+    public com.pharbers.kafka.schema.UploadEnd.Builder setAssetId(java.lang.CharSequence value) {
       validate(fields()[1], value);
-      this.traceId = value;
+      this.assetId = value;
       fieldSetFlags()[1] = true;
       return this;
     }
 
     /**
-      * Checks whether the 'traceId' field has been set.
-      * @return True if the 'traceId' field has been set, false otherwise.
+      * Checks whether the 'assetId' field has been set.
+      * @return True if the 'assetId' field has been set, false otherwise.
       */
-    public boolean hasTraceId() {
+    public boolean hasAssetId() {
       return fieldSetFlags()[1];
     }
 
 
     /**
-      * Clears the value of the 'traceId' field.
+      * Clears the value of the 'assetId' field.
       * @return This builder.
       */
-    public com.pharbers.kafka.schema.UploadEnd.Builder clearTraceId() {
-      traceId = null;
+    public com.pharbers.kafka.schema.UploadEnd.Builder clearAssetId() {
+      assetId = null;
       fieldSetFlags()[1] = false;
       return this;
     }
@@ -240,7 +240,7 @@ public class UploadEnd extends org.apache.avro.specific.SpecificRecordBase imple
       try {
         UploadEnd record = new UploadEnd();
         record.dataSetId = fieldSetFlags()[0] ? this.dataSetId : (java.lang.CharSequence) defaultValue(fields()[0]);
-        record.traceId = fieldSetFlags()[1] ? this.traceId : (java.lang.CharSequence) defaultValue(fields()[1]);
+        record.assetId = fieldSetFlags()[1] ? this.assetId : (java.lang.CharSequence) defaultValue(fields()[1]);
         return record;
       } catch (Exception e) {
         throw new org.apache.avro.AvroRuntimeException(e);

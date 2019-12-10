@@ -41,12 +41,13 @@ class BPSOssPartitionJobContainer(override val strategy: BPSKfkJobStrategy, val 
 //            .option("failOnDataLoss", "false")
             .load()
 
+        // TODO: 求稳定，机器不够，切记
         inputStream = Some(reading
             .selectExpr(
                 """deserialize(value) AS value""",
                 "timestamp"
             ).toDF()
-            .withWatermark("timestamp", "24 hours")
+            .withWatermark("timestamp", "3 hours")
             .select(
                 from_json($"value", strategy.getSchema).as("data"), col("timestamp")
             ).select("data.*", "timestamp"))

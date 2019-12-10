@@ -36,17 +36,16 @@ class BPKafkaJobListener(val id: String,
 			val sampleDataSetId = new ObjectId().toString
 			val metaDataSetId = new ObjectId().toString
 			hisJobId = record.value().getJobId.toString
-			
+
 			// TODO 路径配置化
 //			val metaDataSavePath: String = s"/jobs/${record.value().getRunId.toString}/$jobContainerId/metadata/"
 //			val checkPointSavePath: String = s"/jobs/${record.value().getRunId.toString}/$jobContainerId/checkpoint"
 //			val parquetSavePath: String =  s"/jobs/${record.value().getRunId.toString}/$jobContainerId/contents/"
-			
+
 			val metaDataSavePath: String = s"/user/alex/jobs/${record.value().getRunId.toString}/$jobContainerId/metadata/"
 			val checkPointSavePath: String = s"/user/alex/jobs/${record.value().getRunId.toString}/$jobContainerId/checkpoint"
 			val parquetSavePath: String =  s"/user/alex/jobs/${record.value().getRunId.toString}/$jobContainerId/contents/"
-			
-			
+
 			val jobParam = Map(
 				"parentJobId" -> record.value().getJobId.toString,
 				"parentMetaData" -> record.value().getMetaDataPath.toString,
@@ -57,7 +56,6 @@ class BPKafkaJobListener(val id: String,
 				"checkPointSavePath" -> checkPointSavePath,
 				"parquetSavePath" -> parquetSavePath
 			)
-			
 			val convertJob: BPSSandBoxConvertSchemaJob =
 				BPSSandBoxConvertSchemaJob(
 					record.value().getRunId.toString,
@@ -67,12 +65,12 @@ class BPKafkaJobListener(val id: String,
 					metaDataSetId)
 			convertJob.open()
 			convertJob.exec()
-			
+
 			pushPyjob(
 				record.value().getRunId.toString,
 				s"$metaDataSavePath" + jobId,
 				s"$parquetSavePath" + jobId,
-				jobId,
+				UUID.randomUUID().toString,
 				(metaDataSetId :: sampleDataSetId :: Nil).mkString(",")
 			)
 		} else {
@@ -91,6 +89,7 @@ class BPKafkaJobListener(val id: String,
 	
 	override def close(): Unit = {
 		super.close()
+		// TODO: Consumer关闭
 		container.finishJobWithId(id)
 	}
 	
@@ -100,8 +99,9 @@ class BPKafkaJobListener(val id: String,
 	                      filesPath: String,
 	                      parentJobId: String,
 	                      dsIds: String): Unit = {
-//		val resultPath = s"hdfs://jobs/$runId/${UUID.randomUUID().toString}/contents/"
-		val resultPath = s"hdfs:///user/alex/jobs/$runId/${UUID.randomUUID().toString}/contents/"
+//		val resultPath = s"hdfs://jobs/$runId/"
+		val resultPath = s"hdfs:///user/alex/jobs/$runId"
+		
 		import org.json4s._
 		import org.json4s.jackson.Serialization.write
 		implicit val formats: DefaultFormats.type = DefaultFormats
@@ -131,11 +131,4 @@ class BPKafkaJobListener(val id: String,
 		val fu = pkp.produce(topic, parentJobId, bpJob)
 		logger.debug(fu.get(10, TimeUnit.SECONDS))
 	}
-	
-//	def pollKafka(topic: String, msg: SpecificRecord, jobId: String): Unit ={
-//		//TODO: 参数化
-//		val pkp = new PharbersKafkaProducer[String, SpecificRecord]
-//		val fu = pkp.produce(topic, jobId, msg)
-//		logger.info(fu.get(10, TimeUnit.SECONDS))
-//	}
 }

@@ -50,7 +50,13 @@ case class BPSOssListener(spark: SparkSession, job: BPStreamJob, jobId: String) 
                 BPSHDFSFile.appendLine2HDFS(s"$metaDataPath/${event2JobId(e)}", e.data)
 	            //TODO： 需要改TS的接口,后面改成Kafka
 //                post(s"""{"traceId": "${e.traceId}","jobId": "${e.jobId}"}""", "application/json")
-                pollKafka(new FileMetaData(runId, e.jobId, metaDataPath, sampleDataPath, ""))
+	            try {
+                    pollKafka(new FileMetaData(runId, e.jobId, metaDataPath, sampleDataPath, ""))
+                } catch {
+                    case ex: Exception =>
+                        pollKafka(new FileMetaData(runId, e.jobId, metaDataPath, sampleDataPath, ""))
+                }
+                
             }
         }
     }
@@ -94,19 +100,6 @@ case class BPSOssListener(spark: SparkSession, job: BPStreamJob, jobId: String) 
 
     override def deActive(): Unit = {
         BPSDriverChannel.unRegisterListener(this)
-    }
-
-    def post(body: String, contentType: String): Unit = {
-        val conn = new URL("http://192.168.100.116:8080/createInfoWithJobId").openConnection.asInstanceOf[HttpURLConnection]
-        val postDataBytes = body.getBytes(StandardCharsets.UTF_8)
-        conn.setRequestMethod("POST")
-        conn.setRequestProperty("Content-Type", contentType)
-        conn.setRequestProperty("Content-Length", String.valueOf(postDataBytes.length))
-        conn.setConnectTimeout(60000)
-        conn.setReadTimeout(60000)
-        conn.setDoOutput(true)
-        conn.getOutputStream.write(postDataBytes)
-        conn.getResponseCode
     }
 
     def pollKafka(msg: FileMetaData): Unit ={
