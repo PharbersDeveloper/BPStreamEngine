@@ -1,20 +1,23 @@
 package com.pharbers.StreamEngine.Jobs.PyJob.PythonJobContainer
 
-import java.util.{Collections, UUID}
-import com.pharbers.kafka.schema.{BPJob, DataSet}
+import java.util.UUID
+import java.util.concurrent.TimeUnit
+import com.pharbers.kafka.schema.BPJob
 import org.apache.spark.sql.SparkSession
 import com.pharbers.StreamEngine.Utils.HDFS.BPSHDFSFile
-import com.pharbers.StreamEngine.Jobs.PyJob.BPSPythonJob
 import com.pharbers.StreamEngine.Utils.GithubHelper.BPSGithubHelper
 import com.pharbers.StreamEngine.Utils.Schema.Spark.BPSParseSchema
-import com.pharbers.StreamEngine.Jobs.SandBoxJob.BloodJob.BPSBloodJob
+import com.pharbers.StreamEngine.Jobs.PyJob.BPSPythonJob
 import com.pharbers.StreamEngine.Utils.Event.EventHandler.BPSEventHandler
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamListener
 import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSKfkJobStrategy
 import com.pharbers.StreamEngine.Utils.StreamJob.{BPDynamicStreamJob, BPSJobContainer}
 import com.pharbers.StreamEngine.Utils.ThreadExecutor.ThreadExecutor
 import com.pharbers.kafka.consumer.PharbersKafkaConsumer
+import com.pharbers.kafka.producer.PharbersKafkaProducer
 import org.apache.kafka.clients.consumer.ConsumerRecord
+import org.bson.types.ObjectId
+import org.json4s.jackson.Serialization.write
 
 object BPSPythonJobContainer {
     def apply(strategy: BPSKfkJobStrategy,
@@ -65,17 +68,16 @@ class BPSPythonJobContainer(override val spark: SparkSession, config: Map[String
     // open kafka consumer
     override def open(): Unit = {
         logger.info(s"open kafka consumer, listener topic is `$listenerTopic`")
-        val pkc = new PharbersKafkaConsumer[String, BPJob](
-            topics = List(listenerTopic), process = consumerFunc
-        )
+        val pkc = new PharbersKafkaConsumer(topics = List(listenerTopic), process = consumerFunc)
         ThreadExecutor().execute(pkc)
     }
 
     import org.json4s._
     import org.json4s.jackson.JsonMethods._
-    implicit val formats: DefaultFormats.type = org.json4s.DefaultFormats
 
-    val consumerFunc: ConsumerRecord[String, BPJob] => Unit = (record: ConsumerRecord[String, BPJob]) => {
+    // TODO 需要并发管理
+    val consumerFunc: ConsumerRecord[String, BPJob] => Unit = { (record: ConsumerRecord[String, BPJob]) =>
+        implicit val formats: DefaultFormats.type = org.json4s.DefaultFormats
         val jobMsg = parse(record.value().getJob.toString).extract[Map[String, Any]]
 
         // 获得 PyJob 参数信息
@@ -86,6 +88,8 @@ class BPSPythonJobContainer(override val spark: SparkSession, config: Map[String
         val noticeTopic: String = jobMsg.getOrElse("noticeTopic", defaultNoticeTopic).toString
         val partition: String = jobMsg.getOrElse("partition", defaultPartition).toString
         val retryCount: String = jobMsg.getOrElse("retryCount", defaultRetryCount).toString
+        val parentsOId: String = jobMsg.getOrElse("parentsOId", "").toString
+        val mongoOId: String = jobMsg.getOrElse("mongoOId", new ObjectId().toString).toString
 
         // 检查输入数据是否存在
         notFoundShouldWait(metadataPath)
@@ -107,7 +111,9 @@ class BPSPythonJobContainer(override val spark: SparkSession, config: Map[String
             "resultPath" -> resultPath,
             "lastMetadata" -> metadata,
             "partition" -> partition,
-            "retryCount" -> retryCount
+            "retryCount" -> retryCount,
+            "parentsOId" -> parentsOId,
+            "mongoOId" -> mongoOId
         ))
         job.open()
         job.exec()
@@ -122,29 +128,16 @@ class BPSPythonJobContainer(override val spark: SparkSession, config: Map[String
         }
     }
 
-    val noticeFunc: (String, Map[String, Any]) => Unit = (topic, msg) => Unit
+    val noticeFunc: (String, Map[String, Any]) => Unit = { (topic, msg) =>
+        implicit val formats: DefaultFormats.type = org.json4s.DefaultFormats
 
+        val pkp = new PharbersKafkaProducer[String, BPJob]
+        val bpJob = new BPJob("", "", "", write(msg))
+        val fu = pkp.produce(topic, "", bpJob)
+        logger.debug(fu.get(10, TimeUnit.SECONDS))
+    }
 
-//    *      parentsOId = "List(parent1, parent2)" // 默认 Nil
-//    *      mongoOId = "oid" // 默认 new ObjectId().toString
-
-//    val parentsOId: List[CharSequence] =
-//        config.getOrElse("parentsOId", "").split(",").toList.map(_.asInstanceOf[CharSequence])
-//    val mongoOId: String = config.getOrElse("mongoOId", new ObjectId().toString)
-//
-//        // 注册血统
-//        import collection.JavaConverters._
-//        val dfs = new DataSet(
-//            parentsOId.asJava,
-//            mongoOId,
-//            id,
-//            Collections.emptyList(),
-//            "",
-//            metadata("length").asInstanceOf[Double].toInt,
-//            s"resultPath/$id/contents",
-//            "Python 清洗 Job")
-//        BPSBloodJob("data_set_job", dfs).exec()
-
+    // TODO 需要关闭 Consumer
     override def close(): Unit = {
         helper.delDir(id)
         super.close()

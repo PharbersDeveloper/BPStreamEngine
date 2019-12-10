@@ -1,6 +1,7 @@
 package com.pharbers.StreamEngine.Jobs.PyJob
 
-import java.util.UUID
+import java.util.{Collections, UUID}
+
 import org.apache.spark.sql
 import org.json4s.DefaultFormats
 import org.apache.spark.sql.types.StringType
@@ -11,6 +12,9 @@ import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSJobStrategy
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamListener
 import com.pharbers.StreamEngine.Utils.StreamJob.{BPSJobContainer, BPStreamJob}
 import com.pharbers.StreamEngine.Jobs.PyJob.Listener.BPSProgressListenerAndClose
+import com.pharbers.StreamEngine.Jobs.SandBoxJob.BloodJob.BPSBloodJob
+import com.pharbers.kafka.schema.DataSet
+import org.bson.types.ObjectId
 
 object BPSPythonJob {
     def apply(id: String,
@@ -60,6 +64,8 @@ class BPSPythonJob(override val id: String,
     val fileSuffix: String = jobConf.getOrElse("fileSuffix", "csv").toString
     val partition: Int = jobConf.getOrElse("partition", "4").asInstanceOf[String].toInt
     val retryCount: String = jobConf.getOrElse("retryCount", "3").toString
+    val parentsOId: List[CharSequence] = jobConf("parentsOId").toString.split(",").toList.map(_.asInstanceOf[CharSequence])
+    val mongoOId: String = jobConf("mongoOId").toString
 
     val checkpointPath: String = resultPath + "/checkpoint"
     val rowRecordPath: String = resultPath + "/row_record"
@@ -72,9 +78,7 @@ class BPSPythonJob(override val id: String,
     }
 
     override def exec(): Unit = {
-
         implicit val py4jManager: BPSPy4jManager = BPSPy4jManager()
-
         inputStream match {
             case Some(is) =>
                 val query = is.repartition(partition).writeStream
@@ -124,6 +128,7 @@ class BPSPythonJob(override val id: String,
     }
 
     override def close(): Unit = {
+        regPedigree()
         noticeFunc(noticeTopic, Map(
             "id" -> id,
             "resultPath" -> resultPath,
@@ -134,6 +139,21 @@ class BPSPythonJob(override val id: String,
         ))
         super.close()
         container.finishJobWithId(id)
+    }
+
+    // 注册血统
+    def regPedigree(): Unit = {
+        import collection.JavaConverters._
+        val dfs = new DataSet(
+            parentsOId.asJava,
+            mongoOId,
+            id,
+            Collections.emptyList(),
+            "",
+            lastMetadata("length").asInstanceOf[Double].toInt,
+            successPath,
+            "Python 清洗 Job")
+        BPSBloodJob("data_set_job", dfs).exec()
     }
 
     def addListener(rowRecordPath: String): BPStreamListener = {
