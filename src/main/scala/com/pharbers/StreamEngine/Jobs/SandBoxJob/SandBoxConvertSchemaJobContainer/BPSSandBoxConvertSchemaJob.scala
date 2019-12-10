@@ -99,6 +99,10 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 					jobParam("parquetSavePath") + jobParam("currentJobId"),
 					"SampleData")).exec()
 			
+			if (assetId.isEmpty) {
+				logger.info(s"Fuck AssetId Is Null ====> $assetId, Path ====> ${jobParam("parquetSavePath")}${jobParam("currentJobId")}")
+			}
+			
 			val uploadEnd = new UploadEnd(sampleDataSetId, assetId)
 			BPSUploadEndJob("upload_end_job", uploadEnd).exec()
 		}
