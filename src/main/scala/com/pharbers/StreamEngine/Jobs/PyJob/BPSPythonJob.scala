@@ -17,7 +17,7 @@ object BPSPythonJob {
               spark: SparkSession,
               inputStream: Option[sql.DataFrame],
               container: BPSJobContainer,
-              noticeFunc: Map[String, Any] => Unit,
+              noticeFunc: (String, Map[String, Any]) => Unit,
               jobConf: Map[String, Any]): BPSPythonJob =
         new BPSPythonJob(id, spark, inputStream, container, noticeFunc, jobConf)
 }
@@ -42,7 +42,7 @@ class BPSPythonJob(override val id: String,
                    override val spark: SparkSession,
                    is: Option[sql.DataFrame],
                    container: BPSJobContainer,
-                   noticeFunc: Map[String, Any] => Unit,
+                   noticeFunc: (String, Map[String, Any]) => Unit,
                    jobConf: Map[String, Any]) extends BPStreamJob with Serializable {
 
     type T = BPSJobStrategy
@@ -124,8 +124,7 @@ class BPSPythonJob(override val id: String,
     }
 
     override def close(): Unit = {
-        noticeFunc(Map(
-            "noticeTopic" -> noticeTopic,
+        noticeFunc(noticeTopic, Map(
             "id" -> id,
             "resultPath" -> resultPath,
             "rowRecordPath" -> rowRecordPath,
