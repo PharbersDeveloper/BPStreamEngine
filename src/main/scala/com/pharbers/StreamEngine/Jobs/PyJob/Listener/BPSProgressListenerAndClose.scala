@@ -25,10 +25,10 @@ case class BPSProgressListenerAndClose(override val job: BPSPythonJob,
     override def trigger(e: BPSEvents): Unit = {
         val rows = BPSHDFSFile.readHDFS(rowRecordPath).map(_.toLong).sum
 
-        logger.debug("=========> Total Row " + rowLength)
-        logger.debug("=====>" + rows)
+        logger.debug(s"===${job.id}======> Total Row $rowLength")
+        logger.debug(s"===${job.id}===>" + rows)
         if (rows >= rowLength) {
-            logger.info("******>" + rows)
+            logger.info(s"***${job.id}***>" + rows)
             job.close()
         }
     }

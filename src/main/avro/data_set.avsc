@@ -11,7 +11,11 @@
       }
     },
     {
-      "name": "jobId",
+      "name": "mongoId",
+      "type": "string"
+    },
+    {
+      "name": "jobContainerId",
       "type": "string"
     },
     {

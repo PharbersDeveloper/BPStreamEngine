@@ -10,14 +10,14 @@ import org.apache.avro.specific.SpecificData;
 @SuppressWarnings("all")
 @org.apache.avro.specific.AvroGenerated
 public class FileMetaData extends org.apache.avro.specific.SpecificRecordBase implements org.apache.avro.specific.SpecificRecord {
-  private static final long serialVersionUID = -2976631748437174536L;
-  public static final org.apache.avro.Schema SCHEMA$ = new org.apache.avro.Schema.Parser().parse("{\"type\":\"record\",\"name\":\"FileMetaData\",\"namespace\":\"com.pharbers.kafka.schema\",\"fields\":[{\"name\":\"RunId\",\"type\":\"string\"},{\"name\":\"JobId\",\"type\":\"string\"},{\"name\":\"MetaDataPath\",\"type\":\"string\"},{\"name\":\"SampleDataPath\",\"type\":\"string\"},{\"name\":\"ConvertType\",\"type\":\"string\"}]}");
+  private static final long serialVersionUID = -4822673345212200413L;
+  public static final org.apache.avro.Schema SCHEMA$ = new org.apache.avro.Schema.Parser().parse("{\"type\":\"record\",\"name\":\"FileMetaData\",\"namespace\":\"com.pharbers.kafka.schema\",\"fields\":[{\"name\":\"runId\",\"type\":\"string\"},{\"name\":\"jobId\",\"type\":\"string\"},{\"name\":\"metaDataPath\",\"type\":\"string\"},{\"name\":\"sampleDataPath\",\"type\":\"string\"},{\"name\":\"convertType\",\"type\":\"string\"}]}");
   public static org.apache.avro.Schema getClassSchema() { return SCHEMA$; }
-  @Deprecated public java.lang.CharSequence RunId;
-  @Deprecated public java.lang.CharSequence JobId;
-  @Deprecated public java.lang.CharSequence MetaDataPath;
-  @Deprecated public java.lang.CharSequence SampleDataPath;
-  @Deprecated public java.lang.CharSequence ConvertType;
+  @Deprecated public java.lang.CharSequence runId;
+  @Deprecated public java.lang.CharSequence jobId;
+  @Deprecated public java.lang.CharSequence metaDataPath;
+  @Deprecated public java.lang.CharSequence sampleDataPath;
+  @Deprecated public java.lang.CharSequence convertType;
 
   /**
    * Default constructor.  Note that this does not initialize fields
@@ -28,29 +28,29 @@ public class FileMetaData extends org.apache.avro.specific.SpecificRecordBase im
 
   /**
    * All-args constructor.
-   * @param RunId The new value for RunId
-   * @param JobId The new value for JobId
-   * @param MetaDataPath The new value for MetaDataPath
-   * @param SampleDataPath The new value for SampleDataPath
-   * @param ConvertType The new value for ConvertType
+   * @param runId The new value for runId
+   * @param jobId The new value for jobId
+   * @param metaDataPath The new value for metaDataPath
+   * @param sampleDataPath The new value for sampleDataPath
+   * @param convertType The new value for convertType
    */
-  public FileMetaData(java.lang.CharSequence RunId, java.lang.CharSequence JobId, java.lang.CharSequence MetaDataPath, java.lang.CharSequence SampleDataPath, java.lang.CharSequence ConvertType) {
-    this.RunId = RunId;
-    this.JobId = JobId;
-    this.MetaDataPath = MetaDataPath;
-    this.SampleDataPath = SampleDataPath;
-    this.ConvertType = ConvertType;
+  public FileMetaData(java.lang.CharSequence runId, java.lang.CharSequence jobId, java.lang.CharSequence metaDataPath, java.lang.CharSequence sampleDataPath, java.lang.CharSequence convertType) {
+    this.runId = runId;
+    this.jobId = jobId;
+    this.metaDataPath = metaDataPath;
+    this.sampleDataPath = sampleDataPath;
+    this.convertType = convertType;
   }
 
   public org.apache.avro.Schema getSchema() { return SCHEMA$; }
   // Used by DatumWriter.  Applications should not call.
   public java.lang.Object get(int field$) {
     switch (field$) {
-    case 0: return RunId;
-    case 1: return JobId;
-    case 2: return MetaDataPath;
-    case 3: return SampleDataPath;
-    case 4: return ConvertType;
+    case 0: return runId;
+    case 1: return jobId;
+    case 2: return metaDataPath;
+    case 3: return sampleDataPath;
+    case 4: return convertType;
     default: throw new org.apache.avro.AvroRuntimeException("Bad index");
     }
   }
@@ -59,93 +59,93 @@ public class FileMetaData extends org.apache.avro.specific.SpecificRecordBase im
   @SuppressWarnings(value="unchecked")
   public void put(int field$, java.lang.Object value$) {
     switch (field$) {
-    case 0: RunId = (java.lang.CharSequence)value$; break;
-    case 1: JobId = (java.lang.CharSequence)value$; break;
-    case 2: MetaDataPath = (java.lang.CharSequence)value$; break;
-    case 3: SampleDataPath = (java.lang.CharSequence)value$; break;
-    case 4: ConvertType = (java.lang.CharSequence)value$; break;
+    case 0: runId = (java.lang.CharSequence)value$; break;
+    case 1: jobId = (java.lang.CharSequence)value$; break;
+    case 2: metaDataPath = (java.lang.CharSequence)value$; break;
+    case 3: sampleDataPath = (java.lang.CharSequence)value$; break;
+    case 4: convertType = (java.lang.CharSequence)value$; break;
     default: throw new org.apache.avro.AvroRuntimeException("Bad index");
     }
   }
 
   /**
-   * Gets the value of the 'RunId' field.
-   * @return The value of the 'RunId' field.
+   * Gets the value of the 'runId' field.
+   * @return The value of the 'runId' field.
    */
   public java.lang.CharSequence getRunId() {
-    return RunId;
+    return runId;
   }
 
   /**
-   * Sets the value of the 'RunId' field.
+   * Sets the value of the 'runId' field.
    * @param value the value to set.
    */
   public void setRunId(java.lang.CharSequence value) {
-    this.RunId = value;
+    this.runId = value;
   }
 
   /**
-   * Gets the value of the 'JobId' field.
-   * @return The value of the 'JobId' field.
+   * Gets the value of the 'jobId' field.
+   * @return The value of the 'jobId' field.
    */
   public java.lang.CharSequence getJobId() {
-    return JobId;
+    return jobId;
   }
 
   /**
-   * Sets the value of the 'JobId' field.
+   * Sets the value of the 'jobId' field.
    * @param value the value to set.
    */
   public void setJobId(java.lang.CharSequence value) {
-    this.JobId = value;
+    this.jobId = value;
   }
 
   /**
-   * Gets the value of the 'MetaDataPath' field.
-   * @return The value of the 'MetaDataPath' field.
+   * Gets the value of the 'metaDataPath' field.
+   * @return The value of the 'metaDataPath' field.
    */
   public java.lang.CharSequence getMetaDataPath() {
-    return MetaDataPath;
+    return metaDataPath;
   }
 
   /**
-   * Sets the value of the 'MetaDataPath' field.
+   * Sets the value of the 'metaDataPath' field.
    * @param value the value to set.
    */
   public void setMetaDataPath(java.lang.CharSequence value) {
-    this.MetaDataPath = value;
+    this.metaDataPath = value;
   }
 
   /**
-   * Gets the value of the 'SampleDataPath' field.
-   * @return The value of the 'SampleDataPath' field.
+   * Gets the value of the 'sampleDataPath' field.
+   * @return The value of the 'sampleDataPath' field.
    */
   public java.lang.CharSequence getSampleDataPath() {
-    return SampleDataPath;
+    return sampleDataPath;
   }
 
   /**
-   * Sets the value of the 'SampleDataPath' field.
+   * Sets the value of the 'sampleDataPath' field.
    * @param value the value to set.
    */
   public void setSampleDataPath(java.lang.CharSequence value) {
-    this.SampleDataPath = value;
+    this.sampleDataPath = value;
   }
 
   /**
-   * Gets the value of the 'ConvertType' field.
-   * @return The value of the 'ConvertType' field.
+   * Gets the value of the 'convertType' field.
+   * @return The value of the 'convertType' field.
    */
   public java.lang.CharSequence getConvertType() {
-    return ConvertType;
+    return convertType;
   }
 
   /**
-   * Sets the value of the 'ConvertType' field.
+   * Sets the value of the 'convertType' field.
    * @param value the value to set.
    */
   public void setConvertType(java.lang.CharSequence value) {
-    this.ConvertType = value;
+    this.convertType = value;
   }
 
   /**
@@ -180,11 +180,11 @@ public class FileMetaData extends org.apache.avro.specific.SpecificRecordBase im
   public static class Builder extends org.apache.avro.specific.SpecificRecordBuilderBase<FileMetaData>
     implements org.apache.avro.data.RecordBuilder<FileMetaData> {
 
-    private java.lang.CharSequence RunId;
-    private java.lang.CharSequence JobId;
-    private java.lang.CharSequence MetaDataPath;
-    private java.lang.CharSequence SampleDataPath;
-    private java.lang.CharSequence ConvertType;
+    private java.lang.CharSequence runId;
+    private java.lang.CharSequence jobId;
+    private java.lang.CharSequence metaDataPath;
+    private java.lang.CharSequence sampleDataPath;
+    private java.lang.CharSequence convertType;
 
     /** Creates a new Builder */
     private Builder() {
@@ -197,24 +197,24 @@ public class FileMetaData extends org.apache.avro.specific.SpecificRecordBase im
      */
     private Builder(com.pharbers.kafka.schema.FileMetaData.Builder other) {
       super(other);
-      if (isValidValue(fields()[0], other.RunId)) {
-        this.RunId = data().deepCopy(fields()[0].schema(), other.RunId);
+      if (isValidValue(fields()[0], other.runId)) {
+        this.runId = data().deepCopy(fields()[0].schema(), other.runId);
         fieldSetFlags()[0] = true;
       }
-      if (isValidValue(fields()[1], other.JobId)) {
-        this.JobId = data().deepCopy(fields()[1].schema(), other.JobId);
+      if (isValidValue(fields()[1], other.jobId)) {
+        this.jobId = data().deepCopy(fields()[1].schema(), other.jobId);
         fieldSetFlags()[1] = true;
       }
-      if (isValidValue(fields()[2], other.MetaDataPath)) {
-        this.MetaDataPath = data().deepCopy(fields()[2].schema(), other.MetaDataPath);
+      if (isValidValue(fields()[2], other.metaDataPath)) {
+        this.metaDataPath = data().deepCopy(fields()[2].schema(), other.metaDataPath);
         fieldSetFlags()[2] = true;
       }
-      if (isValidValue(fields()[3], other.SampleDataPath)) {
-        this.SampleDataPath = data().deepCopy(fields()[3].schema(), other.SampleDataPath);
+      if (isValidValue(fields()[3], other.sampleDataPath)) {
+        this.sampleDataPath = data().deepCopy(fields()[3].schema(), other.sampleDataPath);
         fieldSetFlags()[3] = true;
       }
-      if (isValidValue(fields()[4], other.ConvertType)) {
-        this.ConvertType = data().deepCopy(fields()[4].schema(), other.ConvertType);
+      if (isValidValue(fields()[4], other.convertType)) {
+        this.convertType = data().deepCopy(fields()[4].schema(), other.convertType);
         fieldSetFlags()[4] = true;
       }
     }
@@ -225,51 +225,51 @@ public class FileMetaData extends org.apache.avro.specific.SpecificRecordBase im
      */
     private Builder(com.pharbers.kafka.schema.FileMetaData other) {
             super(SCHEMA$);
-      if (isValidValue(fields()[0], other.RunId)) {
-        this.RunId = data().deepCopy(fields()[0].schema(), other.RunId);
+      if (isValidValue(fields()[0], other.runId)) {
+        this.runId = data().deepCopy(fields()[0].schema(), other.runId);
         fieldSetFlags()[0] = true;
       }
-      if (isValidValue(fields()[1], other.JobId)) {
-        this.JobId = data().deepCopy(fields()[1].schema(), other.JobId);
+      if (isValidValue(fields()[1], other.jobId)) {
+        this.jobId = data().deepCopy(fields()[1].schema(), other.jobId);
         fieldSetFlags()[1] = true;
       }
-      if (isValidValue(fields()[2], other.MetaDataPath)) {
-        this.MetaDataPath = data().deepCopy(fields()[2].schema(), other.MetaDataPath);
+      if (isValidValue(fields()[2], other.metaDataPath)) {
+        this.metaDataPath = data().deepCopy(fields()[2].schema(), other.metaDataPath);
         fieldSetFlags()[2] = true;
       }
-      if (isValidValue(fields()[3], other.SampleDataPath)) {
-        this.SampleDataPath = data().deepCopy(fields()[3].schema(), other.SampleDataPath);
+      if (isValidValue(fields()[3], other.sampleDataPath)) {
+        this.sampleDataPath = data().deepCopy(fields()[3].schema(), other.sampleDataPath);
         fieldSetFlags()[3] = true;
       }
-      if (isValidValue(fields()[4], other.ConvertType)) {
-        this.ConvertType = data().deepCopy(fields()[4].schema(), other.ConvertType);
+      if (isValidValue(fields()[4], other.convertType)) {
+        this.convertType = data().deepCopy(fields()[4].schema(), other.convertType);
         fieldSetFlags()[4] = true;
       }
     }
 
     /**
-      * Gets the value of the 'RunId' field.
+      * Gets the value of the 'runId' field.
       * @return The value.
       */
     public java.lang.CharSequence getRunId() {
-      return RunId;
+      return runId;
     }
 
     /**
-      * Sets the value of the 'RunId' field.
-      * @param value The value of 'RunId'.
+      * Sets the value of the 'runId' field.
+      * @param value The value of 'runId'.
       * @return This builder.
       */
     public com.pharbers.kafka.schema.FileMetaData.Builder setRunId(java.lang.CharSequence value) {
       validate(fields()[0], value);
-      this.RunId = value;
+      this.runId = value;
       fieldSetFlags()[0] = true;
       return this;
     }
 
     /**
-      * Checks whether the 'RunId' field has been set.
-      * @return True if the 'RunId' field has been set, false otherwise.
+      * Checks whether the 'runId' field has been set.
+      * @return True if the 'runId' field has been set, false otherwise.
       */
     public boolean hasRunId() {
       return fieldSetFlags()[0];
@@ -277,38 +277,38 @@ public class FileMetaData extends org.apache.avro.specific.SpecificRecordBase im
 
 
     /**
-      * Clears the value of the 'RunId' field.
+      * Clears the value of the 'runId' field.
       * @return This builder.
       */
     public com.pharbers.kafka.schema.FileMetaData.Builder clearRunId() {
-      RunId = null;
+      runId = null;
       fieldSetFlags()[0] = false;
       return this;
     }
 
     /**
-      * Gets the value of the 'JobId' field.
+      * Gets the value of the 'jobId' field.
       * @return The value.
       */
     public java.lang.CharSequence getJobId() {
-      return JobId;
+      return jobId;
     }
 
     /**
-      * Sets the value of the 'JobId' field.
-      * @param value The value of 'JobId'.
+      * Sets the value of the 'jobId' field.
+      * @param value The value of 'jobId'.
       * @return This builder.
       */
     public com.pharbers.kafka.schema.FileMetaData.Builder setJobId(java.lang.CharSequence value) {
       validate(fields()[1], value);
-      this.JobId = value;
+      this.jobId = value;
       fieldSetFlags()[1] = true;
       return this;
     }
 
     /**
-      * Checks whether the 'JobId' field has been set.
-      * @return True if the 'JobId' field has been set, false otherwise.
+      * Checks whether the 'jobId' field has been set.
+      * @return True if the 'jobId' field has been set, false otherwise.
       */
     public boolean hasJobId() {
       return fieldSetFlags()[1];
@@ -316,38 +316,38 @@ public class FileMetaData extends org.apache.avro.specific.SpecificRecordBase im
 
 
     /**
-      * Clears the value of the 'JobId' field.
+      * Clears the value of the 'jobId' field.
       * @return This builder.
       */
     public com.pharbers.kafka.schema.FileMetaData.Builder clearJobId() {
-      JobId = null;
+      jobId = null;
       fieldSetFlags()[1] = false;
       return this;
     }
 
     /**
-      * Gets the value of the 'MetaDataPath' field.
+      * Gets the value of the 'metaDataPath' field.
       * @return The value.
       */
     public java.lang.CharSequence getMetaDataPath() {
-      return MetaDataPath;
+      return metaDataPath;
     }
 
     /**
-      * Sets the value of the 'MetaDataPath' field.
-      * @param value The value of 'MetaDataPath'.
+      * Sets the value of the 'metaDataPath' field.
+      * @param value The value of 'metaDataPath'.
       * @return This builder.
       */
     public com.pharbers.kafka.schema.FileMetaData.Builder setMetaDataPath(java.lang.CharSequence value) {
       validate(fields()[2], value);
-      this.MetaDataPath = value;
+      this.metaDataPath = value;
       fieldSetFlags()[2] = true;
       return this;
     }
 
     /**
-      * Checks whether the 'MetaDataPath' field has been set.
-      * @return True if the 'MetaDataPath' field has been set, false otherwise.
+      * Checks whether the 'metaDataPath' field has been set.
+      * @return True if the 'metaDataPath' field has been set, false otherwise.
       */
     public boolean hasMetaDataPath() {
       return fieldSetFlags()[2];
@@ -355,38 +355,38 @@ public class FileMetaData extends org.apache.avro.specific.SpecificRecordBase im
 
 
     /**
-      * Clears the value of the 'MetaDataPath' field.
+      * Clears the value of the 'metaDataPath' field.
       * @return This builder.
       */
     public com.pharbers.kafka.schema.FileMetaData.Builder clearMetaDataPath() {
-      MetaDataPath = null;
+      metaDataPath = null;
       fieldSetFlags()[2] = false;
       return this;
     }
 
     /**
-      * Gets the value of the 'SampleDataPath' field.
+      * Gets the value of the 'sampleDataPath' field.
       * @return The value.
       */
     public java.lang.CharSequence getSampleDataPath() {
-      return SampleDataPath;
+      return sampleDataPath;
     }
 
     /**
-      * Sets the value of the 'SampleDataPath' field.
-      * @param value The value of 'SampleDataPath'.
+      * Sets the value of the 'sampleDataPath' field.
+      * @param value The value of 'sampleDataPath'.
       * @return This builder.
       */
     public com.pharbers.kafka.schema.FileMetaData.Builder setSampleDataPath(java.lang.CharSequence value) {
       validate(fields()[3], value);
-      this.SampleDataPath = value;
+      this.sampleDataPath = value;
       fieldSetFlags()[3] = true;
       return this;
     }
 
     /**
-      * Checks whether the 'SampleDataPath' field has been set.
-      * @return True if the 'SampleDataPath' field has been set, false otherwise.
+      * Checks whether the 'sampleDataPath' field has been set.
+      * @return True if the 'sampleDataPath' field has been set, false otherwise.
       */
     public boolean hasSampleDataPath() {
       return fieldSetFlags()[3];
@@ -394,38 +394,38 @@ public class FileMetaData extends org.apache.avro.specific.SpecificRecordBase im
 
 
     /**
-      * Clears the value of the 'SampleDataPath' field.
+      * Clears the value of the 'sampleDataPath' field.
       * @return This builder.
       */
     public com.pharbers.kafka.schema.FileMetaData.Builder clearSampleDataPath() {
-      SampleDataPath = null;
+      sampleDataPath = null;
       fieldSetFlags()[3] = false;
       return this;
     }
 
     /**
-      * Gets the value of the 'ConvertType' field.
+      * Gets the value of the 'convertType' field.
       * @return The value.
       */
     public java.lang.CharSequence getConvertType() {
-      return ConvertType;
+      return convertType;
     }
 
     /**
-      * Sets the value of the 'ConvertType' field.
-      * @param value The value of 'ConvertType'.
+      * Sets the value of the 'convertType' field.
+      * @param value The value of 'convertType'.
       * @return This builder.
       */
     public com.pharbers.kafka.schema.FileMetaData.Builder setConvertType(java.lang.CharSequence value) {
       validate(fields()[4], value);
-      this.ConvertType = value;
+      this.convertType = value;
       fieldSetFlags()[4] = true;
       return this;
     }
 
     /**
-      * Checks whether the 'ConvertType' field has been set.
-      * @return True if the 'ConvertType' field has been set, false otherwise.
+      * Checks whether the 'convertType' field has been set.
+      * @return True if the 'convertType' field has been set, false otherwise.
       */
     public boolean hasConvertType() {
       return fieldSetFlags()[4];
@@ -433,11 +433,11 @@ public class FileMetaData extends org.apache.avro.specific.SpecificRecordBase im
 
 
     /**
-      * Clears the value of the 'ConvertType' field.
+      * Clears the value of the 'convertType' field.
       * @return This builder.
       */
     public com.pharbers.kafka.schema.FileMetaData.Builder clearConvertType() {
-      ConvertType = null;
+      convertType = null;
       fieldSetFlags()[4] = false;
       return this;
     }
@@ -446,11 +446,11 @@ public class FileMetaData extends org.apache.avro.specific.SpecificRecordBase im
     public FileMetaData build() {
       try {
         FileMetaData record = new FileMetaData();
-        record.RunId = fieldSetFlags()[0] ? this.RunId : (java.lang.CharSequence) defaultValue(fields()[0]);
-        record.JobId = fieldSetFlags()[1] ? this.JobId : (java.lang.CharSequence) defaultValue(fields()[1]);
-        record.MetaDataPath = fieldSetFlags()[2] ? this.MetaDataPath : (java.lang.CharSequence) defaultValue(fields()[2]);
-        record.SampleDataPath = fieldSetFlags()[3] ? this.SampleDataPath : (java.lang.CharSequence) defaultValue(fields()[3]);
-        record.ConvertType = fieldSetFlags()[4] ? this.ConvertType : (java.lang.CharSequence) defaultValue(fields()[4]);
+        record.runId = fieldSetFlags()[0] ? this.runId : (java.lang.CharSequence) defaultValue(fields()[0]);
+        record.jobId = fieldSetFlags()[1] ? this.jobId : (java.lang.CharSequence) defaultValue(fields()[1]);
+        record.metaDataPath = fieldSetFlags()[2] ? this.metaDataPath : (java.lang.CharSequence) defaultValue(fields()[2]);
+        record.sampleDataPath = fieldSetFlags()[3] ? this.sampleDataPath : (java.lang.CharSequence) defaultValue(fields()[3]);
+        record.convertType = fieldSetFlags()[4] ? this.convertType : (java.lang.CharSequence) defaultValue(fields()[4]);
         return record;
       } catch (Exception e) {
         throw new org.apache.avro.AvroRuntimeException(e);
@@ -461,9 +461,7 @@ public class FileMetaData extends org.apache.avro.specific.SpecificRecordBase im
   private static final org.apache.avro.io.DatumWriter
     WRITER$ = new org.apache.avro.specific.SpecificDatumWriter(SCHEMA$);
 
-
   private static final org.apache.avro.io.DatumReader
     READER$ = new org.apache.avro.specific.SpecificDatumReader(SCHEMA$);
-
 
 }

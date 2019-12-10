@@ -10,29 +10,30 @@ import py4j.{GatewayServer, Py4JNetworkException}
 import com.pharbers.StreamEngine.Utils.HDFS.BPSHDFSFile
 
 
-object BPSPy4jServer extends Serializable {
+//object BPSPy4jServer extends Serializable {
+//
+//    // 保存当前 JVM 上运行的所有 Py4j 服务
+//    var servers: Map[String, BPSPy4jServer] = Map.empty
+//
+//    def open(serverConf: Map[String, Any] = Map().empty): Unit = {
+//        BPSPy4jServer.synchronized {
+//            val server = BPSPy4jServer(serverConf).openBuffer().startServer().startEndpoint()
+//            servers = servers + (server.threadId -> server)
+//        }
+//    }
+//
+//
+//    // 保存流中的数据，并可以给 Python 访问
+//    var dataQueue: List[String] = Nil
+//
+//    def push(message: String): Unit = {
+//        BPSPy4jServer.synchronized {
+//            BPSPy4jServer.dataQueue = BPSPy4jServer.dataQueue ::: message :: Nil
+//        }
+//    }
+//}
 
-    // 保存当前 JVM 上运行的所有 Py4j 服务
-    var servers: Map[String, BPSPy4jServer] = Map.empty
-
-    def open(serverConf: Map[String, Any] = Map().empty): Unit = {
-        BPSPy4jServer.synchronized {
-            val server = BPSPy4jServer(serverConf).openBuffer().startServer().startEndpoint()
-            servers = servers + (server.threadId -> server)
-        }
-    }
-
-
-    // 保存流中的数据，并可以给 Python 访问
-    var dataQueue: List[String] = Nil
-
-    def push(message: String): Unit = {
-        BPSPy4jServer.synchronized {
-            BPSPy4jServer.dataQueue = BPSPy4jServer.dataQueue ::: message :: Nil
-        }
-    }
-}
-
+// TODO 这种实现是 “依赖倒置”
 /** 实现 Py4j 的 GatewayServer 的实例
  *
  * @author clock
@@ -44,11 +45,12 @@ object BPSPy4jServer extends Serializable {
  *     threadId = "threadId" // 默认重新生成UUID
  *     rowRecordPath = "./jobs/$jobId/row_record/$threadId" //默认
  *     metadataPath = "./jobs/$jobId/metadata/$threadId" //默认
- *     successPath = "./jobs/$jobId/success/$threadId" //默认
+ *     successPath = "./jobs/$jobId/contents/$threadId" //默认
  *     errPath = "./jobs/$jobId/err/$threadId" //默认
  * }}}
  */
-case class BPSPy4jServer(serverConf: Map[String, Any] = Map().empty) extends Serializable {
+case class BPSPy4jServer(serverConf: Map[String, Any] = Map().empty)
+                        (implicit py4jManager: BPSPy4jManager) extends Serializable {
     final val RETRY_COUNT: Int = 3
 
     val jobId: String = serverConf.getOrElse("jobId", UUID.randomUUID().toString).toString
@@ -56,7 +58,7 @@ case class BPSPy4jServer(serverConf: Map[String, Any] = Map().empty) extends Ser
 
     val rowRecordPath: String = serverConf.getOrElse("rowRecordPath", s"./jobs/$jobId/row_record/$threadId").toString
     val metadataPath: String = serverConf.getOrElse("metadataPath", s"./jobs/$jobId/metadata/$threadId").toString
-    val successPath: String = serverConf.getOrElse("successPath", s"./jobs/$jobId/success/$threadId").toString
+    val successPath: String = serverConf.getOrElse("successPath", s"./jobs/$jobId/contents/$threadId").toString
     val errPath: String = serverConf.getOrElse("errPath", s"./jobs/$jobId/err/$threadId").toString
 
 
@@ -194,13 +196,7 @@ case class BPSPy4jServer(serverConf: Map[String, Any] = Map().empty) extends Ser
 
     // Py4j 提供的 API
     def py4j_pop(): String = {
-        BPSPy4jServer.synchronized {
-            if (BPSPy4jServer.dataQueue.nonEmpty) {
-                val result = BPSPy4jServer.dataQueue.head
-                BPSPy4jServer.dataQueue = BPSPy4jServer.dataQueue.tail
-                result
-            } else "EMPTY"
-        }
+        py4jManager.pop()
     }
 
     // 计数器，统计处理的行数
@@ -210,7 +206,7 @@ case class BPSPy4jServer(serverConf: Map[String, Any] = Map().empty) extends Ser
     def py4j_writeHdfs(str: String): Unit = {
         // python 可能调用多次，即一条数据清洗出多条来
         // 2019-11-26 补充: 这里计数没问题，记录处理后的数据条目，而且只多不少，所以Listener判断输出数据条目大于等于输入数据条数
-        BPSPy4jServer.synchronized(curRow += 1)
+        this.synchronized(curRow += 1)
         JSON.parseFull(str) match {
             case Some(result: Map[String, AnyRef]) =>
                 if (result("tag").asInstanceOf[Double] == 1) {
@@ -240,6 +236,6 @@ case class BPSPy4jServer(serverConf: Map[String, Any] = Map().empty) extends Ser
         closeBuffer()
         shutdownServer()
         destroyEndpoint()
-        BPSPy4jServer.synchronized(BPSPy4jServer.servers = BPSPy4jServer.servers - threadId)
+        py4jManager.close(threadId)
     }
 }

@@ -10,11 +10,12 @@ import org.apache.avro.specific.SpecificData;
 @SuppressWarnings("all")
 @org.apache.avro.specific.AvroGenerated
 public class DataSet extends org.apache.avro.specific.SpecificRecordBase implements org.apache.avro.specific.SpecificRecord {
-  private static final long serialVersionUID = 5357404456338904112L;
-  public static final org.apache.avro.Schema SCHEMA$ = new org.apache.avro.Schema.Parser().parse("{\"type\":\"record\",\"name\":\"DataSet\",\"namespace\":\"com.pharbers.kafka.schema\",\"fields\":[{\"name\":\"parentIds\",\"type\":{\"type\":\"array\",\"items\":\"string\"}},{\"name\":\"jobId\",\"type\":\"string\"},{\"name\":\"colName\",\"type\":{\"type\":\"array\",\"items\":\"string\"}},{\"name\":\"tabName\",\"type\":\"string\"},{\"name\":\"length\",\"type\":\"int\"},{\"name\":\"url\",\"type\":\"string\"},{\"name\":\"description\",\"type\":\"string\"}]}");
+  private static final long serialVersionUID = -902128848882024924L;
+  public static final org.apache.avro.Schema SCHEMA$ = new org.apache.avro.Schema.Parser().parse("{\"type\":\"record\",\"name\":\"DataSet\",\"namespace\":\"com.pharbers.kafka.schema\",\"fields\":[{\"name\":\"parentIds\",\"type\":{\"type\":\"array\",\"items\":\"string\"}},{\"name\":\"mongoId\",\"type\":\"string\"},{\"name\":\"jobContainerId\",\"type\":\"string\"},{\"name\":\"colName\",\"type\":{\"type\":\"array\",\"items\":\"string\"}},{\"name\":\"tabName\",\"type\":\"string\"},{\"name\":\"length\",\"type\":\"int\"},{\"name\":\"url\",\"type\":\"string\"},{\"name\":\"description\",\"type\":\"string\"}]}");
   public static org.apache.avro.Schema getClassSchema() { return SCHEMA$; }
   @Deprecated public java.util.List<java.lang.CharSequence> parentIds;
-  @Deprecated public java.lang.CharSequence jobId;
+  @Deprecated public java.lang.CharSequence mongoId;
+  @Deprecated public java.lang.CharSequence jobContainerId;
   @Deprecated public java.util.List<java.lang.CharSequence> colName;
   @Deprecated public java.lang.CharSequence tabName;
   @Deprecated public int length;
@@ -31,16 +32,18 @@ public class DataSet extends org.apache.avro.specific.SpecificRecordBase impleme
   /**
    * All-args constructor.
    * @param parentIds The new value for parentIds
-   * @param jobId The new value for jobId
+   * @param mongoId The new value for mongoId
+   * @param jobContainerId The new value for jobContainerId
    * @param colName The new value for colName
    * @param tabName The new value for tabName
    * @param length The new value for length
    * @param url The new value for url
    * @param description The new value for description
    */
-  public DataSet(java.util.List<java.lang.CharSequence> parentIds, java.lang.CharSequence jobId, java.util.List<java.lang.CharSequence> colName, java.lang.CharSequence tabName, java.lang.Integer length, java.lang.CharSequence url, java.lang.CharSequence description) {
+  public DataSet(java.util.List<java.lang.CharSequence> parentIds, java.lang.CharSequence mongoId, java.lang.CharSequence jobContainerId, java.util.List<java.lang.CharSequence> colName, java.lang.CharSequence tabName, java.lang.Integer length, java.lang.CharSequence url, java.lang.CharSequence description) {
     this.parentIds = parentIds;
-    this.jobId = jobId;
+    this.mongoId = mongoId;
+    this.jobContainerId = jobContainerId;
     this.colName = colName;
     this.tabName = tabName;
     this.length = length;
@@ -53,12 +56,13 @@ public class DataSet extends org.apache.avro.specific.SpecificRecordBase impleme
   public java.lang.Object get(int field$) {
     switch (field$) {
     case 0: return parentIds;
-    case 1: return jobId;
-    case 2: return colName;
-    case 3: return tabName;
-    case 4: return length;
-    case 5: return url;
-    case 6: return description;
+    case 1: return mongoId;
+    case 2: return jobContainerId;
+    case 3: return colName;
+    case 4: return tabName;
+    case 5: return length;
+    case 6: return url;
+    case 7: return description;
     default: throw new org.apache.avro.AvroRuntimeException("Bad index");
     }
   }
@@ -68,12 +72,13 @@ public class DataSet extends org.apache.avro.specific.SpecificRecordBase impleme
   public void put(int field$, java.lang.Object value$) {
     switch (field$) {
     case 0: parentIds = (java.util.List<java.lang.CharSequence>)value$; break;
-    case 1: jobId = (java.lang.CharSequence)value$; break;
-    case 2: colName = (java.util.List<java.lang.CharSequence>)value$; break;
-    case 3: tabName = (java.lang.CharSequence)value$; break;
-    case 4: length = (java.lang.Integer)value$; break;
-    case 5: url = (java.lang.CharSequence)value$; break;
-    case 6: description = (java.lang.CharSequence)value$; break;
+    case 1: mongoId = (java.lang.CharSequence)value$; break;
+    case 2: jobContainerId = (java.lang.CharSequence)value$; break;
+    case 3: colName = (java.util.List<java.lang.CharSequence>)value$; break;
+    case 4: tabName = (java.lang.CharSequence)value$; break;
+    case 5: length = (java.lang.Integer)value$; break;
+    case 6: url = (java.lang.CharSequence)value$; break;
+    case 7: description = (java.lang.CharSequence)value$; break;
     default: throw new org.apache.avro.AvroRuntimeException("Bad index");
     }
   }
@@ -95,19 +100,35 @@ public class DataSet extends org.apache.avro.specific.SpecificRecordBase impleme
   }
 
   /**
-   * Gets the value of the 'jobId' field.
-   * @return The value of the 'jobId' field.
+   * Gets the value of the 'mongoId' field.
+   * @return The value of the 'mongoId' field.
    */
-  public java.lang.CharSequence getJobId() {
-    return jobId;
+  public java.lang.CharSequence getMongoId() {
+    return mongoId;
   }
 
   /**
-   * Sets the value of the 'jobId' field.
+   * Sets the value of the 'mongoId' field.
    * @param value the value to set.
    */
-  public void setJobId(java.lang.CharSequence value) {
-    this.jobId = value;
+  public void setMongoId(java.lang.CharSequence value) {
+    this.mongoId = value;
+  }
+
+  /**
+   * Gets the value of the 'jobContainerId' field.
+   * @return The value of the 'jobContainerId' field.
+   */
+  public java.lang.CharSequence getJobContainerId() {
+    return jobContainerId;
+  }
+
+  /**
+   * Sets the value of the 'jobContainerId' field.
+   * @param value the value to set.
+   */
+  public void setJobContainerId(java.lang.CharSequence value) {
+    this.jobContainerId = value;
   }
 
   /**
@@ -223,7 +244,8 @@ public class DataSet extends org.apache.avro.specific.SpecificRecordBase impleme
     implements org.apache.avro.data.RecordBuilder<DataSet> {
 
     private java.util.List<java.lang.CharSequence> parentIds;
-    private java.lang.CharSequence jobId;
+    private java.lang.CharSequence mongoId;
+    private java.lang.CharSequence jobContainerId;
     private java.util.List<java.lang.CharSequence> colName;
     private java.lang.CharSequence tabName;
     private int length;
@@ -245,29 +267,33 @@ public class DataSet extends org.apache.avro.specific.SpecificRecordBase impleme
         this.parentIds = data().deepCopy(fields()[0].schema(), other.parentIds);
         fieldSetFlags()[0] = true;
       }
-      if (isValidValue(fields()[1], other.jobId)) {
-        this.jobId = data().deepCopy(fields()[1].schema(), other.jobId);
+      if (isValidValue(fields()[1], other.mongoId)) {
+        this.mongoId = data().deepCopy(fields()[1].schema(), other.mongoId);
         fieldSetFlags()[1] = true;
       }
-      if (isValidValue(fields()[2], other.colName)) {
-        this.colName = data().deepCopy(fields()[2].schema(), other.colName);
+      if (isValidValue(fields()[2], other.jobContainerId)) {
+        this.jobContainerId = data().deepCopy(fields()[2].schema(), other.jobContainerId);
         fieldSetFlags()[2] = true;
       }
-      if (isValidValue(fields()[3], other.tabName)) {
-        this.tabName = data().deepCopy(fields()[3].schema(), other.tabName);
+      if (isValidValue(fields()[3], other.colName)) {
+        this.colName = data().deepCopy(fields()[3].schema(), other.colName);
         fieldSetFlags()[3] = true;
       }
-      if (isValidValue(fields()[4], other.length)) {
-        this.length = data().deepCopy(fields()[4].schema(), other.length);
+      if (isValidValue(fields()[4], other.tabName)) {
+        this.tabName = data().deepCopy(fields()[4].schema(), other.tabName);
         fieldSetFlags()[4] = true;
       }
-      if (isValidValue(fields()[5], other.url)) {
-        this.url = data().deepCopy(fields()[5].schema(), other.url);
+      if (isValidValue(fields()[5], other.length)) {
+        this.length = data().deepCopy(fields()[5].schema(), other.length);
         fieldSetFlags()[5] = true;
       }
-      if (isValidValue(fields()[6], other.description)) {
-        this.description = data().deepCopy(fields()[6].schema(), other.description);
+      if (isValidValue(fields()[6], other.url)) {
+        this.url = data().deepCopy(fields()[6].schema(), other.url);
         fieldSetFlags()[6] = true;
+      }
+      if (isValidValue(fields()[7], other.description)) {
+        this.description = data().deepCopy(fields()[7].schema(), other.description);
+        fieldSetFlags()[7] = true;
       }
     }
 
@@ -281,29 +307,33 @@ public class DataSet extends org.apache.avro.specific.SpecificRecordBase impleme
         this.parentIds = data().deepCopy(fields()[0].schema(), other.parentIds);
         fieldSetFlags()[0] = true;
       }
-      if (isValidValue(fields()[1], other.jobId)) {
-        this.jobId = data().deepCopy(fields()[1].schema(), other.jobId);
+      if (isValidValue(fields()[1], other.mongoId)) {
+        this.mongoId = data().deepCopy(fields()[1].schema(), other.mongoId);
         fieldSetFlags()[1] = true;
       }
-      if (isValidValue(fields()[2], other.colName)) {
-        this.colName = data().deepCopy(fields()[2].schema(), other.colName);
+      if (isValidValue(fields()[2], other.jobContainerId)) {
+        this.jobContainerId = data().deepCopy(fields()[2].schema(), other.jobContainerId);
         fieldSetFlags()[2] = true;
       }
-      if (isValidValue(fields()[3], other.tabName)) {
-        this.tabName = data().deepCopy(fields()[3].schema(), other.tabName);
+      if (isValidValue(fields()[3], other.colName)) {
+        this.colName = data().deepCopy(fields()[3].schema(), other.colName);
         fieldSetFlags()[3] = true;
       }
-      if (isValidValue(fields()[4], other.length)) {
-        this.length = data().deepCopy(fields()[4].schema(), other.length);
+      if (isValidValue(fields()[4], other.tabName)) {
+        this.tabName = data().deepCopy(fields()[4].schema(), other.tabName);
         fieldSetFlags()[4] = true;
       }
-      if (isValidValue(fields()[5], other.url)) {
-        this.url = data().deepCopy(fields()[5].schema(), other.url);
+      if (isValidValue(fields()[5], other.length)) {
+        this.length = data().deepCopy(fields()[5].schema(), other.length);
         fieldSetFlags()[5] = true;
       }
-      if (isValidValue(fields()[6], other.description)) {
-        this.description = data().deepCopy(fields()[6].schema(), other.description);
+      if (isValidValue(fields()[6], other.url)) {
+        this.url = data().deepCopy(fields()[6].schema(), other.url);
         fieldSetFlags()[6] = true;
+      }
+      if (isValidValue(fields()[7], other.description)) {
+        this.description = data().deepCopy(fields()[7].schema(), other.description);
+        fieldSetFlags()[7] = true;
       }
     }
 
@@ -347,41 +377,80 @@ public class DataSet extends org.apache.avro.specific.SpecificRecordBase impleme
     }
 
     /**
-      * Gets the value of the 'jobId' field.
+      * Gets the value of the 'mongoId' field.
       * @return The value.
       */
-    public java.lang.CharSequence getJobId() {
-      return jobId;
+    public java.lang.CharSequence getMongoId() {
+      return mongoId;
     }
 
     /**
-      * Sets the value of the 'jobId' field.
-      * @param value The value of 'jobId'.
+      * Sets the value of the 'mongoId' field.
+      * @param value The value of 'mongoId'.
       * @return This builder.
       */
-    public com.pharbers.kafka.schema.DataSet.Builder setJobId(java.lang.CharSequence value) {
+    public com.pharbers.kafka.schema.DataSet.Builder setMongoId(java.lang.CharSequence value) {
       validate(fields()[1], value);
-      this.jobId = value;
+      this.mongoId = value;
       fieldSetFlags()[1] = true;
       return this;
     }
 
     /**
-      * Checks whether the 'jobId' field has been set.
-      * @return True if the 'jobId' field has been set, false otherwise.
+      * Checks whether the 'mongoId' field has been set.
+      * @return True if the 'mongoId' field has been set, false otherwise.
       */
-    public boolean hasJobId() {
+    public boolean hasMongoId() {
       return fieldSetFlags()[1];
     }
 
 
     /**
-      * Clears the value of the 'jobId' field.
+      * Clears the value of the 'mongoId' field.
       * @return This builder.
       */
-    public com.pharbers.kafka.schema.DataSet.Builder clearJobId() {
-      jobId = null;
+    public com.pharbers.kafka.schema.DataSet.Builder clearMongoId() {
+      mongoId = null;
       fieldSetFlags()[1] = false;
+      return this;
+    }
+
+    /**
+      * Gets the value of the 'jobContainerId' field.
+      * @return The value.
+      */
+    public java.lang.CharSequence getJobContainerId() {
+      return jobContainerId;
+    }
+
+    /**
+      * Sets the value of the 'jobContainerId' field.
+      * @param value The value of 'jobContainerId'.
+      * @return This builder.
+      */
+    public com.pharbers.kafka.schema.DataSet.Builder setJobContainerId(java.lang.CharSequence value) {
+      validate(fields()[2], value);
+      this.jobContainerId = value;
+      fieldSetFlags()[2] = true;
+      return this;
+    }
+
+    /**
+      * Checks whether the 'jobContainerId' field has been set.
+      * @return True if the 'jobContainerId' field has been set, false otherwise.
+      */
+    public boolean hasJobContainerId() {
+      return fieldSetFlags()[2];
+    }
+
+
+    /**
+      * Clears the value of the 'jobContainerId' field.
+      * @return This builder.
+      */
+    public com.pharbers.kafka.schema.DataSet.Builder clearJobContainerId() {
+      jobContainerId = null;
+      fieldSetFlags()[2] = false;
       return this;
     }
 
@@ -399,9 +468,9 @@ public class DataSet extends org.apache.avro.specific.SpecificRecordBase impleme
       * @return This builder.
       */
     public com.pharbers.kafka.schema.DataSet.Builder setColName(java.util.List<java.lang.CharSequence> value) {
-      validate(fields()[2], value);
+      validate(fields()[3], value);
       this.colName = value;
-      fieldSetFlags()[2] = true;
+      fieldSetFlags()[3] = true;
       return this;
     }
 
@@ -410,7 +479,7 @@ public class DataSet extends org.apache.avro.specific.SpecificRecordBase impleme
       * @return True if the 'colName' field has been set, false otherwise.
       */
     public boolean hasColName() {
-      return fieldSetFlags()[2];
+      return fieldSetFlags()[3];
     }
 
 
@@ -420,7 +489,7 @@ public class DataSet extends org.apache.avro.specific.SpecificRecordBase impleme
       */
     public com.pharbers.kafka.schema.DataSet.Builder clearColName() {
       colName = null;
-      fieldSetFlags()[2] = false;
+      fieldSetFlags()[3] = false;
       return this;
     }
 
@@ -438,9 +507,9 @@ public class DataSet extends org.apache.avro.specific.SpecificRecordBase impleme
       * @return This builder.
       */
     public com.pharbers.kafka.schema.DataSet.Builder setTabName(java.lang.CharSequence value) {
-      validate(fields()[3], value);
+      validate(fields()[4], value);
       this.tabName = value;
-      fieldSetFlags()[3] = true;
+      fieldSetFlags()[4] = true;
       return this;
     }
 
@@ -449,7 +518,7 @@ public class DataSet extends org.apache.avro.specific.SpecificRecordBase impleme
       * @return True if the 'tabName' field has been set, false otherwise.
       */
     public boolean hasTabName() {
-      return fieldSetFlags()[3];
+      return fieldSetFlags()[4];
     }
 
 
@@ -459,7 +528,7 @@ public class DataSet extends org.apache.avro.specific.SpecificRecordBase impleme
       */
     public com.pharbers.kafka.schema.DataSet.Builder clearTabName() {
       tabName = null;
-      fieldSetFlags()[3] = false;
+      fieldSetFlags()[4] = false;
       return this;
     }
 
@@ -477,9 +546,9 @@ public class DataSet extends org.apache.avro.specific.SpecificRecordBase impleme
       * @return This builder.
       */
     public com.pharbers.kafka.schema.DataSet.Builder setLength(int value) {
-      validate(fields()[4], value);
+      validate(fields()[5], value);
       this.length = value;
-      fieldSetFlags()[4] = true;
+      fieldSetFlags()[5] = true;
       return this;
     }
 
@@ -488,7 +557,7 @@ public class DataSet extends org.apache.avro.specific.SpecificRecordBase impleme
       * @return True if the 'length' field has been set, false otherwise.
       */
     public boolean hasLength() {
-      return fieldSetFlags()[4];
+      return fieldSetFlags()[5];
     }
 
 
@@ -497,7 +566,7 @@ public class DataSet extends org.apache.avro.specific.SpecificRecordBase impleme
       * @return This builder.
       */
     public com.pharbers.kafka.schema.DataSet.Builder clearLength() {
-      fieldSetFlags()[4] = false;
+      fieldSetFlags()[5] = false;
       return this;
     }
 
@@ -515,9 +584,9 @@ public class DataSet extends org.apache.avro.specific.SpecificRecordBase impleme
       * @return This builder.
       */
     public com.pharbers.kafka.schema.DataSet.Builder setUrl(java.lang.CharSequence value) {
-      validate(fields()[5], value);
+      validate(fields()[6], value);
       this.url = value;
-      fieldSetFlags()[5] = true;
+      fieldSetFlags()[6] = true;
       return this;
     }
 
@@ -526,7 +595,7 @@ public class DataSet extends org.apache.avro.specific.SpecificRecordBase impleme
       * @return True if the 'url' field has been set, false otherwise.
       */
     public boolean hasUrl() {
-      return fieldSetFlags()[5];
+      return fieldSetFlags()[6];
     }
 
 
@@ -536,7 +605,7 @@ public class DataSet extends org.apache.avro.specific.SpecificRecordBase impleme
       */
     public com.pharbers.kafka.schema.DataSet.Builder clearUrl() {
       url = null;
-      fieldSetFlags()[5] = false;
+      fieldSetFlags()[6] = false;
       return this;
     }
 
@@ -554,9 +623,9 @@ public class DataSet extends org.apache.avro.specific.SpecificRecordBase impleme
       * @return This builder.
       */
     public com.pharbers.kafka.schema.DataSet.Builder setDescription(java.lang.CharSequence value) {
-      validate(fields()[6], value);
+      validate(fields()[7], value);
       this.description = value;
-      fieldSetFlags()[6] = true;
+      fieldSetFlags()[7] = true;
       return this;
     }
 
@@ -565,7 +634,7 @@ public class DataSet extends org.apache.avro.specific.SpecificRecordBase impleme
       * @return True if the 'description' field has been set, false otherwise.
       */
     public boolean hasDescription() {
-      return fieldSetFlags()[6];
+      return fieldSetFlags()[7];
     }
 
 
@@ -575,7 +644,7 @@ public class DataSet extends org.apache.avro.specific.SpecificRecordBase impleme
       */
     public com.pharbers.kafka.schema.DataSet.Builder clearDescription() {
       description = null;
-      fieldSetFlags()[6] = false;
+      fieldSetFlags()[7] = false;
       return this;
     }
 
@@ -584,12 +653,13 @@ public class DataSet extends org.apache.avro.specific.SpecificRecordBase impleme
       try {
         DataSet record = new DataSet();
         record.parentIds = fieldSetFlags()[0] ? this.parentIds : (java.util.List<java.lang.CharSequence>) defaultValue(fields()[0]);
-        record.jobId = fieldSetFlags()[1] ? this.jobId : (java.lang.CharSequence) defaultValue(fields()[1]);
-        record.colName = fieldSetFlags()[2] ? this.colName : (java.util.List<java.lang.CharSequence>) defaultValue(fields()[2]);
-        record.tabName = fieldSetFlags()[3] ? this.tabName : (java.lang.CharSequence) defaultValue(fields()[3]);
-        record.length = fieldSetFlags()[4] ? this.length : (java.lang.Integer) defaultValue(fields()[4]);
-        record.url = fieldSetFlags()[5] ? this.url : (java.lang.CharSequence) defaultValue(fields()[5]);
-        record.description = fieldSetFlags()[6] ? this.description : (java.lang.CharSequence) defaultValue(fields()[6]);
+        record.mongoId = fieldSetFlags()[1] ? this.mongoId : (java.lang.CharSequence) defaultValue(fields()[1]);
+        record.jobContainerId = fieldSetFlags()[2] ? this.jobContainerId : (java.lang.CharSequence) defaultValue(fields()[2]);
+        record.colName = fieldSetFlags()[3] ? this.colName : (java.util.List<java.lang.CharSequence>) defaultValue(fields()[3]);
+        record.tabName = fieldSetFlags()[4] ? this.tabName : (java.lang.CharSequence) defaultValue(fields()[4]);
+        record.length = fieldSetFlags()[5] ? this.length : (java.lang.Integer) defaultValue(fields()[5]);
+        record.url = fieldSetFlags()[6] ? this.url : (java.lang.CharSequence) defaultValue(fields()[6]);
+        record.description = fieldSetFlags()[7] ? this.description : (java.lang.CharSequence) defaultValue(fields()[7]);
         return record;
       } catch (Exception e) {
         throw new org.apache.avro.AvroRuntimeException(e);
@@ -602,6 +672,5 @@ public class DataSet extends org.apache.avro.specific.SpecificRecordBase impleme
 
   private static final org.apache.avro.io.DatumReader
     READER$ = new org.apache.avro.specific.SpecificDatumReader(SCHEMA$);
-
 
 }

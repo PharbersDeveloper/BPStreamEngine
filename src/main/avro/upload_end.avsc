@@ -4,11 +4,11 @@
   "namespace": "com.pharbers.kafka.schema",
   "fields": [
     {
-      "name": "jobId",
+      "name": "dataSetId",
       "type": "string"
     },
     {
-      "name": "traceId",
+      "name": "assetId",
       "type": "string"
     }
   ]

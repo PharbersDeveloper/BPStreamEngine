@@ -1,6 +1,6 @@
 {
   "type": "record",
-  "name": "Job",
+  "name": "OssTaskResult",
   "namespace": "com.pharbers.kafka.schema",
   "fields": [
     {
@@ -8,15 +8,15 @@
       "type": "string"
     },
     {
-      "name": "status",
+      "name": "traceId",
       "type": "string"
+    },
+    {
+      "name": "progress",
+      "type": "long"
     },
     {
       "name": "error",
-      "type": "string"
-    },
-    {
-      "name": "description",
       "type": "string"
     }
   ]

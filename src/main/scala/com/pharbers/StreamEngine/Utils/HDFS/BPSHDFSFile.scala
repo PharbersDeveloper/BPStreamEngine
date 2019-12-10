@@ -13,7 +13,7 @@ object BPSHDFSFile {
     configuration.set("fs.defaultFS", hdfsAddr)
 
     def openHdfsBuffer(path: String): Option[BufferedWriter] = {
-        val fileSystem: FileSystem = FileSystem.get(configuration)
+        val fileSystem: FileSystem = FileSystem.newInstance(configuration)
 
         val hdfsWritePath = new Path(path)
         val fsDataOutputStream: FSDataOutputStream =
@@ -26,12 +26,12 @@ object BPSHDFSFile {
     }
 
     def checkPath(path: String): Boolean = {
-        val fileSystem: FileSystem = FileSystem.get(configuration)
+        val fileSystem: FileSystem = FileSystem.newInstance(configuration)
         fileSystem.exists(new Path(path))
     }
 
     def appendLine2HDFS(path: String, line: String): Unit = {
-        val fileSystem: FileSystem = FileSystem.get(configuration)
+        val fileSystem: FileSystem = FileSystem.newInstance(configuration)
         val hdfsWritePath: Path = new Path(path)
         val fsDataOutputStream: FSDataOutputStream =
             if (fileSystem.exists(hdfsWritePath))
@@ -49,7 +49,7 @@ object BPSHDFSFile {
         if(!checkPath(path)) return Nil
 
         var result: List[String] = Nil
-        val fs = FileSystem.get(new URI(path), configuration)
+        val fs = FileSystem.newInstance(new URI(path), configuration)
 
         // 判断是否是目录
         if(fs.isDirectory(new Path(path))) {
@@ -72,10 +72,11 @@ object BPSHDFSFile {
                 result = result ::: line :: Nil
                 line = inReader.readLine()
             }
-
+            inBuf.close()
+            inReader.close()
             result
         }
-
+        fs.close()
         result
     }
 }
