@@ -1,17 +1,13 @@
 package com.pharbers.StreamEngine.Jobs.PyJob
 
-import java.util.{Collections, UUID}
-
-import com.pharbers.StreamEngine.Jobs.PyJob.ForeachWriter.PyCleanSinkHDFS
 import org.apache.spark.sql
-import org.json4s.DefaultFormats
+import java.util.Collections
+import org.apache.spark.sql.SparkSession
 import com.pharbers.kafka.schema.DataSet
-import org.apache.spark.sql.types.StringType
-import org.json4s.jackson.Serialization.write
 import com.pharbers.StreamEngine.Utils.StreamJob.BPStreamJob
-import org.apache.spark.sql.{ForeachWriter, Row, SparkSession}
 import com.pharbers.StreamEngine.Jobs.SandBoxJob.BloodJob.BPSBloodJob
 import com.pharbers.StreamEngine.Jobs.PyJob.Py4jServer.BPSPy4jManager
+import com.pharbers.StreamEngine.Jobs.PyJob.ForeachWriter.PyCleanSinkHDFS
 import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSJobStrategy
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamListener
 import com.pharbers.StreamEngine.Jobs.PyJob.Listener.BPSProgressListenerAndClose
