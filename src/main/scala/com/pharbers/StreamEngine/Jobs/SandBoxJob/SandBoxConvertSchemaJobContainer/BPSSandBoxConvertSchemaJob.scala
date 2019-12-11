@@ -101,6 +101,7 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 			
 			if (assetId.isEmpty) {
 				logger.info(s"Fuck AssetId Is Null ====> $assetId, Path ====> ${jobParam("parquetSavePath")}${jobParam("currentJobId")}")
+				logger.info(s"Fuck AssetId Is Null ====> $assetId, Path ====> ${jobParam("metaDataSavePath") + jobParam("currentJobId")}")
 			}
 			
 			val uploadEnd = new UploadEnd(sampleDataSetId, assetId)
@@ -153,7 +154,7 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 				list2Map(metaDataDF.select("MetaData").collect().toList.map(_.getAs[String]("MetaData")))
 			implicit val formats: DefaultFormats.type = DefaultFormats
 			val schema  = write(contentMap("schema").asInstanceOf[List[Map[String, Any]]])
-			
+			// TODO: 既然啥都没做，为啥要这样写，直接COPY不就行了，后面再改吧
 			metaDataDF.collect().foreach(x => BPSHDFSFile.appendLine2HDFS(path, x.getAs[String]("MetaData")))
 			val colNames =  contentMap("schema").asInstanceOf[List[Map[String, Any]]].map(_("key").toString)
 			val tabName = contentMap.

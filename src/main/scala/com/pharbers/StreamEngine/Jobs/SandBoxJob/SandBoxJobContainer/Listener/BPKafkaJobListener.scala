@@ -24,7 +24,6 @@ object BPKafkaJobListener {
 class BPKafkaJobListener(val id: String,
                          val spark: SparkSession,
                          container: BPSJobContainer) extends BPStreamJob {
-	
 	type T = BPSJobStrategy
 	override val strategy: T = null
 	var hisJobId = ""

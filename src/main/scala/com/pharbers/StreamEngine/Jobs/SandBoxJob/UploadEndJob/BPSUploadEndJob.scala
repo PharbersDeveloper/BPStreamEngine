@@ -2,6 +2,7 @@ package com.pharbers.StreamEngine.Jobs.SandBoxJob.UploadEndJob
 
 import java.util.concurrent.TimeUnit
 
+import com.pharbers.StreamEngine.Jobs.SandBoxJob.BloodJob.ProducerSingleton
 import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSJobStrategy
 import com.pharbers.StreamEngine.Utils.StreamJob.{BPSJobContainer, BPStreamJob}
 import com.pharbers.kafka.producer.PharbersKafkaProducer
@@ -24,7 +25,8 @@ class BPSUploadEndJob(topic: String,
 	val spark: SparkSession = null
 	
 	override def exec(): Unit = {
-		val fu = new PharbersKafkaProducer[String, SpecificRecord].produce(topic, id, msg)
+//		val fu = new PharbersKafkaProducer[String, SpecificRecord].produce(topic, id, msg)
+		val fu = ProducerSingleton.getIns().produce(topic, id, msg)
 		logger.debug(fu.get(10, TimeUnit.SECONDS))
 	}
 	

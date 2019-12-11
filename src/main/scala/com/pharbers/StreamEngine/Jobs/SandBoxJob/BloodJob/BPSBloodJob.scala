@@ -24,7 +24,8 @@ class BPSBloodJob(topic: String,
 	val spark: SparkSession = null
 	
 	override def exec(): Unit = {
-		val fu = new PharbersKafkaProducer[String, SpecificRecord].produce(topic, id, msg)
+//		val fu = new PharbersKafkaProducer[String, SpecificRecord].produce(topic, id, msg)
+		val fu = ProducerSingleton.getIns().produce(topic, id, msg)
 		logger.debug(fu.get(10, TimeUnit.SECONDS))
 	}
 	
