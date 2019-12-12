@@ -138,7 +138,7 @@ def cpa_gyc_mapping():
             "ColDesc": "包装数量",
             "Type": "String",
             "Candidate": ["包装数量", "PACKAGE_QTY", "PACK_NUMBER", "PACKNUMBER", "数量.（支/片）",
-                          "数量（支/片）", "数量(支/片)", "数量.(支/片)", "包装.数量"],
+                          "数量（支/片）", "数量支/片", "数量(支/片)", "数量.(支/片)", "数量.支/片", "包装.数量"],
             "NotNull": True
         },
         {
@@ -153,8 +153,8 @@ def cpa_gyc_mapping():
             "ColName": "SALES_VALUE",
             "ColDesc": "销售额",
             "Type": "Double",
-            "Candidate": ["金额", "金额(元)", "金额（元）", "金额.(元)", "销售金AM", "VALUE", "Value",
-                          "SALES VALUE (RMB)", "SALES_VALUE", "销售金额", "金额.（元）"],
+            "Candidate": ["金额", "金额元","金额(元)", "金额（元）", "金额.元", "销售金AM", "VALUE", "Value",
+                          "SALES VALUE (RMB)", "SALES VALUERMB", "SALESVALUERMB", "SALES_VALUE", "销售金额", "金额.（元）", "金额.(元)"],
             "NotNull": True
         },
         {
