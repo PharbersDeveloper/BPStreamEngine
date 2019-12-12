@@ -24,16 +24,14 @@ object BPSSandBoxConvertSchemaJob {
     def apply(id: String,
               jobParam: Map[String, String],
               spark: SparkSession,
-              sampleDataSetId: String,
-              metaDataSetId: String): BPSSandBoxConvertSchemaJob =
-        new BPSSandBoxConvertSchemaJob(id, jobParam, spark, sampleDataSetId, metaDataSetId)
+              dataSetId: String): BPSSandBoxConvertSchemaJob =
+        new BPSSandBoxConvertSchemaJob(id, jobParam, spark, dataSetId)
 }
 
 class BPSSandBoxConvertSchemaJob(val id: String,
                                  jobParam: Map[String, String],
                                  val spark: SparkSession,
-                                 sampleDataSetId: String,
-                                 metaDataSetId: String) extends BPSJobContainer {
+                                 dataSetId: String) extends BPSJobContainer {
 	
 	type T = BPSKfkJobStrategy
 	val strategy: Null = null
@@ -41,17 +39,23 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 	
 	// TODO: 想个办法把这个东西搞出去
 	var totalRow: Long = 0
+//	var columnNames: List[CharSequence] = Nil
+//	var sheetName: String = ""
+//	var dataAssetId: String = ""
 	
 	override def open(): Unit = {
 		
 		notFoundShouldWait(s"${jobParam("parentMetaData")}/${jobParam("parentJobId")}")
 		val metaData = spark.sparkContext.textFile(s"${jobParam("parentMetaData")}/${jobParam("parentJobId")}")
 		val (schemaData, colNames, tabName, length, assetId) =
-			writeMetaData(metaData, jobParam("metaDataSavePath") + jobParam("currentJobId"))
+			writeMetaData(metaData, s"${jobParam("metaDataSavePath")}")
 		totalRow = length
+//		columnNames = colNames
+//		sheetName = tabName
+//		dataAssetId = assetId
 		
 		if (schemaData.isEmpty || schemaData == "") {
-			logger.warn("Schema Is Null，又是一个空的")
+			logger.warn("Schema Is Null")
 			this.close()
 		} else {
 			val schema = SchemaConverter.str2SqlType(schemaData)
@@ -73,38 +77,25 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 					.select("data.*")
 			)
 			
-			// MetaData DataSet
-			BPSBloodJob(
-				"data_set_job",
-				new DataSet(
-					Collections.emptyList(),
-					metaDataSetId,
-					jobParam("jobContainerId"),
-					Collections.emptyList(),
-					"",
-					0,
-					jobParam("metaDataSavePath") + jobParam("currentJobId"),
-					"MetaData")).exec()
 			
-			// SampleData DataSet
+			if (assetId.isEmpty) {
+				logger.info(s"AssetId Is Null ====> $assetId, Path ====> ${jobParam("parquetSavePath")}")
+				logger.info(s"AssetId Is Null ====> $assetId, Path ====> ${jobParam("metaDataSavePath")}")
+			}
+			
 			BPSBloodJob(
 				"data_set_job",
 				new DataSet(
 					Collections.emptyList(),
-					sampleDataSetId,
+					dataSetId,
 					jobParam("jobContainerId"),
 					colNames.asJava,
 					tabName,
 					length,
-					jobParam("parquetSavePath") + jobParam("currentJobId"),
+					s"${jobParam("parquetSavePath")}",
 					"SampleData")).exec()
 			
-			if (assetId.isEmpty) {
-				logger.info(s"Fuck AssetId Is Null ====> $assetId, Path ====> ${jobParam("parquetSavePath")}${jobParam("currentJobId")}")
-				logger.info(s"Fuck AssetId Is Null ====> $assetId, Path ====> ${jobParam("metaDataSavePath") + jobParam("currentJobId")}")
-			}
-			
-			val uploadEnd = new UploadEnd(sampleDataSetId, assetId)
+			val uploadEnd = new UploadEnd(dataSetId, assetId)
 			BPSUploadEndJob("upload_end_job", uploadEnd).exec()
 		}
 	}
@@ -116,24 +107,36 @@ class BPSSandBoxConvertSchemaJob(val id: String,
     					.outputMode("append")
     					.format("parquet")
     					.option("checkpointLocation", jobParam("checkPointSavePath"))
-    					.option("path", jobParam("parquetSavePath") + jobParam("currentJobId"))
+    					.option("path", s"${jobParam("parquetSavePath")}")
 					    .start()
 				
-				logger.debug(s"Parquet Save Path Your Path =======> ${jobParam("parquetSavePath")}${jobParam("currentJobId")}")
+				logger.debug(s"Parquet Save Path Your Path =======> ${jobParam("parquetSavePath")}")
 				
 				outputStream = query :: outputStream
 				val listener = ConvertSchemaListener(id, jobParam("parentJobId"), spark, this, query, totalRow)
 				listener.active(null)
 				listeners = listener :: listeners
-			case None => logger.warn("流是个空的")
+			case None => logger.warn("Stream Is Null")
 		}
 	}
 	
 	override def close(): Unit = {
 		// TODO 将处理好的Schema发送邮件
 		
-//		val automationResp = new OssTaskResult(jobParam("jobContainerId"), "", 100.toLong, "")
-//		BPSAutomationJob("oss_task_response", automationResp).exec()
+//		BPSBloodJob(
+//			"data_set_job",
+//			new DataSet(
+//				Collections.emptyList(),
+//				dataSetId,
+//				jobParam("jobContainerId"),
+//				columnNames.asJava,
+//				sheetName,
+//				totalRow.toInt,
+//				s"${jobParam("parquetSavePath")}",
+//				"SampleData")).exec()
+//
+//		val uploadEnd = new UploadEnd(dataSetId, dataAssetId)
+//		BPSUploadEndJob("upload_end_job", uploadEnd).exec()
 		
 		outputStream.foreach(_.stop())
 		listeners.foreach(_.deActive())

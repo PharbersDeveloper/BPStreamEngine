@@ -30,50 +30,46 @@ class BPKafkaJobListener(val id: String,
 	val process: ConsumerRecord[String, FileMetaData] => Unit = (record: ConsumerRecord[String, FileMetaData]) => {
 		if (record.value().getJobId.toString != hisJobId) {
 			val jobContainerId: String = UUID.randomUUID().toString
-			// TODO:现在没有调度，只能先在这里创建我任务执行的DataSet传递给齐
-			val jobId: String = UUID.randomUUID().toString
-			val sampleDataSetId = new ObjectId().toString
-			val metaDataSetId = new ObjectId().toString
+			val dataSetId = new ObjectId().toString
 			hisJobId = record.value().getJobId.toString
 
 			// TODO 路径配置化
-//			val metaDataSavePath: String = s"/jobs/${record.value().getRunId.toString}/$jobContainerId/metadata/"
+//			val metaDataSavePath: String = s"/jobs/${record.value().getRunId.toString}/$jobContainerId"
 //			val checkPointSavePath: String = s"/jobs/${record.value().getRunId.toString}/$jobContainerId/checkpoint"
-//			val parquetSavePath: String =  s"/jobs/${record.value().getRunId.toString}/$jobContainerId/contents/"
+//			val parquetSavePath: String =  s"/jobs/${record.value().getRunId.toString}/$jobContainerId"
 
-			val metaDataSavePath: String = s"/user/alex/jobs/${record.value().getRunId.toString}/$jobContainerId/metadata/"
+			val metaDataSavePath: String = s"/user/alex/jobs/${record.value().getRunId.toString}/$jobContainerId/metadata"
 			val checkPointSavePath: String = s"/user/alex/jobs/${record.value().getRunId.toString}/$jobContainerId/checkpoint"
-			val parquetSavePath: String =  s"/user/alex/jobs/${record.value().getRunId.toString}/$jobContainerId/contents/"
+			val parquetSavePath: String =  s"/user/alex/jobs/${record.value().getRunId.toString}/$jobContainerId/contents"
 
 			val jobParam = Map(
 				"parentJobId" -> record.value().getJobId.toString,
 				"parentMetaData" -> record.value().getMetaDataPath.toString,
 				"parentSampleData" -> record.value().getSampleDataPath.toString,
 				"jobContainerId" -> jobContainerId,
-				"currentJobId" -> jobId,
 				"metaDataSavePath" -> metaDataSavePath,
 				"checkPointSavePath" -> checkPointSavePath,
 				"parquetSavePath" -> parquetSavePath
 			)
+			
 			val convertJob: BPSSandBoxConvertSchemaJob =
 				BPSSandBoxConvertSchemaJob(
 					record.value().getRunId.toString,
 					jobParam,
 					spark,
-					sampleDataSetId,
-					metaDataSetId)
+					dataSetId)
 			convertJob.open()
 			convertJob.exec()
 
 			pushPyjob(
 				record.value().getRunId.toString,
-				s"$metaDataSavePath" + jobId,
-				s"$parquetSavePath" + jobId,
+				s"$metaDataSavePath",
+				s"$parquetSavePath",
 				UUID.randomUUID().toString,
-				(metaDataSetId :: sampleDataSetId :: Nil).mkString(",")
+				(dataSetId :: Nil).mkString(",")
 			)
 		} else {
-			logger.error("咋还重复传递JobID呢", hisJobId)
+			logger.error("this is Repetitive Job", hisJobId)
 		}
 	}
 	
