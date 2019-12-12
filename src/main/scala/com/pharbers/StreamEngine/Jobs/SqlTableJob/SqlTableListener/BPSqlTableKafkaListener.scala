@@ -40,6 +40,6 @@ case class BPSqlTableKafkaListener(job: BPSqlTableJobContainer, topic: String) e
 
     override def deActive(): Unit = {
         consumer.close()
-        BPSLocalChannel.registerListener(this)
+        BPSLocalChannel.unRegisterListener(this)
     }
 }

@@ -11,6 +11,7 @@ import org.apache.kafka.common.config.ConfigDef
 import org.apache.kafka.common.config.ConfigDef.{Importance, Type}
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions._
+import org.apache.spark.storage.StorageLevel
 
 
 /** 功能描述
@@ -34,8 +35,17 @@ case class BPSqlTableJob(jobContainer: BPSJobContainer, spark: SparkSession, con
     val saveMode: String = jobConfig.getString(TASK_TYPE_CONFIG_KEY)
     val metadataPath: String = jobConfig.getString(METADATA_PATH_CONFIG_KEY)
 
+
     override def open(): Unit = {
-        inputStream = Some(spark.read.csv(url))
+        inputStream = Some(spark.read
+                .format("csv")
+                .option("header", true)
+                .option("delimiter", ",")
+                .load(url)
+//todo: 先判断有没有YEAR和MONTH
+//                .repartition(col("YEAR"), col("MONTH"))
+                .persist(StorageLevel.MEMORY_ONLY)
+        )
     }
 
     override def exec(): Unit = {
@@ -64,11 +74,15 @@ case class BPSqlTableJob(jobContainer: BPSJobContainer, spark: SparkSession, con
         val version = "0.0.0"
         inputStream match {
             case Some(df) =>
-                df.withColumn("version", lit(version)).write
-                        .partitionBy("YEAR", "MONTH")
-                        .mode(saveMode)
-                        .option("path", s"/common/public/$tableName/$version")
-                        .saveAsTable(tableName)
+                val count = df.count()
+                logger.info(s"url: $url, count: $count")
+//                if(count != 0){
+//                    df.withColumn("version", lit(version)).write
+//                            .partitionBy("YEAR", "MONTH")
+//                            .mode(saveMode)
+//                            .option("path", s"/common/public/$tableName/$version")
+//                            .saveAsTable(tableName)
+//                }
             case _ =>
         }
     }

@@ -24,18 +24,25 @@ import org.apache.spark.sql.SparkSession
   * @since 2019/12/11 10:57
   * @note 一些值得注意的地方
   */
-class BPSqlTableJobContainer(val id: String, val spark: SparkSession, config: Map[String, String]) extends BPSJobContainer with BPDynamicStreamJob{
+class BPSqlTableJobContainer(val spark: SparkSession, config: Map[String, String]) extends BPSJobContainer with BPDynamicStreamJob{
 
     override type T = BPSJobStrategy
     override val strategy: BPSJobStrategy = null
-    val runId: String = id
-    val jobId: String = UUID.randomUUID().toString
     final val TOPIC_CONFIG_KEY = "topic"
     final val TOPIC_CONFIG_DOC = "kafka topic"
-    val configDef: ConfigDef = new ConfigDef().define(TOPIC_CONFIG_KEY, Type.STRING, "sql_job", Importance.HIGH, TOPIC_CONFIG_DOC)
+    final val RUN_ID_CONFIG_KEY = "runId"
+    final val RUN_ID_CONFIG_DOC = "run id"
+    val configDef: ConfigDef = new ConfigDef()
+            .define(TOPIC_CONFIG_KEY, Type.STRING, "HiveTask", Importance.HIGH, TOPIC_CONFIG_DOC)
+            .define(RUN_ID_CONFIG_KEY, Type.STRING, UUID.randomUUID().toString, Importance.HIGH, RUN_ID_CONFIG_DOC)
     private val jobConfig: BPSConfig = BPSConfig(configDef, config)
 
+    val runId: String = jobConfig.getString(RUN_ID_CONFIG_KEY)
+    val jobId: String = UUID.randomUUID().toString
+    val id: String = runId
+
     val executorService = new ThreadPoolExecutor(3, 3, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue[Runnable])
+
 
     override def open(): Unit = {
         logger.info("open BPSqlTableJobContainer")
