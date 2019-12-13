@@ -23,6 +23,7 @@ object BPSParseSchema {
      * @version 0.1
      * @since 2019/11/6 18:34
      * @example {{{BPSParseSchema.parseMetadataByTxt()()}}}
+     *@node 快速多次调用时会出现java.io.IOException: Filesystem closed
      */
     def parseMetadata(metadataPath: String)(implicit spark: SparkSession): Map[String, Any] = {
         val builder = mutable.Map[String, Any]()

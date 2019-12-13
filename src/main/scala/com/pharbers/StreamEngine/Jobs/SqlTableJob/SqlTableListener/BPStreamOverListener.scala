@@ -39,14 +39,13 @@ case class BPStreamOverListener(job: BPSqlTableJobContainer, config: Map[String,
             logger.info(s"启动sql job")
             val sqlJob = BPSqlTableJob(job, job.spark, config)
             job.addJob2Container(sqlJob)
-            deActive()
         } else {
             //todo: test用
             logger.error(s"row record path: ${listenerConfig.getString(ROW_RECORD_PATH_CONFIG_KEY)}")
             logger.error(s"rows: $rows")
             logger.error(s"length: ${listenerConfig.getLong(LENGTH_CONFIG_KEY)}")
-            deActive()
         }
+        deActive()
     }
 
     override def active(s: DataFrame): Unit = BPSLocalChannel.registerListener(this)

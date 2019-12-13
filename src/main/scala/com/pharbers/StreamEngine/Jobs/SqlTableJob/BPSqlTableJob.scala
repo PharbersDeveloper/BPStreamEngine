@@ -37,13 +37,15 @@ case class BPSqlTableJob(jobContainer: BPSJobContainer, spark: SparkSession, con
 
 
     override def open(): Unit = {
+        logger.info(s"open job $id")
         inputStream = Some(spark.read
                 .format("csv")
-                .option("header", true)
+                .option("header", value = true)
                 .option("delimiter", ",")
                 .load(url)
 //todo: 先判断有没有YEAR和MONTH
 //                .repartition(col("YEAR"), col("MONTH"))
+                .repartition()
                 .persist(StorageLevel.MEMORY_ONLY)
         )
     }
@@ -59,8 +61,9 @@ case class BPSqlTableJob(jobContainer: BPSJobContainer, spark: SparkSession, con
                 //todo: 全量数据处理
                 case _ => ???
             }
-            logger.info(s"save $tableName over, close job $id")
+            logger.info(s"save $tableName over, job: $id")
         }
+        logger.info(s"close job $id")
         close()
     }
 
@@ -71,20 +74,22 @@ case class BPSqlTableJob(jobContainer: BPSJobContainer, spark: SparkSession, con
 
     def appendTable(tableName: String): Unit = {
         //todo: 需要检查已经有的
-        val version = "0.0.0"
+        val version = "0.0.2"
         inputStream match {
             case Some(df) =>
                 val count = df.count()
                 logger.info(s"url: $url, count: $count")
-//                if(count != 0){
-//                    df.withColumn("version", lit(version)).write
-//                            .partitionBy("YEAR", "MONTH")
-//                            .mode(saveMode)
-//                            .option("path", s"/common/public/$tableName/$version")
-//                            .saveAsTable(tableName)
-//                }
+                if(count != 0){
+                    df.withColumn("version", lit(version)).write
+                            .partitionBy("YEAR", "MONTH")
+                            .mode(saveMode)
+                            .option("path", s"/common/public/$tableName/$version")
+                            .saveAsTable(tableName)
+                }
             case _ =>
         }
+        val errorHead = spark.sparkContext.textFile(jobConfig.getString(ERROR_PATH_CONFIG_KEY)).take(1).headOption.getOrElse("")
+        if (errorHead.length > 0) logger.info(s"error path: ${jobConfig.getString(ERROR_PATH_CONFIG_KEY)} ,error: $errorHead")
     }
 
 }
@@ -100,11 +105,14 @@ object BPSqlTableJob {
     final val METADATA_PATH_CONFIG_DOC = "metadataPath"
     final val TASK_TYPE_CONFIG_KEY = "taskType"
     final val TASK_TYPE_CONFIG_DOC = "append or overwrite"
+    final val ERROR_PATH_CONFIG_KEY = "errorPath"
+    final val ERROR_PATH_CONFIG_DOC = "error row  path"
     val configDef: ConfigDef = new ConfigDef()
             .define(JOB_ID_CONFIG_KEY, Type.STRING, UUID.randomUUID().toString, Importance.HIGH, JOB_ID_CONFIG_DOC)
             .define(RUN_ID_CONFIG_KEY, Type.STRING, UUID.randomUUID().toString, Importance.HIGH, RUN_ID_CONFIG_DOC)
             .define(URL_CONFIG_KEY, Type.STRING, "", Importance.HIGH, URL_CONFIG_DOC)
             .define(METADATA_PATH_CONFIG_KEY, Type.STRING, "", Importance.HIGH, METADATA_PATH_CONFIG_DOC)
             .define(TASK_TYPE_CONFIG_KEY, Type.STRING, "append", Importance.HIGH, TASK_TYPE_CONFIG_DOC)
+            .define(ERROR_PATH_CONFIG_KEY, Type.STRING, "", Importance.HIGH, ERROR_PATH_CONFIG_DOC)
 
 }

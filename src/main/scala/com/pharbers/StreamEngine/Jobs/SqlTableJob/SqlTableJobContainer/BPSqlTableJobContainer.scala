@@ -41,7 +41,7 @@ class BPSqlTableJobContainer(val spark: SparkSession, config: Map[String, String
     val jobId: String = UUID.randomUUID().toString
     val id: String = runId
 
-    val executorService = new ThreadPoolExecutor(3, 3, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue[Runnable])
+    val executorService = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue[Runnable])
 
 
     override def open(): Unit = {
@@ -71,13 +71,17 @@ class BPSqlTableJobContainer(val spark: SparkSession, config: Map[String, String
     }
 
     def hiveTaskHandler(msg: HiveTask): Unit ={
+        val url = msg.getUrl.toString
+        val path = url.substring(0, url.lastIndexOf("contents"))
+
         val listenerConfig = Map(
             "runId" -> runId,
             "jobId" -> UUID.randomUUID().toString,
             "url" -> msg.getUrl.toString,
             "length" -> msg.getLength.toString,
-            "rowRecordPath" -> msg.getUrl.toString.replaceAll("contents", "row_record"),
-            "metadataPath" -> msg.getUrl.toString.replaceAll("contents", "metadata"),
+            "rowRecordPath" -> (path + "row_record"),
+            "metadataPath" -> (path +  "metadata"),
+            "errorPath" -> (path +  "err"),
             "taskType" -> msg.getTaskType.toString
         )
         val listener = BPStreamOverListener(this, listenerConfig)
@@ -89,3 +93,4 @@ class BPSqlTableJobContainer(val spark: SparkSession, config: Map[String, String
 
     override def handlerExec(handler: BPSEventHandler): Unit = {}
 }
+
