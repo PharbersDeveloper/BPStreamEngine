@@ -24,7 +24,7 @@ class testStream extends FunSuite  {
         val spark = BPSparkSession(Map("log.level" -> "INFO"))
         import spark.implicits._
 
-        val metaData = SchemaConverter.column2legal("MetaData",spark.sparkContext
+        val metaData = SchemaConverter.column2legalWithDF("MetaData",spark.sparkContext
                 .textFile("/workData/streamingV2/0829b025-48ac-450c-843c-6d4ee91765ca/metadata/bc6b6-3048-434a-a51a-a80c10")
                 .toDF("MetaData"))
 

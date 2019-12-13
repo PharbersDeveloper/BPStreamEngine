@@ -11,7 +11,6 @@ import com.pharbers.StreamEngine.Utils.ThreadExecutor.ThreadExecutor
 import com.pharbers.kafka.consumer.PharbersKafkaConsumer
 import com.pharbers.kafka.producer.PharbersKafkaProducer
 import com.pharbers.kafka.schema.{BPJob, FileMetaData}
-import org.apache.avro.specific.SpecificRecord
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.spark.sql.SparkSession
 import org.mongodb.scala.bson.ObjectId
@@ -34,9 +33,9 @@ class BPKafkaJobListener(val id: String,
 			hisJobId = record.value().getJobId.toString
 
 			// TODO 路径配置化
-//			val metaDataSavePath: String = s"/jobs/${record.value().getRunId.toString}/$jobContainerId"
+//			val metaDataSavePath: String = s"/jobs/${record.value().getRunId.toString}/$jobContainerId/metadata"
 //			val checkPointSavePath: String = s"/jobs/${record.value().getRunId.toString}/$jobContainerId/checkpoint"
-//			val parquetSavePath: String =  s"/jobs/${record.value().getRunId.toString}/$jobContainerId"
+//			val parquetSavePath: String =  s"/jobs/${record.value().getRunId.toString}/$jobContainerId/contents"
 
 			val metaDataSavePath: String = s"/user/alex/jobs/${record.value().getRunId.toString}/$jobContainerId/metadata"
 			val checkPointSavePath: String = s"/user/alex/jobs/${record.value().getRunId.toString}/$jobContainerId/checkpoint"
@@ -61,15 +60,15 @@ class BPKafkaJobListener(val id: String,
 			convertJob.open()
 			convertJob.exec()
 
-			pushPyjob(
-				record.value().getRunId.toString,
-				s"$metaDataSavePath",
-				s"$parquetSavePath",
-				UUID.randomUUID().toString,
-				(dataSetId :: Nil).mkString(",")
-			)
+//			pushPyjob(
+//				record.value().getRunId.toString,
+//				s"$metaDataSavePath",
+//				s"$parquetSavePath",
+//				UUID.randomUUID().toString,
+//				(dataSetId :: Nil).mkString(",")
+//			)
 		} else {
-			logger.error("this is Repetitive Job", hisJobId)
+			logger.error("this is repetitive job", hisJobId)
 		}
 	}
 	
