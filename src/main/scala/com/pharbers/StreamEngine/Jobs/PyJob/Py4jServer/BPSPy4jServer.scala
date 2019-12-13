@@ -53,6 +53,9 @@ case class BPSPy4jServer(serverConf: Map[String, Any] = Map().empty)
                         (implicit py4jManager: BPSPy4jManager) extends Serializable {
     final val RETRY_COUNT: Int = 3
 
+    import java.util.concurrent.Semaphore
+//    val semp = new Semaphore(1)
+
     val jobId: String = serverConf.getOrElse("jobId", UUID.randomUUID().toString).toString
     val threadId: String = serverConf.getOrElse("threadId", UUID.randomUUID().toString).toString
 

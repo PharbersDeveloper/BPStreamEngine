@@ -105,6 +105,9 @@ class BPSPythonJob(override val id: String,
 
                             override def close(errorOrNull: Throwable): Unit = {
                                 py4jManager.push("EOF")
+                                while (py4jManager.dataQueue.nonEmpty) {
+                                    Thread.sleep(1000)
+                                }
                             }
                         })
                         .start()
