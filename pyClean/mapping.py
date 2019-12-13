@@ -95,7 +95,7 @@ def cpa_gyc_mapping():
             "Candidate": ["MOLECULE NAME", "MOLECULE_NAME", "MCL_NAME", "药品名",
                           "分子名", "药品名称", "类别名称", "MOLECULE", "Molecule",
                           "MOLE_NAME", "MOLECULE.NAME", "化学名"],
-            "NotNull": True
+            # "NotNull": True
         },
         {
             "ColName": "KEY_BRAND",
