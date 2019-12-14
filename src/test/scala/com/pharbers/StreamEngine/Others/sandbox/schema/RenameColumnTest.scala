@@ -17,9 +17,18 @@ class RenameColumnTest extends FunSuite{
 //		SchemaConverter.renameColumn(jsonStr)
 		val spark = BPSparkSession()
 		
+		import org.apache.spark.sql.functions._
+		
+		def replaceJsonStr(json: String) = {
+			""
+		}
+		
+		val udf_rep = udf(replaceJsonStr _)
+		
 		val reading = spark.read
 			.load("/jobs/3ca35e29-3198-43ea-b8f6-c73e14a4e1b8/353d9d01-3715-48d7-89e4-ebd042d45faa/contents/jobId=fe17d1ca-2f44-4df7-943d-77e75cd780cc1") //文件的路径
-		reading.select("data").withColumn("data", regexp_replace(col("data") , """(?<=#)(,)(?=")""", "")).show(false)
+		reading.select("data").withColumn("data", udf_rep(col("data"))).show(false)
+//		reading.select("data").withColumn("data", regexp_replace(col("data") , """(?<=#)(,)(?=")""", "")).show(false)
 		println(reading.count())
 //		val metaData = spark.sparkContext.textFile("/jobs/49324e09-d7f9-4455-935a-b33c0d27d59e/aef91ccd-469d-46fb-b2b7-c2009f9a335a/metadata/b3df62cd-31c6-4fe6-b06c-060a7b9d94c21")
 //		println(writeMetaData(metaData, ""))
