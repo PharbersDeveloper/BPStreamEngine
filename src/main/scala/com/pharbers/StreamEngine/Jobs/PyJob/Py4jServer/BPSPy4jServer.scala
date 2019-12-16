@@ -9,7 +9,6 @@ import org.json4s.jackson.Serialization.write
 import py4j.{GatewayServer, Py4JNetworkException}
 import com.pharbers.StreamEngine.Utils.HDFS.BPSHDFSFile
 
-// TODO 这种实现是 “依赖倒置”
 /** 实现 Py4j 的 GatewayServer 的实例
  *
  * @author clock
@@ -27,7 +26,7 @@ import com.pharbers.StreamEngine.Utils.HDFS.BPSHDFSFile
  * }}}
  */
 case class BPSPy4jServer(serverConf: Map[String, Any] = Map().empty)
-                        (implicit py4jManager: BPSPy4jManager) extends Serializable {
+                        (manager_pop: () => String, manager_close: String => Unit) extends Serializable {
 
     final val RETRY_COUNT: Int = serverConf.getOrElse("retryCount", "3").toString.toInt
     val jobId: String = serverConf.getOrElse("jobId", UUID.randomUUID().toString).toString
@@ -131,6 +130,7 @@ case class BPSPy4jServer(serverConf: Map[String, Any] = Map().empty)
     }
 
     var endpoint: Process = _
+
     //    var startEndpointCount = 0
     def startEndpoint(argv: String*): BPSPy4jServer = {
         val socket = new ServerSocket(0)
@@ -172,9 +172,7 @@ case class BPSPy4jServer(serverConf: Map[String, Any] = Map().empty)
 
 
     // Py4j 提供的 API
-    def py4j_pop(): String = {
-        py4jManager.pop()
-    }
+    def py4j_pop(): String = manager_pop()
 
     // 计数器，统计处理的行数
     var curRow: Long = 0L
@@ -213,6 +211,6 @@ case class BPSPy4jServer(serverConf: Map[String, Any] = Map().empty)
         closeBuffer()
         shutdownServer()
         destroyEndpoint()
-        py4jManager.close(threadId)
+        manager_close(threadId)
     }
 }
