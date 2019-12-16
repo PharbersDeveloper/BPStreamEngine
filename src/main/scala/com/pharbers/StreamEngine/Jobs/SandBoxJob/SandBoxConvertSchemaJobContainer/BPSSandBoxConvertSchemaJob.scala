@@ -3,13 +3,13 @@ package com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxConvertSchemaJobContain
 import java.util.{Collections, UUID}
 import java.util.concurrent.TimeUnit
 
-import com.pharbers.StreamEngine.Jobs.SandBoxJob.BloodJob.{BPSBloodJob, ProducerSingleton}
+import com.pharbers.StreamEngine.Jobs.SandBoxJob.BloodJob.BPSBloodJob
 import com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxConvertSchemaJobContainer.Listener.ConvertSchemaListener
-import com.pharbers.StreamEngine.Jobs.SandBoxJob.SchemaConverter
 import com.pharbers.StreamEngine.Jobs.SandBoxJob.UploadEndJob.BPSUploadEndJob
 import com.pharbers.StreamEngine.Utils.Component.Dynamic.JobMsg
 import com.pharbers.StreamEngine.Utils.HDFS.BPSHDFSFile
-import com.pharbers.StreamEngine.Utils.Schema.Spark.BPSMetaData2Map
+import com.pharbers.StreamEngine.Utils.Kafka.ProducerSingleton
+import com.pharbers.StreamEngine.Utils.Schema.Spark.{BPSMetaData2Map, SchemaConverter}
 import com.pharbers.StreamEngine.Utils.StreamJob.BPSJobContainer
 import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSKfkJobStrategy
 import com.pharbers.kafka.producer.PharbersKafkaProducer
@@ -82,29 +82,29 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 					.select(from_json($"data", schema).as("data"))
 					.select("data.*")
 			)
-			// TODO: 这部分拿到任务结束在创建否则中间崩溃又要重新创建一次
-//			BPSBloodJob(
-//				"data_set_job",
-//				new DataSet(
-//					Collections.emptyList(),
-//					dataSetId,
-//					jobParam("jobContainerId"),
-//					colNames.asJava,
-//					tabName,
-//					length,
-//					s"${jobParam("parquetSavePath")}",
-//					"SampleData")).exec()
-//
-//			val uploadEnd = new UploadEnd(dataSetId, assetId)
-//			BPSUploadEndJob("upload_end_job", uploadEnd).exec()
-//
-//			pushPyjob(
-//				id,
-//				s"${jobParam("metaDataSavePath")}",
-//				s"${jobParam("parquetSavePath")}",
-//				UUID.randomUUID().toString,
-//				(dataSetId :: Nil).mkString(",")
-//			)
+//			// TODO: 这部分拿到任务结束在创建否则中间崩溃又要重新创建一次
+			BPSBloodJob(
+				"data_set_job",
+				new DataSet(
+					Collections.emptyList(),
+					dataSetId,
+					jobParam("jobContainerId"),
+					colNames.asJava,
+					tabName,
+					length,
+					s"${jobParam("parquetSavePath")}",
+					"SampleData")).exec()
+
+			val uploadEnd = new UploadEnd(dataSetId, assetId)
+			BPSUploadEndJob("upload_end_job", uploadEnd).exec()
+
+			pushPyjob(
+				id,
+				s"${jobParam("metaDataSavePath")}",
+				s"${jobParam("parquetSavePath")}",
+				UUID.randomUUID().toString,
+				(dataSetId :: Nil).mkString(",")
+			)
 		}
 	}
 	
@@ -208,6 +208,7 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 		
 	}
 	
+	// TODO：因还未曾与老齐对接口，暂时放到这里
 	private def pushPyjob(runId: String,
 	                      metadataPath: String,
 	                      filesPath: String,
@@ -241,7 +242,7 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 		val jobMsg = write(job)
 		val topic = "stream_job_submit"
 		val bpJob = new BPJob(parentJobId, traceId, `type`, jobMsg)
-		val fu = ProducerSingleton.getIns().produce(topic, parentJobId, bpJob)
+		val fu = ProducerSingleton.getIns.produce(topic, parentJobId, bpJob)
 		logger.debug(fu.get(10, TimeUnit.SECONDS))
 	}
 }
