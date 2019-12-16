@@ -38,11 +38,10 @@ class BPSparkSession(config: Map[String, String]) extends BPSparkSessionConfig {
 
     private val conf = new SparkConf()
             .setAll(pops.asScala)
-//            .set("spark.extraListeners", "com.pharbers.StreamEngine.Utils.Session.Spark.BPSparkListener")
             .setAppName(sparkConfigs.getString(APP_NAME_KEY))
             .setMaster(sparkConfigs.getString(MASTER_KEY))
 
-    val spark: SparkSession = SparkSession.builder().config(conf).getOrCreate()
+    val spark: SparkSession = SparkSession.builder().config(conf).enableHiveSupport().getOrCreate()
     spark.sparkContext.setLogLevel(sparkConfigs.getString(LOG_LEVEL_KEY))
     spark.sparkContext.setLocalProperty("host", InetAddress.getLocalHost.getHostAddress)
 //    spark.streams.addListener(new SparkQueryListener)
