@@ -92,8 +92,8 @@ def cpa_gyc_mapping():
             "ColName": "MOLE_NAME",
             "ColDesc": "分子名",
             "Type": "String",
-            "Candidate": ["MOLECULE NAME", "MOLECULE_NAME", "MCL_NAME", "药品名",
-                          "分子名", "药品名称", "类别名称", "MOLECULE", "Molecule",
+            "Candidate": ["MOLECULENAME", "MOLECULE NAME", "MOLECULE_NAME", "MCL_NAME", "药品名",
+                          "分子名", "药品名称", "类别名称", "MOLECULE", "MOLECULE",
                           "MOLE_NAME", "MOLECULE.NAME", "化学名", "通用名", "KEY_BRAND"],
             "NotNull": True
         },
@@ -123,14 +123,14 @@ def cpa_gyc_mapping():
             "ColDesc": "规格",
             "Type": "String",
             "Candidate": ["药品规格", "包装规格", "规格", "统一规格", "SPECIFICAT", "PACK_DES", "品规",
-                          "PACK_DESCRIPTION", "PACK", "Pack"],
+                          "PACK_DESCRIPTION", "PACK", "Pack", "SKU"],
             "NotNull": True # TODO: 需要决策树
         },
         {
             "ColName": "DOSAGE",
             "ColDesc": "剂型",
             "Type": "String",
-            "Candidate": ["剂型", "FORM", "Form", "DOSAGE", "FORMULATION_NAME", "APP2_COD"],
+            "Candidate": ["剂型", "FORM", "Form", "DOSAGE", "FORMULATION_NAME", "CONTENT_TYPE", "CONTENTTYPE", "APP2_COD"],
             "NotNull": True
         },
         {
@@ -138,7 +138,8 @@ def cpa_gyc_mapping():
             "ColDesc": "包装数量",
             "Type": "String",
             "Candidate": ["包装数量", "PACKAGE_QTY", "PACK_NUMBER", "PACKNUMBER", "数量.（支/片）",
-                          "数量（支/片）", "数量支/片", "数量(支/片)", "数量.(支/片)", "数量.支/片", "包装.数量"],
+                          "数量（支/片）", "数量支/片", "数量(支/片)", "数量.(支/片)",
+                          "数量.支/片", "包装.数量", "QUANTITY", "Quantity"],
             # "NotNull": True
         },
         {
