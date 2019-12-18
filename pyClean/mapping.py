@@ -44,7 +44,7 @@ def cpa_gyc_mapping():
             "ColName": "YEAR",
             "ColDesc": "年份",
             "Type": "Integer",
-            "Candidate": ["年", "YEARID", "YEAR", "Year"],
+            "Candidate": ["年", "年月", "YEARID", "YEAR", "Year", "PERIOD", "Period"],
             "NotNull": True
         },
         {
@@ -56,8 +56,8 @@ def cpa_gyc_mapping():
         {
             "ColName": "MONTH",
             "ColDesc": "月份",
-            "Type": "Integer",
-            "Candidate": ["月", "YYYYMM", "年月", "PERIOD", "月份", "MONTH", "Month", "YEAR_MONTH"]
+            "Type": "String",
+            "Candidate": ["月", "YYYYMM", "月份", "MONTH", "Month", "YEAR_MONTH"]
         },
         {
             "ColName": "HOSP_NAME",
@@ -94,14 +94,14 @@ def cpa_gyc_mapping():
             "Type": "String",
             "Candidate": ["MOLECULE NAME", "MOLECULE_NAME", "MCL_NAME", "药品名",
                           "分子名", "药品名称", "类别名称", "MOLECULE", "Molecule",
-                          "MOLE_NAME", "MOLECULE.NAME", "化学名"],
-            # "NotNull": True
+                          "MOLE_NAME", "MOLECULE.NAME", "化学名", "通用名", "KEY_BRAND"],
+            "NotNull": True
         },
         {
             "ColName": "KEY_BRAND",
             "ColDesc": "通用名",
             "Type": "String",
-            "Candidate": ["通用名", "KEY_BRAND"]
+            "Candidate": []
         },
         {
             "ColName": "PRODUCT_NAME",
@@ -115,7 +115,7 @@ def cpa_gyc_mapping():
             "ColName": "PACK",
             "ColDesc": "包装",
             "Type": "String",
-            "Candidate": ["包装", "包装单位", "PACK", "Pack", "PACKAGE", "包装.单位", "包.装"],
+            "Candidate": ["包装", "包装单位", "PACKAGE", "包装.单位", "包.装"],
             # "NotNull": True
         },
         {
@@ -123,8 +123,8 @@ def cpa_gyc_mapping():
             "ColDesc": "规格",
             "Type": "String",
             "Candidate": ["药品规格", "包装规格", "规格", "统一规格", "SPECIFICAT", "PACK_DES", "品规",
-                          "PACK_DESCRIPTION"],
-            "NotNull": True
+                          "PACK_DESCRIPTION", "PACK", "Pack"],
+            "NotNull": True # TODO: 需要决策树
         },
         {
             "ColName": "DOSAGE",
@@ -139,7 +139,7 @@ def cpa_gyc_mapping():
             "Type": "String",
             "Candidate": ["包装数量", "PACKAGE_QTY", "PACK_NUMBER", "PACKNUMBER", "数量.（支/片）",
                           "数量（支/片）", "数量支/片", "数量(支/片)", "数量.(支/片)", "数量.支/片", "包装.数量"],
-            "NotNull": True
+            # "NotNull": True
         },
         {
             "ColName": "SALES_QTY",
@@ -215,7 +215,7 @@ def chc_mapping():
             "ColName": "MONTH",
             "ColDesc": "月份",
             "Type": "Integer",
-            "Candidate": ["月", "YYYYMM", "年月", "PERIOD", "月份", "MONTH", "Month", "YEAR_MONTH"]
+            "Candidate": ["月", "YYYYMM", "年月", "PERIOD", "Period", "月份", "MONTH", "Month", "YEAR_MONTH"]
         },
         {
             "ColName": "PROVINCE_NAME",

@@ -175,8 +175,14 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 				getOrElse("tag", Map.empty).
 				asInstanceOf[Map[String, Any]].
 				getOrElse("assetId", "").toString
-			
-			convertContent.foreach(x => BPSHDFSFile.appendLine2HDFS(path, write(x._2)))
+			// TODO: 这块儿还要改进
+			convertContent.foreach { x =>
+				if(x._1 == "length") {
+					BPSHDFSFile.appendLine2HDFS(path, s"""{"length": ${x._2}}""")
+				} else {
+					BPSHDFSFile.appendLine2HDFS(path, write(x._2))
+				}
+			}
 			(schema, colNames, tabName, convertContent("length").toString.toInt, assetId)
 			
 			
