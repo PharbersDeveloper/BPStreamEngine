@@ -33,8 +33,8 @@ case class ReCallJobListener(job: BPStreamJob, topic: String, runId: String, job
 
     override def trigger(e: BPSEvents): Unit = {
         consumer.poll(Duration.ofSeconds(1)).asScala.foreach(x => {
-            val metaDataPath = x.value().getParentUrl.getMetaData.toString
             val simpleDataPath = x.value().getParentUrl.getSampleData.toString
+            val metaDataPath = simpleDataPath.replace("contents", "metadata")
             val parentIds = x.value().getParentDatasetId.asScala.map(_.toString)
             pushPyjob(runId, metaDataPath, simpleDataPath, jobId, parentIds.mkString(","))
         })

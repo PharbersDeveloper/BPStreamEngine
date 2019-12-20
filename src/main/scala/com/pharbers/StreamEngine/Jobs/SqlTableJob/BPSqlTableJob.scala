@@ -74,18 +74,18 @@ case class BPSqlTableJob(jobContainer: BPSJobContainer, spark: SparkSession, con
 
     def appendTable(tableName: String): Unit = {
         //todo: 需要检查已经有的
-        val version = "0.0.2"
+        val version = "0.0.7"
         inputStream match {
             case Some(df) =>
-                val count = df.count()
-                logger.info(s"url: $url, count: $count")
-                if(count != 0){
-                    df.withColumn("version", lit(version)).write
-                            .partitionBy("YEAR", "MONTH")
+//                val count = df.count()
+//                logger.info(s"url: $url, count: $count")
+//                if(count != 0){
+                    df.coalesce(4).withColumn("version", lit(version)).write
+//                            .partitionBy("YEAR", "MONTH")
                             .mode(saveMode)
                             .option("path", s"/common/public/$tableName/$version")
                             .saveAsTable(tableName)
-                }
+//                }
             case _ =>
         }
         val errorHead = spark.sparkContext.textFile(jobConfig.getString(ERROR_PATH_CONFIG_KEY)).take(1).headOption.getOrElse("")
