@@ -44,7 +44,7 @@ def cpa_gyc_mapping():
             "ColName": "YEAR",
             "ColDesc": "年份",
             "Type": "Integer",
-            "Candidate": ["年", "年月", "YEARID", "YEAR", "Year", "PERIOD", "Period"],
+            "Candidate": ["年", "年月", "YEARID", "YEAR", "Year", "PERIOD", "Period", "YEAR_MONTH", "DATE"],
             "NotNull": True
         },
         {
@@ -139,7 +139,7 @@ def cpa_gyc_mapping():
             "Type": "String",
             "Candidate": ["包装数量", "PACKAGE_QTY", "PACK_NUMBER", "PACKNUMBER", "数量.（支/片）",
                           "数量（支/片）", "数量支/片", "数量(支/片)", "数量.(支/片)",
-                          "数量.支/片", "包装.数量", "QUANTITY", "Quantity"],
+                          "数量.支/片", "包装.数量", "QUANTITY", "Quantity", "SIZE" ,"Size"],
             # "NotNull": True
         },
         {

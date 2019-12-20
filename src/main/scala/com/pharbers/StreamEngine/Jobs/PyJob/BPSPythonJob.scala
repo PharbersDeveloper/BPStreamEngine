@@ -123,15 +123,7 @@ class BPSPythonJob(override val id: String,
     }
 
     override def close(): Unit = {
-//        pushClose()
         super.close()
         container.finishJobWithId(id)
     }
-
-    def pushClose(): Unit ={
-        val pkp = new PharbersKafkaProducer[String, String]
-        val fu = pkp.produce("oss_test_dcs", "dcs", "ok")
-        println(fu.get(10, TimeUnit.SECONDS))
-    }
-
 }

@@ -29,6 +29,7 @@ case class BPSProgressListenerAndClose(override val job: BPSPythonJob,
         logger.debug(s"===${job.id}===>" + rows)
         if (rows >= rowLength) {
             logger.info(s"***${job.id}***>" + rows)
+            Thread.sleep(10 * 1000) // TODO: 因为过早关闭，导致content的内容会少几或百条
             job.close()
         }
     }
