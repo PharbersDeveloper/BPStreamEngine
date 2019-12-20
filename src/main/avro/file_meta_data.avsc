@@ -4,23 +4,23 @@
   "namespace": "com.pharbers.kafka.schema",
   "fields": [
     {
-      "name": "RunId",
+      "name": "runId",
       "type": "string"
     },
     {
-      "name": "JobId",
+      "name": "jobId",
       "type": "string"
     },
     {
-      "name": "MetaDataPath",
+      "name": "metaDataPath",
       "type": "string"
     },
     {
-      "name": "SampleDataPath",
+      "name": "sampleDataPath",
       "type": "string"
     },
     {
-      "name": "ConvertType",
+      "name": "convertType",
       "type": "string"
     }
   ]

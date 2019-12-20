@@ -37,11 +37,13 @@ class BPSOssPartitionJobContainer(override val strategy: BPSKfkJobStrategy, val 
             .option("kafka.ssl.endpoint.identification.algorithm", " ")
             .option("maxOffsetsPerTrigger", 10000)
             .option("startingOffsets", "earliest")
+            .option("maxOffsetsPerTrigger", 10000)
 //            .option("startingOffsets", "latest")
             .option("subscribe", strategy.getTopic)
 //            .option("failOnDataLoss", "false")
             .load()
 
+        // TODO: 求稳定，机器不够，切记
         inputStream = Some(reading
             .selectExpr(
                 """deserialize(value) AS value""",

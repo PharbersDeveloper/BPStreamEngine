@@ -33,13 +33,13 @@ def process(event):
 
     source = providers[1:2]
     if not len(source):
-        source = "DEFAULT_COMPANY"
+        source = "DEFAULT_SOURCE"
     else:
         source = source[0]
 
     company = providers[0:1]
     if not len(company):
-        company = "DEFAULT_SOURCE"
+        company = "DEFAULT_COMPANY"
     else:
         company = company[0]
 
@@ -71,13 +71,17 @@ def process(event):
         elif m["Type"] is "Integer":
             if value is None:
                 return 0
+            elif value == "":
+                return 0
             else:
                 return int(value)
         elif m["Type"] is "Double":
             if value is None:
                 return 0.0
+            elif value == "":
+                return 0.0
             else:
-                return float(value)
+                return float(value.replace(",", ""))
 
     for m in mapping:
         value = reval[m["ColName"]]
