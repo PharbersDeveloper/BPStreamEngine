@@ -1,6 +1,8 @@
-import com.pharbers.StreamEngine.Utils.Session.Spark.BPSparkSession
-import com.pharbers.StreamEngine.Utils.ThreadExecutor.ThreadExecutor
-import org.apache.spark.sql.{Dataset, SparkSession}
+import org.apache.avro.generic.GenericRecord
+import org.apache.hadoop.fs.Path
+import org.apache.parquet.hadoop.ParquetInputFormat
+import org.apache.spark.SparkConf
+import org.apache.spark.streaming.{Duration, StreamingContext}
 
 /** 功能描述
   *
@@ -11,110 +13,11 @@ import org.apache.spark.sql.{Dataset, SparkSession}
   * @since 2019/11/27 11:27
   * @note 一些值得注意的地方
   */
-object TestSpark {
-
-    def main(args: Array[String]): Unit = {
-        Run1.run()
-        Run2.run()
-        Run3.run()
-        Run4.run()
-        Run5.run()
-        ThreadExecutor.waitForShutdown()
-    }
-
-
-    object Run1 extends Serializable {
-        def run(): Unit = {
-            val a = new TestClass
-            a.init()
-            val spark = BPSparkSession()
-            import spark.implicits._
-            val df = Seq("a", "b").toDS()
-                    .map(x => {
-                        x + a.a
-                    })
-            println("run1")
-            df.show()
-        }
-    }
-
-    object Run2 extends Serializable {
-        val a = new TestClass
-        a.init()
-        def run(): Unit = {
-            val spark = BPSparkSession()
-            import spark.implicits._
-            val df = Seq("a", "b").toDS()
-                    .map(x => {
-                        x + a.a
-                    })
-            println("run2")
-            df.show()
-        }
-    }
-
-    object Run3 extends Serializable {
-        def run(): Unit = {
-            TestObj.init()
-            val spark = BPSparkSession()
-            import spark.implicits._
-            val df = Seq("a", "b").toDS()
-                    .map(x => {
-                        x + TestObj.a
-                    })
-            println("run3")
-            df.show()
-        }
-    }
-
-    object Run4 extends Serializable {
-        def run(): Unit = {
-            val a = TestObj
-            a.init()
-            val spark = BPSparkSession()
-            import spark.implicits._
-            val df = Seq("a", "b").toDS()
-                    .map(x => {
-                        x + a.a
-                    })
-            println("run4")
-            df.show()
-        }
-    }
-
-    object Run5 extends Serializable {
-        val a = TestObj
-        a.init()
-        def run(): Unit = {
-            val spark = BPSparkSession()
-            import spark.implicits._
-            val df = Seq("a", "b").toDS()
-                    .map(x => {
-                        x + a.a
-                    })
-            println("run5")
-            df.show()
-        }
-    }
-
-    class TestClass extends Serializable {
-        println("初始化Test class")
-        var a = "0"
-
-        def init(): Unit = {
-            println("改变test class a")
-            a = "class"
-        }
-    }
-
-    object TestObj extends Serializable {
-        println("初始化TestObj")
-        var a = "0"
-
-        def init(): Unit = {
-            println("改变test obj a")
-            a = "obj"
-        }
-    }
-
+object TestSpark extends App {
+    val conf = new SparkConf().setMaster("yarn").setAppName("NetworkWordCount")
+    val ssc: StreamingContext = new StreamingContext(conf, Duration(1000))
+    ssc.sparkContext.hadoopConfiguration.set("parquet.read.support.class", "parquet.avro.AvroReadSupport")
+    val stream = ssc.fileStream[Void, GenericRecord, ParquetInputFormat[GenericRecord]](
+        "/user/alex/jobs/6cdb14ff-7897-4bd8-b9c5-7785c98935d1/45b95705-50fd-43bd-9fd2-29f1634f88b2/contents/a551d9fa-bb9b-43fd-aade-b60995611c8e", { path: Path => path.toString.endsWith("parquet") }, true, ssc.sparkContext.hadoopConfiguration)
+    stream.foreachRDD(x => x.pipe(""))
 }
