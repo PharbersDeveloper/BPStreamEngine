@@ -1,16 +1,19 @@
 package com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxConvertSchemaJobContainer
 
-import java.util.Collections
+import java.util.{Collections, UUID}
+import java.util.concurrent.TimeUnit
 
 import com.pharbers.StreamEngine.Jobs.SandBoxJob.BloodJob.BPSBloodJob
 import com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxConvertSchemaJobContainer.Listener.ConvertSchemaListener
-import com.pharbers.StreamEngine.Jobs.SandBoxJob.SchemaConverter
 import com.pharbers.StreamEngine.Jobs.SandBoxJob.UploadEndJob.BPSUploadEndJob
+import com.pharbers.StreamEngine.Utils.Component.Dynamic.JobMsg
 import com.pharbers.StreamEngine.Utils.HDFS.BPSHDFSFile
-import com.pharbers.StreamEngine.Utils.Schema.Spark.BPSMetaData2Map
+import com.pharbers.StreamEngine.Utils.Kafka.ProducerSingleton
+import com.pharbers.StreamEngine.Utils.Schema.Spark.{BPSMetaData2Map, SchemaConverter}
 import com.pharbers.StreamEngine.Utils.StreamJob.BPSJobContainer
 import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSKfkJobStrategy
-import com.pharbers.kafka.schema.{DataSet, UploadEnd}
+import com.pharbers.kafka.producer.PharbersKafkaProducer
+import com.pharbers.kafka.schema.{BPJob, DataSet, UploadEnd}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.SparkSession
@@ -24,16 +27,14 @@ object BPSSandBoxConvertSchemaJob {
     def apply(id: String,
               jobParam: Map[String, String],
               spark: SparkSession,
-              sampleDataSetId: String,
-              metaDataSetId: String): BPSSandBoxConvertSchemaJob =
-        new BPSSandBoxConvertSchemaJob(id, jobParam, spark, sampleDataSetId, metaDataSetId)
+              dataSetId: String): BPSSandBoxConvertSchemaJob =
+        new BPSSandBoxConvertSchemaJob(id, jobParam, spark, dataSetId)
 }
 
 class BPSSandBoxConvertSchemaJob(val id: String,
                                  jobParam: Map[String, String],
                                  val spark: SparkSession,
-                                 sampleDataSetId: String,
-                                 metaDataSetId: String) extends BPSJobContainer {
+                                 dataSetId: String) extends BPSJobContainer {
 	
 	type T = BPSKfkJobStrategy
 	val strategy: Null = null
@@ -41,23 +42,32 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 	
 	// TODO: 想个办法把这个东西搞出去
 	var totalRow: Long = 0
+//	var columnNames: List[CharSequence] = Nil
+//	var sheetName: String = ""
+//	var dataAssetId: String = ""
 	
 	override def open(): Unit = {
 		
 		notFoundShouldWait(s"${jobParam("parentMetaData")}/${jobParam("parentJobId")}")
 		val metaData = spark.sparkContext.textFile(s"${jobParam("parentMetaData")}/${jobParam("parentJobId")}")
 		val (schemaData, colNames, tabName, length, assetId) =
-			writeMetaData(metaData, jobParam("metaDataSavePath") + jobParam("currentJobId"))
+			writeMetaData(metaData, s"${jobParam("metaDataSavePath")}")
 		totalRow = length
+//		columnNames = colNames
+//		sheetName = tabName
+//		dataAssetId = assetId
 		
-		if (schemaData.isEmpty || schemaData == "") {
-			logger.warn("Schema Is Null，又是一个空的")
+		if (schemaData.isEmpty || assetId.isEmpty) {
+			// TODO: metadata中缺少schema 和 asset标识，走错误流程
+			logger.error("Schema Is Null")
+			logger.error(s"AssetId Is Null ====> $assetId, Path ====> ${jobParam("parquetSavePath")}")
+			logger.error(s"AssetId Is Null ====> $assetId, Path ====> ${jobParam("metaDataSavePath")}")
 			this.close()
 		} else {
 			val schema = SchemaConverter.str2SqlType(schemaData)
 			
 			notFoundShouldWait(jobParam("parentSampleData"))
-			
+			logger.info(s"Fuck Info ${jobParam("parentSampleData")}")
 			val reading = spark.readStream.schema(StructType(
 			    StructField("traceId", StringType) ::
 				StructField("type", StringType) ::
@@ -68,43 +78,33 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 				.filter($"jobId" === jobParam("parentJobId") and $"type" === "SandBox")
 			
 			inputStream = Some(
-				SchemaConverter.column2legal("data", reading)
+				SchemaConverter.column2legalWithDF("data", reading)
 					.select(from_json($"data", schema).as("data"))
 					.select("data.*")
 			)
-			
-			// MetaData DataSet
+//			// TODO: 这部分拿到任务结束在创建否则中间崩溃又要重新创建一次
 			BPSBloodJob(
 				"data_set_job",
 				new DataSet(
 					Collections.emptyList(),
-					metaDataSetId,
-					jobParam("jobContainerId"),
-					Collections.emptyList(),
-					"",
-					0,
-					jobParam("metaDataSavePath") + jobParam("currentJobId"),
-					"MetaData")).exec()
-			
-			// SampleData DataSet
-			BPSBloodJob(
-				"data_set_job",
-				new DataSet(
-					Collections.emptyList(),
-					sampleDataSetId,
+					dataSetId,
 					jobParam("jobContainerId"),
 					colNames.asJava,
 					tabName,
 					length,
-					jobParam("parquetSavePath") + jobParam("currentJobId"),
+					s"${jobParam("parquetSavePath")}",
 					"SampleData")).exec()
-			
-			if (assetId.isEmpty) {
-				logger.info(s"Fuck AssetId Is Null ====> $assetId, Path ====> ${jobParam("parquetSavePath")}${jobParam("currentJobId")}")
-			}
-			
-			val uploadEnd = new UploadEnd(sampleDataSetId, assetId)
+
+			val uploadEnd = new UploadEnd(dataSetId, assetId)
 			BPSUploadEndJob("upload_end_job", uploadEnd).exec()
+
+			pushPyjob(
+				id,
+				s"${jobParam("metaDataSavePath")}",
+				s"${jobParam("parquetSavePath")}",
+				UUID.randomUUID().toString,
+				(dataSetId :: Nil).mkString(",")
+			)
 		}
 	}
 	
@@ -115,24 +115,36 @@ class BPSSandBoxConvertSchemaJob(val id: String,
     					.outputMode("append")
     					.format("parquet")
     					.option("checkpointLocation", jobParam("checkPointSavePath"))
-    					.option("path", jobParam("parquetSavePath") + jobParam("currentJobId"))
+    					.option("path", s"${jobParam("parquetSavePath")}")
 					    .start()
 				
-				logger.debug(s"Parquet Save Path Your Path =======> ${jobParam("parquetSavePath")}${jobParam("currentJobId")}")
+				logger.debug(s"Parquet Save Path Your Path =======> ${jobParam("parquetSavePath")}")
 				
 				outputStream = query :: outputStream
 				val listener = ConvertSchemaListener(id, jobParam("parentJobId"), spark, this, query, totalRow)
 				listener.active(null)
 				listeners = listener :: listeners
-			case None => logger.warn("流是个空的")
+			case None => logger.warn("Stream Is Null")
 		}
 	}
 	
 	override def close(): Unit = {
 		// TODO 将处理好的Schema发送邮件
 		
-//		val automationResp = new OssTaskResult(jobParam("jobContainerId"), "", 100.toLong, "")
-//		BPSAutomationJob("oss_task_response", automationResp).exec()
+//		BPSBloodJob(
+//			"data_set_job",
+//			new DataSet(
+//				Collections.emptyList(),
+//				dataSetId,
+//				jobParam("jobContainerId"),
+//				columnNames.asJava,
+//				sheetName,
+//				totalRow.toInt,
+//				s"${jobParam("parquetSavePath")}",
+//				"SampleData")).exec()
+//
+//		val uploadEnd = new UploadEnd(dataSetId, dataAssetId)
+//		BPSUploadEndJob("upload_end_job", uploadEnd).exec()
 		
 		outputStream.foreach(_.stop())
 		listeners.foreach(_.deActive())
@@ -148,25 +160,51 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 	
 	def writeMetaData(metaData: RDD[String], path: String): (String, List[CharSequence], String, Int, String) = {
 		try {
-			val metaDataDF = SchemaConverter.column2legal("MetaData", metaData.toDF("MetaData"))
-			val contentMap = BPSMetaData2Map.
-				list2Map(metaDataDF.select("MetaData").collect().toList.map(_.getAs[String]("MetaData")))
-			implicit val formats: DefaultFormats.type = DefaultFormats
-			val schema  = write(contentMap("schema").asInstanceOf[List[Map[String, Any]]])
+			val primitive = BPSMetaData2Map.list2Map(metaData.collect().toList)
+			val convertContent = primitive ++ SchemaConverter.column2legalWithMetaDataSchema(primitive)
 			
-			metaDataDF.collect().foreach(x => BPSHDFSFile.appendLine2HDFS(path, x.getAs[String]("MetaData")))
-			val colNames =  contentMap("schema").asInstanceOf[List[Map[String, Any]]].map(_("key").toString)
-			val tabName = contentMap.
+			implicit val formats: DefaultFormats.type = DefaultFormats
+			val schema  = write(convertContent("schema").asInstanceOf[List[Map[String, Any]]])
+			val colNames =  convertContent("schema").asInstanceOf[List[Map[String, Any]]].map(_("key").toString)
+			val tabName = convertContent.
 				getOrElse("tag", Map.empty).
 				asInstanceOf[Map[String, Any]].
 				getOrElse("sheetName", "").toString
-			
-			val assetId = contentMap.
+
+			val assetId = convertContent.
 				getOrElse("tag", Map.empty).
 				asInstanceOf[Map[String, Any]].
 				getOrElse("assetId", "").toString
+			// TODO: 这块儿还要改进
+			convertContent.foreach { x =>
+				if(x._1 == "length") {
+					BPSHDFSFile.appendLine2HDFS(path, s"""{"length": ${x._2}}""")
+				} else {
+					BPSHDFSFile.appendLine2HDFS(path, write(x._2))
+				}
+			}
+			(schema, colNames, tabName, convertContent("length").toString.toInt, assetId)
 			
-			(schema, colNames, tabName, contentMap("length").toString.toInt, assetId)
+			
+//			val metaDataDF = SchemaConverter.column2legalWithDF("MetaData", metaData.toDF("MetaData"))
+//			val contentMap = BPSMetaData2Map.
+//				list2Map(metaDataDF.select("MetaData").collect().toList.map(_.getAs[String]("MetaData")))
+//			implicit val formats: DefaultFormats.type = DefaultFormats
+//			val schema  = write(contentMap("schema").asInstanceOf[List[Map[String, Any]]])
+//			metaDataDF.collect().foreach(x => BPSHDFSFile.appendLine2HDFS(path, x.getAs[String]("MetaData")))
+//
+//			val colNames =  contentMap("schema").asInstanceOf[List[Map[String, Any]]].map(_("key").toString)
+//			val tabName = contentMap.
+//				getOrElse("tag", Map.empty).
+//				asInstanceOf[Map[String, Any]].
+//				getOrElse("sheetName", "").toString
+//
+//			val assetId = contentMap.
+//				getOrElse("tag", Map.empty).
+//				asInstanceOf[Map[String, Any]].
+//				getOrElse("assetId", "").toString
+//
+//			(schema, colNames, tabName, contentMap("length").toString.toInt, assetId)
 		} catch {
 			case e: Exception =>
 				// TODO: 处理不了发送重试
@@ -174,5 +212,43 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 				("", Nil, "", 0, "")
 		}
 		
+	}
+	
+	// TODO：因还未曾与老齐对接口，暂时放到这里
+	private def pushPyjob(runId: String,
+	                      metadataPath: String,
+	                      filesPath: String,
+	                      parentJobId: String,
+	                      dsIds: String): Unit = {
+		//		val resultPath = s"hdfs://jobs/$runId/"
+		val resultPath = s"hdfs:///user/alex/jobs/$runId"
+		
+		import org.json4s._
+		import org.json4s.jackson.Serialization.write
+		implicit val formats: DefaultFormats.type = DefaultFormats
+		val traceId = ""
+		val `type` = "add"
+		val jobConfig = Map(
+			"jobId" -> parentJobId,
+			"parentsOId" -> dsIds,
+			"metadataPath" -> metadataPath,
+			"filesPath" -> filesPath,
+			"resultPath" -> resultPath
+		)
+		val job = JobMsg(
+			s"ossPyJob$parentJobId",
+			"job",
+			"com.pharbers.StreamEngine.Jobs.PyJob.PythonJobContainer.BPSPythonJobContainer",
+			List("$BPSparkSession"),
+			Nil,
+			Nil,
+			jobConfig,
+			"",
+			"temp job")
+		val jobMsg = write(job)
+		val topic = "stream_job_submit"
+		val bpJob = new BPJob(parentJobId, traceId, `type`, jobMsg)
+		val fu = ProducerSingleton.getIns.produce(topic, parentJobId, bpJob)
+		logger.debug(fu.get(10, TimeUnit.SECONDS))
 	}
 }

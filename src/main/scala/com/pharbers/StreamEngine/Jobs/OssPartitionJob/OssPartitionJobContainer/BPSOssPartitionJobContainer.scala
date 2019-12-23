@@ -37,6 +37,7 @@ class BPSOssPartitionJobContainer(override val strategy: BPSKfkJobStrategy, val 
             .option("kafka.ssl.endpoint.identification.algorithm", " ")
             .option("maxOffsetsPerTrigger", 10000)
             .option("startingOffsets", "earliest")
+            .option("maxOffsetsPerTrigger", 10000)
 //            .option("startingOffsets", "latest")
             .option("subscribe", strategy.getTopic)
 //            .option("failOnDataLoss", "false")
@@ -48,7 +49,7 @@ class BPSOssPartitionJobContainer(override val strategy: BPSKfkJobStrategy, val 
                 """deserialize(value) AS value""",
                 "timestamp"
             ).toDF()
-            .withWatermark("timestamp", "3 hours")
+            .withWatermark("timestamp", "24 hours")
             .select(
                 from_json($"value", strategy.getSchema).as("data"), col("timestamp")
             ).select("data.*", "timestamp"))

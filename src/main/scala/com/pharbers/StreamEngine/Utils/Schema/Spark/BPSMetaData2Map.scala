@@ -13,16 +13,16 @@ import org.json4s.jackson.Serialization.read
  * @note 一些值得注意的地方
  */
 object BPSMetaData2Map {
-	def list2Map(jsonList: List[String]): Map[String, Any] = {
+	def list2Map(jsonList: List[String]): Map[String, AnyRef] = {
 		implicit val formats: DefaultFormats.type = DefaultFormats
-		var jsonMap: Map[String, Any] = Map()
+		var jsonMap: Map[String, AnyRef] = Map()
 		jsonList.foreach{ line =>
 			try {
-				val schema = read[List[Map[String, Any]]](line)
+				val schema = read[List[Map[String, AnyRef]]](line)
 				jsonMap = jsonMap ++ Map("schema" -> schema)
 			} catch {
 				case _: Throwable =>
-					val obj = read[Map[String, Any]](line)
+					val obj = read[Map[String, AnyRef]](line)
 					obj match {
 						case o if o.contains("label") => jsonMap = jsonMap ++ Map("tag" -> o)
 						case o if o.contains("length") => jsonMap = jsonMap ++ Map("length" -> o("length"))
@@ -33,6 +33,6 @@ object BPSMetaData2Map {
 		jsonMap
 	}
 
-	def str2Map(jsonObjectStr: String): Map[String, Any] = ???
+	def str2Map(jsonObjectStr: String): Map[String, AnyRef] = ???
 
 }

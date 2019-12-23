@@ -79,17 +79,46 @@ class BPSPythonJob(override val id: String,
             case Some(is) =>
                 val query = is.repartition(partition).writeStream
                         .option("checkpointLocation", checkpointPath)
-                        .foreach(PyCleanSinkHDFS(
-                            fileSuffix = fileSuffix,
-                            retryCount = retryCount,
-                            jobId = id,
-                            rowRecordPath = rowRecordPath,
-                            successPath = successPath,
-                            errPath = errPath,
-                            metadataPath = metadataPath,
-                            lastMetadata = lastMetadata,
-                            py4jManager = py4jManager
-                        ))
+                        .foreach(new ForeachWriter[Row]() {
+
+                            override def open(partitionId: Long, version: Long): Boolean = {
+                                val threadId: String = UUID.randomUUID().toString
+                                val genPath: String => String = path => s"$path/part-$partitionId-$threadId.$fileSuffix"
+
+                                py4jManager.open(Map(
+                                    "py4jManager" -> py4jManager,
+                                    "jobId" -> id,
+                                    "threadId" -> threadId,
+                                    "rowRecordPath" -> genPath(rowRecordPath),
+                                    "successPath" -> genPath(successPath),
+                                    "errPath" -> genPath(errPath),
+                                    "metadataPath" -> genPath(metadataPath)
+                                ))
+
+                                true
+                            }
+
+                            override def process(value: Row): Unit = {
+                                val data = value.schema.map { schema =>
+                                    schema.dataType match {
+                                        case StringType =>
+                                            schema.name -> value.getAs[String](schema.name)
+                                        case _ => ???
+                                    }
+                                }.toMap
+
+                                py4jManager.push(
+                                    write(Map("metadata" -> lastMetadata, "data" -> data))(DefaultFormats)
+                                )
+                            }
+
+                            override def close(errorOrNull: Throwable): Unit = {
+                                py4jManager.push("EOF")
+                                while (py4jManager.dataQueue.nonEmpty) {
+                                    Thread.sleep(1000)
+                                }
+                            }
+                        })
                         .start()
 
                 outputStream = query :: outputStream
@@ -99,38 +128,7 @@ class BPSPythonJob(override val id: String,
     }
 
     override def close(): Unit = {
-//        regPedigree()
-        noticeFunc(noticeTopic, Map(
-            "id" -> id,
-            "resultPath" -> resultPath,
-            "rowRecordPath" -> rowRecordPath,
-            "metadataPath" -> metadataPath,
-            "successPath" -> successPath,
-            "errPath" -> errPath
-        ))
         super.close()
         jobCloseFunc(id)
-    }
-
-    // 注册血统
-    def regPedigree(): Unit = {
-        import collection.JavaConverters._
-        val dfs = new DataSet(
-            parentsOId.asJava,
-            mongoOId,
-            id,
-            Collections.emptyList(),
-            "",
-            lastMetadata("length").asInstanceOf[Double].toInt,
-            successPath,
-            "Python 清洗 Job")
-        BPSBloodJob("data_set_job", dfs).exec()
-    }
-
-    def addListener(rowRecordPath: String): BPStreamListener = {
-        val rowLength = lastMetadata("length").asInstanceOf[Double].toLong
-        val listener = BPSProgressListenerAndClose(this, spark, rowLength, rowRecordPath)
-        listener.active(null)
-        listener
     }
 }

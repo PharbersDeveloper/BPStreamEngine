@@ -28,7 +28,9 @@ import com.pharbers.StreamEngine.Utils.HDFS.BPSHDFSFile
 case class BPSPy4jServer(serverConf: Map[String, Any] = Map().empty)
                         (manager_pop: () => String, manager_close: String => Unit) extends Serializable {
 
-    final val RETRY_COUNT: Int = serverConf.getOrElse("retryCount", "3").toString.toInt
+    import java.util.concurrent.Semaphore
+//    val semp = new Semaphore(1)
+
     val jobId: String = serverConf.getOrElse("jobId", UUID.randomUUID().toString).toString
     val threadId: String = serverConf.getOrElse("threadId", UUID.randomUUID().toString).toString
 
