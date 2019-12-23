@@ -19,11 +19,13 @@ case class Hive2EsJobStartListener(id: String,
         val jobId: String = UUID.randomUUID().toString
         val indexName: String = record.value().getIndexName.toString
         val sqlString: String = record.value().getSql.toString
+        val strategy: String = record.value().getStrategy.toString
         val checkpointLocation: String = "/jobs/" + RUNNER_ID + "/" + jobId + "/checkpoint"
 
         val job = BPSHive2EsJob(jobId, spark, container, Map(
             BPSHive2EsJob.INDEX_NAME_KEY -> indexName,
             BPSHive2EsJob.SQL_STRING_KEY -> sqlString,
+            BPSHive2EsJob.STRATEGY_CMD_KEY -> strategy,
             BPSHive2EsJob.CHECKPOINT_LOCATION_KEY -> checkpointLocation
         ))
         job.open()

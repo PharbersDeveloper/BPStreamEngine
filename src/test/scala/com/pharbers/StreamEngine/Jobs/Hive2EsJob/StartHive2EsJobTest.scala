@@ -18,10 +18,12 @@ class StartHive2EsJobTest extends FunSuite{
             " CAST(SALES_VALUE As DOUBLE) AS SALES, CAST(YEAR As INT) AS YEAR, CAST(MONTH As INT) AS MONTH" +
             " FROM cpa WHERE ( YEAR like '2018%' AND MONTH >= 8 ) OR ( YEAR like '2019%' AND MONTH <= 8 )"
         val indexName = "cpa"
+        val strategy = BPSHive2EsJob.STRATEGY_CMD_MaxDashboard
         val topic = "Hive2EsJobSubmit"
 
+
         val pkp = new PharbersKafkaProducer[String, Hive2EsJobSubmit]
-        val esJob = new Hive2EsJobSubmit(sql, indexName)
+        val esJob = new Hive2EsJobSubmit(sql, indexName, strategy)
         val fu = pkp.produce(topic, jobId, esJob)
         println(fu.get(10, TimeUnit.SECONDS))
     }

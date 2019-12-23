@@ -10,11 +10,12 @@ import org.apache.avro.specific.SpecificData;
 @SuppressWarnings("all")
 @org.apache.avro.specific.AvroGenerated
 public class Hive2EsJobSubmit extends org.apache.avro.specific.SpecificRecordBase implements org.apache.avro.specific.SpecificRecord {
-  private static final long serialVersionUID = -5187883231762572459L;
-  public static final org.apache.avro.Schema SCHEMA$ = new org.apache.avro.Schema.Parser().parse("{\"type\":\"record\",\"name\":\"Hive2EsJobSubmit\",\"namespace\":\"com.pharbers.kafka.schema\",\"fields\":[{\"name\":\"Sql\",\"type\":\"string\"},{\"name\":\"IndexName\",\"type\":\"string\"}]}");
+  private static final long serialVersionUID = 4050705969596879354L;
+  public static final org.apache.avro.Schema SCHEMA$ = new org.apache.avro.Schema.Parser().parse("{\"type\":\"record\",\"name\":\"Hive2EsJobSubmit\",\"namespace\":\"com.pharbers.kafka.schema\",\"fields\":[{\"name\":\"Sql\",\"type\":\"string\"},{\"name\":\"IndexName\",\"type\":\"string\"},{\"name\":\"Strategy\",\"type\":\"string\"}]}");
   public static org.apache.avro.Schema getClassSchema() { return SCHEMA$; }
   @Deprecated public java.lang.CharSequence Sql;
   @Deprecated public java.lang.CharSequence IndexName;
+  @Deprecated public java.lang.CharSequence Strategy;
 
   /**
    * Default constructor.  Note that this does not initialize fields
@@ -27,10 +28,12 @@ public class Hive2EsJobSubmit extends org.apache.avro.specific.SpecificRecordBas
    * All-args constructor.
    * @param Sql The new value for Sql
    * @param IndexName The new value for IndexName
+   * @param Strategy The new value for Strategy
    */
-  public Hive2EsJobSubmit(java.lang.CharSequence Sql, java.lang.CharSequence IndexName) {
+  public Hive2EsJobSubmit(java.lang.CharSequence Sql, java.lang.CharSequence IndexName, java.lang.CharSequence Strategy) {
     this.Sql = Sql;
     this.IndexName = IndexName;
+    this.Strategy = Strategy;
   }
 
   public org.apache.avro.Schema getSchema() { return SCHEMA$; }
@@ -39,6 +42,7 @@ public class Hive2EsJobSubmit extends org.apache.avro.specific.SpecificRecordBas
     switch (field$) {
     case 0: return Sql;
     case 1: return IndexName;
+    case 2: return Strategy;
     default: throw new org.apache.avro.AvroRuntimeException("Bad index");
     }
   }
@@ -49,6 +53,7 @@ public class Hive2EsJobSubmit extends org.apache.avro.specific.SpecificRecordBas
     switch (field$) {
     case 0: Sql = (java.lang.CharSequence)value$; break;
     case 1: IndexName = (java.lang.CharSequence)value$; break;
+    case 2: Strategy = (java.lang.CharSequence)value$; break;
     default: throw new org.apache.avro.AvroRuntimeException("Bad index");
     }
   }
@@ -86,6 +91,22 @@ public class Hive2EsJobSubmit extends org.apache.avro.specific.SpecificRecordBas
   }
 
   /**
+   * Gets the value of the 'Strategy' field.
+   * @return The value of the 'Strategy' field.
+   */
+  public java.lang.CharSequence getStrategy() {
+    return Strategy;
+  }
+
+  /**
+   * Sets the value of the 'Strategy' field.
+   * @param value the value to set.
+   */
+  public void setStrategy(java.lang.CharSequence value) {
+    this.Strategy = value;
+  }
+
+  /**
    * Creates a new Hive2EsJobSubmit RecordBuilder.
    * @return A new Hive2EsJobSubmit RecordBuilder
    */
@@ -119,6 +140,7 @@ public class Hive2EsJobSubmit extends org.apache.avro.specific.SpecificRecordBas
 
     private java.lang.CharSequence Sql;
     private java.lang.CharSequence IndexName;
+    private java.lang.CharSequence Strategy;
 
     /** Creates a new Builder */
     private Builder() {
@@ -139,6 +161,10 @@ public class Hive2EsJobSubmit extends org.apache.avro.specific.SpecificRecordBas
         this.IndexName = data().deepCopy(fields()[1].schema(), other.IndexName);
         fieldSetFlags()[1] = true;
       }
+      if (isValidValue(fields()[2], other.Strategy)) {
+        this.Strategy = data().deepCopy(fields()[2].schema(), other.Strategy);
+        fieldSetFlags()[2] = true;
+      }
     }
 
     /**
@@ -154,6 +180,10 @@ public class Hive2EsJobSubmit extends org.apache.avro.specific.SpecificRecordBas
       if (isValidValue(fields()[1], other.IndexName)) {
         this.IndexName = data().deepCopy(fields()[1].schema(), other.IndexName);
         fieldSetFlags()[1] = true;
+      }
+      if (isValidValue(fields()[2], other.Strategy)) {
+        this.Strategy = data().deepCopy(fields()[2].schema(), other.Strategy);
+        fieldSetFlags()[2] = true;
       }
     }
 
@@ -235,12 +265,52 @@ public class Hive2EsJobSubmit extends org.apache.avro.specific.SpecificRecordBas
       return this;
     }
 
+    /**
+      * Gets the value of the 'Strategy' field.
+      * @return The value.
+      */
+    public java.lang.CharSequence getStrategy() {
+      return Strategy;
+    }
+
+    /**
+      * Sets the value of the 'Strategy' field.
+      * @param value The value of 'Strategy'.
+      * @return This builder.
+      */
+    public com.pharbers.kafka.schema.Hive2EsJobSubmit.Builder setStrategy(java.lang.CharSequence value) {
+      validate(fields()[2], value);
+      this.Strategy = value;
+      fieldSetFlags()[2] = true;
+      return this;
+    }
+
+    /**
+      * Checks whether the 'Strategy' field has been set.
+      * @return True if the 'Strategy' field has been set, false otherwise.
+      */
+    public boolean hasStrategy() {
+      return fieldSetFlags()[2];
+    }
+
+
+    /**
+      * Clears the value of the 'Strategy' field.
+      * @return This builder.
+      */
+    public com.pharbers.kafka.schema.Hive2EsJobSubmit.Builder clearStrategy() {
+      Strategy = null;
+      fieldSetFlags()[2] = false;
+      return this;
+    }
+
     @Override
     public Hive2EsJobSubmit build() {
       try {
         Hive2EsJobSubmit record = new Hive2EsJobSubmit();
         record.Sql = fieldSetFlags()[0] ? this.Sql : (java.lang.CharSequence) defaultValue(fields()[0]);
         record.IndexName = fieldSetFlags()[1] ? this.IndexName : (java.lang.CharSequence) defaultValue(fields()[1]);
+        record.Strategy = fieldSetFlags()[2] ? this.Strategy : (java.lang.CharSequence) defaultValue(fields()[2]);
         return record;
       } catch (Exception e) {
         throw new org.apache.avro.AvroRuntimeException(e);
