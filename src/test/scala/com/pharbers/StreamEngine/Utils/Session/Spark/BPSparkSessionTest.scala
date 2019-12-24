@@ -59,49 +59,88 @@ class BPSparkSessionTest extends FunSuite with PhLogable {
             .withColumn("SALES_QTY", col("SALES_QTY").cast(DataTypes.LongType))
             .withColumn("SALES_VALUE", col("SALES_VALUE").cast(DataTypes.DoubleType))
 
-        //分子级别在单个年月、省&城市级别、产品维度的聚合数据
+        //缩小数据范围，需求中最小维度是分子，先计算出分子级别在单个年月、省&城市级别、产品维度的聚合数据
         val moleLevelDF = formatDF.groupBy("YM", "PROVINCE_NAME", "CITY_NAME", "PRODUCT_NAME", "MOLE_NAME")
             .agg(expr("SUM(SALES_QTY) as MOLE_SALES_QTY"), expr("SUM(SALES_VALUE) as MOLE_SALES_VALUE"))
 
         //TODO:得保证数据源中包含两年的数据
-        val current2YearYmList = moleLevelDF.select("YM").sort("YM").distinct().collect().map(_(0)).toList.takeRight(24).asInstanceOf[List[Int]]
-        val currentYearYmList = current2YearYmList.takeRight(12)
-        val lastMonthYmList = current2YearYmList.takeRight(13).take(12)
+        val current2YearYmList = moleLevelDF.select("YM").distinct().sort("YM").collect().map(_(0)).toList.takeRight(24).asInstanceOf[List[Int]]
 
-        //当前最新的12个月的各分组（分子、产品、城市、省份、年月）数据
-        val currentYearMoleLevelDF = moleLevelDF
-            .filter(col("YM") >= currentYearYmList.min.toString.toInt && col("YM") <= currentYearYmList.max.toString.toInt)
-            .sort("YM", "PROVINCE_NAME", "CITY_NAME", "PRODUCT_NAME", "MOLE_NAME")
-            .withColumnRenamed("MOLE_SALES_QTY", "CURR_MOLE_SALES_QTY")
-            .withColumnRenamed("MOLE_SALES_VALUE", "CURR_MOLE_SALES_VALUE")
-
-        //上月（1个月前）的12个月的各分组（分子、产品、城市、省份、年月）数据
-        val lastMonthYearMoleLevelDF = moleLevelDF
-            .filter(col("YM") >= lastMonthYmList.min.toString.toInt && col("YM") <= lastMonthYmList.max.toString.toInt)
-            .sort("YM", "PROVINCE_NAME", "CITY_NAME", "PRODUCT_NAME", "MOLE_NAME")
-            .withColumnRenamed("MOLE_SALES_QTY", "LAST_M_MOLE_SALES_QTY")
-            .withColumnRenamed("MOLE_SALES_VALUE", "LAST_M_MOLE_SALES_VALUE")
-            .withColumnRenamed("YM", "LAST_MONTH_YM")
-            .withColumn("CURR_MONTH_YM", when(col("LAST_MONTH_YM") === 12, col("LAST_MONTH_YM").+(89)).otherwise(col("LAST_MONTH_YM").+(1)))
-
-        lastMonthYearMoleLevelDF.show(10)
-
-        val current2YearMoleLevelDF = moleLevelDF
-            .filter(col("YM") >= current2YearYmList.min.toString.toInt && col("YM") <= current2YearYmList.max.toString.toInt)
-            .sort("YM", "PROVINCE_NAME", "CITY_NAME", "PRODUCT_NAME", "MOLE_NAME")
-
-        val lastMonthMoleWindow = Window
+        val moleWindow = Window
             .partitionBy("YM", "PROVINCE_NAME", "CITY_NAME", "PRODUCT_NAME", "MOLE_NAME")
-            .orderBy("YM")
-            .rowsBetween(-1, 0)
 
-        current2YearMoleLevelDF
-            .withColumn("LAST_M_MOLE_SALES_QTY", first(col("MOLE_SALES_QTY").over(lastMonthMoleWindow)))
-            .withColumn("LAST_M_MOLE_SALES_VALUE", first(col("MOLE_SALES_VALUE").over(lastMonthMoleWindow)))
+        val lastMonthMoleWindow = moleWindow
+            .orderBy(to_date(col("YM").cast("string"), "yyyyMM").cast("timestamp").cast("long"))
+            .rangeBetween(-86400 * 31, Window.currentRow)
 
-        current2YearMoleLevelDF.show(10)
+        val prodWindow = Window
+            .partitionBy("YM", "PROVINCE_NAME", "CITY_NAME", "PRODUCT_NAME")
 
-        return moleLevelDF
+        val cityWindow = Window
+            .partitionBy("YM", "PROVINCE_NAME", "CITY_NAME")
+
+        val provWindow = Window
+            .partitionBy("YM", "PROVINCE_NAME")
+
+        val ymWindow = Window
+            .partitionBy("YM")
+
+        val current2YearDF = moleLevelDF
+            .filter(col("YM") >= current2YearYmList.min.toString.toInt && col("YM") <= current2YearYmList.max.toString.toInt)
+//            .withColumn("PROD_SALES_QTY", sum("MOLE_SALES_QTY").over(prodWindow))
+//            .withColumn("PROD_SALES_VALUE", sum("MOLE_SALES_VALUE").over(prodWindow))
+//            .withColumn("CITY_SALES_QTY", sum("MOLE_SALES_QTY").over(cityWindow))
+//            .withColumn("CITY_SALES_VALUE", sum("MOLE_SALES_VALUE").over(cityWindow))
+//            .withColumn("PROV_SALES_QTY", sum("MOLE_SALES_QTY").over(provWindow))
+//            .withColumn("PROV_SALES_VALUE", sum("MOLE_SALES_VALUE").over(provWindow))
+//            .withColumn("YM_SALES_QTY", sum("MOLE_SALES_QTY").over(ymWindow))
+//            .withColumn("YM_SALES_VALUE", sum("MOLE_SALES_VALUE").over(ymWindow))
+            //fill lastMonth values
+            .withColumn("LAST_M_MOLE_SALES_QTY", sum("MOLE_SALES_QTY").over(lastMonthMoleWindow) - col("MOLE_SALES_QTY"))
+            .withColumn("LAST_M_MOLE_SALES_VALUE", sum("MOLE_SALES_VALUE").over(lastMonthMoleWindow) - col("MOLE_SALES_VALUE"))
+            .na.fill(Map("LAST_M_MOLE_SALES_QTY" -> 0, "LAST_M_MOLE_SALES_VALUE" -> 0.0))
+//            .withColumn("LAST_M_PROD_SALES_QTY", first("PROD_SALES_QTY").over(lastMonthWindow(prodWindow)))
+//            .withColumn("LAST_M_PROD_SALES_VALUE", first("PROD_SALES_VALUE").over(lastMonthWindow(prodWindow)))
+//            .na.fill(Map("LAST_M_PROD_SALES_QTY" -> 0, "LAST_M_PROD_SALES_VALUE" -> 0.0))
+//            .withColumn("LAST_M_CITY_SALES_QTY", first("CITY_SALES_QTY").over(lastMonthWindow(cityWindow)))
+//            .withColumn("LAST_M_CITY_SALES_VALUE", first("CITY_SALES_VALUE").over(lastMonthWindow(cityWindow)))
+//            .na.fill(Map("LAST_M_CITY_SALES_QTY" -> 0, "LAST_M_CITY_SALES_VALUE" -> 0.0))
+//            .withColumn("LAST_M_PROV_SALES_QTY", first("PROV_SALES_QTY").over(lastMonthWindow(provWindow)))
+//            .withColumn("LAST_M_PROV_SALES_VALUE", first("PROV_SALES_VALUE").over(lastMonthWindow(provWindow)))
+//            .na.fill(Map("LAST_M_PROV_SALES_QTY" -> 0, "LAST_M_PROV_SALES_VALUE" -> 0.0))
+//            .withColumn("LAST_M_YM_SALES_QTY", first("YM_SALES_QTY").over(lastMonthWindow(ymWindow)))
+//            .withColumn("LAST_M_YM_SALES_VALUE", first("YM_SALES_VALUE").over(lastMonthWindow(ymWindow)))
+//            .na.fill(Map("LAST_M_YM_SALES_QTY" -> 0, "LAST_M_YM_SALES_VALUE" -> 0.0))
+//            //fill lastYear values
+//            .withColumn("LAST_Y_MOLE_SALES_QTY", first("MOLE_SALES_QTY").over(lastYearWindow(moleWindow)))
+//            .withColumn("LAST_Y_MOLE_SALES_VALUE", first("MOLE_SALES_VALUE").over(lastYearWindow(moleWindow)))
+//            .na.fill(Map("LAST_Y_MOLE_SALES_QTY" -> 0, "LAST_Y_MOLE_SALES_VALUE" -> 0.0))
+//            .withColumn("LAST_Y_PROD_SALES_QTY", first("PROD_SALES_QTY").over(lastYearWindow(prodWindow)))
+//            .withColumn("LAST_Y_PROD_SALES_VALUE", first("PROD_SALES_VALUE").over(lastYearWindow(prodWindow)))
+//            .na.fill(Map("LAST_Y_PROD_SALES_QTY" -> 0, "LAST_Y_PROD_SALES_VALUE" -> 0.0))
+//            .withColumn("LAST_Y_CITY_SALES_QTY", first("CITY_SALES_QTY").over(lastYearWindow(cityWindow)))
+//            .withColumn("LAST_Y_CITY_SALES_VALUE", first("CITY_SALES_VALUE").over(lastYearWindow(cityWindow)))
+//            .na.fill(Map("LAST_Y_CITY_SALES_QTY" -> 0, "LAST_Y_CITY_SALES_VALUE" -> 0.0))
+//            .withColumn("LAST_Y_PROV_SALES_QTY", first("PROV_SALES_QTY").over(lastYearWindow(provWindow)))
+//            .withColumn("LAST_Y_PROV_SALES_VALUE", first("PROV_SALES_VALUE").over(lastYearWindow(provWindow)))
+//            .na.fill(Map("LAST_Y_PROV_SALES_QTY" -> 0, "LAST_Y_PROV_SALES_VALUE" -> 0.0))
+//            .withColumn("LAST_Y_YM_SALES_QTY", first("YM_SALES_QTY").over(lastYearWindow(ymWindow)))
+//            .withColumn("LAST_Y_YM_SALES_VALUE", first("YM_SALES_VALUE").over(lastYearWindow(ymWindow)))
+//            .na.fill(Map("LAST_Y_YM_SALES_QTY" -> 0, "LAST_Y_YM_SALES_VALUE" -> 0.0))
+
+        current2YearDF.show(20)
+//        current2YearDF.filter(col("PRODUCT_NAME") === "丽泉" && col("CITY_NAME") === "七台河市" && col("YM") === "201803").show(10)
+        return current2YearDF
     }
+
+    def lastMonthWindow(window: WindowSpec): WindowSpec = {
+        window
+            .orderBy(to_date(col("YM").cast("string"), "yyyyMM").cast("timestamp").cast("long"))
+            .rangeBetween(-86400 * 31, -86400 * 28)
+    }
+
+
+    def lastYearWindow(window: WindowSpec): WindowSpec =
+        window.orderBy(col("YM").cast(DataTypes.IntegerType)).rangeBetween(-100, -100)
 
 }
