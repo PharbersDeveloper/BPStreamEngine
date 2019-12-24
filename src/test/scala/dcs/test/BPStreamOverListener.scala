@@ -22,7 +22,7 @@ import org.scalatest.FunSuite
 class BPStreamOverListener extends FunSuite with PhLogable{
     val spark = BPSparkSession()
     test("test pyjob ok"){
-        val scan = new Scanner(new File("D:\\文件\\weixin\\WeChat Files\\dengcao1993\\FileStorage\\File\\2019-12\\14pyjob.csv"))
+        val scan = new Scanner(new File("D:\\文件\\weixin\\WeChat Files\\dengcao1993\\FileStorage\\File\\2019-12\\error.csv"))
         while (scan.hasNextLine){
             val line = scan.nextLine().split(",")
             val jobId = line.head
@@ -36,7 +36,7 @@ class BPStreamOverListener extends FunSuite with PhLogable{
         val scan = new Scanner(new File("C:\\Users\\EDZ\\Desktop\\err"))
         while (scan.hasNextLine){
             val line = scan.nextLine()
-            val path = "/user/alex/jobs/" + line + "/err"
+            val path = "/user/alex/jobs/78bed4a4-8b03-4aa5-9800-3ef7ec9bb942/" + line + "/err"
             val err = spark.sparkContext.textFile(path).take(1).head
             println(err)
         }

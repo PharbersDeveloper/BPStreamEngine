@@ -74,7 +74,7 @@ case class BPSqlTableJob(jobContainer: BPSJobContainer, spark: SparkSession, con
 
     def appendTable(tableName: String): Unit = {
         //todo: 需要检查已经有的
-        val version = "0.0.7"
+        val version = "0.0.9"
         inputStream match {
             case Some(df) =>
 //                val count = df.count()
