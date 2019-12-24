@@ -1,0 +1,35 @@
+{
+  "type": "record",
+  "name": "HiveTask",
+  "namespace": "com.pharbers.kafka.schema",
+  "fields": [
+    {
+      "name": "jobId",
+      "type": "string"
+    },
+    {
+      "name": "traceId",
+      "type": "string"
+    },
+    {
+      "name": "datasetId",
+      "type": "string"
+    },
+    {
+      "name": "taskType",
+      "type": "string"
+    },
+    {
+      "name": "url",
+      "type": "string"
+    },
+    {
+      "name": "length",
+      "type": "int"
+    },
+    {
+      "name": "remarks",
+      "type": "string"
+    }
+  ]
+}

@@ -45,7 +45,7 @@ object BPSDriverChannel {
 //    }
 }
 
-// TODO 希望可以补全注释，因为我不知道这是干什么的
+// TODO 希望可以补全注释
 @Component(name = "BPSDriverChannel", `type` = "BPSDriverChannel")
 class BPSDriverChannel(config: Map[String, String]) extends Runnable with PhLogable {
 
@@ -55,7 +55,15 @@ class BPSDriverChannel(config: Map[String, String]) extends Runnable with PhLoga
 
     def registerListener(listener: BPStreamRemoteListener): Unit = lst = listener :: lst
 
-    def trigger(e: BPSEvents): Unit = lst.filter(_.hit(e)).foreach(_.trigger(e))
+    def trigger(e: BPSEvents): Unit = lst.filter(_.hit(e)).foreach(x =>
+            try {
+                x.trigger(e)
+            } catch {
+                case e: Exception =>
+                    logger.error(s"listener error job: ${x.job.id}", e)
+            }
+
+    )
 
     override def run(): Unit = {
         val selector: Selector = Selector.open // selector is open here

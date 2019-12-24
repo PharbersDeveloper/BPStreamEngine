@@ -1,0 +1,15 @@
+{
+  "type": "record",
+  "name": "UploadEnd",
+  "namespace": "com.pharbers.kafka.schema",
+  "fields": [
+    {
+      "name": "dataSetId",
+      "type": "string"
+    },
+    {
+      "name": "assetId",
+      "type": "string"
+    }
+  ]
+}

@@ -14,40 +14,55 @@ import scala.util.parsing.json.JSON
  * @note
  */
 object ReadParquetScript extends App {
-    val id = "57fe0-2bda-4880-8301-dc55a0"
-    val matedataPath = "hdfs:///test/alex/07b8411a-5064-4271-bfd3-73079f2b42b2/metadata/"
-    val filesPath = "hdfs:///test/alex/07b8411a-5064-4271-bfd3-73079f2b42b2/files/"
+    val runId = "83ee0f2a-360a-4236-ba26-afa09d58e01d"
+    val jobId = "ea293f1b-a66d-44fb-95ff-49a009840ed4"
+//    val matedataPath = s"/jobs/$runId/$jobId/metadata"
+//    val filesPath = s"/jobs/$runId/$jobId/contents/$jobId"
 
     val spark = BPSparkSession()
-
+    val id = "08d72f26-f5cc-4618-911c-812a4a4e1cec"
     def byBatchForCsv(): Unit = {
+        val jobId = "6aa67117-099d-42c9-90a8-c30fe875c596"
+
+//        val path = s"hdfs:///user/clock/jobs/$jobId/metadata"
+//        val path = s"hdfs:///user/clock/jobs/$jobId/contents"
+        val path = s"hdfs:///user/clock/jobs/$jobId/err"
+//        val path = s"hdfs:///user/clock/jobs/$jobId/row_record"
+
         val reading = spark.read
                 .format("com.databricks.spark.csv")
-                .option("header", "true") //这里如果在csv第一行有属性的话，没有就是"false"
+//                .option("header", "true") //这里如果在csv第一行有属性的话，没有就是"false"
                 .option("inferSchema", true.toString)//这是自动推断属性列的数据类型。
-                .load("hdfs:///test/qi/57fe0-2bda-4880-8301-dc55a0/file") //文件的路径
+                .load(path) //文件的路径
         reading.show(false)
+        println(reading.count())
     }
     byBatchForCsv()
 
+    val testPath = "/user/alex/jobs/b583ab59-ef9d-4a08-9246-91396c770676/"+ id + "/contents"
+    val matedataPath = "/user/alex/jobs/b583ab59-ef9d-4a08-9246-91396c770676/"+ id + "/metadata"
     def byBatch(): Unit = {
-        val reading = spark.read.parquet(filesPath)
+        val loadSchema = BPSParseSchema.parseSchemaByMetadata(matedataPath)(spark)
+        val reading = spark.read.schema(loadSchema).parquet(testPath)
         reading.show(false)
+        println(reading.count())
     }
+//    byBatch()
 
-    def byStream(): Unit = {
-        val loadSchema = BPSParseSchema.parseSchemaByMetadata(matedataPath + id)(spark)
-        val reading = spark.readStream
-                .schema(loadSchema)
-                .option("startingOffsets", "earliest")
-                .parquet(filesPath + id)
-
-        val wordCounts = reading.groupBy("Year").count()
-
-        val query = wordCounts.writeStream
-                .outputMode("complete")
-                .format("console")
-                .start()
-        query.awaitTermination()
-    }
+//    def byStream(): Unit = {
+//        val loadSchema = BPSParseSchema.parseSchemaByMetadata(matedataPath)(spark)
+//        val reading = spark.readStream
+//                .schema(loadSchema)
+//                .option("startingOffsets", "earliest")
+//                .parquet(filesPath)
+//
+//        val wordCounts = reading.groupBy("1#Year").count()
+//
+//        val query = wordCounts.writeStream
+//                .outputMode("complete")
+//                .format("console")
+//                .start()
+//        query.awaitTermination()
+//    }
+//    byStream()
 }
