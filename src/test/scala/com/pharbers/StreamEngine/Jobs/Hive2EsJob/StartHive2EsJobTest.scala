@@ -14,10 +14,8 @@ class StartHive2EsJobTest extends FunSuite{
         implicit val formats: DefaultFormats.type = DefaultFormats
         val jobId = UUID.randomUUID().toString
 
-        val sql = "SELECT COMPANY, SOURCE, PROVINCE_NAME, CITY_NAME, HOSP_NAME, HOSP_CODE, HOSP_LEVEL, MOLE_NAME, PRODUCT_NAME, MANUFACTURER_NAME, MKT," +
-            " CAST(SALES_VALUE As DOUBLE) AS SALES, CAST(YEAR As INT) AS YEAR, CAST(MONTH As INT) AS MONTH" +
-            " FROM cpa WHERE ( YEAR like '2018%' AND MONTH >= 8 ) OR ( YEAR like '2019%' AND MONTH <= 8 )"
-        val indexName = "cpa"
+        val sql = "SELECT * FROM cpa WHERE ( YEAR >= 2017 ) AND ( YEAR <= 2019 ) AND ( MONTH >= 1 ) AND ( MONTH <= 12 )"
+        val indexName = "test2"
         val strategy = BPSHive2EsJob.STRATEGY_CMD_MaxDashboard
         val topic = "Hive2EsJobSubmit"
 

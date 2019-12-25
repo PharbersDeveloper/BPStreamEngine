@@ -1,6 +1,6 @@
 package com.pharbers.StreamEngine.Jobs.Hive2EsJob
 
-import com.pharbers.StreamEngine.Jobs.EsJob.strategy.{BPSMaxDataHive2EsStrategy, BPSStrategy}
+import com.pharbers.StreamEngine.Jobs.Hive2EsJob.strategy.{BPSMaxDataHive2EsStrategy, BPSStrategy}
 import com.pharbers.StreamEngine.Utils.Config.BPSConfig
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSJobStrategy
@@ -101,7 +101,6 @@ class BPSHive2EsJob(override val id: String,
     }
 
     override def close(): Unit = {
-        super.close()
         container.finishJobWithId(id)
         logger.info("hive to es job closed with id ========>" + id)
     }
