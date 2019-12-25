@@ -26,17 +26,12 @@ class BPSparkSessionTest extends FunSuite with PhLogable {
 
     test("Read Hive And Convert MaxDashboard") {
         val spark = BPSparkSession(Map("app.name" -> "ReadHive"))
-        //        val reading = spark.sql("SELECT COMPANY, SOURCE, PROVINCE_NAME, CITY_NAME, HOSP_NAME, HOSP_CODE, CAST(SALES_VALUE As DOUBLE) AS SALES, CAST(YEAR As INT) AS YEAR, CAST(MONTH As INT) AS MONTH" +
-
-        val reading = spark.sql("SELECT *" +
-            " FROM cpa WHERE ( YEAR >= 2017 ) AND ( YEAR <= 2019 ) AND ( MONTH >= 1 ) AND ( MONTH <= 12 )")
-        //        println("origin count = ", reading.count())
+//        val reading = spark.sql("SELECT COMPANY, SOURCE, PROVINCE_NAME, CITY_NAME, HOSP_NAME, HOSP_CODE, CAST(SALES_VALUE As DOUBLE) AS SALES, CAST(YEAR As INT) AS YEAR, CAST(MONTH As INT) AS MONTH" +
+        val reading = spark.sql("SELECT * FROM cpa WHERE ( YEAR >= 2017 ) AND ( YEAR <= 2019 ) AND ( MONTH >= 1 ) AND ( MONTH <= 12 )")
+//        println("origin count = ", reading.count())
         val newData = convert(reading)
-        //        println("new count = ", newData.count())
-
-        //        newData.show(10)
         newData.printSchema()
-        //        newData.groupBy("YM").agg("SALES_VALUE" -> "sum").show(100)
+        newData.show(20)
     }
 
     def convert(data: DataFrame): DataFrame = {
@@ -92,7 +87,20 @@ class BPSparkSessionTest extends FunSuite with PhLogable {
             .withColumn("PROV_SALES_VALUE", sum("MOLE_SALES_VALUE").over(currMonthWindow(provWindow)))
             .withColumn("MKT_SALES_QTY", sum("MOLE_SALES_QTY").over(currMonthWindow(mktWindow)))
             .withColumn("MKT_SALES_VALUE", sum("MOLE_SALES_VALUE").over(currMonthWindow(mktWindow)))
+            .withColumn("MOLE_IN_PROD_SHARE", col("MOLE_SALES_VALUE") / col("PROD_SALES_VALUE"))
+            .withColumn("MOLE_IN_CITY_SHARE", col("MOLE_SALES_VALUE") / col("CITY_SALES_VALUE"))
+            .withColumn("MOLE_IN_PROV_SHARE", col("MOLE_SALES_VALUE") / col("PROV_SALES_VALUE"))
+            .withColumn("MOLE_IN_MKT_SHARE", col("MOLE_SALES_VALUE") / col("MKT_SALES_VALUE"))
+            .withColumn("PROD_IN_CITY_SHARE", col("PROD_SALES_VALUE") / col("CITY_SALES_VALUE"))
+            .withColumn("PROD_IN_PROV_SHARE", col("PROD_SALES_VALUE") / col("PROV_SALES_VALUE"))
+            .withColumn("PROD_IN_MKT_SHARE", col("PROD_SALES_VALUE") / col("MKT_SALES_VALUE"))
+            .withColumn("CITY_IN_PROV_SHARE", col("CITY_SALES_VALUE") / col("PROV_SALES_VALUE"))
+            .withColumn("CITY_IN_MKT_SHARE", col("CITY_SALES_VALUE") / col("MKT_SALES_VALUE"))
+            .withColumn("PROV_IN_MKT_SHARE", col("PROV_SALES_VALUE") / col("MKT_SALES_VALUE"))
             //fill lastMonth values
+            .withColumn("LAST_M_MOLE_SALES_QTY", first("MOLE_SALES_QTY").over(lastMonthWindow(prodWindow)))
+            .withColumn("LAST_M_MOLE_SALES_VALUE", first("MOLE_SALES_VALUE").over(lastMonthWindow(prodWindow)))
+            .na.fill(Map("LAST_M_MOLE_SALES_QTY" -> 0, "LAST_M_MOLE_SALES_VALUE" -> 0.0))
             .withColumn("LAST_M_PROD_SALES_QTY", first("PROD_SALES_QTY").over(lastMonthWindow(prodWindow)))
             .withColumn("LAST_M_PROD_SALES_VALUE", first("PROD_SALES_VALUE").over(lastMonthWindow(prodWindow)))
             .na.fill(Map("LAST_M_PROD_SALES_QTY" -> 0, "LAST_M_PROD_SALES_VALUE" -> 0.0))
@@ -105,6 +113,22 @@ class BPSparkSessionTest extends FunSuite with PhLogable {
             .withColumn("LAST_M_MKT_SALES_QTY", first("MKT_SALES_QTY").over(lastMonthWindow(mktWindow)))
             .withColumn("LAST_M_MKT_SALES_VALUE", first("MKT_SALES_VALUE").over(lastMonthWindow(mktWindow)))
             .na.fill(Map("LAST_M_MKT_SALES_QTY" -> 0, "LAST_M_MKT_SALES_VALUE" -> 0.0))
+            .withColumn("LAST_M_MOLE_IN_PROD_SHARE", when(col("LAST_M_PROD_SALES_VALUE") === 0.0, 0.0).otherwise(col("LAST_M_MOLE_SALES_VALUE") / col("LAST_M_PROD_SALES_VALUE")))
+            .withColumn("LAST_M_MOLE_IN_CITY_SHARE", when(col("LAST_M_CITY_SALES_VALUE") === 0.0, 0.0).otherwise(col("LAST_M_MOLE_SALES_VALUE") / col("LAST_M_CITY_SALES_VALUE")))
+            .withColumn("LAST_M_MOLE_IN_PROV_SHARE", when(col("LAST_M_PROV_SALES_VALUE") === 0.0, 0.0).otherwise(col("LAST_M_MOLE_SALES_VALUE") / col("LAST_M_PROV_SALES_VALUE")))
+            .withColumn("LAST_M_MOLE_IN_MKT_SHARE", when(col("LAST_M_MKT_SALES_VALUE") === 0.0, 0.0).otherwise(col("LAST_M_MOLE_SALES_VALUE") / col("LAST_M_MKT_SALES_VALUE")))
+            .withColumn("LAST_M_PROD_IN_CITY_SHARE", when(col("LAST_M_CITY_SALES_VALUE") === 0.0, 0.0).otherwise(col("LAST_M_PROD_SALES_VALUE") / col("LAST_M_CITY_SALES_VALUE")))
+            .withColumn("LAST_M_PROD_IN_PROV_SHARE", when(col("LAST_M_PROV_SALES_VALUE") === 0.0, 0.0).otherwise(col("LAST_M_PROD_SALES_VALUE") / col("LAST_M_PROV_SALES_VALUE")))
+            .withColumn("LAST_M_PROD_IN_MKT_SHARE", when(col("LAST_M_MKT_SALES_VALUE") === 0.0, 0.0).otherwise(col("LAST_M_PROD_SALES_VALUE") / col("LAST_M_MKT_SALES_VALUE")))
+            .withColumn("LAST_M_CITY_IN_PROV_SHARE", when(col("LAST_M_PROV_SALES_VALUE") === 0.0, 0.0).otherwise(col("LAST_M_CITY_SALES_VALUE") / col("LAST_M_PROV_SALES_VALUE")))
+            .withColumn("LAST_M_CITY_IN_MKT_SHARE", when(col("LAST_M_MKT_SALES_VALUE") === 0.0, 0.0).otherwise(col("LAST_M_CITY_SALES_VALUE") / col("LAST_M_MKT_SALES_VALUE")))
+            .withColumn("LAST_M_PROV_IN_MKT_SHARE", when(col("LAST_M_MKT_SALES_VALUE") === 0.0, 0.0).otherwise(col("LAST_M_PROV_SALES_VALUE") / col("LAST_M_MKT_SALES_VALUE")))
+            .withColumn("MOLE_MOM", when(col("LAST_M_MOLE_SALES_VALUE") === 0.0, 0.0).otherwise((col("MOLE_SALES_VALUE") - col("LAST_M_MOLE_SALES_VALUE")) / col("LAST_M_MOLE_SALES_VALUE")))
+            .withColumn("PROD_MOM", when(col("LAST_M_PROD_SALES_VALUE") === 0.0, 0.0).otherwise((col("PROD_SALES_VALUE") - col("LAST_M_PROD_SALES_VALUE")) / col("LAST_M_PROD_SALES_VALUE")))
+            .withColumn("CITY_MOM", when(col("LAST_M_CITY_SALES_VALUE") === 0.0, 0.0).otherwise((col("CITY_SALES_VALUE") - col("LAST_M_CITY_SALES_VALUE")) / col("LAST_M_CITY_SALES_VALUE")))
+            .withColumn("PROV_MOM", when(col("LAST_M_PROV_SALES_VALUE") === 0.0, 0.0).otherwise((col("PROV_SALES_VALUE") - col("LAST_M_PROV_SALES_VALUE")) / col("LAST_M_PROV_SALES_VALUE")))
+            .withColumn("MKT_MOM", when(col("LAST_M_MKT_SALES_VALUE") === 0.0, 0.0).otherwise((col("MKT_SALES_VALUE") - col("LAST_M_MKT_SALES_VALUE")) / col("LAST_M_MKT_SALES_VALUE")))
+            .withColumn("EI", when(col("LAST_M_PROD_IN_MKT_SHARE") === 0.0, 0.0).otherwise(col("PROD_IN_MKT_SHARE") / col("LAST_M_PROD_IN_MKT_SHARE")))
             //fill lastYear values
             .withColumn("LAST_Y_MOLE_SALES_QTY", first("MOLE_SALES_QTY").over(lastYearWindow(moleWindow)))
             .withColumn("LAST_Y_MOLE_SALES_VALUE", first("MOLE_SALES_VALUE").over(lastYearWindow(moleWindow)))
@@ -121,9 +145,22 @@ class BPSparkSessionTest extends FunSuite with PhLogable {
             .withColumn("LAST_Y_MKT_SALES_QTY", first("MKT_SALES_QTY").over(lastYearWindow(mktWindow)))
             .withColumn("LAST_Y_MKT_SALES_VALUE", first("MKT_SALES_VALUE").over(lastYearWindow(mktWindow)))
             .na.fill(Map("LAST_Y_MKT_SALES_QTY" -> 0, "LAST_Y_MKT_SALES_VALUE" -> 0.0))
+            .withColumn("LAST_Y_MOLE_IN_PROD_SHARE", when(col("LAST_Y_PROD_SALES_VALUE") === 0.0, 0.0).otherwise(col("LAST_Y_MOLE_SALES_VALUE") / col("LAST_Y_PROD_SALES_VALUE")))
+            .withColumn("LAST_Y_MOLE_IN_CITY_SHARE", when(col("LAST_Y_CITY_SALES_VALUE") === 0.0, 0.0).otherwise(col("LAST_Y_MOLE_SALES_VALUE") / col("LAST_Y_CITY_SALES_VALUE")))
+            .withColumn("LAST_Y_MOLE_IN_PROV_SHARE", when(col("LAST_Y_PROV_SALES_VALUE") === 0.0, 0.0).otherwise(col("LAST_Y_MOLE_SALES_VALUE") / col("LAST_Y_PROV_SALES_VALUE")))
+            .withColumn("LAST_Y_MOLE_IN_MKT_SHARE", when(col("LAST_Y_MKT_SALES_VALUE") === 0.0, 0.0).otherwise(col("LAST_Y_MOLE_SALES_VALUE") / col("LAST_Y_MKT_SALES_VALUE")))
+            .withColumn("LAST_Y_PROD_IN_CITY_SHARE", when(col("LAST_Y_CITY_SALES_VALUE") === 0.0, 0.0).otherwise(col("LAST_Y_PROD_SALES_VALUE") / col("LAST_Y_CITY_SALES_VALUE")))
+            .withColumn("LAST_Y_PROD_IN_PROV_SHARE", when(col("LAST_Y_PROV_SALES_VALUE") === 0.0, 0.0).otherwise(col("LAST_Y_PROD_SALES_VALUE") / col("LAST_Y_PROV_SALES_VALUE")))
+            .withColumn("LAST_Y_PROD_IN_MKT_SHARE", when(col("LAST_Y_MKT_SALES_VALUE") === 0.0, 0.0).otherwise(col("LAST_Y_PROD_SALES_VALUE") / col("LAST_Y_MKT_SALES_VALUE")))
+            .withColumn("LAST_Y_CITY_IN_PROV_SHARE", when(col("LAST_Y_PROV_SALES_VALUE") === 0.0, 0.0).otherwise(col("LAST_Y_CITY_SALES_VALUE") / col("LAST_Y_PROV_SALES_VALUE")))
+            .withColumn("LAST_Y_CITY_IN_MKT_SHARE", when(col("LAST_Y_MKT_SALES_VALUE") === 0.0, 0.0).otherwise(col("LAST_Y_CITY_SALES_VALUE") / col("LAST_Y_MKT_SALES_VALUE")))
+            .withColumn("LAST_Y_PROV_IN_MKT_SHARE", when(col("LAST_Y_MKT_SALES_VALUE") === 0.0, 0.0).otherwise(col("LAST_Y_PROV_SALES_VALUE") / col("LAST_Y_MKT_SALES_VALUE")))
+            .withColumn("MOLE_YOY", when(col("LAST_Y_MOLE_SALES_VALUE") === 0.0, 0.0).otherwise((col("MOLE_SALES_VALUE") - col("LAST_Y_MOLE_SALES_VALUE")) / col("LAST_Y_MOLE_SALES_VALUE")))
+            .withColumn("PROD_YOY", when(col("LAST_Y_PROD_SALES_VALUE") === 0.0, 0.0).otherwise((col("PROD_SALES_VALUE") - col("LAST_Y_PROD_SALES_VALUE")) / col("LAST_Y_PROD_SALES_VALUE")))
+            .withColumn("CITY_YOY", when(col("LAST_Y_CITY_SALES_VALUE") === 0.0, 0.0).otherwise((col("CITY_SALES_VALUE") - col("LAST_Y_CITY_SALES_VALUE")) / col("LAST_Y_CITY_SALES_VALUE")))
+            .withColumn("PROV_YOY", when(col("LAST_Y_PROV_SALES_VALUE") === 0.0, 0.0).otherwise((col("PROV_SALES_VALUE") - col("LAST_Y_PROV_SALES_VALUE")) / col("LAST_Y_PROV_SALES_VALUE")))
+            .withColumn("MKT_YOY", when(col("LAST_Y_MKT_SALES_VALUE") === 0.0, 0.0).otherwise((col("MKT_SALES_VALUE") - col("LAST_Y_MKT_SALES_VALUE")) / col("LAST_Y_MKT_SALES_VALUE")))
 
-        current2YearDF.show(20)
-//        current2YearDF.filter(col("PRODUCT_NAME") === "丽泉" && col("CITY_NAME") === "七台河市" && col("YM") === "201803").show(10)
         return current2YearDF
     }
 
