@@ -32,13 +32,19 @@ case class BPSMaxDataHive2EsStrategy() extends BPSStrategy[DataFrame] with PhLog
 
         //TODO:得保证数据源中包含两年的数据
         val current2YearYmList = moleLevelDF.select("YM").distinct().sort("YM").collect().map(_(0)).toList.takeRight(24).asInstanceOf[List[Int]]
+        val currentYearYmList = current2YearYmList.takeRight(12)
 
         val current2YearDF = moleLevelDF
             .filter(col("YM") >= current2YearYmList.min.toString.toInt && col("YM") <= current2YearYmList.max.toString.toInt)
 
         //因辉瑞数据庞大造成数据偏移，单独处理辉瑞
-        val pfizerDF = computeMaxDashboardData(current2YearDF.filter(col("COMPANY") === "Pfizer")).cache()
-        val otherDF = computeMaxDashboardData(current2YearDF.filter(col("COMPANY") =!= "Pfizer")).cache()
+        val pfizerDF = computeMaxDashboardData(current2YearDF.filter(col("COMPANY") === "Pfizer"))
+            .filter(col("YM") >= currentYearYmList.min.toString.toInt && col("YM") <= currentYearYmList.max.toString.toInt)
+            .cache()
+        val otherDF = computeMaxDashboardData(current2YearDF.filter(col("COMPANY") =!= "Pfizer"))
+            .filter(col("YM") >= currentYearYmList.min.toString.toInt && col("YM") <= currentYearYmList.max.toString.toInt)
+            .cache()
+
 
         pfizerDF union otherDF
     }
