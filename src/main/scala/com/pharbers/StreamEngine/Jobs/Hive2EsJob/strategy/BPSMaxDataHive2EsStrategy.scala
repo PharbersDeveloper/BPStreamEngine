@@ -30,43 +30,46 @@ case class BPSMaxDataHive2EsStrategy() extends BPSStrategy[DataFrame] with PhLog
         val moleLevelDF = formatDF.groupBy("COMPANY", "YM", "MKT", "PROVINCE_NAME", "CITY_NAME", "PRODUCT_NAME", "MOLE_NAME")
             .agg(expr("SUM(SALES_VALUE) as MOLE_SALES_VALUE"))
 
-        //TODO:得保证数据源中包含两年的数据
-        val current2YearYmList = moleLevelDF.select("YM").distinct().sort("YM").collect().map(_(0)).toList.takeRight(24).asInstanceOf[List[Int]]
-        val currentYearYmList = current2YearYmList.takeRight(12)
+        //TODO:因不同公司数据的数据时间维度不一样，所以分别要对每个公司的数据进行计算最新一年的数据
+        val companyList = moleLevelDF.select("COMPANY").distinct().collect().map(_(0)).toList.asInstanceOf[List[String]]
 
-        val current2YearDF = moleLevelDF
-            .filter(col("YM") >= current2YearYmList.min.toString.toInt && col("YM") <= current2YearYmList.max.toString.toInt)
+        companyList.map(company => {
+            val companyDF = moleLevelDF.filter(col("COMPANY") === company)
+            //TODO:得保证数据源中包含两年的数据
+            val current2YearYmList = companyDF.select("YM").distinct().sort("YM").collect().map(_(0)).toList.takeRight(24).asInstanceOf[List[Int]]
+            val currentYearYmList = current2YearYmList.takeRight(12)
 
-        //因辉瑞数据庞大造成数据偏移，单独处理辉瑞
-        val pfizerDF = computeMaxDashboardData(current2YearDF.filter(col("COMPANY") === "Pfizer"))
-            .filter(col("YM") >= currentYearYmList.min.toString.toInt && col("YM") <= currentYearYmList.max.toString.toInt)
-            .cache()
-        val otherDF = computeMaxDashboardData(current2YearDF.filter(col("COMPANY") =!= "Pfizer"))
-            .filter(col("YM") >= currentYearYmList.min.toString.toInt && col("YM") <= currentYearYmList.max.toString.toInt)
-            .cache()
+            val current2YearDF = companyDF
+                .filter(col("YM") >= current2YearYmList.min.toString.toInt && col("YM") <= current2YearYmList.max.toString.toInt)
+            val currentYearDF = computeMaxDashboardData(current2YearDF)
+                .filter(col("YM") >= currentYearYmList.min.toString.toInt && col("YM") <= currentYearYmList.max.toString.toInt)
+                .cache()
+            currentYearDF
+        }).reduce((x, y) => x union y)
 
-
-        pfizerDF union otherDF
     }
 
     def computeMaxDashboardData(df: DataFrame): DataFrame = {
         val moleWindow = Window
-            .partitionBy("COMPANY", "MKT", "PROVINCE_NAME", "CITY_NAME", "PRODUCT_NAME", "MOLE_NAME")
+            .partitionBy("MKT", "PROVINCE_NAME", "CITY_NAME", "PRODUCT_NAME", "MOLE_NAME")
 
         val prodWindow = Window
-            .partitionBy("COMPANY", "MKT", "PROVINCE_NAME", "CITY_NAME", "PRODUCT_NAME")
+            .partitionBy("MKT", "PROVINCE_NAME", "CITY_NAME", "PRODUCT_NAME")
 
         val cityWindow = Window
-            .partitionBy("COMPANY", "MKT", "PROVINCE_NAME", "CITY_NAME")
+            .partitionBy("MKT", "PROVINCE_NAME", "CITY_NAME")
 
         val provWindow = Window
-            .partitionBy("COMPANY", "MKT", "PROVINCE_NAME")
+            .partitionBy("MKT", "PROVINCE_NAME")
 
         val mktWindow = Window
-            .partitionBy("COMPANY", "MKT")
+            .partitionBy("MKT")
 
+        //TODO:产品在不同范围内的销售额和份额都是不同的，PROD_IN_CITY,PROD_IN_PROV,PROD_IN_MKT,PROD_IN_COMPANY
+        //TODO:数据是否正确需要核对
         df.withColumn("PROD_SALES_VALUE", sum("MOLE_SALES_VALUE").over(currMonthWindow(prodWindow)))
-            .withColumn("PROD_SALES_VALUE_RANK", dense_rank.over(prodWindow.orderBy("PROD_SALES_VALUE")))
+            .withColumn("PROD_SALES_IN_COMPANY_VALUE", sum("MOLE_SALES_VALUE").over(currMonthWindow(Window.partitionBy("PRODUCT_NAME"))))
+            .withColumn("PROD_SALES_IN_COMPANY_RANK", dense_rank.over(Window.partitionBy("YM").orderBy(col("PROD_SALES_IN_COMPANY_VALUE").desc)))
             .withColumn("CITY_SALES_VALUE", sum("MOLE_SALES_VALUE").over(currMonthWindow(cityWindow)))
             .withColumn("PROV_SALES_VALUE", sum("MOLE_SALES_VALUE").over(currMonthWindow(provWindow)))
             .withColumn("MKT_SALES_VALUE", sum("MOLE_SALES_VALUE").over(currMonthWindow(mktWindow)))
