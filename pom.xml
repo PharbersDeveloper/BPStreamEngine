@@ -225,6 +225,12 @@
                     <artifactId>mongodb-driver-sync</artifactId>
                     <version>3.9.1</version>
                 </dependency>
+
+                <dependency>
+                    <groupId>org.eclipse.jgit</groupId>
+                    <artifactId>org.eclipse.jgit</artifactId>
+                    <version>5.3.6.201910020505-r</version>
+                </dependency>
             </dependencies>
         </profile>
     </profiles>
@@ -236,6 +242,15 @@
                 <directory>src/main/resources</directory>
                 <includes>
                     <include>**/*.xml</include>
+                    <!--<include>**/*.json</include>-->
+                    <!--<include>**/*.properties</include>-->
+                </includes>
+            </resource>
+            <resource> <!--TODO: 与老齐整合的时候这段删除@Alex-->
+                <directory>pyClean</directory>
+                <targetPath>pyClean</targetPath>
+                <includes>
+                    <include>**/*.py</include>
                     <!--<include>**/*.json</include>-->
                     <!--<include>**/*.properties</include>-->
                 </includes>

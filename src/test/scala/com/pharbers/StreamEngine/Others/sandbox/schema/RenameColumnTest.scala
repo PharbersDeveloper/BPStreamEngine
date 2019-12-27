@@ -105,5 +105,11 @@ class RenameColumnTest extends FunSuite with PhLogable {
 		
 	}
 	
+	test("read hive schema and type") {
+		val spark = BPSparkSession()
+		val result = spark.sql("SELECT * FROM chc limit 10")
+		result.show()
+		result.printSchema()
+	}
 }
 
