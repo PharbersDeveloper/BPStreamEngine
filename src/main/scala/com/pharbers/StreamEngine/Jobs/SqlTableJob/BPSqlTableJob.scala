@@ -35,6 +35,11 @@ case class BPSqlTableJob(jobContainer: BPSJobContainer, spark: SparkSession, con
     val saveMode: String = jobConfig.getString(TASK_TYPE_CONFIG_KEY)
     val metadataPath: String = jobConfig.getString(METADATA_PATH_CONFIG_KEY)
 
+    val tableNameMap = Map(
+//        "CPA&GYC" -> "cpa",
+        "CHC" -> "chc"
+    )
+
 
     override def open(): Unit = {
         logger.info(s"open job $id")
@@ -43,8 +48,8 @@ case class BPSqlTableJob(jobContainer: BPSJobContainer, spark: SparkSession, con
                 .option("header", value = true)
                 .option("delimiter", ",")
                 .load(url)
-//todo: 先判断有没有YEAR和MONTH
-//                .repartition(col("YEAR"), col("MONTH"))
+                //todo: 先判断有没有YEAR和MONTH
+                //                .repartition(col("YEAR"), col("MONTH"))
                 .repartition()
                 .persist(StorageLevel.MEMORY_ONLY)
         )
@@ -53,8 +58,13 @@ case class BPSqlTableJob(jobContainer: BPSJobContainer, spark: SparkSession, con
     override def exec(): Unit = {
         val metadata = BPSParseSchema.parseMetadata(metadataPath)(spark)
         val providers = metadata.getOrElse("providers", List("")).asInstanceOf[List[String]]
-        if(providers.contains("CPA&GYC")) {
-            val tableName = "cpa"
+        if (providers.toSet.intersect(tableNameMap.keySet).isEmpty) {
+            logger.info(s"不需要处理的数据, close job $id")
+            close()
+            return
+        }
+        providers.toSet.intersect(tableNameMap.keySet).foreach(key => {
+            val tableName = tableNameMap(key)
             logger.info(s"start save table $tableName, mode: $saveMode")
             saveMode match {
                 case "append" => appendTable(tableName)
@@ -62,7 +72,8 @@ case class BPSqlTableJob(jobContainer: BPSJobContainer, spark: SparkSession, con
                 case _ => ???
             }
             logger.info(s"save $tableName over, job: $id")
-        }
+        })
+
         logger.info(s"close job $id")
         close()
     }
@@ -74,18 +85,18 @@ case class BPSqlTableJob(jobContainer: BPSJobContainer, spark: SparkSession, con
 
     def appendTable(tableName: String): Unit = {
         //todo: 需要检查已经有的
-        val version = "0.0.9"
+        val version = "0.0.4"
         inputStream match {
             case Some(df) =>
-//                val count = df.count()
-//                logger.info(s"url: $url, count: $count")
-//                if(count != 0){
-                    df.coalesce(4).withColumn("version", lit(version)).write
-//                            .partitionBy("YEAR", "MONTH")
-                            .mode(saveMode)
-                            .option("path", s"/common/public/$tableName/$version")
-                            .saveAsTable(tableName)
-//                }
+                //                val count = df.count()
+                //                logger.info(s"url: $url, count: $count")
+                //                if(count != 0){
+                df.coalesce(4).withColumn("version", lit(version)).write
+                        //                            .partitionBy("YEAR", "MONTH")
+                        .mode(saveMode)
+                        .option("path", s"/common/public/$tableName/$version")
+                        .saveAsTable(tableName)
+            //                }
             case _ =>
         }
         val errorHead = spark.sparkContext.textFile(jobConfig.getString(ERROR_PATH_CONFIG_KEY)).take(1).headOption.getOrElse("")
@@ -116,3 +127,4 @@ object BPSqlTableJob {
             .define(ERROR_PATH_CONFIG_KEY, Type.STRING, "", Importance.HIGH, ERROR_PATH_CONFIG_DOC)
 
 }
+
