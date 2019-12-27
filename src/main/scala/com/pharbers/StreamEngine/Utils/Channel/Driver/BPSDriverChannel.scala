@@ -98,7 +98,7 @@ class BPSDriverChannel(config: Map[String, String]) extends Runnable with PhLoga
                 } else if (item.isReadable()) {
                     val client = item.channel().asInstanceOf[SocketChannel]
                     // TODO: 分包读取的机制
-                    val Buffer = ByteBuffer.allocate(4096)
+                    val Buffer = ByteBuffer.allocate(15360)
                     if (client.read(Buffer) > 0) {
                         val result = new String(Buffer.array()).trim()
                         logger.info("Message received: " + result)
@@ -109,9 +109,15 @@ class BPSDriverChannel(config: Map[String, String]) extends Runnable with PhLoga
                             logger.info("Server will keep running. Try running client again to establish new connection")
                         }
 
-                        implicit val formats = DefaultFormats
-                        val event = read[BPSEvents](result)
-                        trigger(event)
+                        implicit val formats: DefaultFormats.type = DefaultFormats
+                        try {
+                            val event = read[BPSEvents](result)
+                            trigger(event)
+                        } catch {
+                            case e: com.fasterxml.jackson.core.JsonParseException =>
+                                logger.error(e.getMessage, e)
+                        }
+
                     }
                 }
                 iter.remove()

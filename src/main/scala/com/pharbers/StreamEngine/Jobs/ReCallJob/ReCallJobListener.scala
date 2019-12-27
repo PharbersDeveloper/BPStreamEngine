@@ -40,7 +40,7 @@ case class ReCallJobListener(job: BPStreamJob, topic: String, runId: String, job
         })
     }
 
-    private def pushPyjob(runId: String,
+    def pushPyjob(runId: String,
                           metadataPath: String,
                           filesPath: String,
                           parentJobId: String,
