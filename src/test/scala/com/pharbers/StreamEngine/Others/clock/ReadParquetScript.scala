@@ -2,9 +2,6 @@ package com.pharbers.StreamEngine.Others.clock
 
 import com.pharbers.StreamEngine.Utils.Schema.Spark.BPSParseSchema
 import com.pharbers.StreamEngine.Utils.Session.Spark.BPSparkSession
-import org.apache.spark.sql.types.{StringType, StructField, StructType, TimestampType}
-
-import scala.util.parsing.json.JSON
 
 /** 查看Parquet的脚本
  *
@@ -22,7 +19,7 @@ object ReadParquetScript extends App {
     val spark = BPSparkSession()
     val id = "08d72f26-f5cc-4618-911c-812a4a4e1cec"
     def byBatchForCsv(): Unit = {
-        val jobId = "6aa67117-099d-42c9-90a8-c30fe875c596"
+        val jobId = "558c95fb-71e0-47d4-8e8a-b4468f099e35"
 
 //        val path = s"hdfs:///user/clock/jobs/$jobId/metadata"
 //        val path = s"hdfs:///user/clock/jobs/$jobId/contents"
