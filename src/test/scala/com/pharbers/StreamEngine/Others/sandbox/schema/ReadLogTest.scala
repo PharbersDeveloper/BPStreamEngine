@@ -38,10 +38,11 @@ class ReadLogTest extends FunSuite {
 			
 			val reading = spark.read.csv(hdfsUrl)
 			val count = reading.count()
-			println(s"$count <====> $length -----> ${count == length.toLong}")
-//			if (length.toLong != count) {
+//			println(s"$count <====> $length -----> ${count == length.toLong}")
+			if (count < length.toLong || count == 0) {
 //				println(s"$id,$hdfsUrl")
-//			}
+				println(s"""ObjectId("$id"),""")
+			}
 		
 		}
 	}
@@ -76,6 +77,20 @@ class ReadLogTest extends FunSuite {
 		
 		lines.foreach { line =>
 			println(line.replaceAll("""\\""", """\\\\"""))
+		}
+		
+	}
+	
+	test("tmp") {
+		val source = Source.fromFile("/Users/qianpeng/GitHub/BPStreamEngine/logs/aaa")
+		val lines = source.getLines().toList
+		source.close()
+		
+		lines.foreach { line =>
+			println(line.split(":")(0))
+		}
+		lines.foreach { line =>
+			println(line.split(":")(1))
 		}
 		
 	}
