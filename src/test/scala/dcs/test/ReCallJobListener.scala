@@ -26,4 +26,14 @@ class ReCallJobListener extends FunSuite{
         listener.active(null)
         ThreadExecutor.waitForShutdown()
     }
+
+    test("recall"){
+        val jobId = "20191225"
+        val runId = "20191225"
+        val topic = "HiveTracebackTask"
+        val simpleDataPath = "/user/alex/jobs/86a5bf98-ee9d-40c1-9661-9590b0e6cae7/85423efb-3328-4eaa-89f5-d8208339bd9a/contents"
+        val metaDataPath = simpleDataPath.replace("contents", "metadata")
+        val listener = ReCallJobListener(null, topic, runId, jobId)
+        listener.pushPyjob(runId,metaDataPath, simpleDataPath, "", "")
+    }
 }
