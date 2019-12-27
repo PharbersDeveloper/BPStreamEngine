@@ -7,9 +7,11 @@ import java.util.concurrent.TimeUnit
 import com.pharbers.StreamEngine.Utils.Component.Dynamic.JobMsg
 import com.pharbers.StreamEngine.Utils.Kafka.ProducerSingleton
 import com.pharbers.kafka.producer.PharbersKafkaProducer
-import com.pharbers.kafka.schema.BPJob
+import com.pharbers.kafka.schema.{BPJob, HiveTask, OssTask}
+import io.confluent.ksql.avro_schemas.KsqlDataSourceSchema
 import org.apache.avro.Schema
 import org.apache.avro.generic.{GenericData, GenericRecord}
+import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.scalatest.FunSuite
 
 /** 功能描述
@@ -56,15 +58,17 @@ class PushJobTest extends FunSuite {
         val jobId = "201910231514"
         val traceId = "201910231514"
         val `type` = "addList"
+        val runId = UUID.randomUUID().toString
         val jobs =
-            JobMsg("ossStreamJob", "job", "com.pharbers.StreamEngine.Jobs.OssPartitionJob.OssJobContainer.BPSOssPartitionJobContainer", List("$BPSKfkJobStrategy", "$BPSparkSession"), Nil, Nil, Map.empty, "", "oss job") ::
-                JobMsg("sandBoxJob", "job", "com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxJobContainer.BPSSandBoxJobContainer", List("$BPSparkSession"), Nil, Nil, Map.empty, "", "sandbox job") ::
+//            JobMsg("ossStreamJob", "job", "com.pharbers.StreamEngine.Jobs.OssPartitionJob.OssJobContainer.BPSOssPartitionJobContainer", List("$BPSKfkJobStrategy", "$BPSparkSession"), Nil, Nil, Map.empty, "", "oss job") ::
+//                JobMsg("sandBoxJob", "job", "com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxJobContainer.BPSSandBoxJobContainer", List("$BPSparkSession"), Nil, Nil, Map.empty, "", "sandbox job") ::
                 //                JobMsg("pyBoxJob", "job", "com.pharbers.StreamEngine.Jobs.PyJob.PythonJobContainer.BPSPythonJobContainer", List("$BPSparkSession"), Nil, Nil, Map(
                 //                    "jobId" -> "20796d42-c177-4838-9a20-79bfba60d036",
                 //                    "matedataPath" -> "/test/alex2/b1b6875c-a590-4dfd-9aa7-f852596266ef/metadata/",
                 //                    "filesPath" -> "/test/alex2/b1b6875c-a590-4dfd-9aa7-f852596266ef/files/20796d42-c177-4838-9a20-79bfba60d036",
                 //                    "resultPath" -> "hdfs:///test/dcs/testPy2"
                 //                ), "", "py job") ::
+                    JobMsg("sql job", "job", "com.pharbers.StreamEngine.Jobs.SqlTableJob.SqlTableJobContainer.BPSqlTableJobContainer", List("$BPSparkSession"), Nil, Nil, Map("runId" -> runId), "", "oss job") ::
                 Nil
         
         val jobMsg = write(jobs)

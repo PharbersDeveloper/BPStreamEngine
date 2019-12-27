@@ -1,14 +1,17 @@
 package com.pharbers.StreamEngine.Jobs.EsJob.EsJobContainer
 
-import com.pharbers.StreamEngine.Jobs.EsJob.BPSEsSinkJob
-import org.apache.hadoop.fs.{FileSystem, Path}
+import java.util.UUID
+
+import com.pharbers.StreamEngine.Jobs.EsJob.Listener.EsSinkJobStartListener
 import org.apache.spark.sql.SparkSession
-import org.apache.hadoop.conf.Configuration
-import com.pharbers.StreamEngine.Utils.Schema.Spark.BPSParseSchema
 import com.pharbers.StreamEngine.Utils.Event.EventHandler.BPSEventHandler
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamListener
+import com.pharbers.StreamEngine.Utils.HDFS.BPSHDFSFile
 import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSKfkJobStrategy
 import com.pharbers.StreamEngine.Utils.StreamJob.{BPDynamicStreamJob, BPSJobContainer}
+import com.pharbers.StreamEngine.Utils.ThreadExecutor.ThreadExecutor
+import com.pharbers.kafka.consumer.PharbersKafkaConsumer
+import com.pharbers.kafka.schema.EsSinkJobSubmit
 
 object BPSEsSinkJobContainer {
     def apply(strategy: BPSKfkJobStrategy,
@@ -32,55 +35,35 @@ class BPSEsSinkJobContainer(override val spark: SparkSession,
     type T = BPSKfkJobStrategy
 
     var metadata: Map[String, Any] = Map.empty
+    final val DEFAULT_LISTENING_TOPIC = "EsSinkJobSubmit"
 
-    val id: String = config("jobId").toString
-    val matedataPath: String = config("matedataPath").toString
-    val filesPath: String = config("filesPath").toString
-    val indexName: String = config("indexName").toString
-
-    // 当所需文件未准备完毕，则等待
-    def notFoundShouldWait(path: String): Unit = {
-        val configuration: Configuration = new Configuration
-        configuration.set("fs.defaultFS", "hdfs://192.168.100.137:9000")
-        val fileSystem: FileSystem = FileSystem.get(configuration)
-        val filePath: Path = new Path(path)
-        if (!fileSystem.exists(filePath)) {
-            logger.debug(path + "文件不存在，等待 1s")
-            Thread.sleep(1000)
-            notFoundShouldWait(path)
-        }
-    }
+    // container id 作为 runner id
+    val id: String = config.getOrElse("id", UUID.randomUUID().toString)
+    val listeningTopic: String = config.getOrElse("listeningTopic", DEFAULT_LISTENING_TOPIC)
+    var pkc: PharbersKafkaConsumer[String, EsSinkJobSubmit] = null
 
     override def open(): Unit = {
-        notFoundShouldWait(matedataPath)
-        //不全是path + jobid， 可能是path + jobid + file
-        notFoundShouldWait(filesPath )
-        metadata = BPSParseSchema.parseMetadata(matedataPath)(spark)
-        val loadSchema = BPSParseSchema.parseSchema(metadata("schema").asInstanceOf[List[_]])
+        logger.info("es sink job container open with runner-id ========>" + id)
+        //注册container后，使用kafka-consumer监听具体job的启动
+        pkc = new PharbersKafkaConsumer[String, EsSinkJobSubmit](
+            listeningTopic :: Nil,
+            1000,
+            Int.MaxValue, EsSinkJobStartListener(id, spark, this).process
+        )
 
-        println(loadSchema)
-
-        val reading = spark.readStream
-                .schema(loadSchema)
-                .option("startingOffsets", "earliest")
-                //不全是path + jobid， 可能是path + jobid + file
-                .parquet(filesPath)
-
-        inputStream = Some(reading)
     }
 
-    override def exec(): Unit = inputStream match {
-        case Some(_) =>
-            val job = BPSEsSinkJob(id, spark, inputStream, this, Map(
-                "indexName" -> indexName,
-                "metadata" -> metadata
-            ))
-            job.open()
-            job.exec()
-        case None => ???
+    override def exec(): Unit = {
+        ThreadExecutor().execute(pkc)
     }
 
-    override def registerListeners(listener: BPStreamListener): Unit = {}
+    override def close(): Unit = {
+        super.close()
+        pkc.close()
+        logger.info("es sink job container closed with runner-id ========>" + id)
+    }
 
     override def handlerExec(handler: BPSEventHandler): Unit = {}
+
+    override def registerListeners(listener: BPStreamListener): Unit = {}
 }

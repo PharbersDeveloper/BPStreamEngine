@@ -35,6 +35,7 @@ class BPSOssPartitionJobContainer(override val strategy: BPSKfkJobStrategy, val 
             .option("kafka.ssl.truststore.location", "./kafka.broker1.truststore.jks")
             .option("kafka.ssl.truststore.password", "pharbers")
             .option("kafka.ssl.endpoint.identification.algorithm", " ")
+            .option("maxOffsetsPerTrigger", 10000)
             .option("startingOffsets", "earliest")
             .option("maxOffsetsPerTrigger", 10000)
 //            .option("startingOffsets", "latest")
