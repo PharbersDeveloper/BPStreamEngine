@@ -1,0 +1,19 @@
+{
+  "type": "record",
+  "name": "Hive2EsJobSubmit",
+  "namespace": "com.pharbers.kafka.schema",
+  "fields": [
+    {
+      "name": "Sql",
+      "type": "string"
+    },
+    {
+      "name": "IndexName",
+      "type": "string"
+    },
+    {
+      "name": "Strategy",
+      "type": "string"
+    }
+  ]
+}

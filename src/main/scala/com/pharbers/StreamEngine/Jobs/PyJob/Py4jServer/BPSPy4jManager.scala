@@ -10,9 +10,10 @@ case class BPSPy4jManager() {
     // 保存当前 JVM 上运行的所有 Py4j 服务
     var servers: Map[String, BPSPy4jServer] = Map.empty
 
-    def open(serverConf: Map[String, Any] = Map().empty): Unit = {
+    def open(serverConf: Map[String, Any] = Map().empty)
+            (implicit py4jManager: BPSPy4jManager): Unit = {
         this.synchronized {
-            val server = BPSPy4jServer(serverConf)(pop, close).openBuffer().startServer().startEndpoint()
+            val server = BPSPy4jServer(serverConf).openBuffer().startServer().startEndpoint()
             servers = servers + (server.threadId -> server)
         }
     }

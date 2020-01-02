@@ -7,7 +7,7 @@ import com.pharbers.StreamEngine.Jobs.PyJob.Py4jServer.{BPSPy4jManager, BPSPy4jS
 class BPSPy4jServerTest extends FunSuite {
     test("test push and pop") {
         implicit val manager: BPSPy4jManager = BPSPy4jManager()
-        val server = BPSPy4jServer()(manager.pop, manager.close)
+        val server = BPSPy4jServer()
         assert(server.py4j_pop() == "EMPTY")
         assert(manager.push("abc-1") == ())
         assert(manager.push("abc-2") == ())
@@ -33,7 +33,7 @@ class BPSPy4jServerTest extends FunSuite {
         val genPath: (String, String) => String =
             (path, threadId) => s"$path/part-$partitionId-$threadId.$fileSuffix"
 
-        val manager: BPSPy4jManager = BPSPy4jManager()
+        implicit val manager: BPSPy4jManager = BPSPy4jManager()
 
         // TODO 执行测试要修改 startEndpoint 中，python script 的路径
         manager.open(Map(

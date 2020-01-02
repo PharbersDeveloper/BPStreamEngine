@@ -49,7 +49,7 @@ object BPSHDFSFile {
         if(!checkPath(path)) return Nil
 
         var result: List[String] = Nil
-        val fs = FileSystem.newInstance(new URI(path), configuration)
+        val fs = FileSystem.newInstance(configuration)
 
         // 判断是否是目录
         if(fs.isDirectory(new Path(path))) {

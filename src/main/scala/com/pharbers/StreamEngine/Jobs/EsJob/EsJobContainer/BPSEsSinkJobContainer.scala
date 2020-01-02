@@ -42,15 +42,6 @@ class BPSEsSinkJobContainer(override val spark: SparkSession,
     val listeningTopic: String = config.getOrElse("listeningTopic", DEFAULT_LISTENING_TOPIC)
     var pkc: PharbersKafkaConsumer[String, EsSinkJobSubmit] = null
 
-    // 当所需文件未准备完毕，则等待
-    def notFoundShouldWait(path: String): Unit = {
-        if (!BPSHDFSFile.checkPath(path)) {
-            logger.info(path + "文件不存在，等待 1s")
-            Thread.sleep(1000)
-            notFoundShouldWait(path)
-        }
-    }
-
     override def open(): Unit = {
         logger.info("es sink job container open with runner-id ========>" + id)
         //注册container后，使用kafka-consumer监听具体job的启动

@@ -26,7 +26,6 @@
                 <log4j.version>2.11.2</log4j.version>
                 <confluent.version>5.2.1</confluent.version>
                 <kafka.version>2.2.1</kafka.version>
-                <confluent.version>5.2.1</confluent.version>
             </properties>
 
             <repositories>
@@ -85,7 +84,6 @@
                     <groupId>org.apache.spark</groupId>
                     <artifactId>spark-streaming_2.11</artifactId>
                     <version>${spark.version}</version>
-                    <scope>${scope}</scope>
                 </dependency>
                 <dependency>
                     <groupId>org.apache.spark</groupId>
@@ -113,6 +111,19 @@
                     <artifactId>spark-avro_2.11</artifactId>
                     <version>4.0.0</version>
                 </dependency>
+                <!--hive-->
+                <dependency>
+                    <groupId>org.apache.spark</groupId>
+                    <artifactId>spark-hive_2.11</artifactId>
+                    <version>2.3.0</version>
+                </dependency>
+                <!-- https://mvnrepository.com/artifact/mysql/mysql-connector-java -->
+                <dependency>
+                    <groupId>mysql</groupId>
+                    <artifactId>mysql-connector-java</artifactId>
+                    <version>8.0.15</version>
+                </dependency>
+
 
                 <!--Kafka-->
                 <dependency>
@@ -203,7 +214,18 @@
                     <version>3.2.11</version>
                 </dependency>
 
-                <!-- https://mvnrepository.com/artifact/org.eclipse.jgit/org.eclipse.jgit -->
+                <!--mongo driver-->
+                <dependency>
+                    <groupId>org.mongodb.scala</groupId>
+                    <artifactId>mongo-scala-driver_2.11</artifactId>
+                    <version>2.6.0</version>
+                </dependency>
+                <dependency>
+                    <groupId>org.mongodb</groupId>
+                    <artifactId>mongodb-driver-sync</artifactId>
+                    <version>3.9.1</version>
+                </dependency>
+
                 <dependency>
                     <groupId>org.eclipse.jgit</groupId>
                     <artifactId>org.eclipse.jgit</artifactId>
@@ -220,6 +242,15 @@
                 <directory>src/main/resources</directory>
                 <includes>
                     <include>**/*.xml</include>
+                    <!--<include>**/*.json</include>-->
+                    <!--<include>**/*.properties</include>-->
+                </includes>
+            </resource>
+            <resource> <!--TODO: 与老齐整合的时候这段删除@Alex-->
+                <directory>pyClean</directory>
+                <targetPath>pyClean</targetPath>
+                <includes>
+                    <include>**/*.py</include>
                     <!--<include>**/*.json</include>-->
                     <!--<include>**/*.properties</include>-->
                 </includes>
@@ -316,29 +347,29 @@
             </plugin>
             <!--将依赖打包成一个jar，与上面主类设置冲突-->
             <!--<plugin>-->
-                <!--<artifactId>maven-assembly-plugin</artifactId>-->
-                <!--<version>3.1.1</version>-->
-                <!--<configuration>-->
-                    <!--<finalName>jar-all</finalName>-->
-                    <!--<appendAssemblyId>false</appendAssemblyId>-->
-                    <!--<descriptorRefs>-->
-                        <!--<descriptorRef>jar-with-dependencies</descriptorRef>-->
-                    <!--</descriptorRefs>-->
-                    <!--<archive>-->
-                        <!--<manifest>-->
-                            <!--<mainClass>main</mainClass>-->
-                        <!--</manifest>-->
-                    <!--</archive>-->
-                <!--</configuration>-->
-                <!--<executions>-->
-                    <!--<execution>-->
-                        <!--<id>make-assembly</id>-->
-                        <!--<phase>package</phase>-->
-                        <!--<goals>-->
-                            <!--<goal>single</goal>-->
-                        <!--</goals>-->
-                    <!--</execution>-->
-                <!--</executions>-->
+            <!--<artifactId>maven-assembly-plugin</artifactId>-->
+            <!--<version>3.1.1</version>-->
+            <!--<configuration>-->
+            <!--<finalName>jar-all</finalName>-->
+            <!--<appendAssemblyId>false</appendAssemblyId>-->
+            <!--<descriptorRefs>-->
+            <!--<descriptorRef>jar-with-dependencies</descriptorRef>-->
+            <!--</descriptorRefs>-->
+            <!--<archive>-->
+            <!--<manifest>-->
+            <!--<mainClass>main</mainClass>-->
+            <!--</manifest>-->
+            <!--</archive>-->
+            <!--</configuration>-->
+            <!--<executions>-->
+            <!--<execution>-->
+            <!--<id>make-assembly</id>-->
+            <!--<phase>package</phase>-->
+            <!--<goals>-->
+            <!--<goal>single</goal>-->
+            <!--</goals>-->
+            <!--</execution>-->
+            <!--</executions>-->
             <!--</plugin>-->
         </plugins>
     </build>
