@@ -19,6 +19,8 @@ def create_mapping(source):
         return mapping.cpa_gyc_mapping()
     elif source.upper() == "CHC":
         return mapping.chc_mapping()
+    elif source.upper() == "RESULT":
+        return mapping.result_mapping()
     else:
         return mapping.cpa_gyc_mapping()
 
