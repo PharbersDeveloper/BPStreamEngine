@@ -13,7 +13,9 @@ object main extends App {
 
 object test extends App{
     val spark = BPSparkSession()
-    val df = spark.read.parquet("/common/public/cpa/0.0.6.1")
+//    val df = spark.read.parquet("/common/public/cpa/0.0.6.1")
+    val df = spark.sql("select *, substr(year, 0, 4) as YEAR from cpa where company = 'Janssen' limit 100")
+    df.show()
 //    df.write.saveAsTable("cpa2")
 //    df.write.partitionBy("YEAR", "MONTH").saveAsTable("cpa3")
 }
