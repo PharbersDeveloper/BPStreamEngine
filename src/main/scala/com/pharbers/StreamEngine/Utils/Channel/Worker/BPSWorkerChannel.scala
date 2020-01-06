@@ -6,6 +6,8 @@ import java.nio.channels.SocketChannel
 
 import com.pharbers.util.log.PhLogable
 
+import scala.collection.mutable.ArrayBuffer
+
 
 object BPSWorkerChannel {
     //    var host: Broadcast[String] = _
@@ -16,9 +18,10 @@ object BPSWorkerChannel {
         tmp.connect()
         tmp
     }
-//    def init(hostBroadcast: Broadcast[String]): Unit ={
-//        host = hostBroadcast
-//    }
+
+    //    def init(hostBroadcast: Broadcast[String]): Unit ={
+    //        host = hostBroadcast
+    //    }
 }
 
 // TODO 希望可以补全注释
@@ -39,9 +42,25 @@ class BPSWorkerChannel(host: String, port: Int) extends Serializable with PhLoga
 
     def pushMessage(msg: String): Unit = {
         val message = msg.getBytes()
+        val msgLength = message.length
+        val b = Array[Byte](
+            (msgLength >> 24 & 0xff).toByte,
+            (msgLength >> 16 & 0xff).toByte,
+            (msgLength >> 8 & 0xff).toByte,
+            (msgLength & 0xff).toByte
+        )
+        b(3) = (msgLength & 0xff).toByte
+        b(2) = (msgLength >> 8 & 0xff).toByte
+        b(1) = (msgLength >> 16 & 0xff).toByte
+        b(0) = (msgLength >> 24 & 0xff).toByte
+        val lengthBuffer = ByteBuffer.wrap(b)
         val buffer = ByteBuffer.wrap(message)
         client match {
-            case Some(c) => c.write(buffer)
+            case Some(c) =>
+                //                c.write(lengthBuffer)
+                while (buffer.hasRemaining) {
+                    c.write(buffer)
+                }
             case None => ???
         }
 

@@ -1,8 +1,10 @@
 package com.pharbers.StreamEngine.Jobs.CpaCleanJob
 
 import java.util.UUID
+
 import BPSCpaCleanJob._
 import com.pharbers.StreamEngine.Utils.Config.BPSConfig
+import com.pharbers.StreamEngine.Utils.Session.Spark.BPSparkSession
 import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSJobStrategy
 import com.pharbers.StreamEngine.Utils.StreamJob.{BPSJobContainer, BPStreamJob}
 import org.apache.kafka.common.config.ConfigDef
@@ -56,7 +58,7 @@ case class BPSCpaCleanJob(jobContainer: BPSJobContainer, spark: SparkSession, co
                 .unionByName(janssen)
                 .write
                 .mode("append")
-                .option("path", s"/common/public/CPA_Janssen/0.0.4")
+                .option("path", s"/common/public/CPA_Janssen/0.0.5")
                 .saveAsTable("CPA_Janssen")
     }
 
@@ -182,4 +184,43 @@ object test extends App {
     ))
     job.open()
     job.exec()
+}
+
+//Janssen补数用
+object add extends App{
+    import org.apache.spark.sql.functions._
+    val spark = BPSparkSession()
+    val df = spark.read.format("csv")
+            .option("header", true)
+            .option("delimiter", ",")
+            .load("/user/dcs/jassenClean/jassen_add.csv")
+            .selectExpr(
+                "'Janssen' as COMPANY",
+                "'CPA&GYC' as SOURCE",
+                "province_name as PROVINCE_NAME",
+                "city_name as CITY_NAME",
+                "BI_Code as HOSP_CODE",
+                "hospital_name as HOSP_NAME",
+                "atc3_code as ATC",
+                "molecule_name as MOLE_NAME",
+                "product_name as PRODUCT_NAME",
+                "company_name as MANUFACTURER_NAME",
+                "pack_description as SPEC",
+                "formulation_name as DOSAGE",
+                "year_month as YEAR",
+                "year_month as QUARTER",
+                "year_month as MONTH",
+                "cast(regexp_replace(sales_value, ',', '') as double) as SALES_VALUE" ,
+                "total_units as SALES_QTY"
+            ).withColumn("PREFECTURE_NAME", lit(null))
+            .withColumn("HOSP_LEVEL", lit(null))
+            .withColumn("KEY_BRAND", lit(null))
+            .withColumn("PACK", lit(null))
+            .withColumn("PACK_QTY", lit(null))
+            .withColumn("DELIVERY_WAY", lit(null))
+            .withColumn("MKT", lit(null))
+            .withColumn("version", lit("0.0.9"))
+            .write.mode("append")
+            .option("path", "/common/public/cpa/0.0.9")
+            .saveAsTable("cpa")
 }

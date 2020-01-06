@@ -98,7 +98,7 @@ class BPSDriverChannel(config: Map[String, String]) extends Runnable with PhLoga
                 } else if (item.isReadable()) {
                     val client = item.channel().asInstanceOf[SocketChannel]
                     // TODO: 分包读取的机制
-                    val Buffer = ByteBuffer.allocate(15360)
+                    val Buffer = ByteBuffer.allocate(10240)
                     if (client.read(Buffer) > 0) {
                         val result = new String(Buffer.array()).trim()
                         logger.info("Message received: " + result)
