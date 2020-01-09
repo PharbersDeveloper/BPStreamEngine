@@ -3,11 +3,7 @@ package com.pharbers.StreamEngine.Utils.Channel.Worker
 import java.net.{InetAddress, InetSocketAddress}
 import java.nio.ByteBuffer
 import java.nio.channels.SocketChannel
-
 import com.pharbers.util.log.PhLogable
-
-import scala.collection.mutable.ArrayBuffer
-
 
 object BPSWorkerChannel {
     //    var host: Broadcast[String] = _
@@ -35,7 +31,8 @@ class BPSWorkerChannel(host: String, port: Int) extends Serializable with PhLoga
         try {
             client = Some(SocketChannel.open(addr))
         } catch {
-            case e: Exception => throw new Exception(s"error~~~worker~~~~host:${addr.getHostString} $host, name: ${addr.getPort}", e)
+            case e: Exception =>
+                logger.info(e.getMessage, e)
         }
         logger.info("Connecting to Server on port 55555 ...")
     }
@@ -57,11 +54,12 @@ class BPSWorkerChannel(host: String, port: Int) extends Serializable with PhLoga
         val buffer = ByteBuffer.wrap(message)
         client match {
             case Some(c) =>
-                //                c.write(lengthBuffer)
+                c.write(lengthBuffer)
                 while (buffer.hasRemaining) {
                     c.write(buffer)
                 }
-            case None => ???
+            case None =>
+                logger.error("client未成功连接")
         }
 
         buffer.clear()

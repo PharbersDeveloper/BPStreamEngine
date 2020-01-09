@@ -58,7 +58,7 @@ case class BPSCpaCleanJob(jobContainer: BPSJobContainer, spark: SparkSession, co
                 .unionByName(janssen)
                 .write
                 .mode("append")
-                .option("path", s"/common/public/CPA_Janssen/0.0.5")
+                .option("path", s"/common/public/CPA_Janssen/0.0.7")
                 .saveAsTable("CPA_Janssen")
     }
 
