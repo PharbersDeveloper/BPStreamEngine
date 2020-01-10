@@ -360,6 +360,20 @@ def chc_mapping():
 def result_mapping():
     return [
         {
+            "ColName": "COMPANY",
+            "ColDesc": "数据公司",
+            "Type": "String",
+            "Candidate": [],
+            "NotNull": True
+        },
+        {
+            "ColName": "SOURCE",
+            "ColDesc": "数据来源",
+            "Type": "String",
+            "Candidate": ["数据来源"],
+            "NotNull": True
+        },
+        {
             "ColName": "DATE",
             "ColDesc": "结果数据年月",
             "Type": "String",
