@@ -38,8 +38,8 @@ case class BPSCpaCleanJob(jobContainer: BPSJobContainer, spark: SparkSession, co
                 .option("header", true)
                 .option("delimiter", ",")
                 .load(jobConfig.getString(HOSP_MAPPING_PATH_KEY))
-                .select("`PHA.ID.x`", "BI_hospital_name_cn")
-                .groupBy("BI_hospital_name_cn").agg(first("`PHA.ID.x`") as "PHA_ID_x")
+                .select("`PHA.ID.x`", "BI_hospital_code")
+                .groupBy("BI_hospital_code").agg(first("`PHA.ID.x`") as "PHA_ID_x")
                 .createTempView("hosp_mapping")
 
         spark.read
@@ -58,7 +58,7 @@ case class BPSCpaCleanJob(jobContainer: BPSJobContainer, spark: SparkSession, co
                 .unionByName(janssen)
                 .write
                 .mode("append")
-                .option("path", s"/common/public/CPA_Janssen/0.0.7")
+                .option("path", s"/common/public/CPA_Janssen/0.0.8")
                 .saveAsTable("CPA_Janssen")
     }
 
@@ -119,7 +119,7 @@ object BPSCpaCleanJob {
            |SELECT * FROM
            | ($filterCompanyAndCleanYearMonth) cpa_janssen
            | LEFT JOIN hosp_mapping ON
-           | cpa_janssen.HOSP_NAME = hosp_mapping.BI_hospital_name_cn
+           | cpa_janssen.HOSP_CODE = hosp_mapping.BI_hospital_code
         """.stripMargin
 
     val joinHosp: String =

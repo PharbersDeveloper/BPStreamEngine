@@ -37,7 +37,8 @@ case class BPSqlTableJob(jobContainer: BPSJobContainer, spark: SparkSession, con
 
     val tableNameMap = Map(
 //        "CPA&GYC" -> "cpa",
-        "CHC" -> "chc"
+//        "CHC" -> "chc",
+        "RESULT" -> "result"
     )
 
 
@@ -85,7 +86,7 @@ case class BPSqlTableJob(jobContainer: BPSJobContainer, spark: SparkSession, con
 
     def appendTable(tableName: String): Unit = {
         //todo: 需要检查已经有的
-        val version = "0.0.4"
+        val version = "0.0.1"
         inputStream match {
             case Some(df) =>
                 //                val count = df.count()

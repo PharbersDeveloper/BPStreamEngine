@@ -73,7 +73,7 @@ def cpa_gyc_mapping():
             "Type": "String",
             "Candidate": ["医院编码", "VEEVA_CUSTOMER_ID", "HOSP_ID", "HOSPITAL CODE", "CODE",
                           "HOSPITAL.CODE", "HOSPITAL_CODE", "医院.代码", "UCBHOSCODE",
-                          "HOSCODE", "医院.编码", "ID", "DSCN医院编码"]
+                          "HOSCODE", "医院.编码", "ID", "DSCN医院编码", "BI_CODE"]
         },
         {
             "ColName": "HOSP_LEVEL",
