@@ -220,7 +220,7 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 	                      filesPath: String,
 	                      parentJobId: String,
 	                      dsIds: String): Unit = {
-		val resultPath = s"hdfs://jobs/$runId/"
+		val resultPath = s"hdfs:///jobs/$runId/"
 //		val resultPath = s"hdfs:///user/alex/jobs/$runId"
 		
 		import org.json4s._
