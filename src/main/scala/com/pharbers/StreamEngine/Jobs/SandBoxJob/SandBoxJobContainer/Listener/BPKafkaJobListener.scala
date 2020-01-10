@@ -33,13 +33,13 @@ class BPKafkaJobListener(val id: String,
 			hisJobId = record.value().getJobId.toString
 
 			// TODO 路径配置化
-//			val metaDataSavePath: String = s"/jobs/${record.value().getRunId.toString}/$jobContainerId/metadata"
-//			val checkPointSavePath: String = s"/jobs/${record.value().getRunId.toString}/$jobContainerId/checkpoint"
-//			val parquetSavePath: String =  s"/jobs/${record.value().getRunId.toString}/$jobContainerId/contents"
-
-			val metaDataSavePath: String = s"/user/alex/jobs/${record.value().getRunId.toString}/$jobContainerId/metadata"
-			val checkPointSavePath: String = s"/user/alex/jobs/${record.value().getRunId.toString}/$jobContainerId/checkpoint"
-			val parquetSavePath: String =  s"/user/alex/jobs/${record.value().getRunId.toString}/$jobContainerId/contents"
+			val metaDataSavePath: String = s"/jobs/${record.value().getRunId.toString}/$jobContainerId/metadata"
+			val checkPointSavePath: String = s"/jobs/${record.value().getRunId.toString}/$jobContainerId/checkpoint"
+			val parquetSavePath: String =  s"/jobs/${record.value().getRunId.toString}/$jobContainerId/contents"
+//
+//			val metaDataSavePath: String = s"/user/alex/jobs/${record.value().getRunId.toString}/$jobContainerId/metadata"
+//			val checkPointSavePath: String = s"/user/alex/jobs/${record.value().getRunId.toString}/$jobContainerId/checkpoint"
+//			val parquetSavePath: String =  s"/user/alex/jobs/${record.value().getRunId.toString}/$jobContainerId/contents"
 
 			val jobParam = Map(
 				"parentJobId" -> record.value().getJobId.toString,
@@ -93,8 +93,8 @@ class BPKafkaJobListener(val id: String,
 	                      filesPath: String,
 	                      parentJobId: String,
 	                      dsIds: String): Unit = {
-//		val resultPath = s"hdfs://jobs/$runId/"
-		val resultPath = s"hdfs:///user/alex/jobs/$runId"
+		val resultPath = s"hdfs://jobs/$runId/"
+//		val resultPath = s"hdfs:///user/alex/jobs/$runId"
 		
 		import org.json4s._
 		import org.json4s.jackson.Serialization.write
