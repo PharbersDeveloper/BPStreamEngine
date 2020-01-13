@@ -1,12 +1,13 @@
 package com.pharbers.StreamEngine.Jobs.Hive2EsJob.strategy
 
 import com.pharbers.util.log.PhLogable
-import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.expressions.{Window, WindowSpec}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.DataTypes
 
-case class BPSMaxDataHive2EsStrategy() extends BPSStrategy[DataFrame] with PhLogable {
+case class BPSMaxDataHive2EsStrategy(spark: SparkSession) extends BPSStrategy[DataFrame] with PhLogable {
+
     override def convert(data: DataFrame): DataFrame = {
         //TODO:筛选出 max_dashboard 需要用到的 keys 即可
         val keys: List[String] = "COMPANY" :: "SOURCE" :: "PROVINCE_NAME" :: "CITY_NAME" :: "PREFECTURE_NAME" :: "QUARTER" :: "HOSP_NAME" :: "HOSP_CODE" :: "HOSP_LEVEL" ::
