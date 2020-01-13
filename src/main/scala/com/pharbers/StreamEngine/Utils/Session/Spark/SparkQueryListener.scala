@@ -34,22 +34,22 @@ class SparkQueryListener extends StreamingQueryListener with PhLogable{
 
 class BPSparkListener extends SparkListener with PhLogable{
     override def onJobStart(jobStart: SparkListenerJobStart): Unit = {
-        logger.info("job start" + jobStart.jobId)
+        logger.debug("job start" + jobStart.jobId)
     }
     override def onTaskStart(taskStart: SparkListenerTaskStart): Unit = {
-        logger.info("task start" + taskStart.stageId)
+        logger.debug("task start" + taskStart.stageId)
     }
 
     override def onTaskEnd(taskEnd: SparkListenerTaskEnd): Unit = {
-        logger.info("onTaskEnd" + taskEnd.stageId)
+        logger.debug("onTaskEnd" + taskEnd.stageId)
     }
 
     override def onOtherEvent(event: SparkListenerEvent): Unit = {
-        logger.info("other event" + event.toString)
+        logger.debug("other event" + event.toString)
     }
 
     override def onExecutorAdded(executorAdded: SparkListenerExecutorAdded): Unit ={
-        logger.info("onExecutorAdded" + executorAdded.executorId + executorAdded.executorInfo)
+        logger.debug("onExecutorAdded" + executorAdded.executorId + executorAdded.executorInfo)
     }
 
 }

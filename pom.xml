@@ -84,7 +84,6 @@
                     <groupId>org.apache.spark</groupId>
                     <artifactId>spark-streaming_2.11</artifactId>
                     <version>${spark.version}</version>
-                    <scope>${scope}</scope>
                 </dependency>
                 <dependency>
                     <groupId>org.apache.spark</groupId>
@@ -215,7 +214,18 @@
                     <version>3.2.11</version>
                 </dependency>
 
-                <!-- https://mvnrepository.com/artifact/org.eclipse.jgit/org.eclipse.jgit -->
+                <!--mongo driver-->
+                <dependency>
+                    <groupId>org.mongodb.scala</groupId>
+                    <artifactId>mongo-scala-driver_2.11</artifactId>
+                    <version>2.6.0</version>
+                </dependency>
+                <dependency>
+                    <groupId>org.mongodb</groupId>
+                    <artifactId>mongodb-driver-sync</artifactId>
+                    <version>3.9.1</version>
+                </dependency>
+
                 <dependency>
                     <groupId>org.eclipse.jgit</groupId>
                     <artifactId>org.eclipse.jgit</artifactId>
@@ -228,12 +238,19 @@
         <sourceDirectory>src/main/scala</sourceDirectory>
         <testSourceDirectory>src/test/scala</testSourceDirectory>
         <resources>
-            <resource>
-                <directory>src/main/resources</directory>
+<!--            <resource>-->
+<!--                <directory>src/main/resources</directory>-->
+<!--                <includes>-->
+<!--                    <include>**/*.xml</include>-->
+<!--                    &lt;!&ndash;<include>**/*.json</include>&ndash;&gt;-->
+<!--                    &lt;!&ndash;<include>**/*.properties</include>&ndash;&gt;-->
+<!--                </includes>-->
+<!--            </resource>-->
+            <resource> <!--TODO: 与老齐整合的时候这段删除@Alex-->
+                <directory>pyClean</directory>
+                <targetPath>pyClean</targetPath>
                 <includes>
-                    <include>**/*.xml</include>
-                    <!--<include>**/*.json</include>-->
-                    <!--<include>**/*.properties</include>-->
+                    <include>**/*.py</include>
                 </includes>
             </resource>
         </resources>
@@ -326,32 +343,32 @@
                     </execution>
                 </executions>
             </plugin>
-            <!--将依赖打包成一个jar，与上面主类设置冲突-->
-            <!--<plugin>-->
-            <!--<artifactId>maven-assembly-plugin</artifactId>-->
-            <!--<version>3.1.1</version>-->
-            <!--<configuration>-->
-            <!--<finalName>jar-all</finalName>-->
-            <!--<appendAssemblyId>false</appendAssemblyId>-->
-            <!--<descriptorRefs>-->
-            <!--<descriptorRef>jar-with-dependencies</descriptorRef>-->
-            <!--</descriptorRefs>-->
-            <!--<archive>-->
-            <!--<manifest>-->
-            <!--<mainClass>main</mainClass>-->
-            <!--</manifest>-->
-            <!--</archive>-->
-            <!--</configuration>-->
-            <!--<executions>-->
-            <!--<execution>-->
-            <!--<id>make-assembly</id>-->
-            <!--<phase>package</phase>-->
-            <!--<goals>-->
-            <!--<goal>single</goal>-->
-            <!--</goals>-->
-            <!--</execution>-->
-            <!--</executions>-->
-            <!--</plugin>-->
+            <!--打包太大了-->
+<!--            <plugin>-->
+<!--                <artifactId>maven-assembly-plugin</artifactId>-->
+<!--                <version>3.1.1</version>-->
+<!--                <configuration>-->
+<!--                    <finalName>BP-Stream-Engine</finalName>-->
+<!--                    <appendAssemblyId>false</appendAssemblyId>-->
+<!--                    <descriptorRefs>-->
+<!--                        <descriptorRef>jar-with-dependencies</descriptorRef>-->
+<!--                    </descriptorRefs>-->
+<!--                    <archive>-->
+<!--                        <manifest>-->
+<!--                            <mainClass>com.pharbers.StreamEngine.main</mainClass>-->
+<!--                        </manifest>-->
+<!--                    </archive>-->
+<!--                </configuration>-->
+<!--                <executions>-->
+<!--                    <execution>-->
+<!--                        <id>make-assembly</id>-->
+<!--                        <phase>package</phase>-->
+<!--                        <goals>-->
+<!--                            <goal>single</goal>-->
+<!--                        </goals>-->
+<!--                    </execution>-->
+<!--                </executions>-->
+<!--            </plugin>-->
         </plugins>
     </build>
 

@@ -715,10 +715,8 @@ public class HiveTracebackTask extends org.apache.avro.specific.SpecificRecordBa
     WRITER$ = new org.apache.avro.specific.SpecificDatumWriter(SCHEMA$);
 
 
-
   private static final org.apache.avro.io.DatumReader
     READER$ = new org.apache.avro.specific.SpecificDatumReader(SCHEMA$);
-
 
 
 }

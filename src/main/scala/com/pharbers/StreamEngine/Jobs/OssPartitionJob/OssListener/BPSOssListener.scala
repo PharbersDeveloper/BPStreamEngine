@@ -1,10 +1,7 @@
 package com.pharbers.StreamEngine.Jobs.OssPartitionJob.OssListener
 
-import java.net.{HttpURLConnection, URL}
-import java.nio.charset.StandardCharsets
 import java.util.UUID
 import java.util.concurrent.TimeUnit
-
 import com.pharbers.StreamEngine.Utils.Channel.Driver.BPSDriverChannel
 import com.pharbers.StreamEngine.Utils.Channel.Worker.BPSWorkerChannel
 import com.pharbers.StreamEngine.Utils.StreamJob.{BPSJobContainer, BPStreamJob}
@@ -91,7 +88,9 @@ case class BPSOssListener(spark: SparkSession, job: BPStreamJob, jobId: String) 
                             channel.get.pushMessage(write(event))
                         }
 
-                        def close(errorOrNull: scala.Throwable): Unit = {}//channel.get.close()
+                        def close(errorOrNull: scala.Throwable): Unit = {
+                            channel.get.close()
+                        }
                     }
                 )
                 .option("checkpointLocation", "/jobs/" + UUID.randomUUID().toString + "/checkpoint")
