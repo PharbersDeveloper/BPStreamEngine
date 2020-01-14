@@ -107,14 +107,9 @@ class BPSparkSessionTest extends FunSuite with PhLogable {
                 .filter(col("DATE") >= currentYearYmList.min.toString.toInt && col("DATE") <= currentYearYmList.max.toString.toInt)
                 .cache()
             currentYearDF
-        }).reduce((x, y) => x union y)
+        }).reduce((x, y) => x union y).na.fill(0.0)
 
         newData.printSchema()
-
-//        println(newData.select("MKT").distinct().collect().map(_ (0)).toList)
-//        println(newData.count())
-        //        println(newData.select("PRODUCT_NAME").distinct().collect().map(_(0)).toList.size)
-        //        println(newData.filter(col("COMPANY") === "Pfizer").select("PRODUCT_NAME").distinct().collect().map(_(0)).toList.size)
 
     }
 
