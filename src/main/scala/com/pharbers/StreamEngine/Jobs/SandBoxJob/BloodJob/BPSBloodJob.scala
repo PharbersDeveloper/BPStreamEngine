@@ -2,9 +2,9 @@ package com.pharbers.StreamEngine.Jobs.SandBoxJob.BloodJob
 
 import java.util.concurrent.TimeUnit
 
-import com.pharbers.StreamEngine.Utils.Kafka.ProducerSingleton
 import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSJobStrategy
 import com.pharbers.StreamEngine.Utils.StreamJob.BPStreamJob
+import com.pharbers.kafka.producer.PharbersKafkaProducer
 import org.apache.avro.specific.SpecificRecord
 import org.apache.spark.sql
 import org.apache.spark.sql.{DataFrame, SparkSession}
@@ -25,9 +25,11 @@ class BPSBloodJob(topic: String,
 	val spark: SparkSession = null
 	
 	override def exec(): Unit = {
-//		val fu = new PharbersKafkaProducer[String, SpecificRecord].produce(topic, id, msg)
-		val fu = ProducerSingleton.getIns.produce(topic, id, msg)
+		val producerInstance = new PharbersKafkaProducer[String, SpecificRecord]
+		val fu = producerInstance.produce(topic, id, msg)
+//		val fu = ProducerSingleton.getIns.produce(topic, id, msg)
 		logger.debug(fu.get(10, TimeUnit.SECONDS))
+		producerInstance.producer.close()
 	}
 	
 	override def close(): Unit = {
