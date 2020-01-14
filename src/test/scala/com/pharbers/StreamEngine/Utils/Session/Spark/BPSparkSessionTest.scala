@@ -84,7 +84,7 @@ class BPSparkSessionTest extends FunSuite with PhLogable {
             .groupBy("COMPANY", "PRODUCT_NAME", "MOLE_NAME")
             .agg(first("MKT").alias("MKT"))
 
-        //41836
+        //20200114-结果数据总count-41836
         val mergeDF = moleLevelDF
             .join(cpa, moleLevelDF("COMPANY") === cpa("COMPANY") and moleLevelDF("PRODUCT_NAME") === cpa("PRODUCT_NAME") and moleLevelDF("MOLE_NAME") === cpa("MOLE_NAME"), "inner")
             .drop(cpa("COMPANY"))
@@ -94,6 +94,7 @@ class BPSparkSessionTest extends FunSuite with PhLogable {
         //TODO:因不同公司数据的数据时间维度不一样，所以分别要对每个公司的数据进行计算最新一年的数据
         val companyList = mergeDF.select("COMPANY").distinct().collect().map(_ (0)).toList.asInstanceOf[List[String]]
 
+        //20200114-分公司计算最新一年的count-21437
         val newData = companyList.map(company => {
             val companyDF = mergeDF.filter(col("COMPANY") === company)
             //TODO:得保证数据源中包含两年的数据
@@ -105,7 +106,6 @@ class BPSparkSessionTest extends FunSuite with PhLogable {
             val currentYearDF = computeMaxDashboardData(current2YearDF)
                 .filter(col("DATE") >= currentYearYmList.min.toString.toInt && col("DATE") <= currentYearYmList.max.toString.toInt)
                 .cache()
-            println(company, currentYearDF.count())
             currentYearDF
         }).reduce((x, y) => x union y)
 
@@ -119,107 +119,158 @@ class BPSparkSessionTest extends FunSuite with PhLogable {
     }
 
     def computeMaxDashboardData(df: DataFrame): DataFrame = {
-        val moleWindow = Window
-            .partitionBy("MKT", "PROVINCE", "CITY", "PRODUCT_NAME", "MOLE_NAME")
-
-        val prodWindow = Window
-            .partitionBy("MKT", "PROVINCE", "CITY", "PRODUCT_NAME")
-
-        val cityWindow = Window
-            .partitionBy("MKT", "PROVINCE", "CITY")
-
-        val provWindow = Window
-            .partitionBy("MKT", "PROVINCE")
-
-        val mktWindow = Window
-            .partitionBy("MKT")
 
         //TODO:产品在不同范围内的销售额和份额都是不同的，PROD_IN_CITY,PROD_IN_PROV,PROD_IN_MKT,PROD_IN_COMPANY
         //TODO:数据是否正确需要核对
-        df.withColumn("PROD_SALES_VALUE", sum("MOLE_SALES_VALUE").over(currMonthWindow(prodWindow)))
-            .withColumn("PROD_SALES_IN_COMPANY_VALUE", sum("MOLE_SALES_VALUE").over(currMonthWindow(Window.partitionBy("PRODUCT_NAME"))))
-            .withColumn("PROD_SALES_IN_COMPANY_RANK", dense_rank.over(Window.partitionBy("DATE").orderBy(col("PROD_SALES_IN_COMPANY_VALUE").desc)))
-            .withColumn("CITY_SALES_VALUE", sum("MOLE_SALES_VALUE").over(currMonthWindow(cityWindow)))
-            .withColumn("PROV_SALES_VALUE", sum("MOLE_SALES_VALUE").over(currMonthWindow(provWindow)))
-            .withColumn("MKT_SALES_VALUE", sum("MOLE_SALES_VALUE").over(currMonthWindow(mktWindow)))
-            .withColumn("MOLE_IN_PROD_SHARE", col("MOLE_SALES_VALUE") / col("PROD_SALES_VALUE"))
-            .withColumn("MOLE_IN_CITY_SHARE", col("MOLE_SALES_VALUE") / col("CITY_SALES_VALUE"))
-            .withColumn("MOLE_IN_PROV_SHARE", col("MOLE_SALES_VALUE") / col("PROV_SALES_VALUE"))
-            .withColumn("MOLE_IN_MKT_SHARE", col("MOLE_SALES_VALUE") / col("MKT_SALES_VALUE"))
-            .withColumn("PROD_IN_CITY_SHARE", col("PROD_SALES_VALUE") / col("CITY_SALES_VALUE"))
-            .withColumn("PROD_IN_PROV_SHARE", col("PROD_SALES_VALUE") / col("PROV_SALES_VALUE"))
-            .withColumn("PROD_IN_MKT_SHARE", col("PROD_SALES_VALUE") / col("MKT_SALES_VALUE"))
-            .withColumn("CITY_IN_PROV_SHARE", col("CITY_SALES_VALUE") / col("PROV_SALES_VALUE"))
-            .withColumn("CITY_IN_MKT_SHARE", col("CITY_SALES_VALUE") / col("MKT_SALES_VALUE"))
-            .withColumn("PROV_IN_MKT_SHARE", col("PROV_SALES_VALUE") / col("MKT_SALES_VALUE"))
-            //fill lastMonth values
-            .withColumn("LAST_M_MOLE_SALES_VALUE", first("MOLE_SALES_VALUE").over(lastMonthWindow(prodWindow)))
-            .na.fill(Map("LAST_M_MOLE_SALES_VALUE" -> 0.0))
-            .withColumn("LAST_M_PROD_SALES_VALUE", first("PROD_SALES_VALUE").over(lastMonthWindow(prodWindow)))
-            .na.fill(Map("LAST_M_PROD_SALES_VALUE" -> 0.0))
-            .withColumn("LAST_M_CITY_SALES_VALUE", first("CITY_SALES_VALUE").over(lastMonthWindow(cityWindow)))
-            .na.fill(Map("LAST_M_CITY_SALES_VALUE" -> 0.0))
-            .withColumn("LAST_M_PROV_SALES_VALUE", first("PROV_SALES_VALUE").over(lastMonthWindow(provWindow)))
-            .na.fill(Map("LAST_M_PROV_SALES_VALUE" -> 0.0))
-            .withColumn("LAST_M_MKT_SALES_VALUE", first("MKT_SALES_VALUE").over(lastMonthWindow(mktWindow)))
-            .na.fill(Map("LAST_M_MKT_SALES_VALUE" -> 0.0))
-            .withColumn("LAST_M_MOLE_IN_PROD_SHARE", when(col("LAST_M_PROD_SALES_VALUE") === 0.0, 0.0).otherwise(col("LAST_M_MOLE_SALES_VALUE") / col("LAST_M_PROD_SALES_VALUE")))
-            .withColumn("LAST_M_MOLE_IN_CITY_SHARE", when(col("LAST_M_CITY_SALES_VALUE") === 0.0, 0.0).otherwise(col("LAST_M_MOLE_SALES_VALUE") / col("LAST_M_CITY_SALES_VALUE")))
-            .withColumn("LAST_M_MOLE_IN_PROV_SHARE", when(col("LAST_M_PROV_SALES_VALUE") === 0.0, 0.0).otherwise(col("LAST_M_MOLE_SALES_VALUE") / col("LAST_M_PROV_SALES_VALUE")))
-            .withColumn("LAST_M_MOLE_IN_MKT_SHARE", when(col("LAST_M_MKT_SALES_VALUE") === 0.0, 0.0).otherwise(col("LAST_M_MOLE_SALES_VALUE") / col("LAST_M_MKT_SALES_VALUE")))
-            .withColumn("LAST_M_PROD_IN_CITY_SHARE", when(col("LAST_M_CITY_SALES_VALUE") === 0.0, 0.0).otherwise(col("LAST_M_PROD_SALES_VALUE") / col("LAST_M_CITY_SALES_VALUE")))
-            .withColumn("LAST_M_PROD_IN_PROV_SHARE", when(col("LAST_M_PROV_SALES_VALUE") === 0.0, 0.0).otherwise(col("LAST_M_PROD_SALES_VALUE") / col("LAST_M_PROV_SALES_VALUE")))
-            .withColumn("LAST_M_PROD_IN_MKT_SHARE", when(col("LAST_M_MKT_SALES_VALUE") === 0.0, 0.0).otherwise(col("LAST_M_PROD_SALES_VALUE") / col("LAST_M_MKT_SALES_VALUE")))
-            .withColumn("LAST_M_CITY_IN_PROV_SHARE", when(col("LAST_M_PROV_SALES_VALUE") === 0.0, 0.0).otherwise(col("LAST_M_CITY_SALES_VALUE") / col("LAST_M_PROV_SALES_VALUE")))
-            .withColumn("LAST_M_CITY_IN_MKT_SHARE", when(col("LAST_M_MKT_SALES_VALUE") === 0.0, 0.0).otherwise(col("LAST_M_CITY_SALES_VALUE") / col("LAST_M_MKT_SALES_VALUE")))
-            .withColumn("LAST_M_PROV_IN_MKT_SHARE", when(col("LAST_M_MKT_SALES_VALUE") === 0.0, 0.0).otherwise(col("LAST_M_PROV_SALES_VALUE") / col("LAST_M_MKT_SALES_VALUE")))
-            .withColumn("MOLE_MOM", when(col("LAST_M_MOLE_SALES_VALUE") === 0.0, 0.0).otherwise((col("MOLE_SALES_VALUE") - col("LAST_M_MOLE_SALES_VALUE")) / col("LAST_M_MOLE_SALES_VALUE")))
-            .withColumn("PROD_MOM", when(col("LAST_M_PROD_SALES_VALUE") === 0.0, 0.0).otherwise((col("PROD_SALES_VALUE") - col("LAST_M_PROD_SALES_VALUE")) / col("LAST_M_PROD_SALES_VALUE")))
-            .withColumn("CITY_MOM", when(col("LAST_M_CITY_SALES_VALUE") === 0.0, 0.0).otherwise((col("CITY_SALES_VALUE") - col("LAST_M_CITY_SALES_VALUE")) / col("LAST_M_CITY_SALES_VALUE")))
-            .withColumn("PROV_MOM", when(col("LAST_M_PROV_SALES_VALUE") === 0.0, 0.0).otherwise((col("PROV_SALES_VALUE") - col("LAST_M_PROV_SALES_VALUE")) / col("LAST_M_PROV_SALES_VALUE")))
-            .withColumn("MKT_MOM", when(col("LAST_M_MKT_SALES_VALUE") === 0.0, 0.0).otherwise((col("MKT_SALES_VALUE") - col("LAST_M_MKT_SALES_VALUE")) / col("LAST_M_MKT_SALES_VALUE")))
-            .withColumn("EI", when(col("LAST_M_PROD_IN_MKT_SHARE") === 0.0, 0.0).otherwise(col("PROD_IN_MKT_SHARE") / col("LAST_M_PROD_IN_MKT_SHARE")))
-            //fill lastYear values
-            .withColumn("LAST_Y_MOLE_SALES_VALUE", first("MOLE_SALES_VALUE").over(lastYearWindow(moleWindow)))
-            .na.fill(Map("LAST_Y_MOLE_SALES_VALUE" -> 0.0))
-            .withColumn("LAST_Y_PROD_SALES_VALUE", first("PROD_SALES_VALUE").over(lastYearWindow(prodWindow)))
-            .na.fill(Map("LAST_Y_PROD_SALES_VALUE" -> 0.0))
-            .withColumn("LAST_Y_CITY_SALES_VALUE", first("CITY_SALES_VALUE").over(lastYearWindow(cityWindow)))
-            .na.fill(Map("LAST_Y_CITY_SALES_VALUE" -> 0.0))
-            .withColumn("LAST_Y_PROV_SALES_VALUE", first("PROV_SALES_VALUE").over(lastYearWindow(provWindow)))
-            .na.fill(Map("LAST_Y_PROV_SALES_VALUE" -> 0.0))
-            .withColumn("LAST_Y_MKT_SALES_VALUE", first("MKT_SALES_VALUE").over(lastYearWindow(mktWindow)))
-            .na.fill(Map("LAST_Y_MKT_SALES_VALUE" -> 0.0))
-            .withColumn("LAST_Y_MOLE_IN_PROD_SHARE", when(col("LAST_Y_PROD_SALES_VALUE") === 0.0, 0.0).otherwise(col("LAST_Y_MOLE_SALES_VALUE") / col("LAST_Y_PROD_SALES_VALUE")))
-            .withColumn("LAST_Y_MOLE_IN_CITY_SHARE", when(col("LAST_Y_CITY_SALES_VALUE") === 0.0, 0.0).otherwise(col("LAST_Y_MOLE_SALES_VALUE") / col("LAST_Y_CITY_SALES_VALUE")))
-            .withColumn("LAST_Y_MOLE_IN_PROV_SHARE", when(col("LAST_Y_PROV_SALES_VALUE") === 0.0, 0.0).otherwise(col("LAST_Y_MOLE_SALES_VALUE") / col("LAST_Y_PROV_SALES_VALUE")))
-            .withColumn("LAST_Y_MOLE_IN_MKT_SHARE", when(col("LAST_Y_MKT_SALES_VALUE") === 0.0, 0.0).otherwise(col("LAST_Y_MOLE_SALES_VALUE") / col("LAST_Y_MKT_SALES_VALUE")))
-            .withColumn("LAST_Y_PROD_IN_CITY_SHARE", when(col("LAST_Y_CITY_SALES_VALUE") === 0.0, 0.0).otherwise(col("LAST_Y_PROD_SALES_VALUE") / col("LAST_Y_CITY_SALES_VALUE")))
-            .withColumn("LAST_Y_PROD_IN_PROV_SHARE", when(col("LAST_Y_PROV_SALES_VALUE") === 0.0, 0.0).otherwise(col("LAST_Y_PROD_SALES_VALUE") / col("LAST_Y_PROV_SALES_VALUE")))
-            .withColumn("LAST_Y_PROD_IN_MKT_SHARE", when(col("LAST_Y_MKT_SALES_VALUE") === 0.0, 0.0).otherwise(col("LAST_Y_PROD_SALES_VALUE") / col("LAST_Y_MKT_SALES_VALUE")))
-            .withColumn("LAST_Y_CITY_IN_PROV_SHARE", when(col("LAST_Y_PROV_SALES_VALUE") === 0.0, 0.0).otherwise(col("LAST_Y_CITY_SALES_VALUE") / col("LAST_Y_PROV_SALES_VALUE")))
-            .withColumn("LAST_Y_CITY_IN_MKT_SHARE", when(col("LAST_Y_MKT_SALES_VALUE") === 0.0, 0.0).otherwise(col("LAST_Y_CITY_SALES_VALUE") / col("LAST_Y_MKT_SALES_VALUE")))
-            .withColumn("LAST_Y_PROV_IN_MKT_SHARE", when(col("LAST_Y_MKT_SALES_VALUE") === 0.0, 0.0).otherwise(col("LAST_Y_PROV_SALES_VALUE") / col("LAST_Y_MKT_SALES_VALUE")))
-            .withColumn("MOLE_YOY", when(col("LAST_Y_MOLE_SALES_VALUE") === 0.0, 0.0).otherwise((col("MOLE_SALES_VALUE") - col("LAST_Y_MOLE_SALES_VALUE")) / col("LAST_Y_MOLE_SALES_VALUE")))
-            .withColumn("PROD_YOY", when(col("LAST_Y_PROD_SALES_VALUE") === 0.0, 0.0).otherwise((col("PROD_SALES_VALUE") - col("LAST_Y_PROD_SALES_VALUE")) / col("LAST_Y_PROD_SALES_VALUE")))
-            .withColumn("CITY_YOY", when(col("LAST_Y_CITY_SALES_VALUE") === 0.0, 0.0).otherwise((col("CITY_SALES_VALUE") - col("LAST_Y_CITY_SALES_VALUE")) / col("LAST_Y_CITY_SALES_VALUE")))
-            .withColumn("PROV_YOY", when(col("LAST_Y_PROV_SALES_VALUE") === 0.0, 0.0).otherwise((col("PROV_SALES_VALUE") - col("LAST_Y_PROV_SALES_VALUE")) / col("LAST_Y_PROV_SALES_VALUE")))
-            .withColumn("MKT_YOY", when(col("LAST_Y_MKT_SALES_VALUE") === 0.0, 0.0).otherwise((col("MKT_SALES_VALUE") - col("LAST_Y_MKT_SALES_VALUE")) / col("LAST_Y_MKT_SALES_VALUE")))
+        PhMaxDashboardDF(df)
+            .GenerateSalesRowWith("CURR", "MOLE", "CITY")
+            .GenerateSalesRowWith("CURR", "MOLE", "PROV")
+            .GenerateSalesRowWith("CURR", "MOLE", "NATION")
+            .GenerateSalesRowWith("CURR", "PROD", "CITY")
+            .GenerateSalesRowWith("CURR", "PROD", "PROV")
+            .GenerateSalesRowWith("CURR", "PROD", "NATION")
+            .GenerateSalesRowWith("LAST_M", "MOLE", "CITY")
+            .GenerateSalesRowWith("LAST_M", "MOLE", "PROV")
+            .GenerateSalesRowWith("LAST_M", "MOLE", "NATION")
+            .GenerateSalesRowWith("LAST_M", "PROD", "CITY")
+            .GenerateSalesRowWith("LAST_M", "PROD", "PROV")
+            .GenerateSalesRowWith("LAST_M", "PROD", "NATION")
+            .GenerateSalesRowWith("LAST_Y", "MOLE", "CITY")
+            .GenerateSalesRowWith("LAST_Y", "MOLE", "PROV")
+            .GenerateSalesRowWith("LAST_Y", "MOLE", "NATION")
+            .GenerateSalesRowWith("LAST_Y", "PROD", "CITY")
+            .GenerateSalesRowWith("LAST_Y", "PROD", "PROV")
+            .GenerateSalesRowWith("LAST_Y", "PROD", "NATION")
+            .GenerateRankAndShareRowWith("CURR","MOLE","CITY", "PROV")
+            .GenerateRankAndShareRowWith("CURR","MOLE","CITY", "NATION")
+            .GenerateRankAndShareRowWith("CURR","MOLE","PROV", "NATION")
+            .GenerateRankAndShareRowWith("CURR","PROD","CITY", "PROV")
+            .GenerateRankAndShareRowWith("CURR","PROD","CITY", "NATION")
+            .GenerateRankAndShareRowWith("CURR","PROD","PROV", "NATION")
+            .GenerateRankAndShareRowWith("LAST_M","MOLE","CITY", "PROV")
+            .GenerateRankAndShareRowWith("LAST_M","MOLE","CITY", "NATION")
+            .GenerateRankAndShareRowWith("LAST_M","MOLE","PROV", "NATION")
+            .GenerateRankAndShareRowWith("LAST_M","PROD","CITY", "PROV")
+            .GenerateRankAndShareRowWith("LAST_M","PROD","CITY", "NATION")
+            .GenerateRankAndShareRowWith("LAST_M","PROD","PROV", "NATION")
+            .GenerateRankAndShareRowWith("LAST_Y","MOLE","CITY", "PROV")
+            .GenerateRankAndShareRowWith("LAST_Y","MOLE","CITY", "NATION")
+            .GenerateRankAndShareRowWith("LAST_Y","MOLE","PROV", "NATION")
+            .GenerateRankAndShareRowWith("LAST_Y","PROD","CITY", "PROV")
+            .GenerateRankAndShareRowWith("LAST_Y","PROD","CITY", "NATION")
+            .GenerateRankAndShareRowWith("LAST_Y","PROD","PROV", "NATION")
+            .GenerateGrowthRowWith("MOM", "MOLE", "CITY")
+            .GenerateGrowthRowWith("MOM", "MOLE", "PROV")
+            .GenerateGrowthRowWith("MOM", "MOLE", "NATION")
+            .GenerateGrowthRowWith("MOM", "PROD", "CITY")
+            .GenerateGrowthRowWith("MOM", "PROD", "PROV")
+            .GenerateGrowthRowWith("MOM", "PROD", "NATION")
+            .GenerateGrowthRowWith("YOY", "MOLE", "CITY")
+            .GenerateGrowthRowWith("YOY", "MOLE", "PROV")
+            .GenerateGrowthRowWith("YOY", "MOLE", "NATION")
+            .GenerateGrowthRowWith("YOY", "PROD", "CITY")
+            .GenerateGrowthRowWith("YOY", "PROD", "PROV")
+            .GenerateGrowthRowWith("YOY", "PROD", "NATION")
+            .GenerateEIRowWith("MOLE", "CITY", "PROV")
+            .GenerateEIRowWith("MOLE", "CITY", "NATION")
+            .GenerateEIRowWith("MOLE", "PROV", "NATION")
+            .GenerateEIRowWith("PROD", "CITY", "PROV")
+            .GenerateEIRowWith("PROD", "CITY", "NATION")
+            .GenerateEIRowWith("PROD", "PROV", "NATION")
+            .df
 
     }
 
-    def currMonthWindow(window: WindowSpec): WindowSpec = {
+}
+
+case class PhMaxDashboardDF(df: DataFrame) extends PhLogable {
+
+    private def currMonthWindow(window: WindowSpec): WindowSpec = {
         window.orderBy(col("DATE").cast(DataTypes.IntegerType)).rangeBetween(0, 0)
     }
 
-    def lastMonthWindow(window: WindowSpec): WindowSpec = {
+    private def lastMonthWindow(window: WindowSpec): WindowSpec = {
         window
             .orderBy(to_date(col("DATE").cast("string"), "yyyyMM").cast("timestamp").cast("long"))
             .rangeBetween(-86400 * 31, -86400 * 28)
     }
 
-
-    def lastYearWindow(window: WindowSpec): WindowSpec =
+    private def lastYearWindow(window: WindowSpec): WindowSpec =
         window.orderBy(col("DATE").cast(DataTypes.IntegerType)).rangeBetween(-100, -100)
+
+    def GenerateSalesRowWith(time: String, prodLevel: String, region: String): PhMaxDashboardDF = {
+
+        val prodLevelKeys: List[String] = prodLevel match {
+            case "MOLE" => "PRODUCT_NAME" :: "MOLE_NAME" :: Nil
+            case "PROD" => "PRODUCT_NAME" :: Nil
+            case _ => logger.error(s"${prodLevel} not implemented."); Nil
+        }
+
+        val regionKeys: List[String] = region match {
+            case "CITY" => "PROVINCE" :: "CITY" :: Nil
+            case "PROV" => "PROVINCE" :: Nil
+            case "NATION" => Nil
+            case _ => logger.error(s"${prodLevel} not implemented."); Nil
+        }
+
+        val mktWindow: WindowSpec = Window.partitionBy("MKT", prodLevelKeys ::: regionKeys: _*)
+
+        val newDF: DataFrame = time match {
+            case "CURR" => df
+                .withColumn(time + "_" + prodLevel + "_SALES_IN_" + region, sum("MOLE_SALES_VALUE").over(currMonthWindow(mktWindow)))
+            case "LAST_M" => df
+                .withColumn(time + "_" + prodLevel + "_SALES_IN_" + region, sum("MOLE_SALES_VALUE").over(lastMonthWindow(mktWindow)))
+            case "LAST_Y" => df
+                .withColumn(time + "_" + prodLevel + "_SALES_IN_" + region, sum("MOLE_SALES_VALUE").over(lastYearWindow(mktWindow)))
+            case _ => logger.error(s"${time} not implemented."); df
+        }
+
+        PhMaxDashboardDF(newDF)
+    }
+
+    def GenerateRankAndShareRowWith(time: String, prodLevel: String, childRegion: String, fatherRegion: String): PhMaxDashboardDF = {
+        val prodLevelRankKeys: List[String] = prodLevel match {
+            case "MOLE" => "PRODUCT_NAME" :: Nil
+            case "PROD" => Nil
+            case _ => logger.error(s"${prodLevel} not implemented."); Nil
+        }
+
+        val regionRankKeys: List[String] = fatherRegion match {
+            case "CITY" => "PROVINCE" :: "CITY" :: Nil
+            case "PROV" => "PROVINCE" :: Nil
+            case "NATION" => Nil
+            case _ => logger.error(s"${prodLevel} not implemented."); Nil
+        }
+
+        val rankWindow: WindowSpec = Window.partitionBy("DATE", "MKT" :: prodLevelRankKeys ::: regionRankKeys: _*)
+
+        val newDF: DataFrame = df
+            .withColumn(time + "_" + prodLevel + "_" + childRegion + "_RANK_IN_" + fatherRegion, dense_rank.over(rankWindow.orderBy(col(time + "_" + prodLevel + "_SALES_IN_" + childRegion).desc)))
+            .withColumn(time + "_" + prodLevel + "_" + childRegion + "_SHARE_IN_" + fatherRegion, col(time + "_" + prodLevel + "_SALES_IN_" + childRegion) / col(time + "_" + prodLevel + "_SALES_IN_" + fatherRegion))
+
+        PhMaxDashboardDF(newDF)
+    }
+
+    def GenerateGrowthRowWith(time: String, prodLevel: String, region: String): PhMaxDashboardDF = {
+        val newDF: DataFrame = time match {
+            case "MOM" => df
+                .withColumn("MOM_GROWTH_ON_" + prodLevel + "_" + region + "LEVEL", when(col("LAST_M_" + prodLevel + "_SALES_IN_" + region) === 0.0, 0.0).otherwise(col("CURR_" + prodLevel + "_SALES_IN_" + region) - col("LAST_M_" + prodLevel + "_SALES_IN_" + region)))
+                .withColumn("MOM_RATE_ON_" + prodLevel + "_" + region + "LEVEL", when(col("LAST_M_" + prodLevel + "_SALES_IN_" + region) === 0.0, 0.0).otherwise((col("CURR_" + prodLevel + "_SALES_IN_" + region) - col("LAST_M_" + prodLevel + "_SALES_IN_" + region)) / col("LAST_M_" + prodLevel + "_SALES_IN_" + region)))
+            case "YOY" => df
+                .withColumn("YOY_GROWTH_ON_" + prodLevel + "_" + region + "LEVEL", when(col("LAST_Y_" + prodLevel + "_SALES_IN_" + region) === 0.0, 0.0).otherwise(col("CURR_" + prodLevel + "_SALES_IN_" + region) - col("LAST_Y_" + prodLevel + "_SALES_IN_" + region)))
+                .withColumn("YOY_RATE_ON_" + prodLevel + "_" + region + "LEVEL", when(col("LAST_Y_" + prodLevel + "_SALES_IN_" + region) === 0.0, 0.0).otherwise((col("CURR_" + prodLevel + "_SALES_IN_" + region) - col("LAST_Y_" + prodLevel + "_SALES_IN_" + region)) / col("LAST_M_" + prodLevel + "_SALES_IN_" + region)))
+            case _ => logger.error(s"${time} not implemented."); df
+        }
+
+        PhMaxDashboardDF(newDF)
+    }
+
+    def GenerateEIRowWith(prodLevel: String, childRegion: String, fatherRegion: String): PhMaxDashboardDF = {
+
+        val newDF: DataFrame = df
+            .withColumn("EI_" + prodLevel + "_" + childRegion + "_OVER_" + fatherRegion, when(col("LAST_M_" + prodLevel + "_" + childRegion + "_SHARE_IN_" + fatherRegion) === 0.0, 0.0).otherwise(col("LAST_M_" + prodLevel + "_" + childRegion + "_SHARE_IN_" + fatherRegion) / col("CURR_" + prodLevel + "_" + childRegion + "_SHARE_IN_" + fatherRegion)))
+
+        PhMaxDashboardDF(newDF)
+    }
 
 }
