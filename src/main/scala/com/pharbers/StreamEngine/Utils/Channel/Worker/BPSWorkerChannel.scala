@@ -3,9 +3,7 @@ package com.pharbers.StreamEngine.Utils.Channel.Worker
 import java.net.{InetAddress, InetSocketAddress}
 import java.nio.ByteBuffer
 import java.nio.channels.SocketChannel
-
 import com.pharbers.util.log.PhLogable
-
 
 object BPSWorkerChannel {
     //    var host: Broadcast[String] = _
@@ -16,12 +14,13 @@ object BPSWorkerChannel {
         tmp.connect()
         tmp
     }
-//    def init(hostBroadcast: Broadcast[String]): Unit ={
-//        host = hostBroadcast
-//    }
+
+    //    def init(hostBroadcast: Broadcast[String]): Unit ={
+    //        host = hostBroadcast
+    //    }
 }
 
-// TODO 希望可以补全注释，因为我不知道这是干什么的
+// TODO 希望可以补全注释
 class BPSWorkerChannel(host: String, port: Int) extends Serializable with PhLogable {
 
     lazy val addr = new InetSocketAddress(host, port)
@@ -32,17 +31,35 @@ class BPSWorkerChannel(host: String, port: Int) extends Serializable with PhLoga
         try {
             client = Some(SocketChannel.open(addr))
         } catch {
-            case e: Exception => throw new Exception(s"error~~~worker~~~~host:${addr.getHostString} $host, name: ${addr.getPort}", e)
+            case e: Exception =>
+                logger.info(e.getMessage, e)
         }
         logger.info("Connecting to Server on port 55555 ...")
     }
 
     def pushMessage(msg: String): Unit = {
         val message = msg.getBytes()
+        val msgLength = message.length
+        val b = Array[Byte](
+            (msgLength >> 24 & 0xff).toByte,
+            (msgLength >> 16 & 0xff).toByte,
+            (msgLength >> 8 & 0xff).toByte,
+            (msgLength & 0xff).toByte
+        )
+        b(3) = (msgLength & 0xff).toByte
+        b(2) = (msgLength >> 8 & 0xff).toByte
+        b(1) = (msgLength >> 16 & 0xff).toByte
+        b(0) = (msgLength >> 24 & 0xff).toByte
+        val lengthBuffer = ByteBuffer.wrap(b)
         val buffer = ByteBuffer.wrap(message)
         client match {
-            case Some(c) => c.write(buffer)
-            case None => ???
+            case Some(c) =>
+                c.write(lengthBuffer)
+                while (buffer.hasRemaining) {
+                    c.write(buffer)
+                }
+            case None =>
+                logger.error("client未成功连接")
         }
 
         buffer.clear()

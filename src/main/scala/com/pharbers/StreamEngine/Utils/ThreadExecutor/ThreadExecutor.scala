@@ -31,4 +31,9 @@ object ThreadExecutor {
         count.countDown()
         executorService.get.shutdown()
     }
+
+    def shutdownNow(): Unit ={
+        count.countDown()
+        executorService.get.shutdownNow()
+    }
 }

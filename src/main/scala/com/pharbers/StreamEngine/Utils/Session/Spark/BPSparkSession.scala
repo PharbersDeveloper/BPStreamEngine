@@ -18,7 +18,7 @@ object BPSparkSession {
 /** 创建 SparkSession 实例
  *
  * @author clock
- * @version 0.1
+ * @version 0.0.1
  * @since 2019/11/6 17:37
  * @node 可用的配置参数
  * {{{
@@ -41,21 +41,27 @@ class BPSparkSession(config: Map[String, String]) extends BPSparkSessionConfig {
             .setAppName(sparkConfigs.getString(APP_NAME_KEY))
             .setMaster(sparkConfigs.getString(MASTER_KEY))
 
-    val spark: SparkSession = SparkSession.builder().config(conf).getOrCreate()
+    val spark: SparkSession = SparkSession.builder().config(conf).enableHiveSupport().getOrCreate()
     spark.sparkContext.setLogLevel(sparkConfigs.getString(LOG_LEVEL_KEY))
     spark.sparkContext.setLocalProperty("host", InetAddress.getLocalHost.getHostAddress)
-
+//    spark.streams.addListener(new SparkQueryListener)
     // 初始环境设置
     sparkConfigs.getString(RUN_MODEL_KEY) match {
         case "client" =>
             spark.sparkContext.addFile("./kafka.broker1.keystore.jks")
             spark.sparkContext.addFile("./kafka.broker1.truststore.jks")
             spark.sparkContext.addJar("./target/BP-Stream-Engine-1.0-SNAPSHOT.jar")
-            spark.sparkContext.addJar("./jars/kafka-schema-registry-client-5.2.1.jar")
-            spark.sparkContext.addJar("./jars/kafka-avro-serializer-5.2.1.jar")
+
             spark.sparkContext.addJar("./jars/common-config-5.2.1.jar")
             spark.sparkContext.addJar("./jars/common-utils-5.2.1.jar")
+            spark.sparkContext.addJar("./jars/elasticsearch-spark-20_2.11-7.2.0.jar")
+            spark.sparkContext.addJar("./jars/kafka-avro-serializer-5.2.1.jar")
+            spark.sparkContext.addJar("./jars/kafka-clients-2.2.1.jar")
+            spark.sparkContext.addJar("./jars/kafka-schema-registry-client-5.2.1.jar")
+            spark.sparkContext.addJar("./jars/log4j-api-2.11.2.jar")
+            spark.sparkContext.addJar("./jars/log4j-core-2.11.2.jar")
             spark.sparkContext.addJar("./jars/logs-1.0.jar")
+            spark.sparkContext.addJar("./jars/spark-sql-kafka-0-10_2.11-2.3.0.jar")
         case _ =>
     }
 }

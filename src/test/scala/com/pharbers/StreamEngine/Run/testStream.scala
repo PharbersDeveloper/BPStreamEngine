@@ -1,7 +1,7 @@
 package com.pharbers.StreamEngine.Run
 
-import com.pharbers.StreamEngine.Jobs.SandBoxJob.SchemaConverter
 import com.pharbers.StreamEngine.Utils.Component.ComponentContext
+import com.pharbers.StreamEngine.Utils.Schema.Spark.SchemaConverter
 import com.pharbers.StreamEngine.Utils.Session.Spark.BPSparkSession
 import com.pharbers.StreamEngine.Utils.ThreadExecutor.ThreadExecutor
 import org.apache.spark.sql.functions.{from_json, lit, regexp_replace}
@@ -24,7 +24,7 @@ class testStream extends FunSuite  {
         val spark = BPSparkSession(Map("log.level" -> "INFO"))
         import spark.implicits._
 
-        val metaData = SchemaConverter.column2legal("MetaData",spark.sparkContext
+        val metaData = SchemaConverter.column2legalWithDF("MetaData",spark.sparkContext
                 .textFile("/workData/streamingV2/0829b025-48ac-450c-843c-6d4ee91765ca/metadata/bc6b6-3048-434a-a51a-a80c10")
                 .toDF("MetaData"))
 
@@ -97,10 +97,5 @@ class testStream extends FunSuite  {
                 .option("path", s"/test/dcs/parquet/")
                 .start()
         query.awaitTermination()
-    }
-
-    test("componment"){
-        ComponentContext.init()
-        ThreadExecutor.waitForShutdown()
     }
 }
