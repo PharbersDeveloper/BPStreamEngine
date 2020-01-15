@@ -7,7 +7,7 @@ import org.apache.hadoop.fs.{FSDataOutputStream, FileSystem, Path}
 import java.io.{BufferedReader, BufferedWriter, InputStreamReader, OutputStreamWriter}
 
 object BPSHDFSFile {
-    val hdfsAddr: String = "hdfs://spark.master:8020"
+    val hdfsAddr: String = "hdfs://starLord:8020"
 
     val configuration: Configuration = new Configuration
     configuration.set("fs.defaultFS", hdfsAddr)
