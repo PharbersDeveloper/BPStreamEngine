@@ -2,6 +2,7 @@ package com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxConvertSchemaJobContain
 
 import java.util.{Collections, UUID}
 import java.util.concurrent.TimeUnit
+
 import com.pharbers.StreamEngine.Jobs.SandBoxJob.BloodJob.BPSBloodJob
 import com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxConvertSchemaJobContainer.Listener.ConvertSchemaListener
 import com.pharbers.StreamEngine.Jobs.SandBoxJob.UploadEndJob.BPSUploadEndJob
@@ -10,6 +11,7 @@ import com.pharbers.StreamEngine.Utils.HDFS.BPSHDFSFile
 import com.pharbers.StreamEngine.Utils.Schema.Spark.{BPSMetaData2Map, SchemaConverter}
 import com.pharbers.StreamEngine.Utils.StreamJob.BPSJobContainer
 import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSKfkJobStrategy
+import com.pharbers.kafka.producer.PharbersKafkaProducer
 import com.pharbers.kafka.schema.{BPJob, DataSet, UploadEnd}
 import org.apache.avro.specific.SpecificRecord
 import org.apache.spark.rdd.RDD
@@ -18,6 +20,7 @@ import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.types._
 import org.json4s.DefaultFormats
 import org.json4s.jackson.Serialization._
+
 import collection.JavaConverters._
 
 object BPSSandBoxConvertSchemaJob {
@@ -253,14 +256,10 @@ class BPSSandBoxConvertSchemaJob(val id: String,
         val jobMsg = write(job)
         val topic = "stream_job_submit"
         val bpJob = new BPJob(parentJobId, traceId, `type`, jobMsg)
-        val fu = ProducerSingleton.getIns.produce(topic, parentJobId, bpJob)
+        val producerInstance = new PharbersKafkaProducer[String, SpecificRecord]
+        val fu = producerInstance.produce(topic, parentJobId, bpJob)
         logger.debug(fu.get(10, TimeUnit.SECONDS))
+        producerInstance.producer.close()
     }
-		val jobMsg = write(job)
-		val topic = "stream_job_submit"
-		val bpJob = new BPJob(parentJobId, traceId, `type`, jobMsg)
-		val producerInstance = new PharbersKafkaProducer[String, SpecificRecord]
-		val fu = producerInstance.produce(topic, parentJobId, bpJob)
-		logger.debug(fu.get(10, TimeUnit.SECONDS))
-		producerInstance.producer.close()
+
 }
