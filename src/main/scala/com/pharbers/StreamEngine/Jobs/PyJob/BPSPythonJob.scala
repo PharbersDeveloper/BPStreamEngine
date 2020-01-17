@@ -68,7 +68,10 @@ class BPSPythonJob(override val id: String,
 
         inputStream match {
             case Some(is) =>
-                val query = is.repartition(partition).writeStream
+                val query = is
+                        //todo: 本来是为了通过重新分区来提高并行度，但是会产生shuffle。测试通过使用读取文件数量来分区
+//                        .repartition(partition)
+                        .writeStream
                         .option("checkpointLocation", checkpointPath)
                         .foreach(new ForeachWriter[Row]() {
 

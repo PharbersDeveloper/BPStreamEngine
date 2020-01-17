@@ -590,7 +590,7 @@ def prod_mapping():
             "ColDesc": "MNF_TYPE_NAME_CN",
             "Type": "String",
             "Candidate": ["MNF_TYPE_NAME_CN", "Local&MNC"],
-            "NotNull": True,
+            # "NotNull": True,
         },
         {
             "ColName": "SPEC",
@@ -609,7 +609,7 @@ def prod_mapping():
         {
             "ColName": "PACK",
             "ColDesc": "包装数量",
-            "Type": "Integer",
+            "Type": "Double",
             "Candidate": ["PACK", "包装数量", "PCK"],
             "NotNull": True,
         },
@@ -674,7 +674,7 @@ def prod_mapping():
             "ColDesc": "给药途径分类123的名字",
             "Type": "String",
             "Candidate": ["NFC123_NAME_CH"],
-            "NotNull": True,
+            # "NotNull": True,
         },
         {
             "ColName": "ATC1_CODE",

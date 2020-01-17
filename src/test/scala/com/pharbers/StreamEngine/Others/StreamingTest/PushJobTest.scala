@@ -6,6 +6,7 @@ import java.util.concurrent.TimeUnit
 
 import com.pharbers.StreamEngine.Utils.Component.Dynamic.JobMsg
 import com.pharbers.StreamEngine.Utils.Kafka.ProducerSingleton
+import com.pharbers.StreamEngine.Utils.Session.Spark.BPSparkSession
 import com.pharbers.kafka.producer.PharbersKafkaProducer
 import com.pharbers.kafka.schema.{BPJob, HiveTask, OssTask}
 import io.confluent.ksql.avro_schemas.KsqlDataSourceSchema
@@ -105,6 +106,7 @@ class PushJobTest extends FunSuite {
             ("001" :: Nil).mkString(",")
         )
     }
+
     
     // TODO：因还未曾与老齐对接口，暂时放到这里
     private def pushPyjob(runId: String,

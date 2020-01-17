@@ -49,10 +49,6 @@ case class BPSqlTableJob(jobContainer: BPSJobContainer, spark: SparkSession, con
                 .option("header", value = true)
                 .option("delimiter", ",")
                 .load(url)
-                //todo: 先判断有没有YEAR和MONTH
-                //                .repartition(col("YEAR"), col("MONTH"))
-                .repartition()
-                .persist(StorageLevel.MEMORY_ONLY)
         )
     }
 
@@ -86,7 +82,7 @@ case class BPSqlTableJob(jobContainer: BPSJobContainer, spark: SparkSession, con
 
     def appendTable(tableName: String): Unit = {
         //todo: 需要检查已经有的
-        val version = "0.0.1"
+        val version = "0.0.2"
         inputStream match {
             case Some(df) =>
                 //                val count = df.count()

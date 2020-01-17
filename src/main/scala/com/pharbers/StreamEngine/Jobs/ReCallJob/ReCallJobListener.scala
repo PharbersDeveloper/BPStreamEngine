@@ -45,7 +45,7 @@ case class ReCallJobListener(job: BPStreamJob, topic: String, runId: String, job
                           filesPath: String,
                           parentJobId: String,
                           dsIds: String): Unit = {
-        val resultPath = s"hdfs:///user/alex/jobs/$runId/${UUID.randomUUID().toString}/contents/"
+        val resultPath = s"hdfs:///jobs/$runId/${UUID.randomUUID().toString}/contents/"
         import org.json4s._
         import org.json4s.jackson.Serialization.write
         implicit val formats: DefaultFormats.type = DefaultFormats
