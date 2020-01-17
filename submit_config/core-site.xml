@@ -20,7 +20,7 @@
     <property>  
         <name>fs.defaultFS</name>  
         <value>hdfs://starLord:8020</value>
-    </property>  
+    </property>
     <property>  
         <name>hadoop.tmp.dir</name>  
         <value>/home/spark/data/tmp</value>

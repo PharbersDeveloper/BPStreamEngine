@@ -27,9 +27,9 @@ import org.json4s.jackson.Serialization.write
 case class BPSOssListener(spark: SparkSession, job: BPStreamJob, jobId: String) extends BPStreamRemoteListener {
     import spark.implicits._
     def event2JobId(e: BPSEvents): String = e.jobId
+    val runId = job.asInstanceOf[BPSJobContainer].id
 
     override def trigger(e: BPSEvents): Unit = {
-        val runId = job.asInstanceOf[BPSJobContainer].id
         // TODO: 后面可变配置化
         val genPath = s"/jobs/$runId/$jobId"
 	    val metaDataPath = s"$genPath/metadata"
@@ -93,7 +93,7 @@ case class BPSOssListener(spark: SparkSession, job: BPStreamJob, jobId: String) 
                         }
                     }
                 )
-                .option("checkpointLocation", "/jobs/" + UUID.randomUUID().toString + "/checkpoint")
+                .option("checkpointLocation", s"/jobs/$runId/${UUID.randomUUID().toString}/checkpoint")
                 .start() :: job.outputStream
     }
 
@@ -103,7 +103,7 @@ case class BPSOssListener(spark: SparkSession, job: BPStreamJob, jobId: String) 
 
     def pollKafka(msg: FileMetaData): Unit ={
         //todo: 参数化
-        val topic = "sb_file_meta_job"
+        val topic = "sb_file_meta_job_k8s_test"
         val pkp = new PharbersKafkaProducer[String, FileMetaData]
         val fu = pkp.produce(topic, msg.getJobId.toString, msg)
         logger.info(fu.get(10, TimeUnit.SECONDS))

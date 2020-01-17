@@ -22,7 +22,7 @@ class BPSSandBoxJobContainer( val spark: SparkSession, config: Map[String, Strin
 		// TODO log
 		logger.info("初始化SandBoxJobContainer")
 		if (sbcm.isEmpty) {
-			sbcm = Some(BPSandBoxConsumerManager("sb_file_meta_job" :: Nil,spark))
+			sbcm = Some(BPSandBoxConsumerManager("sb_file_meta_job_k8s_test" :: Nil,spark))
 		}
 	}
 	
