@@ -7,11 +7,11 @@ import com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxConvertSchemaJobContaine
 import com.pharbers.StreamEngine.Jobs.SandBoxJob.UploadEndJob.BPSUploadEndJob
 import com.pharbers.StreamEngine.Utils.Component.Dynamic.JobMsg
 import com.pharbers.StreamEngine.Utils.HDFS.BPSHDFSFile
-import com.pharbers.StreamEngine.Utils.Kafka.ProducerSingleton
 import com.pharbers.StreamEngine.Utils.Schema.Spark.{BPSMetaData2Map, SchemaConverter}
 import com.pharbers.StreamEngine.Utils.StreamJob.BPSJobContainer
 import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSKfkJobStrategy
 import com.pharbers.kafka.schema.{BPJob, DataSet, UploadEnd}
+import org.apache.avro.specific.SpecificRecord
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.SparkSession
@@ -256,4 +256,11 @@ class BPSSandBoxConvertSchemaJob(val id: String,
         val fu = ProducerSingleton.getIns.produce(topic, parentJobId, bpJob)
         logger.debug(fu.get(10, TimeUnit.SECONDS))
     }
+		val jobMsg = write(job)
+		val topic = "stream_job_submit"
+		val bpJob = new BPJob(parentJobId, traceId, `type`, jobMsg)
+		val producerInstance = new PharbersKafkaProducer[String, SpecificRecord]
+		val fu = producerInstance.produce(topic, parentJobId, bpJob)
+		logger.debug(fu.get(10, TimeUnit.SECONDS))
+		producerInstance.producer.close()
 }
