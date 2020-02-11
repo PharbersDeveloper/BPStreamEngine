@@ -65,42 +65,76 @@ case class BPEditDistance(jobContainer: BPSJobContainer, spark: SparkSession, co
         //                .repartitionByRange(100, col("id"))
         val distanceDf = mapping.foldLeft(joinDf)((l, r) => getColumnDistance(l, r._1, r._2))
         //同一个id取编辑距离和最小的一行
-        val usdCheck = udf((map: Map[String, Int]) => BPEditDistance.checkFunc(map))
-        val res = distanceDf
+        val usdCheck = udf((map: Map[String, Int]) => BPEditDistance.checkColumnsFunc(map))
+        val filterMinDistance = distanceDf
                 .filter("check_MOLE_NAME_CH != ''")
                 .groupByKey(x => x.getAs[Long]("id"))
                 .mapGroups((id, row) => row.reduce((l, r) => {
-                    val leftSum = mapping.keySet.foldLeft(0)((x, y) => x + l.getAs[Int](s"${y}_distance"))
-                    val rightSum = mapping.keySet.foldLeft(0)((x, y) => x + r.getAs[Int](s"${y}_distance"))
+                    val func: Row => Int = row => mapping.keySet.foldLeft(0)((x, y) => x + row.getAs[Int](s"${y}_distance"))
+                    val leftSum = func(l)
+                    val rightSum = func(r)
                     if (leftSum > rightSum) r else l
                 }))(RowEncoder(distanceDf.schema))
                 //判断编辑距离是否在误差范围
-                .withColumn("check", usdCheck(map(mapping.keySet.toList.flatMap(x => List(col(s"in_$x"), col(s"${x}_distance"))): _*)))
+//                .withColumn("check", usdCheck(map(mapping.keySet.toList.flatMap(x => List(col(s"in_$x"), col(s"${x}_distance")(2))): _*)))
 
-
-        res.write
+        val res = mapping.keys.foldLeft(filterMinDistance)((df, s) => replaceWithDistance(s, df)).persist(StorageLevel.MEMORY_AND_DISK_2)
+        val cpaVersion = in.select("version").take(1).head.getAs[String]("version")
+        //todo: 从prod表中获取
+        val prodVersion = "0.0.1"
+        //todo: 生成逻辑
+        val version = "0.0.1"
+        res.selectExpr(in.columns.map(x => s"in_$x as $x").toSeq: _*)
+                .write
                 .mode("overwrite")
-                .parquet("/user/dcs/test/BPStreamEngine/cpa_edit_distance")
+                .parquet(s"/user/dcs/test/BPStreamEngine/cpa_edit_distance/cpa_${cpaVersion}_${prodVersion}_$version")
+        res.select("id", mapping.keys.map(x => "in_" + x).toSeq: _*)
+                .withColumn("distances", map(mapping.keys.flatMap(key => List(lit(key), col(s"in_$key."))).toSeq: _*))
+                .select("id", "distances")
+                .flatMap{
+                    case (id: String, distances: Map[String, Array[String]]) => {
+                        distances.map(x => replaceLog(id, x._1, (x._2(0).length / 5 + 1) >= x._2(2).toInt, x._2(0), x._2(1), x._2(2).toInt))
+                    }
+                }
+                .write
+                .mode("error")
+                .parquet(s"/user/dcs/test/BPStreamEngine/cpa_edit_distance/cpa_${cpaVersion}_${prodVersion}_${version}_log")
     }
 
 
     def getColumnDistance(df: DataFrame, column: String, checkColumns: List[String]): DataFrame = {
-        val udfTest = udf((x: String, y: String) => BPEditDistance.getDistance(x, y))
+        val distanceUdf = udf((x: String, y: String) => BPEditDistance.getDistance(x, y))
+        val sort = udf((array: Array[Array[String]]) => BPEditDistance.sortDistanceArray(array))
         df.na.fill("")
-                .withColumn(s"${column}_distance", sort_array(array(checkColumns.map(x =>
-                    udfTest(col(s"in_$column"), col(s"check_$x"))): _*))(0))
+                .withColumn(s"${column}_distance", sort(array(checkColumns.map(x =>
+                    distanceUdf(col(s"in_$column"), col(s"check_$x"))): _*))(0))
     }
+
+    def replaceWithDistance(columnName: String, df: DataFrame): DataFrame ={
+        val replaceUdf = udf((distance: Array[String]) => BPEditDistance.replaceFunc(distance))
+        df.withColumn(s"in_$columnName", replaceUdf(col(s"check_$columnName")))
+    }
+
+    case class replaceLog(id: String, columnName: String, canReplace: Boolean, back: String, check: String, distance: Int)
 
 }
 
 object BPEditDistance extends Serializable {
-    def checkFunc(map: Map[String, Int]): Boolean = {
+    def checkColumnsFunc(map: Map[String, Int]): Boolean = {
         map.forall(r => (r._1.length / 5 + 1) >= r._2)
     }
 
-    def getDistance(inputWord: String, targetWord: String): Int = {
+    def replaceFunc(distance: Array[String]): String ={
+        if((distance(0).length / 5 + 1) >= distance(2).toInt) distance(1) else distance(0)
+    }
+
+    def sortDistanceArray(array: Array[Array[String]]): Array[Array[String]] ={
+        array.sortBy(x => x(2).toInt)
+    }
+
+    def getDistance(inputWord: String, targetWord: String): Array[String] = {
         val resContainer = Array.fill(inputWord.length + 1, targetWord.length + 1)(-1)
-        distance(inputWord, targetWord, inputWord.length, targetWord.length, resContainer)
+        Array(inputWord, targetWord, distance(inputWord, targetWord, inputWord.length, targetWord.length, resContainer).toString)
     }
 
     private def distance(x: String, y: String, i: Int, j: Int, resContainer: Array[Array[Int]]): Int = {
