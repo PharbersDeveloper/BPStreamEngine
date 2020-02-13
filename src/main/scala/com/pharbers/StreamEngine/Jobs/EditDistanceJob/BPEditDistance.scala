@@ -43,7 +43,7 @@ case class BPEditDistance(jobContainer: BPSJobContainer, spark: SparkSession, co
     }
 
     def check(in: DataFrame, checkDf: DataFrame): Unit = {
-        import spark.sqlContext.implicits._
+        import spark.implicits._
         //todo: 配置传入
         val mapping = Map(
             "ATC" -> List("ATC1_CODE", "ATC2_CODE", "ATC3_CODE"),
@@ -88,18 +88,30 @@ case class BPEditDistance(jobContainer: BPSJobContainer, spark: SparkSession, co
                 .write
                 .mode("overwrite")
                 .parquet(s"/user/dcs/test/BPStreamEngine/cpa_edit_distance/cpa_${cpaVersion}_${prodVersion}_$version")
-        res.select("id", mapping.keys.map(x => s"${x}_distance").toSeq: _*)
+        val replaceLogDf = res.selectExpr(Seq("id") ++ mapping.keys.map(x => s"${x}_distance").toSeq ++ in.columns.map(x => s"in_$x").toSeq: _*)
                 .withColumn("distances", map(mapping.keys.toSeq.flatMap(key => List(lit(key), col(s"${key}_distance"))): _*))
-                .select("id", "distances")
+                .withColumn("cols", array(in.columns.map(x => col(s"in_$x")).toSeq: _*))
+                .select("id", "distances", "cols")
                 .flatMap{
-                    case Row(id: Long, distances: Map[String, Seq[String]]) => {
-                        distances.map(x => (id, x._1, (x._2.head.length / 5 + 1) >= x._2(2).toInt, x._2.head, x._2(1), x._2(2).toInt))
+                    case Row(id: Long, distances: Map[String, Seq[String]], cols: Seq[String]) => {
+                        distances.map(x => (id, x._1, (x._2.head.length / 5 + 1) >= x._2(2).toInt, x._2.head, x._2(1), x._2(2).toInt, cols))
                     }
                 }
-                .toDF("id", "columnName", "canReplace", "back", "check", "distance")
+                .toDF("ID", "COL_NAME", "canReplace", "ORIGIN", "check", "distance", "cols")
+                .persist(StorageLevel.DISK_ONLY_2)
+
+        replaceLogDf.filter("canReplace is true and distance > 0")
+                .selectExpr(Seq("ID", "COL_NAME", "ORIGIN", "check as DEST") ++ in.columns.zipWithIndex.map(x => s"cols(${x._2}) as ORIGIN_$x").toSeq: _*)
                 .write
                 .mode("overwrite")
-                .parquet(s"/user/dcs/test/BPStreamEngine/cpa_edit_distance/cpa_${cpaVersion}_${prodVersion}_${version}_log")
+                .parquet(s"/user/dcs/test/BPStreamEngine/cpa_edit_distance/cpa_${cpaVersion}_${prodVersion}_${version}_replace")
+
+        replaceLogDf.filter("canReplace is false")
+                .selectExpr(Seq("ID", "COL_NAME", "ORIGIN", "check as CANDIDATE", "DISTANCE") ++ in.columns.zipWithIndex.map(x => s"cols(${x._2}) as ORIGIN_$x").toSeq: _*)
+                .withColumn("CANDIDATE", array($"CANDIDATE"))
+                .write
+                .mode("overwrite")
+                .parquet(s"/user/dcs/test/BPStreamEngine/cpa_edit_distance/cpa_${cpaVersion}_${prodVersion}_${version}_no_replace")
     }
 
 
