@@ -75,8 +75,7 @@ case class BPEditDistance(jobContainer: BPSJobContainer, spark: SparkSession, co
                     val rightSum = func(r)
                     if (leftSum > rightSum) r else l
                 }))(RowEncoder(distanceDf.schema))
-                //判断编辑距离是否在误差范围
-//                .withColumn("check", usdCheck(map(mapping.keySet.toList.flatMap(x => List(col(s"in_$x"), col(s"${x}_distance")(2))): _*)))
+                .persist(StorageLevel.DISK_ONLY_2)
 
         val res = mapping.keys.foldLeft(filterMinDistance)((df, s) => replaceWithDistance(s, df)).persist(StorageLevel.DISK_ONLY_2)
         val cpaVersion = in.select("version").take(1).head.getAs[String]("version")
@@ -84,6 +83,11 @@ case class BPEditDistance(jobContainer: BPSJobContainer, spark: SparkSession, co
         val prodVersion = "0.0.1"
         //todo: 生成逻辑
         val version = "0.0.1"
+        filterMinDistance.selectExpr("id" +: in.columns.map(x => s"in_$x as $x").toSeq: _*)
+                .write
+                .mode("overwrite")
+                .parquet(s"/user/dcs/test/BPStreamEngine/cpa_edit_distance/old_cpa_${cpaVersion}_${prodVersion}_$version")
+
         res.selectExpr("id" +: in.columns.map(x => s"in_$x as $x").toSeq: _*)
                 .write
                 .mode("overwrite")
@@ -100,14 +104,14 @@ case class BPEditDistance(jobContainer: BPSJobContainer, spark: SparkSession, co
                 .toDF("ID", "COL_NAME", "canReplace", "ORIGIN", "check", "distance", "cols")
                 .persist(StorageLevel.DISK_ONLY_2)
 
-        replaceLogDf.filter("canReplace is true and distance > 0")
-                .selectExpr(Seq("ID", "COL_NAME", "ORIGIN", "check as DEST") ++ in.columns.zipWithIndex.map(x => s"cols(${x._2}) as ORIGIN_$x").toSeq: _*)
+        replaceLogDf.filter("canReplace = true and distance > 0")
+                .selectExpr(List("ID", "COL_NAME", "ORIGIN", "check as DEST") ++ in.columns.zipWithIndex.map(x => s"cols[${x._2}] as ORIGIN_${x._1}").toList: _*)
                 .write
                 .mode("overwrite")
                 .parquet(s"/user/dcs/test/BPStreamEngine/cpa_edit_distance/cpa_${cpaVersion}_${prodVersion}_${version}_replace")
 
-        replaceLogDf.filter("canReplace is false")
-                .selectExpr(Seq("ID", "COL_NAME", "ORIGIN", "check as CANDIDATE", "DISTANCE") ++ in.columns.zipWithIndex.map(x => s"cols(${x._2}) as ORIGIN_$x").toSeq: _*)
+        replaceLogDf.filter("canReplace = false")
+                .selectExpr(List("ID", "COL_NAME", "ORIGIN", "check as CANDIDATE", "DISTANCE") ++ in.columns.zipWithIndex.map(x => s"cols[${x._2}] as ORIGIN_${x._1}").toList: _*)
                 .withColumn("CANDIDATE", array($"CANDIDATE"))
                 .write
                 .mode("overwrite")
