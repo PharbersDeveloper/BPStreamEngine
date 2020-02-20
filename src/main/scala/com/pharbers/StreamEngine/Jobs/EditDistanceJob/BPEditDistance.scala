@@ -51,7 +51,7 @@ case class BPEditDistance(jobContainer: BPSJobContainer, spark: SparkSession, co
             "SPEC" -> List("SPEC"),
             "DOSAGE" -> List("DOSAGE"),
             "PACK_QTY" -> List("PACK"),
-            "MANUFACTURER_NAME" -> List("CORP_NAME_CH", "CORP_NAME_EN", "MNF_NAME_CH11", "MNF_NAME_CH12")
+            "MANUFACTURER_NAME" -> List("CORP_NAME_CH", "MNF_NAME_EN", "MNF_NAME_CH")
         )
         val inDfRename = in.columns.foldLeft(in)((l, r) =>
             l.withColumnRenamed(r, s"in_$r"))
@@ -63,7 +63,8 @@ case class BPEditDistance(jobContainer: BPSJobContainer, spark: SparkSession, co
                 .join(checkDfRename, col("in_MOLE_NAME") === col("check_MOLE_NAME_CH"), "left")
                 .na.fill("")
         //                .repartitionByRange(100, col("id"))
-        val distanceDf = mapping.foldLeft(joinDf)((l, r) => getColumnDistance(l, r._1, r._2)).persist(StorageLevel.DISK_ONLY_2)
+        val distanceDf = mapping.foldLeft(joinDf)((l, r) => getColumnDistance(l, r._1, r._2))
+                .persist(StorageLevel.NONE)
         //同一个id取编辑距离和最小的一行
 //        val usdCheck = udf((map: Map[String, Int]) => BPEditDistance.checkColumnsFunc(map))
         val filterMinDistance = distanceDf
@@ -75,9 +76,9 @@ case class BPEditDistance(jobContainer: BPSJobContainer, spark: SparkSession, co
                     val rightSum = func(r)
                     if (leftSum > rightSum) r else l
                 }))(RowEncoder(distanceDf.schema))
-                .persist(StorageLevel.DISK_ONLY_2)
+//                .persist(StorageLevel.DISK_ONLY)
 
-        val res = mapping.keys.foldLeft(filterMinDistance)((df, s) => replaceWithDistance(s, df)).persist(StorageLevel.DISK_ONLY_2)
+        val res = mapping.keys.foldLeft(filterMinDistance)((df, s) => replaceWithDistance(s, df)).persist(StorageLevel.DISK_ONLY)
         val cpaVersion = in.select("version").take(1).head.getAs[String]("version")
         //todo: 从prod表中获取
         val prodVersion = "0.0.1"
@@ -102,7 +103,7 @@ case class BPEditDistance(jobContainer: BPSJobContainer, spark: SparkSession, co
                     }
                 }
                 .toDF("ID", "COL_NAME", "canReplace", "ORIGIN", "check", "distance", "cols")
-                .persist(StorageLevel.DISK_ONLY_2)
+//                .persist(StorageLevel.DISK_ONLY)
 
         replaceLogDf.filter("canReplace = true and distance > 0")
                 .selectExpr(List("ID", "COL_NAME", "ORIGIN", "check as DEST") ++ in.columns.zipWithIndex.map(x => s"cols[${x._2}] as ORIGIN_${x._1}").toList: _*)
