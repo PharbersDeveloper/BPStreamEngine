@@ -50,13 +50,17 @@ case class BPSMaxDataHive2EsStrategy(spark: SparkSession) extends BPSStrategy[Da
         val moleLevelDF = formatDF.groupBy("COMPANY", "SOURCE", "DATE", "PROVINCE", "CITY", "PRODUCT_NAME", "MOLE_NAME")
             .agg(expr("SUM(SALES_VALUE) as MOLE_SALES_VALUE"))
 
-//        //TODO:用result数据与cpa数据进行匹配，得出MKT，目前cpa数据 暂时 写在算法里，之后匹配逻辑可能会变
-//        val cpa = spark.sql("SELECT * FROM cpa")
-//            .select("COMPANY", "PRODUCT_NAME", "MOLE_NAME", "MKT")
-//            .filter(col("COMPANY").isNotNull and col("PRODUCT_NAME").isNotNull and col("MOLE_NAME").isNotNull and col("MKT").isNotNull)
-//            .groupBy("COMPANY", "PRODUCT_NAME", "MOLE_NAME")
-//            .agg(first("MKT").alias("MKT"))
-//
+        //TODO:临时处理信立泰
+        val moleLevelDF1 = moleLevelDF.filter(col("COMPANY") === "信立泰")
+        val moleLevelDF2 = moleLevelDF.filter(col("COMPANY") =!= "信立泰")
+
+        //TODO:用result数据与cpa数据进行匹配，得出MKT，目前cpa数据 暂时 写在算法里，之后匹配逻辑可能会变
+        val cpa = spark.sql("SELECT * FROM cpa")
+            .select("COMPANY", "PRODUCT_NAME", "MOLE_NAME", "MKT")
+            .filter(col("COMPANY").isNotNull and col("PRODUCT_NAME").isNotNull and col("MOLE_NAME").isNotNull and col("MKT").isNotNull)
+            .groupBy("COMPANY", "PRODUCT_NAME", "MOLE_NAME")
+            .agg(first("MKT").alias("MKT"))
+
 //        //20200114-结果数据总count-41836
 //        val mergeDF = moleLevelDF
 //            .join(cpa, moleLevelDF("COMPANY") === cpa("COMPANY") and moleLevelDF("PRODUCT_NAME") === cpa("PRODUCT_NAME") and moleLevelDF("MOLE_NAME") === cpa("MOLE_NAME"), "inner")
@@ -64,8 +68,14 @@ case class BPSMaxDataHive2EsStrategy(spark: SparkSession) extends BPSStrategy[Da
 //            .drop(cpa("PRODUCT_NAME"))
 //            .drop(cpa("MOLE_NAME"))
 
-        //TODO:临时使用公司名作为市场
-        val mergeDF = moleLevelDF.withColumn("MKT", col("COMPANY"))
+        //TODO:临时处理信立泰
+        val mergeDF1 = moleLevelDF1.withColumn("MKT", lit("抗血小板市场"))
+        val mergeDF2 = moleLevelDF2
+            .join(cpa, moleLevelDF2("COMPANY") === cpa("COMPANY") and moleLevelDF2("PRODUCT_NAME") === cpa("PRODUCT_NAME") and moleLevelDF2("MOLE_NAME") === cpa("MOLE_NAME"), "inner")
+            .drop(cpa("COMPANY"))
+            .drop(cpa("PRODUCT_NAME"))
+            .drop(cpa("MOLE_NAME"))
+        val mergeDF = mergeDF1 union mergeDF2
 
         //TODO:因不同公司数据的数据时间维度不一样，所以分别要对每个公司的数据进行计算最新一年的数据
         val companyList = mergeDF.select("COMPANY").distinct().collect().map(_ (0)).toList.asInstanceOf[List[String]]
