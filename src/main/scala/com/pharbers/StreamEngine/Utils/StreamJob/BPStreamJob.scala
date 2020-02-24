@@ -9,13 +9,21 @@ import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.streaming.StreamingQuery
 
 trait BPStreamJob extends PhLogable{
+    @transient
     type T <: BPSJobStrategy
+    @transient
     val strategy: T
+    @transient
     val id: String
+    @transient
     val spark: SparkSession
+    @transient
     var inputStream: Option[sql.DataFrame] = None
+    @transient
     var outputStream: List[StreamingQuery] = Nil
+    @transient
     var listeners: List[BPStreamListener] = Nil
+    @transient
     var handlers: List[BPSEventHandler] = Nil
     def open(): Unit = {}
     def close(): Unit = {

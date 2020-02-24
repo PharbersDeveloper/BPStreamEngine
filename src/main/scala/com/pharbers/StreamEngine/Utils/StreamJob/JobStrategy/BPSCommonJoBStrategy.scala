@@ -14,7 +14,7 @@ import org.apache.spark.sql.types.DataType
  * @since 2020/02/04 14:02
  * @note 一些值得注意的地方
  */
-case class BPSCommonJoBStrategy(config: Map[String, String], inoutConfigDef: ConfigDef = new ConfigDef()) extends BPSJobStrategy with BPSJobIdConfigStrategy {
+case class BPSCommonJoBStrategy(config: Map[String, String],@transient inoutConfigDef: ConfigDef = new ConfigDef()) extends BPSJobStrategy with BPSJobIdConfigStrategy {
     val JOB_ID_CONFIG_KEY = "jobId"
     val JOB_ID_CONFIG_DOC = "job id"
     val RUN_ID_CONFIG_KEY = "runId"

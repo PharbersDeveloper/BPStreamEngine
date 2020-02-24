@@ -8,6 +8,8 @@ import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 import org.apache.spark.sql.functions._
 import org.apache.spark.storage.StorageLevel
 
+import scala.collection.mutable
+
 /** 功能描述
   *
   * @author dcs
@@ -16,11 +18,21 @@ import org.apache.spark.storage.StorageLevel
   * @note 一些值得注意的地方
   */
 case class BPEditDistance(jobContainer: BPSJobContainer, spark: SparkSession, config: Map[String, String]) extends BPStreamJob {
+    import spark.implicits._
     override type T = BPSCommonJoBStrategy
     override val strategy: BPSCommonJoBStrategy = BPSCommonJoBStrategy(config)
     val jobId: String = strategy.getJobId
     val runId: String = strategy.getRunId
     override val id: String = jobId
+    //todo: 配置传入
+    val mappingConfig = Map(
+        "ATC" -> List("ATC1_CODE", "ATC2_CODE", "ATC3_CODE"),
+        "PRODUCT_NAME" -> List("PROD_NAME_CH", "PROD_NAME"),
+        "SPEC" -> List("SPEC"),
+        "DOSAGE" -> List("DOSAGE"),
+        "PACK_QTY" -> List("PACK"),
+        "MANUFACTURER_NAME" -> List("CORP_NAME_CH", "MNF_NAME_CH", "MNF_NAME_EN")
+    )
 
     override def open(): Unit = {
         inputStream = Some(spark.sql("select * from cpa"))
@@ -29,10 +41,13 @@ case class BPEditDistance(jobContainer: BPSJobContainer, spark: SparkSession, co
 
 
     override def exec(): Unit = {
+//        val mapping = Map() ++ mappingConfig
+//        val mappingDf = spark.sql("select * from prod")
+
         //todo: 配置传入
         val mappingDf = spark.sql("select * from prod")
         inputStream match {
-            case Some(in) => check(in, mappingDf)
+            case Some(in) => check(in.repartition(2000), mappingDf)
             case _ =>
         }
     }
@@ -43,84 +58,81 @@ case class BPEditDistance(jobContainer: BPSJobContainer, spark: SparkSession, co
     }
 
     def check(in: DataFrame, checkDf: DataFrame): Unit = {
-        import spark.implicits._
-        //todo: 配置传入
-        val mapping = Map(
-            "ATC" -> List("ATC1_CODE", "ATC2_CODE", "ATC3_CODE"),
-            "PRODUCT_NAME" -> List("PROD_NAME_CH", "PROD_NAME"),
-            "SPEC" -> List("SPEC"),
-            "DOSAGE" -> List("DOSAGE"),
-            "PACK_QTY" -> List("PACK"),
-            "MANUFACTURER_NAME" -> List("CORP_NAME_CH", "MNF_NAME_EN", "MNF_NAME_CH")
-        )
-        val inDfRename = in.columns.foldLeft(in)((l, r) =>
-            l.withColumnRenamed(r, s"in_$r"))
-        val checkDfRename = checkDf.columns.foldLeft(checkDf)((l, r) =>
-            l.withColumnRenamed(r, s"check_$r"))
+//        val mapping = Map() ++ mappingConfig
+//        val inDfRename = in.columns.foldLeft(in)((l, r) =>
+//            l.withColumnRenamed(r, s"in_$r"))
+//        val checkDfRename = checkDf.columns.foldLeft(checkDf)((l, r) =>
+//            l.withColumnRenamed(r, s"check_$r"))
+//
+//        val joinDf = inDfRename
+//                .withColumn("id", monotonically_increasing_id())
+//                .join(checkDfRename, col("in_MOLE_NAME") === col("check_MOLE_NAME_CH"), "inner")
+//                .na.fill("")
+//
+//        val distanceDfTmp = mapping.foldLeft(joinDf)((l, r) => getColumnDistance(l, r._1, r._2))
+//        //                .persist(StorageLevel.DISK_ONLY_2)
+//
+//        distanceDfTmp.write
+//                .partitionBy("in_MOLE_NAME")
+//                .mode("overwrite")
+//                .parquet(s"/user/dcs/test/tmp/distanceDfRepartition")
+//
+////        //同一个id取编辑距离和最小的一行
+//        val moles  = checkDf.select("MOLE_NAME_CH").distinct().collect().map(row => row.getAs[String]("MOLE_NAME_CH"))
+//
+//        val distance = spark.read.parquet("/user/dcs/test/tmp/distanceDfRepartition")
+//
+//        moles.foreach(mole => {
+//            val distanceDf = distance.filter($"in_MOLE_NAME" === mole)
+//            val filterMinDistanceDf = filterMinDistance(distanceDf)
+//
+//            val res = mapping.keys.foldLeft(filterMinDistanceDf)((df, s) => replaceWithDistance(s, df))
+//            //todo: 这儿正式运行后会根据每次id不同生成不同的文件，所以需要定期删除
+//            res.write
+//                    .mode("append")
+//                    .parquet(s"/user/dcs/test/tmp/res_$id")
+//        })
+//
+        val resTmp = spark.read.parquet(s"/user/dcs/test/tmp/res_$id")
 
-        val joinDf = inDfRename
-                .withColumn("id", monotonically_increasing_id())
-                .join(checkDfRename, col("in_MOLE_NAME") === col("check_MOLE_NAME_CH"), "left")
-                .na.fill("")
-        //                .repartitionByRange(100, col("id"))
-        val distanceDf = mapping.foldLeft(joinDf)((l, r) => getColumnDistance(l, r._1, r._2))
-                .persist(StorageLevel.NONE)
-        //同一个id取编辑距离和最小的一行
-//        val usdCheck = udf((map: Map[String, Int]) => BPEditDistance.checkColumnsFunc(map))
-        val filterMinDistance = distanceDf
-                .filter("check_MOLE_NAME_CH != ''")
-                .groupByKey(x => x.getAs[Long]("id"))
-                .mapGroups((id, row) => row.reduce((l, r) => {
-                    val func: Row => Int = row => mapping.keySet.foldLeft(0)((x, y) => x + row.getAs[Seq[String]](s"${y}_distance")(2).toInt)
-                    val leftSum = func(l)
-                    val rightSum = func(r)
-                    if (leftSum > rightSum) r else l
-                }))(RowEncoder(distanceDf.schema))
-//                .persist(StorageLevel.DISK_ONLY)
-
-        val res = mapping.keys.foldLeft(filterMinDistance)((df, s) => replaceWithDistance(s, df)).persist(StorageLevel.DISK_ONLY)
         val cpaVersion = in.select("version").take(1).head.getAs[String]("version")
         //todo: 从prod表中获取
         val prodVersion = "0.0.1"
         //todo: 生成逻辑
         val version = "0.0.1"
-        filterMinDistance.selectExpr("id" +: in.columns.map(x => s"in_$x as $x").toSeq: _*)
-                .write
-                .mode("overwrite")
-                .parquet(s"/user/dcs/test/BPStreamEngine/cpa_edit_distance/old_cpa_${cpaVersion}_${prodVersion}_$version")
+        val intColumnsExpr = in.columns.map(x => s"in_$x as $x").toSeq
+        //todo: 未更改列但是增加了id的cpa，因为更改了运算逻辑所以不能这样存了。可以通过distance获取
+//        filterMinDistanceDf.selectExpr("id" +: intColumnsExpr: _*)
+//                .write
+//                .mode("overwrite")
+//                .parquet(s"/user/dcs/test/BPStreamEngine/cpa_edit_distance/old_cpa_${cpaVersion}_${prodVersion}_$version")
 
-        res.selectExpr("id" +: in.columns.map(x => s"in_$x as $x").toSeq: _*)
-                .write
-                .mode("overwrite")
-                .parquet(s"/user/dcs/test/BPStreamEngine/cpa_edit_distance/cpa_${cpaVersion}_${prodVersion}_$version")
-        val replaceLogDf = res.selectExpr(Seq("id") ++ mapping.keys.map(x => s"${x}_distance").toSeq ++ in.columns.map(x => s"in_$x").toSeq: _*)
-                .withColumn("distances", map(mapping.keys.toSeq.flatMap(key => List(lit(key), col(s"${key}_distance"))): _*))
-                .withColumn("cols", array(in.columns.map(x => col(s"in_$x")).toSeq: _*))
-                .select("id", "distances", "cols")
-                .flatMap{
-                    case Row(id: Long, distances: Map[String, Seq[String]], cols: Seq[String]) => {
-                        distances.map(x => (id, x._1, (x._2.head.length / 5 + 1) >= x._2(2).toInt, x._2.head, x._2(1), x._2(2).toInt, cols))
-                    }
-                }
-                .toDF("ID", "COL_NAME", "canReplace", "ORIGIN", "check", "distance", "cols")
-//                .persist(StorageLevel.DISK_ONLY)
+//        resTmp.selectExpr("id" +: intColumnsExpr: _*)
+//                .write
+//                .mode("overwrite")
+//                .parquet(s"/user/dcs/test/BPStreamEngine/cpa_edit_distance/cpa_${cpaVersion}_${prodVersion}_$version")
+        val replaceLogDf = createReplaceLog(resTmp, in.columns)
+        replaceLogDf.show(false)
 
         replaceLogDf.filter("canReplace = true and distance > 0")
                 .selectExpr(List("ID", "COL_NAME", "ORIGIN", "check as DEST") ++ in.columns.zipWithIndex.map(x => s"cols[${x._2}] as ORIGIN_${x._1}").toList: _*)
                 .write
                 .mode("overwrite")
-                .parquet(s"/user/dcs/test/BPStreamEngine/cpa_edit_distance/cpa_${cpaVersion}_${prodVersion}_${version}_replace")
+                .option("path", s"/common/public/cpa_${cpaVersion}_${prodVersion}_${version}_replace")
+                .saveAsTable(s"cpa_replace")
 
         replaceLogDf.filter("canReplace = false")
                 .selectExpr(List("ID", "COL_NAME", "ORIGIN", "check as CANDIDATE", "DISTANCE") ++ in.columns.zipWithIndex.map(x => s"cols[${x._2}] as ORIGIN_${x._1}").toList: _*)
                 .withColumn("CANDIDATE", array($"CANDIDATE"))
                 .write
                 .mode("overwrite")
-                .parquet(s"/user/dcs/test/BPStreamEngine/cpa_edit_distance/cpa_${cpaVersion}_${prodVersion}_${version}_no_replace")
+                .option("path", s"/common/public/cpa_${cpaVersion}_${prodVersion}_${version}_no_replace")
+                .saveAsTable(s"cpa_no_replace")
+
     }
 
 
-    def getColumnDistance(df: DataFrame, column: String, checkColumns: List[String]): DataFrame = {
+    private def getColumnDistance(df: DataFrame, column: String, checkColumns: List[String]): DataFrame = {
         val distanceUdf = udf((x: String, y: String) => BPEditDistance.getDistance(x, y))
         val min = udf((array: Seq[Seq[String]]) => BPEditDistance.minDistanceArray(array))
         df.na.fill("")
@@ -128,11 +140,38 @@ case class BPEditDistance(jobContainer: BPSJobContainer, spark: SparkSession, co
                     distanceUdf(col(s"in_$column"), col(s"check_$x"))): _*)))
     }
 
-    def replaceWithDistance(columnName: String, df: DataFrame): DataFrame ={
+    private def replaceWithDistance(columnName: String, df: DataFrame): DataFrame ={
         val replaceUdf = udf((distance: Seq[String]) => BPEditDistance.replaceFunc(distance))
         df.withColumn(s"in_$columnName", replaceUdf(col(s"${columnName}_distance")))
     }
 
+    private def filterMinDistance(distanceDf: DataFrame): DataFrame ={
+        val mapping = Map() ++ mappingConfig
+        distanceDf.filter("check_MOLE_NAME_CH != ''")
+                .groupByKey(x => x.getAs[Long]("id"))
+                .mapGroups((id, row) => row.reduce((l, r) => {
+                    val func: Row => Int = row => mapping.keySet.foldLeft(0)((x, y) => x + row.getAs[Seq[String]](s"${y}_distance")(2).toInt)
+                    val leftSum = func(l)
+                    val rightSum = func(r)
+                    if (leftSum > rightSum) r else l
+                }))(RowEncoder(distanceDf.schema))
+//                .persist(StorageLevel.DISK_ONLY_2)
+    }
+
+    private def createReplaceLog(replaceDf: DataFrame, inDfColumns: Array[String]): DataFrame ={
+        val mapping = Map() ++ mappingConfig
+        replaceDf.selectExpr(Seq("id") ++ mapping.keys.map(x => s"${x}_distance").toSeq ++ inDfColumns.map(x => s"in_$x").toSeq: _*)
+                .withColumn("distances", map(mapping.keys.toSeq.flatMap(key => List(lit(key), col(s"${key}_distance"))): _*))
+                .withColumn("cols", array(inDfColumns.map(x => col(s"in_$x")).toSeq: _*))
+                .select("id", "distances", "cols")
+                .flatMap{
+                    case Row(id: Long, distances: Map[String, Seq[String]], cols: Seq[String]) => {
+                        distances.map(x => (id, x._1, math.ceil(x._2.head.length / 5.0).toInt >= x._2(2).toInt, x._2.head, x._2(1), x._2(2).toInt, cols))
+                    }
+                }
+                .toDF("ID", "COL_NAME", "canReplace", "ORIGIN", "check", "distance", "cols")
+//                .persist(StorageLevel.DISK_ONLY_2)
+    }
 
 }
 
@@ -176,6 +215,7 @@ object test extends App {
     import com.pharbers.StreamEngine.Utils.Session.Spark.BPSparkSession
 
     val spark = BPSparkSession()
+    spark.sparkContext.setLogLevel("WARN")
     import spark.implicits._
     //    val jobContainer = new BPSJobContainer() {
     //        override type T = BPSCommonJoBStrategy
