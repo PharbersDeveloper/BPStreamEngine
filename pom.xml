@@ -194,6 +194,16 @@
                     <groupId>io.confluent</groupId>
                     <artifactId>kafka-schema-registry</artifactId>
                     <version>${confluent.version}</version>
+                    <exclusions>
+                        <exclusion>
+                            <groupId>org.glassfish.jersey.inject</groupId>
+                            <artifactId>jersey-hk2</artifactId>
+                        </exclusion>
+                        <exclusion>
+                            <groupId>org.glassfish.jersey.ext</groupId>
+                            <artifactId>jersey-bean-validation</artifactId>
+                        </exclusion>
+                    </exclusions>
                 </dependency>
                 <dependency>
                     <groupId>io.confluent</groupId>
