@@ -50,7 +50,7 @@
     "name": "BaseJobHandler",
     "args": ["$NodeMsgHandler", "$BPDynamicStreamJobBuilder"],
     "config": {
-      "topic": "stream_job_submit_k8s_test"
+      "topic": "stream_job_submit_qi"
     }
   },
   {
