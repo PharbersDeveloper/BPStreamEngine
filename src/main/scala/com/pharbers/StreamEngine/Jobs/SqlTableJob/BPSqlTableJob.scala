@@ -5,7 +5,7 @@ import java.util.UUID
 import com.pharbers.StreamEngine.Utils.Config.BPSConfig
 import com.pharbers.StreamEngine.Utils.Schema.Spark.BPSParseSchema
 import BPSqlTableJob._
-import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSJobStrategy
+import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.{BPSCommonJoBStrategy, BPSJobStrategy}
 import com.pharbers.StreamEngine.Utils.StreamJob.{BPSJobContainer, BPStreamJob}
 import org.apache.kafka.common.config.ConfigDef
 import org.apache.kafka.common.config.ConfigDef.{Importance, Type}
@@ -16,19 +16,17 @@ import org.apache.spark.storage.StorageLevel
 
 /** 功能描述
   *
-  * @param args 构造参数
-  * @tparam T 构造泛型参数
   * @author dcs
   * @version 0.0
   * @since 2019/12/11 14:16
   * @note 一些值得注意的地方
   */
 case class BPSqlTableJob(jobContainer: BPSJobContainer, spark: SparkSession, config: Map[String, String]) extends BPStreamJob {
-    override type T = BPSJobStrategy
-    override val strategy: BPSJobStrategy = null
-    private val jobConfig: BPSConfig = BPSConfig(configDef, config)
-    val jobId: String = jobConfig.getString(JOB_ID_CONFIG_KEY)
-    val runId: String = jobConfig.getString(RUN_ID_CONFIG_KEY)
+    override type T = BPSCommonJoBStrategy
+    override val strategy: BPSCommonJoBStrategy = BPSCommonJoBStrategy(config, configDef)
+    private val jobConfig: BPSConfig = strategy.getJobConfig
+    val jobId: String = strategy.getJobId
+    val runId: String = strategy.getRunId
     override val id: String = jobId
 
     val url: String = jobConfig.getString(URL_CONFIG_KEY)
@@ -49,10 +47,6 @@ case class BPSqlTableJob(jobContainer: BPSJobContainer, spark: SparkSession, con
                 .option("header", value = true)
                 .option("delimiter", ",")
                 .load(url)
-                //todo: 先判断有没有YEAR和MONTH
-                //                .repartition(col("YEAR"), col("MONTH"))
-                .repartition()
-                .persist(StorageLevel.MEMORY_ONLY)
         )
     }
 
@@ -86,7 +80,7 @@ case class BPSqlTableJob(jobContainer: BPSJobContainer, spark: SparkSession, con
 
     def appendTable(tableName: String): Unit = {
         //todo: 需要检查已经有的
-        val version = "0.0.1"
+        val version = "0.0.3"
         inputStream match {
             case Some(df) =>
                 //                val count = df.count()
@@ -107,10 +101,6 @@ case class BPSqlTableJob(jobContainer: BPSJobContainer, spark: SparkSession, con
 }
 
 object BPSqlTableJob {
-    final val JOB_ID_CONFIG_KEY = "jobId"
-    final val JOB_ID_CONFIG_DOC = "job id"
-    final val RUN_ID_CONFIG_KEY = "runId"
-    final val RUN_ID_CONFIG_DOC = "run id"
     final val URL_CONFIG_KEY = "url"
     final val URL_CONFIG_DOC = "content path"
     final val METADATA_PATH_CONFIG_KEY = "metadataPath"
@@ -120,8 +110,6 @@ object BPSqlTableJob {
     final val ERROR_PATH_CONFIG_KEY = "errorPath"
     final val ERROR_PATH_CONFIG_DOC = "error row  path"
     val configDef: ConfigDef = new ConfigDef()
-            .define(JOB_ID_CONFIG_KEY, Type.STRING, UUID.randomUUID().toString, Importance.HIGH, JOB_ID_CONFIG_DOC)
-            .define(RUN_ID_CONFIG_KEY, Type.STRING, UUID.randomUUID().toString, Importance.HIGH, RUN_ID_CONFIG_DOC)
             .define(URL_CONFIG_KEY, Type.STRING, "", Importance.HIGH, URL_CONFIG_DOC)
             .define(METADATA_PATH_CONFIG_KEY, Type.STRING, "", Importance.HIGH, METADATA_PATH_CONFIG_DOC)
             .define(TASK_TYPE_CONFIG_KEY, Type.STRING, "append", Importance.HIGH, TASK_TYPE_CONFIG_DOC)

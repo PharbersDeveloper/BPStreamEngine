@@ -19,12 +19,13 @@ object BPSLocalChannel {
 
     def registerListener(listener: BPStreamListener): Unit = channel match {
         case Some(c) => c.registerListener(listener)
-        case None => ???
+        case None => sys.error("未创建BPSLocalChannel")
+
     }
 
     def unRegisterListener(listener: BPStreamListener): Unit = channel match {
         case Some(c) => c.lst = c.lst.filterNot(_ == listener)
-        case None => ???
+        case None => sys.error("未创建BPSLocalChannel")
     }
 }
 
