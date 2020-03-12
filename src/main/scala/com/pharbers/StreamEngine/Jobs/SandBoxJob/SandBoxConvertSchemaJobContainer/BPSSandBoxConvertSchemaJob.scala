@@ -8,12 +8,12 @@ import com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxConvertSchemaJobContaine
 import com.pharbers.StreamEngine.Jobs.SandBoxJob.UploadEndJob.BPSUploadEndJob
 import com.pharbers.StreamEngine.Utils.Component.Dynamic.JobMsg
 import com.pharbers.StreamEngine.Utils.HDFS.BPSHDFSFile
-import com.pharbers.StreamEngine.Utils.Kafka.ProducerSingleton
 import com.pharbers.StreamEngine.Utils.Schema.Spark.{BPSMetaData2Map, SchemaConverter}
 import com.pharbers.StreamEngine.Utils.StreamJob.BPSJobContainer
 import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSKfkJobStrategy
 import com.pharbers.kafka.producer.PharbersKafkaProducer
 import com.pharbers.kafka.schema.{BPJob, DataSet, UploadEnd}
+import org.apache.avro.specific.SpecificRecord
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.SparkSession
@@ -67,7 +67,7 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 			val schema = SchemaConverter.str2SqlType(schemaData)
 			
 			notFoundShouldWait(jobParam("parentSampleData"))
-			logger.info(s"Fuck Info ${jobParam("parentSampleData")}")
+			logger.info(s"DCS Path Info ${jobParam("parentSampleData")}")
 			val reading = spark.readStream.schema(StructType(
 			    StructField("traceId", StringType) ::
 				StructField("type", StringType) ::
@@ -84,7 +84,7 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 			)
 //			// TODO: 这部分拿到任务结束在创建否则中间崩溃又要重新创建一次
 			BPSBloodJob(
-				"data_set_job",
+				"data_set_job_k8s_test",
 				new DataSet(
 					Collections.emptyList(),
 					dataSetId,
@@ -96,7 +96,7 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 					"SampleData")).exec()
 
 			val uploadEnd = new UploadEnd(dataSetId, assetId)
-			BPSUploadEndJob("upload_end_job", uploadEnd).exec()
+			BPSUploadEndJob("upload_end_job_k8s_test", uploadEnd).exec()
 
 			pushPyjob(
 				id,
@@ -220,8 +220,7 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 	                      filesPath: String,
 	                      parentJobId: String,
 	                      dsIds: String): Unit = {
-		//		val resultPath = s"hdfs://jobs/$runId/"
-		val resultPath = s"hdfs:///user/alex/jobs/$runId"
+		val resultPath = s"/jobs/$runId/"
 		
 		import org.json4s._
 		import org.json4s.jackson.Serialization.write
@@ -246,9 +245,11 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 			"",
 			"temp job")
 		val jobMsg = write(job)
-		val topic = "stream_job_submit"
+		val topic = "stream_job_submit_k8s_test"
 		val bpJob = new BPJob(parentJobId, traceId, `type`, jobMsg)
-		val fu = ProducerSingleton.getIns.produce(topic, parentJobId, bpJob)
+		val producerInstance = new PharbersKafkaProducer[String, SpecificRecord]
+		val fu = producerInstance.produce(topic, parentJobId, bpJob)
 		logger.debug(fu.get(10, TimeUnit.SECONDS))
+		producerInstance.producer.close()
 	}
 }

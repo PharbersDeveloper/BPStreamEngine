@@ -1,12 +1,19 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
 
+import sys
+import os
 import string
+
+base_path = os.path.dirname(os.path.dirname(
+    os.path.abspath(__file__)))
+sys.path.append(os.getcwd())
+
 import mapping
 from results import ResultModel
 from results import ResultTag
 
-import sys
+
 
 reload(sys)
 sys.setdefaultencoding('utf8')
@@ -21,6 +28,8 @@ def create_mapping(source):
         return mapping.chc_mapping()
     elif source.upper() == "RESULT":
         return mapping.result_mapping()
+    elif source.upper() == "PROD":
+        return mapping.prod_mapping()
     else:
         return mapping.cpa_gyc_mapping()
 

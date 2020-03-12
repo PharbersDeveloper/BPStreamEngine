@@ -8,7 +8,6 @@ import org.json4s.jackson.Serialization._
 
 case class BPSchemaParseElement(key: String, `type`: String)
 
-// TODO 只是简单放置，需要抽象
 object SchemaConverter extends Serializable {
 	def str2SqlType(data: String): org.apache.spark.sql.types.DataType = {
 		implicit val formats: DefaultFormats.type = DefaultFormats
@@ -29,16 +28,6 @@ object SchemaConverter extends Serializable {
 	}
 	
 	def column2legalWithDF(colu: String, df: DataFrame): DataFrame = {
-//		df.withColumn(colu, regexp_replace(col(colu), """\\"""", ""))
-//			.withColumn(colu, regexp_replace(col(colu) , " ", ""))
-////			.withColumn(colu, regexp_replace(col(colu) , ",", ""))
-//			.withColumn(colu, regexp_replace(col(colu) , ";", ""))
-////			.withColumn(colu, regexp_replace(col(colu) , "\\{", ""))
-////			.withColumn(colu, regexp_replace(col(colu) , "\\}", ""))
-//			.withColumn(colu, regexp_replace(col(colu) , "\\(", ""))
-//			.withColumn(colu, regexp_replace(col(colu) , "\\)", ""))
-//			.withColumn(colu, regexp_replace(col(colu) , "=", ""))
-//    		.withColumn(colu, regexp_replace(col(colu) , "\\\\n|\\\\t", ""))
 		def replaceJsonStr(json: String) = {
 			implicit val formats: DefaultFormats.type = DefaultFormats
 			val jsonMap = read[Map[String, String]](json)

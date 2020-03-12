@@ -1,12 +1,12 @@
 package com.pharbers.StreamEngine.Utils.Channel.Driver
 
+import java.lang.Exception
 import java.net.{InetAddress, InetSocketAddress}
 import java.nio.ByteBuffer
 import java.nio.channels.SelectionKey
 import java.nio.channels.Selector
 import java.nio.channels.ServerSocketChannel
 import java.nio.channels.SocketChannel
-
 import com.pharbers.StreamEngine.Utils.Annotation.Component
 import com.pharbers.StreamEngine.Utils.Event.BPSEvents
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamRemoteListener
@@ -37,12 +37,12 @@ object BPSDriverChannel {
         case None => ???
     }
 
-//    def waitForDriverDead() = {
-//        thread match {
-//            case Some(t) => t.join()
-//            case None => ???
-//        }
-//    }
+    //    def waitForDriverDead() = {
+    //        thread match {
+    //            case Some(t) => t.join()
+    //            case None => ???
+    //        }
+    //    }
 }
 
 // TODO 希望可以补全注释
@@ -51,17 +51,18 @@ class BPSDriverChannel(config: Map[String, String]) extends Runnable with PhLoga
 
     lazy val host: String = InetAddress.getLocalHost.getHostAddress
     lazy val port: Int = 56789
+//    lazy val port: Int = 56780
     var lst: List[BPStreamRemoteListener] = Nil
 
     def registerListener(listener: BPStreamRemoteListener): Unit = lst = listener :: lst
 
     def trigger(e: BPSEvents): Unit = lst.filter(_.hit(e)).foreach(x =>
-            try {
-                x.trigger(e)
-            } catch {
-                case e: Exception =>
-                    logger.error(s"listener error job: ${x.job.id}", e)
-            }
+        try {
+            x.trigger(e)
+        } catch {
+            case e: Exception =>
+                logger.error(s"listener error job: ${x.job.id}", e)
+        }
 
     )
 
@@ -85,43 +86,92 @@ class BPSDriverChannel(config: Map[String, String]) extends Runnable with PhLoga
             val keys = selector.selectedKeys()
             val iter = keys.iterator()
 
-            while (iter.hasNext()) {
+            while (iter.hasNext) {
                 val item = iter.next()
 
+
                 // Tests whether this key's channel is ready to accept a new socket connection
-                if (item.isAcceptable()) {
+                if (item.isAcceptable) {
                     val client = driverSocket.accept()
-                    logger.info("Connection Accepted: " + client.getLocalAddress())
+                    logger.info("Connection Accepted: " + client.getLocalAddress)
                     client.configureBlocking(false)
                     client.register(selector, SelectionKey.OP_READ)
 
-                } else if (item.isReadable()) {
+                } else if (item.isReadable) {
                     val client = item.channel().asInstanceOf[SocketChannel]
-                    // TODO: 分包读取的机制
-                    val Buffer = ByteBuffer.allocate(15360)
-                    if (client.read(Buffer) > 0) {
-                        val result = new String(Buffer.array()).trim()
-                        logger.info("Message received: " + result)
-
-                        if (result.equals("alfred end")) {
-                            client.close()
-                            logger.info("It's time to close connection")
-                            logger.info("Server will keep running. Try running client again to establish new connection")
-                        }
-
-                        implicit val formats: DefaultFormats.type = DefaultFormats
-                        try {
-                            val event = read[BPSEvents](result)
-                            trigger(event)
+                    //前4位记录msg长度
+                    val lengthBuffer = ByteBuffer.allocate(4)
+                    var readTimes = 0
+                    while (lengthBuffer.hasRemaining && readTimes < 100 && readTimes >= 0) {
+                        val readCount = try{
+                            client.read(lengthBuffer)
                         } catch {
-                            case e: com.fasterxml.jackson.core.JsonParseException =>
+                            case e: Exception =>
+                                logger.error(e.getMessage, e)
+                                readTimes = 100
+                                -1
+                        }
+                        readTimes += 1
+                        Thread.sleep(10)
+                        if(readCount == -1){
+                            logger.debug("socket channel被关闭了")
+                            readTimes = -1
+                        }
+                    }
+
+                    val length = if(readTimes > 0){
+                        val lengthBytes = lengthBuffer.array()
+                        ((lengthBytes(0) & 0xff) << 24) |
+                                ((lengthBytes(1) & 0xff) << 16) |
+                                ((lengthBytes(2) & 0xff) << 8) |
+                                (lengthBytes(3) & 0xff)
+                    } else {
+                        logger.info("cancel channel")
+                        -1
+                    }
+                    logger.info("Message length: " + length)
+                    if(length > 0) {
+                        try {
+                            readMsgFromChannel(length, client)
+                        } catch {
+                            case e: Exception =>
                                 logger.error(e.getMessage, e)
                         }
-
+                    } else {
+                        item.cancel()
                     }
+
                 }
                 iter.remove()
             }
+        }
+    }
+
+    private def readMsgFromChannel(length: Int, client: SocketChannel): Unit ={
+        var readTimes = 0
+        val buffer = ByteBuffer.allocate(length)
+        while (buffer.hasRemaining && readTimes < 200) {
+            client.read(buffer)
+            readTimes += 1
+            Thread.sleep(10)
+        }
+        if(readTimes >= 200) return
+        val result = new String(buffer.array()).trim()
+        logger.info("Message received: " + result)
+
+        if (result.equals("alfred end")) {
+            client.close()
+            logger.info("It's time to close connection")
+            logger.info("Server will keep running. Try running client again to establish new connection")
+        }
+
+        implicit val formats: DefaultFormats.type = DefaultFormats
+        try {
+            val event = read[BPSEvents](result)
+            trigger(event)
+        } catch {
+            case e: com.fasterxml.jackson.core.JsonParseException =>
+                logger.error(e.getMessage, e)
         }
     }
 }

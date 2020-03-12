@@ -2,7 +2,12 @@
 # -*- coding: UTF-8 -*-
 
 import json
+import sys
+import os
 
+base_path = os.path.dirname(os.path.dirname(
+    os.path.abspath(__file__)))
+sys.path.append(os.getcwd())
 
 class ResultTag(object):
     Error = -1
