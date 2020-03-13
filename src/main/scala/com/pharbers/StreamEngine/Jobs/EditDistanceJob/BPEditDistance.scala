@@ -66,7 +66,7 @@ case class BPEditDistance(jobContainer: BPSJobContainer, spark: SparkSession, co
 
     def check(in: DataFrame, checkDf: DataFrame): Unit = {
         val mapping = Map() ++ mappingConfig
-        //todo: 配置传入
+//        todo: 配置传入
         val repartitionByIdNum = 50
         val inDfRename = in.columns.foldLeft(in)((l, r) =>
             l.withColumnRenamed(r, s"in_$r"))
@@ -168,6 +168,7 @@ case class BPEditDistance(jobContainer: BPSJobContainer, spark: SparkSession, co
 
     private def filterMinDistance(distanceDf: DataFrame): DataFrame = {
         val mapping = Map() ++ mappingConfig
+        //todo: 这儿filter掉了没有和prod匹配上的，如果逻辑需要保留全部这儿需要去除并且将这儿filter放在后面createReplaceLog的逻辑
         distanceDf.filter("check_MOLE_NAME_CH != ''")
                 .groupByKey(x => x.getAs[Long]("id"))
                 .mapGroups((id, row) => row.reduce((l, r) => {
@@ -262,7 +263,7 @@ object TestBPEditDistance extends App {
     //    }
     //    jobContainer.inputStream = Some(spark.sql("select * from cpa"))
 
-    val job = BPEditDistance(null, spark, Map("jobId" -> "test_0304", "runId" -> "test_0304"))
+    val job = BPEditDistance(null, spark, Map("jobId" -> "test_0309", "runId" -> "test_0309"))
     job.open()
     job.exec()
 }
