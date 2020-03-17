@@ -1,0 +1,20 @@
+<pharbers-modules>
+    <kafka-config>
+        <broker value="123.56.179.133:9092" />
+        <group value="BPStream" />
+        <topics value="" />
+        <acks value="all" />
+        <keyDefaultSerializer value="org.apache.kafka.common.serialization.StringSerializer" />
+        <keyDefaultDeserializer value="org.apache.kafka.common.serialization.StringDeserializer" />
+        <valueDefaultSerializer value="io.confluent.kafka.serializers.KafkaAvroSerializer" />
+        <valueDefaultDeserializer value="io.confluent.kafka.serializers.KafkaAvroDeserializer" />
+        <schemaRegistryUrl value="http://123.56.179.133:8081" />
+        <specificAvroReader value="true" />
+        <securityProtocol value="SSL" />
+        <sslAlgorithm value=" " />
+        <sslTruststoreLocation value="/Users/qianpeng/kafka/secrets/kafka.broker1.truststore.jks" />
+        <sslTruststorePassword value="pharbers" />
+        <sslKeystoreLocation value="/Users/qianpeng/kafka/secrets/kafka.broker1.keystore.jks" />
+        <sslKeystorePassword value="pharbers" />
+    </kafka-config>
+</pharbers-modules>
