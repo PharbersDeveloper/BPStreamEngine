@@ -42,7 +42,7 @@ object RunPyJob extends App {
         ), "", "py job") :: Nil
 
         val jobMsg = write(jobs)
-        val topic = "stream_job_submit_qi"
+        val topic = "stream_job_submit"
 
         val pkp = new PharbersKafkaProducer[String, BPJob]
         val bpJob = new BPJob(jobId, traceId, `type`, jobMsg)

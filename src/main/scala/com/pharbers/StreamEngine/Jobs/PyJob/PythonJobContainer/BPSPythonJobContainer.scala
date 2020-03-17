@@ -99,7 +99,7 @@ class BPSPythonJobContainer(override val spark: SparkSession,
             metadata("length").asInstanceOf[Double].toInt,
             s"$resultPath/$id/contents",
             "Python 清洗 Job")
-        BPSBloodJob("data_set_job_k8s_test", dfs).exec()
+        BPSBloodJob("data_set_job", dfs).exec()
     }
 
     override def exec(): Unit = inputStream match {

@@ -16,7 +16,7 @@
     "name": "BPKafkaSession",
     "args": ["$BPSparkSession"],
     "config": {
-      "topic": "oss_source_1",
+      "topic": "oss_source",
       "url": "http://123.56.179.133:9092",
       "schema": "http://123.56.179.133:8081"
     }
@@ -50,7 +50,7 @@
     "name": "BaseJobHandler",
     "args": ["$NodeMsgHandler", "$BPDynamicStreamJobBuilder"],
     "config": {
-      "topic": "stream_job_submit_k8s_test"
+      "topic": "stream_job_submit"
     }
   },
   {
