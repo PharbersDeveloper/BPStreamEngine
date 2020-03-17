@@ -72,7 +72,7 @@ class BPSHive2EsJob(override val id: String,
 
         //根据不同策略指令来选用策略函数处理job内部数据，默认空指令则不处理
         strategyCMD match {
-            case STRATEGY_CMD_MaxDashboard => InnerJobStrategy = BPSMaxDataHive2EsStrategy()
+            case STRATEGY_CMD_MaxDashboard => InnerJobStrategy = BPSMaxDataHive2EsStrategy(spark)
         }
 
     }
@@ -104,4 +104,5 @@ class BPSHive2EsJob(override val id: String,
         container.finishJobWithId(id)
         logger.info("hive to es job closed with id ========>" + id)
     }
+
 }

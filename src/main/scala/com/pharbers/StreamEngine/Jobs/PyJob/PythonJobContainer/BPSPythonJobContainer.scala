@@ -82,6 +82,8 @@ class BPSPythonJobContainer(override val spark: SparkSession,
         val reading = spark.readStream
                 .schema(loadSchema)
                 .option("startingOffsets", "earliest")
+                //todo: 设置触发的文件数，以控制内存 效果待测试
+                .option("maxFilesPerTrigger", 4)
                 .parquet(filesPath)
 
         inputStream = Some(reading)

@@ -36,8 +36,8 @@ object RunPyJob extends App {
 //        ), "", "py job") :: Nil
         val jobs = JobMsg("pyBoxJob", "job", clazz, List("$BPSparkSession"), Nil, Nil, Map(
             "jobId" -> UUID.randomUUID().toString,
-            "metadataPath" -> "hdfs:///jobs/afc64cc6-6fa4-417c-b4fe-5795f0c2d7b0/269dfc69-9c28-4ae7-8cf6-a66a5a1d9530/metadata",
-            "filesPath" -> "hdfs:///jobs/afc64cc6-6fa4-417c-b4fe-5795f0c2d7b0/269dfc69-9c28-4ae7-8cf6-a66a5a1d9530/contents",
+            "metadataPath" -> "/jobs/16574115-67b0-4c0a-8aea-8121abc8b3a0/35a7202c-1358-426c-b4fb-4ae4914c5153/metadata",
+            "filesPath" -> "/jobs/16574115-67b0-4c0a-8aea-8121abc8b3a0/35a7202c-1358-426c-b4fb-4ae4914c5153/contents",
             "resultPath" -> "./jobs/"
         ), "", "py job") :: Nil
 

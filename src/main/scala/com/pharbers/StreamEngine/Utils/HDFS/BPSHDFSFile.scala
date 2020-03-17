@@ -7,13 +7,11 @@ import org.apache.hadoop.fs.{FSDataOutputStream, FileSystem, Path}
 import java.io.{BufferedReader, BufferedWriter, InputStreamReader, OutputStreamWriter}
 
 object BPSHDFSFile {
-    val hdfsAddr: String = "hdfs://starLord:8020"
+    val hdfsAddr: String = "hdfs://StarLord:8020"
 
     val configuration: Configuration = new Configuration
     configuration.set("fs.defaultFS", hdfsAddr)
-    configuration.set("dfs.client.block.write.replace-datanode-on-failure.policy","NEVER")
     configuration.set("dfs.client.block.write.replace-datanode-on-failure.enable","true")
-    
     def openHdfsBuffer(path: String): Option[BufferedWriter] = {
         val fileSystem: FileSystem = FileSystem.newInstance(configuration)
 

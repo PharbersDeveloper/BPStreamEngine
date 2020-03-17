@@ -47,9 +47,7 @@ class DynamicJobDemo(override val spark: SparkSession, override val strategy: BP
     }
 
     override def close(): Unit = {
-        handlers.foreach(_.close())
-        listeners.foreach(_.deActive())
-        outputStream.foreach(_.stop())
+        super.close()
         println(s"$id:close")
     }
 }
