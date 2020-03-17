@@ -1,0 +1,88 @@
+{
+  "type": "record",
+  "name": "AssetDataMart",
+  "namespace": "com.pharbers.kafka.schema",
+  "fields": [
+    {
+      "name": "assetName",
+      "type": "string"
+    },
+    {
+      "name": "assetDescription",
+      "type": "string"
+    },
+    {
+      "name": "assetVersion",
+      "type": "string"
+    },
+    {
+      "name": "assetDataType",
+      "type": "string"
+    },
+    {
+      "name": "providers",
+      "type": {
+        "items": "string",
+        "type": "array"
+      }
+    },
+    {
+      "name": "markets",
+      "type": {
+        "items": "string",
+        "type": "array"
+      }
+    },
+    {
+      "name": "molecules",
+      "type": {
+        "items": "string",
+        "type": "array"
+      }
+    },
+    {
+      "name": "dataCover",
+      "type": {
+        "items": "string",
+        "type": "array"
+      }
+    },
+    {
+      "name": "geoCover",
+      "type": {
+        "items": "string",
+        "type": "array"
+      }
+    },
+    {
+      "name": "labels",
+      "type": {
+        "items": "string",
+        "type": "array"
+      }
+    },
+    {
+      "name": "dfs",
+      "type": {
+        "items": "string",
+        "type": "array"
+      }
+    },
+    {
+      "name": "martName",
+      "type": "string"
+    },
+    {
+      "name": "martUrl",
+      "type": "string"
+    },
+    {
+      "name": "martDataType",
+      "type": "string"
+    },
+    {
+       "name": "saveMode",
+       "type": "string"
+    }
+  ]
+}

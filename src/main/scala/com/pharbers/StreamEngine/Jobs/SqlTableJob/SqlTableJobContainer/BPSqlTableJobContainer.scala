@@ -3,6 +3,7 @@ package com.pharbers.StreamEngine.Jobs.SqlTableJob.SqlTableJobContainer
 import java.util.UUID
 import java.util.concurrent.{Executors, LinkedBlockingQueue, ThreadPoolExecutor, TimeUnit}
 
+import com.pharbers.StreamEngine.Jobs.SqlTableJob.BPSqlTableJob
 import com.pharbers.StreamEngine.Jobs.SqlTableJob.SqlTableListener.{BPSqlTableKafkaListener, BPStreamOverListener}
 import com.pharbers.StreamEngine.Utils.Config.BPSConfig
 import com.pharbers.StreamEngine.Utils.Event.EventHandler.BPSEventHandler
@@ -32,9 +33,12 @@ class BPSqlTableJobContainer(val spark: SparkSession, config: Map[String, String
     final val TOPIC_CONFIG_DOC = "kafka topic"
     final val RUN_ID_CONFIG_KEY = "runId"
     final val RUN_ID_CONFIG_DOC = "run id"
+    final val VERSIONS_CONFIG_KEY = "version"
+    final val VERSIONS_CONFIG_DOC = "version"
     val configDef: ConfigDef = new ConfigDef()
             .define(TOPIC_CONFIG_KEY, Type.STRING, "HiveTask", Importance.HIGH, TOPIC_CONFIG_DOC)
             .define(RUN_ID_CONFIG_KEY, Type.STRING, UUID.randomUUID().toString, Importance.HIGH, RUN_ID_CONFIG_DOC)
+            .define(VERSIONS_CONFIG_KEY, Type.STRING, UUID.randomUUID().toString, Importance.HIGH, VERSIONS_CONFIG_DOC)
     private val jobConfig: BPSConfig = BPSConfig(configDef, config)
 
     val runId: String = jobConfig.getString(RUN_ID_CONFIG_KEY)
@@ -42,6 +46,15 @@ class BPSqlTableJobContainer(val spark: SparkSession, config: Map[String, String
     val id: String = runId
 
     val executorService = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue[Runnable])
+    //todo: 配置文件
+    val tableNameMap: Map[String, String] = Map(
+        "CPA&GYC" -> "cpa",
+        "CHC" -> "chc",
+        "RESULT" -> "result",
+        "PROD" -> "prod"
+    )
+
+    var jobConfigs:  Map[String,  Map[String, String]] = Map()
 
 
     override def open(): Unit = {
@@ -60,19 +73,44 @@ class BPSqlTableJobContainer(val spark: SparkSession, config: Map[String, String
         jobs.foreach(x => x._2.close())
     }
 
-    def addJob2Container(job: BPStreamJob): Unit ={
-        executorService.execute(new Runnable{
-            override def run(): Unit = {
-                job.open()
-                job.exec()
-            }
+    def runJob(): Unit ={
+        jobConfigs.values.foreach(x =>{
+            val job = new BPSqlTableJob(this, spark, x)
+            executorService.execute(new Runnable{
+                override def run(): Unit = {
+                    job.open()
+                    job.exec()
+                }
+            })
+            jobs = jobs ++ Map(job.id -> job)
         })
-        jobs = jobs ++ Map(job.id -> job)
+    }
+
+    def addJobConfig(config: Map[String, String]): Unit ={
+        val providers = config.getOrElse("providers", "").split(",")
+        providers.toSet.intersect(tableNameMap.keySet).foreach(key => {
+            val tableName = tableNameMap(key)
+            val (urls, dataSets) = if(jobConfigs.contains(tableName)){
+                (jobConfigs(tableName)("urls") + "," + config("url"), jobConfigs(tableName)("dataSets") + "," + config("datasetId"))
+            } else {
+                (config("url"),config("datasetId") )
+            }
+            jobConfigs = jobConfigs ++ Map(tableName -> (config ++ Map("tableName" -> tableName, "urls" -> urls, "dataSets" -> dataSets, "version" -> "")))
+        })
     }
 
     def hiveTaskHandler(msg: HiveTask): Unit ={
         val url = msg.getUrl.toString
-        val path = url.substring(0, url.lastIndexOf("contents"))
+        val path =if(msg.getTaskType.toString != "end"){
+            if(url.contains("contents")) {
+                url.substring(0, url.lastIndexOf("contents"))
+            } else {
+                logger.debug(url)
+                "/"
+            }
+        } else {
+            "/"
+        }
 
         val listenerConfig = Map(
             "runId" -> runId,
@@ -82,7 +120,8 @@ class BPSqlTableJobContainer(val spark: SparkSession, config: Map[String, String
             "rowRecordPath" -> (path + "row_record"),
             "metadataPath" -> (path +  "metadata"),
             "errorPath" -> (path +  "err"),
-            "taskType" -> msg.getTaskType.toString
+            "taskType" -> msg.getTaskType.toString,
+            "datasetId" -> msg.getDatasetId.toString
         )
         val listener = BPStreamOverListener(this, listenerConfig)
         listener.active(null)
