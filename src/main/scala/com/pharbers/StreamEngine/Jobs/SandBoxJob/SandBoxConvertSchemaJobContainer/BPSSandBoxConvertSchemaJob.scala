@@ -145,7 +145,7 @@ class BPSSandBoxConvertSchemaJob(val id: String,
         }
     }
 
-    def writeMetaData(metaData: RDD[String], path: String): (String, List[CharSequence], String, Int, String) = {
+    def writeMetaData(metaData: RDD[String], path: String): (String, List[CharSequence], String, Long, String) = {
         try {
             val primitive = BPSMetaData2Map.list2Map(metaData.collect().toList)
             val convertContent = primitive ++ SchemaConverter.column2legalWithMetaDataSchema(primitive)
@@ -170,7 +170,7 @@ class BPSSandBoxConvertSchemaJob(val id: String,
                     BPSHDFSFile.appendLine2HDFS(path, write(x._2))
                 }
             }
-            (schema, colNames, tabName, convertContent("length").toString.toInt, assetId)
+            (schema, colNames, tabName, convertContent("length").toString.toLong, assetId)
 
 
             //			val metaDataDF = SchemaConverter.column2legalWithDF("MetaData", metaData.toDF("MetaData"))

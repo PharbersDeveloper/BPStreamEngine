@@ -96,7 +96,7 @@ class BPSPythonJobContainer(override val spark: SparkSession,
             id,
             Collections.emptyList(),
             "",
-            metadata("length").asInstanceOf[Double].toInt,
+            metadata("length").asInstanceOf[Double].toLong,
             s"$resultPath/$id/contents",
             "Python 清洗 Job")
         BPSBloodJob("data_set_job", dfs).exec()

@@ -74,7 +74,9 @@ class BPSqlTableJobContainer(val spark: SparkSession, config: Map[String, String
     }
 
     def runJob(): Unit ={
-        jobConfigs.values.foreach(x =>{
+        val configs = jobConfigs
+        jobConfigs = Map()
+        configs.values.foreach(x =>{
             val job = new BPSqlTableJob(this, spark, x)
             executorService.execute(new Runnable{
                 override def run(): Unit = {

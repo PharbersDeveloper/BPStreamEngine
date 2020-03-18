@@ -23,6 +23,10 @@ import com.pharbers.StreamEngine.Utils.Schema.Spark.BPSParseSchema
   * @note 一些值得注意的地方
   */
 case class BPStreamOverListener(job: BPSqlTableJobContainer, config: Map[String, String]) extends BPStreamListener{
+    lazy val configDef: ConfigDef = new ConfigDef()
+            .define(LENGTH_CONFIG_KEY, Type.LONG, 0L, Importance.HIGH, LENGTH_CONFIG_DOC)
+            .define(ROW_RECORD_PATH_CONFIG_KEY, Type.STRING, "", Importance.HIGH, ROW_RECORD_PATH_CONFIG_DOC)
+            .define(METADATA_PATH_CONFIG_KEY, Type.STRING, "", Importance.HIGH, METADATA_PATH_CONFIG_DOC)
 
     private val listenerConfig: BPSConfig = BPSConfig(configDef, config)
 
@@ -64,8 +68,4 @@ object BPStreamOverListener{
     lazy final val ROW_RECORD_PATH_CONFIG_DOC = "already read row record path"
     final val METADATA_PATH_CONFIG_KEY = "metadataPath"
     final val METADATA_PATH_CONFIG_DOC = "metadataPath"
-    lazy val configDef: ConfigDef = new ConfigDef()
-            .define(LENGTH_CONFIG_KEY, Type.LONG, 0L, Importance.HIGH, LENGTH_CONFIG_DOC)
-            .define(ROW_RECORD_PATH_CONFIG_KEY, Type.STRING, "", Importance.HIGH, ROW_RECORD_PATH_CONFIG_DOC)
-            .define(METADATA_PATH_CONFIG_KEY, Type.STRING, "", Importance.HIGH, METADATA_PATH_CONFIG_DOC)
 }
