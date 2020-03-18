@@ -72,7 +72,7 @@ class PushJobTest extends FunSuite {
                 Nil
         
         val jobMsg = write(jobs)
-        val topic = "stream_job_submit_k8s_test"
+        val topic = "stream_job_submit"
         
         val pkp = new PharbersKafkaProducer[String, BPJob]
         val bpJob = new BPJob(jobId, traceId, `type`, jobMsg)

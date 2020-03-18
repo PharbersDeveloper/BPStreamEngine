@@ -103,7 +103,7 @@ case class BPSOssListener(spark: SparkSession, job: BPStreamJob, jobId: String) 
 
     def pollKafka(msg: FileMetaData): Unit ={
         //todo: 参数化
-        val topic = "sb_file_meta_job_k8s_test"
+        val topic = "sb_file_meta_job"
         val pkp = new PharbersKafkaProducer[String, FileMetaData]
         val fu = pkp.produce(topic, msg.getJobId.toString, msg)
         logger.info(fu.get(10, TimeUnit.SECONDS))
