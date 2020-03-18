@@ -263,7 +263,7 @@ object TestBPEditDistance extends App {
     //    }
     //    jobContainer.inputStream = Some(spark.sql("select * from cpa"))
 
-    val job = BPEditDistance(null, spark, Map("jobId" -> "test_0309", "runId" -> "test_0309"))
+    val job = BPEditDistance(null, spark, Map("jobId" -> "test_0316", "runId" -> "test_0316"))
     job.open()
     job.exec()
 }
