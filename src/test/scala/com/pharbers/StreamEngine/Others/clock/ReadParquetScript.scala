@@ -36,8 +36,8 @@ object ReadParquetScript extends App {
     }
 //    byBatchForCsv()
 
-    val testPath = "/jobs/16574115-67b0-4c0a-8aea-8121abc8b3a0/35a7202c-1358-426c-b4fb-4ae4914c5153/contents"
-    val metadataPath = "/jobs/16574115-67b0-4c0a-8aea-8121abc8b3a0/35a7202c-1358-426c-b4fb-4ae4914c5153/metadata"
+    val testPath = "hdfs://jobs/01e951cb-34ed-4644-9a9e-fc3f570e0613/c65c732e-fec8-41ea-b891-ef737837a354/contents"
+    val metadataPath = "hdfs://jobs/01e951cb-34ed-4644-9a9e-fc3f570e0613/c65c732e-fec8-41ea-b891-ef737837a354/metadata"
     def byBatch(): Unit = {
         val loadSchema = BPSParseSchema.parseSchemaByMetadata(metadataPath)(spark)
         val reading = spark.read.schema(loadSchema).parquet(testPath)
