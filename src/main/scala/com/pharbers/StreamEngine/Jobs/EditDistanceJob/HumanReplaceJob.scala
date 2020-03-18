@@ -35,10 +35,16 @@ case class HumanReplaceJob(jobContainer: BPSJobContainer, spark: SparkSession, c
     def createHumanReplaceDf(df: DataFrame): Unit = {
         //todo:配置传入
         val version = "0.0.1"
-        df.filter("PackID = '#N/A'")
+        val table = spark.sql("select * from human_replace")
+        df.filter("PackID != '#N/A'")
+                .na.fill("")
+                .withColumn("ORIGIN_PRODUCT_NAME", when(col("ORIGIN_PRODUCT_NAME").isNotNull, col("ORIGIN_PRODUCT_NAME")).otherwise(lit("")))
 //                .select("ORIGIN_MOLE_NAME", "ORIGIN_PRODUCT_NAME", "ORIGIN_PRODUCT_NAME2", "ORIGIN_SPEC", "ORIGIN_SPEC2", "ORIGIN_DOSAGE", "ORIGIN_DOSAGE2", "ORIGIN_PACK_QTY", "ORIGIN_PACK_QTY", "ORIGIN_MANUFACTURER_NAME", "ORIGIN_MANUFACTURER_NAME2")
-                .withColumn("min", concat($"ORIGIN_MOLE_NAME", $"ORIGIN_PRODUCT_NAME", $"ORIGIN_SPEC", $"ORIGIN_DOSAGE", $"ORIGIN_PACK_QTY", $"ORIGIN_MANUFACTURER_NAME"))
-                .select("min")
+                .withColumn("min", concat(col("ORIGIN_MOLE_NAME"), col("ORIGIN_PRODUCT_NAME"), col("ORIGIN_SPEC"), col("ORIGIN_DOSAGE"), col("ORIGIN_PACK_QTY"), col("ORIGIN_MANUFACTURER_NAME")))
+                .selectExpr("min", "ORIGIN_MOLE_NAME as MOLE_NAME", "ORIGIN_PRODUCT_NAME1 as PRODUCT_NAME", "ORIGIN_SPEC1 as SPEC", "ORIGIN_DOSAGE1 as DOSAGE", "ORIGIN_PACK_QTY1 as PACK_QTY", "ORIGIN_MANUFACTURER_NAME1 as MANUFACTURER_NAME")
+                .distinct()
+                .unionByName(table)
+                .distinct()
                 .write
                 .mode("overwrite")
                 .option("path", s"/common/public/human_replace/$version")
@@ -51,9 +57,9 @@ object TestHumanReplaceJob extends App {
 
     import com.pharbers.StreamEngine.Utils.Session.Spark.BPSparkSession
 
-    val spark = BPSparkSession()
-    spark.sparkContext.setLogLevel("INFO")
-    val job = HumanReplaceJob(null, spark, Map("jobId" -> "test_0228", "runId" -> "test_0228"))
+//    val spark = BPSparkSession()
+//    spark.sparkContext.setLogLevel("INFO")
+    val job = HumanReplaceJob(null, null, Map("jobId" -> "test_0228", "runId" -> "test_0228"))
 
     val localSpark = SparkSession.builder().config(new SparkConf().setMaster("local[*]")).enableHiveSupport().getOrCreate()
     val df = localSpark.read.format("csv")

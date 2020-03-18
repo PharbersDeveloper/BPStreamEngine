@@ -31,7 +31,7 @@
     },
     {
       "name": "length",
-      "type": "int"
+      "type": "long"
     },
     {
       "name": "url",

@@ -11,12 +11,12 @@ import org.apache.spark.storage.StorageLevel
 import scala.collection.mutable
 
 /** 功能描述
- *
- * @author dcs
- * @version 0.0
- * @since 2020/02/04 13:38
- * @note 一些值得注意的地方
- */
+  *
+  * @author dcs
+  * @version 0.0
+  * @since 2020/02/04 13:38
+  * @note 一些值得注意的地方
+  */
 case class BPEditDistance(jobContainer: BPSJobContainer, spark: SparkSession, config: Map[String, String]) extends BPStreamJob {
 
     import spark.implicits._
@@ -37,7 +37,14 @@ case class BPEditDistance(jobContainer: BPSJobContainer, spark: SparkSession, co
     )
 
     override def open(): Unit = {
-        inputStream = Some(spark.sql("select * from cpa"))
+        val list = Seq("拉米夫定",
+            "阿德福韦酯",
+            "恩替卡韦",
+            "替比夫定",
+            "替诺福韦二吡呋酯")
+        inputStream = Some(spark.sql("select * from cpa")
+//                .filter(col("MOLE_NAME").isin(list: _*))
+        )
         //        inputStream = jobContainer.inputStream
     }
 
@@ -59,7 +66,7 @@ case class BPEditDistance(jobContainer: BPSJobContainer, spark: SparkSession, co
 
     def check(in: DataFrame, checkDf: DataFrame): Unit = {
         val mapping = Map() ++ mappingConfig
-        //todo: 配置传入
+//        todo: 配置传入
         val repartitionByIdNum = 50
         val inDfRename = in.columns.foldLeft(in)((l, r) =>
             l.withColumnRenamed(r, s"in_$r"))
@@ -92,18 +99,21 @@ case class BPEditDistance(jobContainer: BPSJobContainer, spark: SparkSession, co
             val filterMinDistanceDf = filterMinDistance(distanceDf)
 
             //todo: 这儿正式运行后会根据每次id不同生成不同的文件，所以需要定期删除
+            //使用人工干预表处理
             filterMinDistanceDf.write
                     .mode("append")
                     .parquet(s"/user/dcs/test/tmp/res_$id")
         })
 
-        val filterMinDistanceDf = spark.read.parquet(s"/user/dcs/test/tmp/res_$id").repartitionByRange($"in_MOLE_NAME")
+        val humanReplaceDf = spark.sql("select * from human_replace")
+
+        val filterMinDistanceDf = humanReplace(spark.read.parquet(s"/user/dcs/test/tmp/res_$id").repartitionByRange($"in_MOLE_NAME"), humanReplaceDf)
 
         val cpaVersion = in.select("version").take(1).head.getAs[String]("version")
         //todo: 从prod表中获取
         val prodVersion = "0.0.2"
         //todo: 生成逻辑
-        val version = "0.0.4"
+        val version = "0.0.5_test"
         val intColumnsExpr = in.columns.map(x => s"in_$x as $x").toList
         //todo: 未更改列但是增加了id的cpa，因为更改了运算逻辑所以不能这样存了。可以通过distance获取
         //        filterMinDistanceDf.selectExpr("id" +: intColumnsExpr: _*)
@@ -113,7 +123,7 @@ case class BPEditDistance(jobContainer: BPSJobContainer, spark: SparkSession, co
 
         val replaceLogDf = createReplaceLog(filterMinDistanceDf, in.columns)
 
-        replaceLogDf.filter("canReplace = true and distance > 0")
+        replaceLogDf.filter("canReplace = true and distance != 0")
                 .selectExpr(List("ID", "COL_NAME", "ORIGIN", "check as DEST") ++ in.columns.zipWithIndex.map(x => s"cols[${x._2}] as ORIGIN_${x._1}").toList: _*)
                 .write
                 //                .bucketBy(11, "ORIGIN_MOLE_NAME")
@@ -158,6 +168,7 @@ case class BPEditDistance(jobContainer: BPSJobContainer, spark: SparkSession, co
 
     private def filterMinDistance(distanceDf: DataFrame): DataFrame = {
         val mapping = Map() ++ mappingConfig
+        //todo: 这儿filter掉了没有和prod匹配上的，如果逻辑需要保留全部这儿需要去除并且将这儿filter放在后面createReplaceLog的逻辑
         distanceDf.filter("check_MOLE_NAME_CH != ''")
                 .groupByKey(x => x.getAs[Long]("id"))
                 .mapGroups((id, row) => row.reduce((l, r) => {
@@ -183,13 +194,20 @@ case class BPEditDistance(jobContainer: BPSJobContainer, spark: SparkSession, co
     }
 
     private def humanReplace(filterMinDistanceDf: DataFrame, humanDf: DataFrame)(implicit mapping: Map[String, List[String]]): DataFrame = {
+        val keys = List("MOLE_NAME", "PRODUCT_NAME", "SPEC", "DOSAGE", "PACK_QTY", "MANUFACTURER_NAME")
         val joinDf = filterMinDistanceDf
-                        .withColumn("in_min", concat((col("in_MOLE_NAME") +: mapping.keys.toList.map(x => col(s"in_$x"))): _*))
+                        .withColumn("in_min", concat(keys.map(x => col(s"in_$x")): _*))
+//                .withColumn("in_min", concat(col("in_MOLE_NAME") +: mapping.keys.toList.map(x => col(s"in_$x")): _*))
                 .join(humanDf, $"in_min" === $"min", "left")
         mapping.keys.foldLeft(joinDf)((df, key) => {
-            joinDf.withColumn(s"${key}_distance", when($"min".isNull, col(s"${key}_distance"))
-                    .otherwise(array(col(s"${key}_distance")(0), col(s"${key}_distance")(1), lit("0"))))
-        }).drop("min", "in_min")
+            df.withColumn(s"${key}_distance", when($"min".isNull, col(s"${key}_distance"))
+                    .otherwise(array(
+                        col(s"${key}_distance")(0),
+                        col(s"$key"),
+                        when(col(s"${key}_distance")(0) === col(s"$key"), lit("0")).otherwise(lit("-1")))
+                    )
+            )
+        }).drop("in_min" +: humanDf.columns: _*)
     }
 
 }
@@ -245,7 +263,7 @@ object TestBPEditDistance extends App {
     //    }
     //    jobContainer.inputStream = Some(spark.sql("select * from cpa"))
 
-    val job = BPEditDistance(null, spark, Map("jobId" -> "test_0228", "runId" -> "test_0228"))
+    val job = BPEditDistance(null, spark, Map("jobId" -> "test_0316", "runId" -> "test_0316"))
     job.open()
     job.exec()
 }
