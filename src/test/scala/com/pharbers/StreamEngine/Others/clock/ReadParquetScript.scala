@@ -19,11 +19,11 @@ object ReadParquetScript extends App {
     val spark = BPSparkSession()
     val id = "08d72f26-f5cc-4618-911c-812a4a4e1cec"
     def byBatchForCsv(): Unit = {
-        val jobId = "558c95fb-71e0-47d4-8e8a-b4468f099e35"
+        val jobId = "0090df5d-8858-46e3-a4fa-ce53e183e905"
 
 //        val path = s"hdfs:///user/clock/jobs/$jobId/metadata"
-//        val path = s"hdfs:///user/clock/jobs/$jobId/contents"
-        val path = s"hdfs:///user/clock/jobs/$jobId/err"
+        val path = s"hdfs:///user/clock/jobs/$jobId/contents"
+//        val path = s"hdfs:///user/clock/jobs/$jobId/err"
 //        val path = s"hdfs:///user/clock/jobs/$jobId/row_record"
 
         val reading = spark.read
@@ -34,17 +34,17 @@ object ReadParquetScript extends App {
         reading.show(false)
         println(reading.count())
     }
-    byBatchForCsv()
+//    byBatchForCsv()
 
-    val testPath = "/user/alex/jobs/b583ab59-ef9d-4a08-9246-91396c770676/"+ id + "/contents"
-    val matedataPath = "/user/alex/jobs/b583ab59-ef9d-4a08-9246-91396c770676/"+ id + "/metadata"
+    val testPath = "/jobs/16574115-67b0-4c0a-8aea-8121abc8b3a0/35a7202c-1358-426c-b4fb-4ae4914c5153/contents"
+    val metadataPath = "/jobs/16574115-67b0-4c0a-8aea-8121abc8b3a0/35a7202c-1358-426c-b4fb-4ae4914c5153/metadata"
     def byBatch(): Unit = {
-        val loadSchema = BPSParseSchema.parseSchemaByMetadata(matedataPath)(spark)
+        val loadSchema = BPSParseSchema.parseSchemaByMetadata(metadataPath)(spark)
         val reading = spark.read.schema(loadSchema).parquet(testPath)
         reading.show(false)
         println(reading.count())
     }
-//    byBatch()
+    byBatch()
 
 //    def byStream(): Unit = {
 //        val loadSchema = BPSParseSchema.parseSchemaByMetadata(matedataPath)(spark)

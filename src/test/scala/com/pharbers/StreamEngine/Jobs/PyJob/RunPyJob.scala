@@ -36,13 +36,13 @@ object RunPyJob extends App {
 //        ), "", "py job") :: Nil
         val jobs = JobMsg("pyBoxJob", "job", clazz, List("$BPSparkSession"), Nil, Nil, Map(
             "jobId" -> UUID.randomUUID().toString,
-            "metadataPath" -> "hdfs:///user/alex/jobs/94350fa8-420e-4f5f-8f1e-467627aafec3/ff94c3bd-1887-4800-a5f4-43a292869008/metadata",
-            "filesPath" -> "hdfs:///user/alex/jobs/94350fa8-420e-4f5f-8f1e-467627aafec3/ff94c3bd-1887-4800-a5f4-43a292869008/contents/6f6b8e34-88df-4bef-a930-20197ccd6ef0",
+            "metadataPath" -> "/jobs/16574115-67b0-4c0a-8aea-8121abc8b3a0/35a7202c-1358-426c-b4fb-4ae4914c5153/metadata",
+            "filesPath" -> "/jobs/16574115-67b0-4c0a-8aea-8121abc8b3a0/35a7202c-1358-426c-b4fb-4ae4914c5153/contents",
             "resultPath" -> "./jobs/"
         ), "", "py job") :: Nil
 
         val jobMsg = write(jobs)
-        val topic = "stream_job_submit_qi"
+        val topic = "stream_job_submit"
 
         val pkp = new PharbersKafkaProducer[String, BPJob]
         val bpJob = new BPJob(jobId, traceId, `type`, jobMsg)

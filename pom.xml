@@ -256,13 +256,13 @@
 <!--                    &lt;!&ndash;<include>**/*.properties</include>&ndash;&gt;-->
 <!--                </includes>-->
 <!--            </resource>-->
-            <resource> <!--TODO: 与老齐整合的时候这段删除@Alex-->
-                <directory>pyClean</directory>
-                <targetPath>pyClean</targetPath>
-                <includes>
-                    <include>**/*.py</include>
-                </includes>
-            </resource>
+<!--            <resource> &lt;!&ndash;TODO: 与老齐整合的时候这段删除@Alex&ndash;&gt;-->
+<!--                <directory>pyClean</directory>-->
+<!--                <targetPath>pyClean</targetPath>-->
+<!--                <includes>-->
+<!--                    <include>**/*.py</include>-->
+<!--                </includes>-->
+<!--            </resource>-->
         </resources>
         <plugins>
             <plugin>

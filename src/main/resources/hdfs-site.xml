@@ -17,28 +17,42 @@
 <!-- Put site-specific property overrides in this file. -->
 
 <configuration>
-    <property>
-        <name>dfs.replication</name>
-        <value>3</value>
-    </property>
-    <property>
-        <name>dfs.permissions</name>
-        <value>false</value>
-    </property>
-    <property>
-        <name>dfs.permissions.enabled</name>
-        <value>false</value>
-    </property>
+
     <property>
         <name>dfs.namenode.name.dir</name>
-        <value>/usr/soft/hadoopData/namenodeData</value>
+        <value>/usr/soft/hadoop/hdfs/name</value>
+        <description>NameNode永久存储名称空间和事务日志的本地文件系统上的路径。如果这是用逗号分隔的目录列表，则将名称表复制到所有目录中，以实现冗余。</description>
     </property>
     <property>
         <name>dfs.datanode.data.dir</name>
-        <value>/usr/soft/hadoopData/datanodeData</value>
+        <value>/usr/soft/hadoop/hdfs/data</value>
+        <description>逗号分隔的DataNode本地文件系统上应存储其块的路径列表。</description>
+    </property>
+
+    <property>
+        <name>dfs.replication</name>
+        <value>1</value>  <!--TODO: 注意修改副本数量-->
+        <description>文件的副本数量，默认为3，建议3个以上来提高数据可靠性。我们为了节省磁盘只使用一个副本。</description>
+    </property>
+    <property>
+        <name>dfs.blocksize</name>
+        <value>64M</value>  <!--TODO: 注意修改数据块大小 -->
+        <description>每个HDFS数据块的大小，默认为134217728=128MB，一般的大型文件系统的块大小会设为256MB。我们为了更细粒度利用利用磁盘空间使用64MB。</description>
     </property>
     <property>
         <name>dfs.namenode.handler.count</name>
-        <value>27</value>
+        <value>27</value> <!--TODO: 注意修改RPC线程数 -->
+        <description>可处理NameNode服务器RPC请求的线程数。默认为10。</description>
+    </property>
+
+    <property>
+        <name>dfs.permissions.enabled</name>
+        <value>true</value>
+        <description>是否启用HDFS的权限检查功能，默认false。</description>
+    </property>
+    <property>
+        <name>dfs.namenode.acls.enabled</name>
+        <value>true</value>
+        <description>是否启用HDFS的ACL(Access Control Lists)功能，默认false。</description>
     </property>
 </configuration>
