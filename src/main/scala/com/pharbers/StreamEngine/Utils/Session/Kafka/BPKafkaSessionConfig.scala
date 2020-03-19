@@ -6,7 +6,7 @@ import org.apache.kafka.common.config.ConfigDef.{Importance, Type}
 trait BPKafkaSessionConfig {
     val defaultKafkaURL = "http://123.56.179.133:9092"
     val defaultSchemaURL = "http://123.56.179.133:8081"
-    val defaultKafkaTopic = "oss_source_1"
+    val defaultKafkaTopic = "oss_source"
 
     final val KAFKA_URL_KEY = "url"
     final val KAFKA_URL_DOC = "kafka url"

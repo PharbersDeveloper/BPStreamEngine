@@ -65,8 +65,8 @@ class BPSOssPartitionJobContainer(override val strategy: BPSKfkJobStrategy, val 
                 .partitionBy("jobId")
                 .format("parquet")
                 .outputMode("append")
-                .option("checkpointLocation", "/jobs/" +  this.id + "/checkpoint")
-                .option("path", "/jobs/" + this.id + "/" + jobId +  "/contents")
+                .option("checkpointLocation", s"/jobs/${this.id}/$jobId/checkpoint")
+                .option("path", s"/jobs/${this.id}/$jobId/contents")
                 .start()
         }
         case None => ???

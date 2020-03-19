@@ -19,7 +19,7 @@
     </property>
     <property>
         <name>yarn.resourcemanager.hostname</name>
-        <value>spark.master</value>
+        <value>starLord</value>
     </property>
     <property>
         <name>yarn.nodemanager.vmem-check-enabled</name>

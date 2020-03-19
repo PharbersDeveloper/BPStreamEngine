@@ -8,6 +8,10 @@ import json
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
+base_path = os.path.dirname(os.path.dirname(
+    os.path.abspath(__file__)))
+sys.path.append(os.getcwd())
+
 from results import ResultTag
 from results import ResultModel
 from cleaning import process

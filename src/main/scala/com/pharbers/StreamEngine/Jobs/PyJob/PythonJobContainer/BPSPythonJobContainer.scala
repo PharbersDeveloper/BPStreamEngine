@@ -106,7 +106,8 @@ class BPSPythonJobContainer(override val spark: SparkSession,
         case Some(_) =>
             //todo: 为了submit后能使用，时使用--file预先加入了file。之后可以选择将py文件放在hdfs中，这儿根据配置的hdfs目录加载
             // 目前是临时办法，打算使用 github 存放 python 脚本, 每次坚持指定分支是否有更新，然后下载并发送到 Spark
-            pyFiles.foreach(spark.sparkContext.addFile)
+	        // TODO: 本地调试打开
+//            pyFiles.foreach(spark.sparkContext.addFile)
             val job = BPSPythonJob(id, spark, inputStream, this, Map(
                 "resultPath" -> resultPath,
                 "lastMetadata" -> metadata,
