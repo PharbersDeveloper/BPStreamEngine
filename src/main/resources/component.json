@@ -34,7 +34,7 @@
     "name": "BaseNodeMsgHandler",
     "args": [],
     "config": {
-      "path": "/test/dcs/nodeMsg/"
+      "path": "/test/clock/nodeMsg/"
     }
   },
   {
