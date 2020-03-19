@@ -43,20 +43,20 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 
     // TODO: 想个办法把这个东西搞出去
     var totalRow: Long = 0
-    //	var columnNames: List[CharSequence] = Nil
-    //	var sheetName: String = ""
-    //	var dataAssetId: String = ""
+    var columnNames: List[CharSequence] = Nil
+    var sheetName: String = ""
+    var dataAssetId: String = ""
 
     override def open(): Unit = {
-
-        notFoundShouldWait(s"${jobParam("parentMetaData")}/${jobParam("parentJobId")}")
+            // TODO 在我这里基本没啥用
+//        notFoundShouldWait(s"${jobParam("parentMetaData")}/${jobParam("parentJobId")}")
         val metaData = spark.sparkContext.textFile(s"${jobParam("parentMetaData")}/${jobParam("parentJobId")}")
         val (schemaData, colNames, tabName, length, assetId) =
             writeMetaData(metaData, s"${jobParam("metaDataSavePath")}")
         totalRow = length
-        //		columnNames = colNames
-        //		sheetName = tabName
-        //		dataAssetId = assetId
+        columnNames = colNames
+        sheetName = tabName
+        dataAssetId = assetId
 
         if (schemaData.isEmpty || assetId.isEmpty) {
             // TODO: metadata中缺少schema 和 asset标识，走错误流程
@@ -66,32 +66,10 @@ class BPSSandBoxConvertSchemaJob(val id: String,
             this.close()
         } else {
             val schema = SchemaConverter.str2SqlType(schemaData)
-            notFoundShouldWait(jobParam("parentSampleData"))
-            logger.info(s"Fuck Info ${jobParam("parentSampleData")}")
+//            notFoundShouldWait(jobParam("parentSampleData"))
+            logger.info(s"parentSampleData Info ${jobParam("parentSampleData")}")
             setInputStream(schema)
-            //			// TODO: 这部分拿到任务结束在创建否则中间崩溃又要重新创建一次
-            BPSBloodJob(
-                "data_set_job",
-                new DataSet(
-                    Collections.emptyList(),
-                    dataSetId,
-                    jobParam("jobContainerId"),
-                    colNames.asJava,
-                    tabName,
-                    length,
-                    s"${jobParam("parquetSavePath")}",
-                    "SampleData")).exec()
-
-            val uploadEnd = new UploadEnd(dataSetId, assetId)
-            BPSUploadEndJob("upload_end_job", uploadEnd).exec()
-
-            pushPyjob(
-                id,
-                s"${jobParam("metaDataSavePath")}",
-                s"${jobParam("parquetSavePath")}",
-                UUID.randomUUID().toString,
-                (dataSetId :: Nil).mkString(",")
-            )
+	        
         }
     }
 
@@ -116,34 +94,50 @@ class BPSSandBoxConvertSchemaJob(val id: String,
     }
 
     override def close(): Unit = {
-        // TODO 将处理好的Schema发送邮件
-
-        //		BPSBloodJob(
-        //			"data_set_job",
-        //			new DataSet(
-        //				Collections.emptyList(),
-        //				dataSetId,
-        //				jobParam("jobContainerId"),
-        //				columnNames.asJava,
-        //				sheetName,
-        //				totalRow.toInt,
-        //				s"${jobParam("parquetSavePath")}",
-        //				"SampleData")).exec()
-        //
-        //		val uploadEnd = new UploadEnd(dataSetId, dataAssetId)
-        //		BPSUploadEndJob("upload_end_job", uploadEnd).exec()
-
+    // TODO 将处理好的Schema发送邮件
+    // TODO: 这部分拿到任务结束在创建否则中间崩溃又要重新创建一次
+        BPSBloodJob(
+            "data_set_job",
+            new DataSet(
+                Collections.emptyList(),
+                dataSetId,
+                jobParam("jobContainerId"),
+                columnNames.asJava,
+                sheetName,
+                totalRow,
+                s"${jobParam("parquetSavePath")}",
+                "SampleData")).exec()
+    
+        val uploadEnd = new UploadEnd(dataSetId, dataAssetId)
+        BPSUploadEndJob("upload_end_job", uploadEnd).exec()
+    
+        pushPyjob(
+            id,
+            s"${jobParam("metaDataSavePath")}",
+            s"${jobParam("parquetSavePath")}",
+            UUID.randomUUID().toString,
+            (dataSetId :: Nil).mkString(",")
+        )
+    
+        totalRow = null
+        columnNames = null
+        sheetName = null
+        dataAssetId = null
+        logger.debug(s"Self Close Job With ID == =====>${id}")
+        super.close()
         outputStream.foreach(_.stop())
         listeners.foreach(_.deActive())
+    
+        
     }
 
-    def notFoundShouldWait(path: String): Unit = {
-        if (!BPSHDFSFile.checkPath(path)) {
-            logger.debug(path + "文件不存在，等待 1s")
-            Thread.sleep(1000)
-            notFoundShouldWait(path)
-        }
-    }
+//    def notFoundShouldWait(path: String): Unit = {
+//        if (!BPSHDFSFile.checkPath(path)) {
+//            logger.debug(path + "文件不存在，等待 1s")
+//            Thread.sleep(1000)
+//            notFoundShouldWait(path)
+//        }
+//    }
 
     def writeMetaData(metaData: RDD[String], path: String): (String, List[CharSequence], String, Long, String) = {
         try {
