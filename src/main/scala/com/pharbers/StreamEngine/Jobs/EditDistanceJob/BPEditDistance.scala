@@ -1,14 +1,13 @@
 package com.pharbers.StreamEngine.Jobs.EditDistanceJob
 
-import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSCommonJoBStrategy
+import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSDataMartJobStrategy
 import com.pharbers.StreamEngine.Utils.StreamJob.{BPSJobContainer, BPStreamJob}
+import org.apache.kafka.common.config.ConfigDef
+import org.apache.kafka.common.config.ConfigDef.{Importance, Type}
 import org.apache.spark.sql.catalyst.encoders.RowEncoder
-import org.apache.spark.sql.catalyst.expressions.GenericRowWithSchema
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 import org.apache.spark.sql.functions._
-import org.apache.spark.storage.StorageLevel
-
-import scala.collection.mutable
+import BPEditDistance._
 
 /** 功能描述
   *
@@ -21,14 +20,16 @@ case class BPEditDistance(jobContainer: BPSJobContainer, spark: SparkSession, co
 
     import spark.implicits._
 
-    override type T = BPSCommonJoBStrategy
-    override val strategy: BPSCommonJoBStrategy = BPSCommonJoBStrategy(config)
+    val configDef: ConfigDef = new ConfigDef()
+            .define(TABLE_NAME_CONFIG_KEY, Type.STRING, "cpa", Importance.HIGH, TABLE_NAME_CONFIG_DOC)
+            .define(DATA_SETS_CONFIG_KEY, Type.LIST, Importance.HIGH, DATA_SETS_CONFIG_DOC)
+    override type T = BPSDataMartJobStrategy
+    override val strategy: BPSDataMartJobStrategy = new BPSDataMartJobStrategy(config)
     val jobId: String = strategy.getJobId
     val runId: String = strategy.getRunId
     override val id: String = jobId
     //todo: 配置传入
     implicit val mappingConfig: Map[String, List[String]] = Map(
-        //        "ATC" -> List("ATC1_CODE", "ATC2_CODE", "ATC3_CODE"),
         "PRODUCT_NAME" -> List("PROD_NAME_CH"),
         "SPEC" -> List("SPEC"),
         "DOSAGE" -> List("DOSAGE"),
@@ -37,24 +38,17 @@ case class BPEditDistance(jobContainer: BPSJobContainer, spark: SparkSession, co
     )
 
     override def open(): Unit = {
-        val list = Seq("拉米夫定",
-            "阿德福韦酯",
-            "恩替卡韦",
-            "替比夫定",
-            "替诺福韦二吡呋酯")
-        inputStream = Some(spark.sql("select * from cpa")
-//                .filter(col("MOLE_NAME").isin(list: _*))
-        )
-        //        inputStream = jobContainer.inputStream
+        //        inputStream = Some(spark.sql("select * from cpa"))
+        inputStream = jobContainer.inputStream
     }
 
 
     override def exec(): Unit = {
-
         //todo: 配置传入
         val mappingDf = spark.sql("select * from prod")
+        val tableName = strategy.getJobConfig.getString(BPEditDistance.TABLE_NAME_CONFIG_KEY)
         inputStream match {
-            case Some(in) => check(in.repartition(2000), mappingDf)
+            case Some(in) => check(in.repartition(2000), mappingDf, tableName)
             case _ =>
         }
     }
@@ -64,9 +58,9 @@ case class BPEditDistance(jobContainer: BPSJobContainer, spark: SparkSession, co
         jobContainer.finishJobWithId(id)
     }
 
-    def check(in: DataFrame, checkDf: DataFrame): Unit = {
+    def check(in: DataFrame, checkDf: DataFrame, tableName: String): Unit = {
         val mapping = Map() ++ mappingConfig
-//        todo: 配置传入
+        //        todo: 配置传入
         val repartitionByIdNum = 50
         val inDfRename = in.columns.foldLeft(in)((l, r) =>
             l.withColumnRenamed(r, s"in_$r"))
@@ -110,28 +104,29 @@ case class BPEditDistance(jobContainer: BPSJobContainer, spark: SparkSession, co
         val filterMinDistanceDf = humanReplace(spark.read.parquet(s"/user/dcs/test/tmp/res_$id").repartitionByRange($"in_MOLE_NAME"), humanReplaceDf)
 
         val cpaVersion = in.select("version").take(1).head.getAs[String]("version")
-        //todo: 从prod表中获取
-        val prodVersion = "0.0.2"
-        //todo: 生成逻辑
-        val version = "0.0.5_test"
+        val prodVersion = checkDf.select("version").take(1).head.getAs[String]("version")
+        val tables = spark.sql("show tables").select("tableName").collect().map(x => x.getString(0))
+        val version = if (tables.contains(s"${tableName}_new")) {
+            val old = spark.sql(s"select version from $tableName limit 1").take(1).head.getString(0).split("\\.")
+            s"${old.head}.${old(1)}.${old(2).toInt + 1}"
+        } else {
+            "0.0.1"
+        }
         val intColumnsExpr = in.columns.map(x => s"in_$x as $x").toList
-        //todo: 未更改列但是增加了id的cpa，因为更改了运算逻辑所以不能这样存了。可以通过distance获取
-        //        filterMinDistanceDf.selectExpr("id" +: intColumnsExpr: _*)
-        //                .write
-        //                .mode("overwrite")
-        //                .parquet(s"/user/dcs/test/BPStreamEngine/cpa_edit_distance/old_cpa_${cpaVersion}_${prodVersion}_$version")
 
         val replaceLogDf = createReplaceLog(filterMinDistanceDf, in.columns)
-
+        val replaceUrl = s"/common/public/${tableName}_replace/${tableName}_${cpaVersion}_${prodVersion}_replace/$version"
         replaceLogDf.filter("canReplace = true and distance != 0")
                 .selectExpr(List("ID", "COL_NAME", "ORIGIN", "check as DEST") ++ in.columns.zipWithIndex.map(x => s"cols[${x._2}] as ORIGIN_${x._1}").toList: _*)
                 .write
                 //                .bucketBy(11, "ORIGIN_MOLE_NAME")
                 .partitionBy("ORIGIN_MOLE_NAME")
                 .mode("overwrite")
-                .option("path", s"/common/public/cpa_replace/cpa_${cpaVersion}_${prodVersion}_${version}_replace")
-                .saveAsTable(s"cpa_replace")
+                .option("path", replaceUrl)
+                .saveAsTable(s"${tableName}_replace")
+        strategy.pushDataSet(s"${tableName}_replace", version, replaceUrl, "overwrite")
 
+        val noReplaceUrl = s"/common/public/${tableName}_no_replace/${tableName}_${cpaVersion}_${prodVersion}_no_replace/$version"
         replaceLogDf.filter("canReplace = false")
                 .selectExpr(List("ID", "COL_NAME", "ORIGIN", "check as CANDIDATE", "DISTANCE") ++ in.columns.zipWithIndex.map(x => s"cols[${x._2}] as ORIGIN_${x._1}").toList: _*)
                 .withColumn("CANDIDATE", array($"CANDIDATE"))
@@ -139,17 +134,19 @@ case class BPEditDistance(jobContainer: BPSJobContainer, spark: SparkSession, co
                 //                .bucketBy(11, "ORIGIN_MOLE_NAME")
                 .partitionBy("ORIGIN_MOLE_NAME")
                 .mode("overwrite")
-                .option("path", s"/common/public/cpa_no_replace/cpa_${cpaVersion}_${prodVersion}_${version}_no_replace")
-                .saveAsTable(s"cpa_no_replace")
+                .option("path", noReplaceUrl)
+                .saveAsTable(s"${tableName}_no_replace")
+
+        strategy.pushDataSet(s"${tableName}_no_replace", version, noReplaceUrl, "overwrite")
 
         val res = mapping.keys.foldLeft(filterMinDistanceDf)((df, s) => replaceWithDistance(s, df))
-
+        val newCpaUrl = s"/common/public/${tableName}_new/${tableName}_${cpaVersion}_${prodVersion}_new/$version"
         res.selectExpr(List("id", "check_PACK_ID as PACK_ID") ::: intColumnsExpr: _*)
                 .write
                 .mode("overwrite")
-                .option("path", s"/common/public/cpa_new/cpa_${cpaVersion}_${prodVersion}_$version")
-                .saveAsTable(s"cpa_new")
-
+                .option("path", newCpaUrl)
+                .saveAsTable(s"${tableName}_new")
+        strategy.pushDataSet(s"${tableName}_new", version, noReplaceUrl, "overwrite")
     }
 
 
@@ -171,7 +168,7 @@ case class BPEditDistance(jobContainer: BPSJobContainer, spark: SparkSession, co
         //todo: 这儿filter掉了没有和prod匹配上的，如果逻辑需要保留全部这儿需要去除并且将这儿filter放在后面createReplaceLog的逻辑
         distanceDf.filter("check_MOLE_NAME_CH != ''")
                 .groupByKey(x => x.getAs[Long]("id"))
-                .mapGroups((id, row) => row.reduce((l, r) => {
+                .mapGroups((_, row) => row.reduce((l, r) => {
                     val func: Row => Int = row => mapping.keySet.foldLeft(0)((x, y) => x + row.getAs[Seq[String]](s"${y}_distance")(2).toInt)
                     val leftSum = func(l)
                     val rightSum = func(r)
@@ -196,8 +193,8 @@ case class BPEditDistance(jobContainer: BPSJobContainer, spark: SparkSession, co
     private def humanReplace(filterMinDistanceDf: DataFrame, humanDf: DataFrame)(implicit mapping: Map[String, List[String]]): DataFrame = {
         val keys = List("MOLE_NAME", "PRODUCT_NAME", "SPEC", "DOSAGE", "PACK_QTY", "MANUFACTURER_NAME")
         val joinDf = filterMinDistanceDf
-                        .withColumn("in_min", concat(keys.map(x => col(s"in_$x")): _*))
-//                .withColumn("in_min", concat(col("in_MOLE_NAME") +: mapping.keys.toList.map(x => col(s"in_$x")): _*))
+                .withColumn("in_min", concat(keys.map(x => col(s"in_$x")): _*))
+                //                .withColumn("in_min", concat(col("in_MOLE_NAME") +: mapping.keys.toList.map(x => col(s"in_$x")): _*))
                 .join(humanDf, $"in_min" === $"min", "left")
         mapping.keys.foldLeft(joinDf)((df, key) => {
             df.withColumn(s"${key}_distance", when($"min".isNull, col(s"${key}_distance"))
@@ -209,10 +206,14 @@ case class BPEditDistance(jobContainer: BPSJobContainer, spark: SparkSession, co
             )
         }).drop("in_min" +: humanDf.columns: _*)
     }
-
 }
 
 object BPEditDistance extends Serializable {
+    final val TABLE_NAME_CONFIG_KEY = "tableName"
+    final val TABLE_NAME_CONFIG_DOC = "need check table name"
+    final val DATA_SETS_CONFIG_KEY = "dataSets"
+    final val DATA_SETS_CONFIG_DOC = "dataSet ids"
+
     def checkColumnsFunc(map: Map[String, Int]): Boolean = {
         map.forall(r => (r._1.length / 5 + 1) >= r._2)
     }
@@ -246,24 +247,3 @@ object BPEditDistance extends Serializable {
     }
 }
 
-
-object TestBPEditDistance extends App {
-
-    import com.pharbers.StreamEngine.Utils.Session.Spark.BPSparkSession
-
-    val spark = BPSparkSession()
-    spark.sparkContext.setLogLevel("INFO")
-
-    import spark.implicits._
-    //    val jobContainer = new BPSJobContainer() {
-    //        override type T = BPSCommonJoBStrategy
-    //        override val strategy: BPSCommonJoBStrategy = null
-    //        override val id: String = ""
-    //        override val spark: SparkSession = null
-    //    }
-    //    jobContainer.inputStream = Some(spark.sql("select * from cpa"))
-
-    val job = BPEditDistance(null, spark, Map("jobId" -> "test_0316", "runId" -> "test_0316"))
-    job.open()
-    job.exec()
-}

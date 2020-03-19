@@ -1,16 +1,20 @@
 package com.pharbers.StreamEngine.Jobs.CpaCleanJob
 
-import java.util.UUID
+import java.util.{Collections, UUID}
 
 import BPSCpaCleanJob._
+import com.pharbers.StreamEngine.Jobs.SandBoxJob.BloodJob.BPSBloodJob
 import com.pharbers.StreamEngine.Utils.Config.BPSConfig
-import com.pharbers.StreamEngine.Utils.Session.Spark.BPSparkSession
-import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSJobStrategy
+
+import collection.JavaConverters._
+import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.{BPSCommonJoBStrategy, BPSDataMartJobStrategy}
 import com.pharbers.StreamEngine.Utils.StreamJob.{BPSJobContainer, BPStreamJob}
+import com.pharbers.kafka.schema.{AssetDataMart, DataSet}
 import org.apache.kafka.common.config.ConfigDef
 import org.apache.kafka.common.config.ConfigDef.{Importance, Type}
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions._
+import org.bson.types.ObjectId
 
 /** 功能描述
   *
@@ -25,17 +29,22 @@ case class BPSCpaCleanJob(jobContainer: BPSJobContainer, spark: SparkSession, co
 
     import spark.implicits._
 
-    override type T = BPSJobStrategy
-    override val strategy: BPSJobStrategy = null
-    private val jobConfig: BPSConfig = BPSConfig(configDef, config)
-    val jobId: String = jobConfig.getString(JOB_ID_CONFIG_KEY)
-    val runId: String = jobConfig.getString(RUN_ID_CONFIG_KEY)
+    val configDef: ConfigDef = new ConfigDef()
+            .define(HOSP_MAPPING_PATH_KEY, Type.STRING, UUID.randomUUID().toString, Importance.HIGH, HOSP_MAPPING_PATH_DOC)
+            .define(MKT_MAPPING_PATH_KEY, Type.STRING, UUID.randomUUID().toString, Importance.HIGH, MKT_MAPPING_PATH_DOC)
+            .define(PARENTS_CONFIG_KEY, Type.LIST,  Importance.HIGH, PARENTS_CONFIG_DOC)
+
+    override type T = BPSDataMartJobStrategy
+    override val strategy: BPSDataMartJobStrategy = new BPSDataMartJobStrategy(config, configDef)
+    private val jobConfig: BPSConfig = strategy.getJobConfig
+    val jobId: String = strategy.getJobId
+    val runId: String = strategy.getRunId
     override val id: String = jobId
 
     override def open(): Unit = {
         spark.read
                 .format("csv")
-                .option("header", true)
+                .option("header", "true")
                 .option("delimiter", ",")
                 .load(jobConfig.getString(HOSP_MAPPING_PATH_KEY))
                 .select("`PHA.ID.x`", "BI_hospital_code")
@@ -44,7 +53,7 @@ case class BPSCpaCleanJob(jobContainer: BPSJobContainer, spark: SparkSession, co
 
         spark.read
                 .format("csv")
-                .option("header", true)
+                .option("header", "true")
                 .option("delimiter", ",")
                 .load(jobConfig.getString(MKT_MAPPING_PATH_KEY))
                 .select("mkt", "molecule_name")
@@ -54,12 +63,23 @@ case class BPSCpaCleanJob(jobContainer: BPSJobContainer, spark: SparkSession, co
 
     override def exec(): Unit = {
         val janssen = spark.sql(joinMkt)
+        val tableName = "CPA_Janssen"
+        val tables = spark.sql("show tables").select("tableName").collect().map(x => x.getString(0))
+        val version = if (tables.contains(tableName)) {
+            val old = spark.sql(s"select version from $tableName limit 1").take(1).head.getString(0).split("\\.")
+            s"${old.head}.${old(1)}.${old(2).toInt + 1}"
+        } else {
+            "0.0.1"
+        }
+        val url = s"/common/public/$tableName/$version"
+        spark.sql(s"drop table $tableName")
         spark.sql("select *, '' as PHA_ID from cpa where company != 'Janssen'")
                 .unionByName(janssen)
                 .write
-                .mode("append")
-                .option("path", s"/common/public/CPA_Janssen/0.0.8")
-                .saveAsTable("CPA_Janssen")
+                .mode("overwrite")
+                .option("path", url)
+                .saveAsTable(tableName)
+        strategy.pushDataSet(tableName, version, url, "overwrite")
     }
 
     override def close(): Unit = {
@@ -68,22 +88,12 @@ case class BPSCpaCleanJob(jobContainer: BPSJobContainer, spark: SparkSession, co
 }
 
 object BPSCpaCleanJob {
-    final val JOB_ID_CONFIG_KEY = "jobId"
-    final val JOB_ID_CONFIG_DOC = "job id"
-    final val RUN_ID_CONFIG_KEY = "runId"
-    final val RUN_ID_CONFIG_DOC = "run id"
-    val CPA_VERSION_KEY = "version"
-    final val CPA_VERSION_DOC = "save cpa version"
-    val HOSP_MAPPING_PATH_KEY = "hospMapping"
+    final val HOSP_MAPPING_PATH_KEY = "hospMapping"
     final val HOSP_MAPPING_PATH_DOC = "hosp mapping csv path"
-    val MKT_MAPPING_PATH_KEY = "marketMapping"
+    final val MKT_MAPPING_PATH_KEY = "marketMapping"
     final val MKT_MAPPING_PATH_DOC = "market mapping csv file path"
-    val configDef: ConfigDef = new ConfigDef()
-            .define(JOB_ID_CONFIG_KEY, Type.STRING, UUID.randomUUID().toString, Importance.HIGH, JOB_ID_CONFIG_DOC)
-            .define(RUN_ID_CONFIG_KEY, Type.STRING, UUID.randomUUID().toString, Importance.HIGH, RUN_ID_CONFIG_DOC)
-            .define(CPA_VERSION_KEY, Type.STRING, UUID.randomUUID().toString, Importance.HIGH, CPA_VERSION_DOC)
-            .define(HOSP_MAPPING_PATH_KEY, Type.STRING, UUID.randomUUID().toString, Importance.HIGH, HOSP_MAPPING_PATH_DOC)
-            .define(MKT_MAPPING_PATH_KEY, Type.STRING, UUID.randomUUID().toString, Importance.HIGH, MKT_MAPPING_PATH_DOC)
+    final val PARENTS_CONFIG_KEY = "dataSets"
+    final val PARENTS_CONFIG_DOC = "parent dataset id list"
 
     val filterCompanyAndCleanYearMonth: String =
         """SELECT
@@ -168,59 +178,4 @@ object BPSCpaCleanJob {
            | on
            | cpa_hosp.MOLE_NAME = mkt_mapping.molecule_name
          """.stripMargin
-}
-
-object test extends App {
-
-    import com.pharbers.StreamEngine.Utils.Session.Spark.BPSparkSession
-
-    val spark = BPSparkSession()
-    val job = BPSCpaCleanJob(null, spark, Map(
-        "jobId" -> "test",
-        "runId" -> "test",
-        "version" -> "0",
-        "hospMapping" -> "/user/dcs/jassenClean/Hospital_Code_PHA_final_2.csv",
-        "marketMapping" -> "/user/dcs/jassenClean/Product_matching_table_packid_v2.csv"
-    ))
-    job.open()
-    job.exec()
-}
-
-//Janssen补数用
-object add extends App{
-    import org.apache.spark.sql.functions._
-    val spark = BPSparkSession()
-    val df = spark.read.format("csv")
-            .option("header", true)
-            .option("delimiter", ",")
-            .load("/user/dcs/jassenClean/jassen_add.csv")
-            .selectExpr(
-                "'Janssen' as COMPANY",
-                "'CPA&GYC' as SOURCE",
-                "province_name as PROVINCE_NAME",
-                "city_name as CITY_NAME",
-                "BI_Code as HOSP_CODE",
-                "hospital_name as HOSP_NAME",
-                "atc3_code as ATC",
-                "molecule_name as MOLE_NAME",
-                "product_name as PRODUCT_NAME",
-                "company_name as MANUFACTURER_NAME",
-                "pack_description as SPEC",
-                "formulation_name as DOSAGE",
-                "year_month as YEAR",
-                "year_month as QUARTER",
-                "year_month as MONTH",
-                "cast(regexp_replace(sales_value, ',', '') as double) as SALES_VALUE" ,
-                "total_units as SALES_QTY"
-            ).withColumn("PREFECTURE_NAME", lit(null))
-            .withColumn("HOSP_LEVEL", lit(null))
-            .withColumn("KEY_BRAND", lit(null))
-            .withColumn("PACK", lit(null))
-            .withColumn("PACK_QTY", lit(null))
-            .withColumn("DELIVERY_WAY", lit(null))
-            .withColumn("MKT", lit(null))
-            .withColumn("version", lit("0.0.9"))
-            .write.mode("append")
-            .option("path", "/common/public/cpa/0.0.9")
-            .saveAsTable("cpa")
 }
