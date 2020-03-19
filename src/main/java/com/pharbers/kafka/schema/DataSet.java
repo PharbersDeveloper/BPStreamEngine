@@ -10,15 +10,15 @@ import org.apache.avro.specific.SpecificData;
 @SuppressWarnings("all")
 @org.apache.avro.specific.AvroGenerated
 public class DataSet extends org.apache.avro.specific.SpecificRecordBase implements org.apache.avro.specific.SpecificRecord {
-  private static final long serialVersionUID = -902128848882024924L;
-  public static final org.apache.avro.Schema SCHEMA$ = new org.apache.avro.Schema.Parser().parse("{\"type\":\"record\",\"name\":\"DataSet\",\"namespace\":\"com.pharbers.kafka.schema\",\"fields\":[{\"name\":\"parentIds\",\"type\":{\"type\":\"array\",\"items\":\"string\"}},{\"name\":\"mongoId\",\"type\":\"string\"},{\"name\":\"jobContainerId\",\"type\":\"string\"},{\"name\":\"colName\",\"type\":{\"type\":\"array\",\"items\":\"string\"}},{\"name\":\"tabName\",\"type\":\"string\"},{\"name\":\"length\",\"type\":\"int\"},{\"name\":\"url\",\"type\":\"string\"},{\"name\":\"description\",\"type\":\"string\"}]}");
+  private static final long serialVersionUID = -841651389049006345L;
+  public static final org.apache.avro.Schema SCHEMA$ = new org.apache.avro.Schema.Parser().parse("{\"type\":\"record\",\"name\":\"DataSet\",\"namespace\":\"com.pharbers.kafka.schema\",\"fields\":[{\"name\":\"parentIds\",\"type\":{\"type\":\"array\",\"items\":\"string\"}},{\"name\":\"mongoId\",\"type\":\"string\"},{\"name\":\"jobContainerId\",\"type\":\"string\"},{\"name\":\"colName\",\"type\":{\"type\":\"array\",\"items\":\"string\"}},{\"name\":\"tabName\",\"type\":\"string\"},{\"name\":\"length\",\"type\":\"long\"},{\"name\":\"url\",\"type\":\"string\"},{\"name\":\"description\",\"type\":\"string\"}]}");
   public static org.apache.avro.Schema getClassSchema() { return SCHEMA$; }
   @Deprecated public java.util.List<java.lang.CharSequence> parentIds;
   @Deprecated public java.lang.CharSequence mongoId;
   @Deprecated public java.lang.CharSequence jobContainerId;
   @Deprecated public java.util.List<java.lang.CharSequence> colName;
   @Deprecated public java.lang.CharSequence tabName;
-  @Deprecated public int length;
+  @Deprecated public long length;
   @Deprecated public java.lang.CharSequence url;
   @Deprecated public java.lang.CharSequence description;
 
@@ -40,7 +40,7 @@ public class DataSet extends org.apache.avro.specific.SpecificRecordBase impleme
    * @param url The new value for url
    * @param description The new value for description
    */
-  public DataSet(java.util.List<java.lang.CharSequence> parentIds, java.lang.CharSequence mongoId, java.lang.CharSequence jobContainerId, java.util.List<java.lang.CharSequence> colName, java.lang.CharSequence tabName, java.lang.Integer length, java.lang.CharSequence url, java.lang.CharSequence description) {
+  public DataSet(java.util.List<java.lang.CharSequence> parentIds, java.lang.CharSequence mongoId, java.lang.CharSequence jobContainerId, java.util.List<java.lang.CharSequence> colName, java.lang.CharSequence tabName, java.lang.Long length, java.lang.CharSequence url, java.lang.CharSequence description) {
     this.parentIds = parentIds;
     this.mongoId = mongoId;
     this.jobContainerId = jobContainerId;
@@ -76,7 +76,7 @@ public class DataSet extends org.apache.avro.specific.SpecificRecordBase impleme
     case 2: jobContainerId = (java.lang.CharSequence)value$; break;
     case 3: colName = (java.util.List<java.lang.CharSequence>)value$; break;
     case 4: tabName = (java.lang.CharSequence)value$; break;
-    case 5: length = (java.lang.Integer)value$; break;
+    case 5: length = (java.lang.Long)value$; break;
     case 6: url = (java.lang.CharSequence)value$; break;
     case 7: description = (java.lang.CharSequence)value$; break;
     default: throw new org.apache.avro.AvroRuntimeException("Bad index");
@@ -167,7 +167,7 @@ public class DataSet extends org.apache.avro.specific.SpecificRecordBase impleme
    * Gets the value of the 'length' field.
    * @return The value of the 'length' field.
    */
-  public java.lang.Integer getLength() {
+  public java.lang.Long getLength() {
     return length;
   }
 
@@ -175,7 +175,7 @@ public class DataSet extends org.apache.avro.specific.SpecificRecordBase impleme
    * Sets the value of the 'length' field.
    * @param value the value to set.
    */
-  public void setLength(java.lang.Integer value) {
+  public void setLength(java.lang.Long value) {
     this.length = value;
   }
 
@@ -248,7 +248,7 @@ public class DataSet extends org.apache.avro.specific.SpecificRecordBase impleme
     private java.lang.CharSequence jobContainerId;
     private java.util.List<java.lang.CharSequence> colName;
     private java.lang.CharSequence tabName;
-    private int length;
+    private long length;
     private java.lang.CharSequence url;
     private java.lang.CharSequence description;
 
@@ -536,7 +536,7 @@ public class DataSet extends org.apache.avro.specific.SpecificRecordBase impleme
       * Gets the value of the 'length' field.
       * @return The value.
       */
-    public java.lang.Integer getLength() {
+    public java.lang.Long getLength() {
       return length;
     }
 
@@ -545,7 +545,7 @@ public class DataSet extends org.apache.avro.specific.SpecificRecordBase impleme
       * @param value The value of 'length'.
       * @return This builder.
       */
-    public com.pharbers.kafka.schema.DataSet.Builder setLength(int value) {
+    public com.pharbers.kafka.schema.DataSet.Builder setLength(long value) {
       validate(fields()[5], value);
       this.length = value;
       fieldSetFlags()[5] = true;
@@ -657,7 +657,7 @@ public class DataSet extends org.apache.avro.specific.SpecificRecordBase impleme
         record.jobContainerId = fieldSetFlags()[2] ? this.jobContainerId : (java.lang.CharSequence) defaultValue(fields()[2]);
         record.colName = fieldSetFlags()[3] ? this.colName : (java.util.List<java.lang.CharSequence>) defaultValue(fields()[3]);
         record.tabName = fieldSetFlags()[4] ? this.tabName : (java.lang.CharSequence) defaultValue(fields()[4]);
-        record.length = fieldSetFlags()[5] ? this.length : (java.lang.Integer) defaultValue(fields()[5]);
+        record.length = fieldSetFlags()[5] ? this.length : (java.lang.Long) defaultValue(fields()[5]);
         record.url = fieldSetFlags()[6] ? this.url : (java.lang.CharSequence) defaultValue(fields()[6]);
         record.description = fieldSetFlags()[7] ? this.description : (java.lang.CharSequence) defaultValue(fields()[7]);
         return record;
@@ -672,5 +672,6 @@ public class DataSet extends org.apache.avro.specific.SpecificRecordBase impleme
 
   private static final org.apache.avro.io.DatumReader
     READER$ = new org.apache.avro.specific.SpecificDatumReader(SCHEMA$);
+
 
 }

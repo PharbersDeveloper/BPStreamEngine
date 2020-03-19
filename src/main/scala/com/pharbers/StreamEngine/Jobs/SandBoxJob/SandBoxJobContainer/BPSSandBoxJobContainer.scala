@@ -1,6 +1,5 @@
 package com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxJobContainer
 
-import com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxJobContainer.Listener.BPKafkaJobListener
 import com.pharbers.StreamEngine.Utils.Event.EventHandler.BPSEventHandler
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamListener
 import com.pharbers.StreamEngine.Utils.StreamJob.{BPDynamicStreamJob, BPSJobContainer}
@@ -13,26 +12,33 @@ object BPSSandBoxJobContainer {
 }
 
 class BPSSandBoxJobContainer( val spark: SparkSession, config: Map[String, String])
-	extends BPSJobContainer
-		with BPDynamicStreamJob {
+	extends BPSJobContainer with BPDynamicStreamJob {
 	
 	val id: String = ""//UUID.randomUUID().toString
 	type T = BPSKfkJobStrategy
 	val strategy: T  = null
-	
+	var sbcm: Option[BPSandBoxConsumerManager] = None
 	override def open(): Unit = {
 		// TODO log
 		logger.info("初始化SandBoxJobContainer")
+		if (sbcm.isEmpty) {
+			sbcm = Some(BPSandBoxConsumerManager("sb_file_meta_job" :: Nil,spark))
+		}
 	}
 	
 	override def exec(): Unit = {
 		// TODO log
 		logger.info("执行SandBoxJobContainer")
-		val job = BPKafkaJobListener(this.id, spark, this)
-		job.exec()
+		sbcm.get.exec()
 	}
 	
 	override def registerListeners(listener: BPStreamListener): Unit = {}
 	
 	override def handlerExec(handler: BPSEventHandler): Unit = {}
+	
+	override def close(): Unit = {
+		// TODO: Consumer关闭
+		sbcm.get.close()
+		super.close()
+	}
 }

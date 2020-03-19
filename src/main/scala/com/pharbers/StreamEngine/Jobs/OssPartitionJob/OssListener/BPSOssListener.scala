@@ -107,5 +107,6 @@ case class BPSOssListener(spark: SparkSession, job: BPStreamJob, jobId: String) 
         val pkp = new PharbersKafkaProducer[String, FileMetaData]
         val fu = pkp.produce(topic, msg.getJobId.toString, msg)
         logger.info(fu.get(10, TimeUnit.SECONDS))
+        pkp.producer.close()
     }
 }

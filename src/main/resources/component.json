@@ -7,7 +7,7 @@
       "app.name": "bp-stream-engine",
       "master": "yarn",
       "spark.configs.path": "src/main/resources/sparkConfig.properties",
-      "log.level": "ERROR",
+      "log.level": "INFO",
       "run.model": "client"
     }
   },

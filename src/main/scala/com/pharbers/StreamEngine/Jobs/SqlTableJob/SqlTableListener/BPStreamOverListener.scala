@@ -9,7 +9,9 @@ import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamListener
 import com.pharbers.StreamEngine.Utils.HDFS.BPSHDFSFile
 import org.apache.kafka.common.config.ConfigDef
 import org.apache.kafka.common.config.ConfigDef.{Importance, Type}
-import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.{DataFrame, SparkSession}
+import BPStreamOverListener._
+import com.pharbers.StreamEngine.Utils.Schema.Spark.BPSParseSchema
 
 /** 功能描述
   *
@@ -21,29 +23,35 @@ import org.apache.spark.sql.DataFrame
   * @note 一些值得注意的地方
   */
 case class BPStreamOverListener(job: BPSqlTableJobContainer, config: Map[String, String]) extends BPStreamListener{
-    final val LENGTH_CONFIG_KEY = "length"
-    final val LENGTH_CONFIG_DOC = "end length"
-    final val ROW_RECORD_PATH_CONFIG_KEY = "rowRecordPath"
-    final val ROW_RECORD_PATH_CONFIG_DOC = "already read row record path"
-    val configDef: ConfigDef = new ConfigDef()
+    lazy val configDef: ConfigDef = new ConfigDef()
             .define(LENGTH_CONFIG_KEY, Type.LONG, 0L, Importance.HIGH, LENGTH_CONFIG_DOC)
             .define(ROW_RECORD_PATH_CONFIG_KEY, Type.STRING, "", Importance.HIGH, ROW_RECORD_PATH_CONFIG_DOC)
+            .define(METADATA_PATH_CONFIG_KEY, Type.STRING, "", Importance.HIGH, METADATA_PATH_CONFIG_DOC)
+
     private val listenerConfig: BPSConfig = BPSConfig(configDef, config)
 
     override def trigger(e: BPSEvents): Unit = {
-        val rows = BPSHDFSFile.readHDFS(listenerConfig.getString(ROW_RECORD_PATH_CONFIG_KEY)).map(_.toLong).sum
-        logger.debug(s"row record path: ${listenerConfig.getString(ROW_RECORD_PATH_CONFIG_KEY)}")
-        logger.debug(s"rows: $rows")
-        logger.debug(s"length: ${listenerConfig.getLong(LENGTH_CONFIG_KEY)}")
-        if (rows >= listenerConfig.getLong(LENGTH_CONFIG_KEY)) {
-            logger.info(s"启动sql job")
-            val sqlJob = BPSqlTableJob(job, job.spark, config)
-            job.addJob2Container(sqlJob)
-        } else {
-            //todo: test用
-            logger.error(s"row record path: ${listenerConfig.getString(ROW_RECORD_PATH_CONFIG_KEY)}")
-            logger.error(s"rows: $rows")
-            logger.error(s"length: ${listenerConfig.getLong(LENGTH_CONFIG_KEY)}")
+        config("taskType") match {
+            case "end" =>
+                job.runJob()
+            case _ =>
+                val rows = BPSHDFSFile.readHDFS(listenerConfig.getString(ROW_RECORD_PATH_CONFIG_KEY)).map(_.toLong).sum
+                logger.debug(s"row record path: ${listenerConfig.getString(ROW_RECORD_PATH_CONFIG_KEY)}")
+                logger.debug(s"rows: $rows")
+                logger.debug(s"length: ${listenerConfig.getLong(LENGTH_CONFIG_KEY)}")
+                if (rows >= listenerConfig.getLong(LENGTH_CONFIG_KEY)) {
+                    logger.info(s"启动sql job")
+                    val metadataPath: String = listenerConfig.getString(METADATA_PATH_CONFIG_KEY)
+                    val metadata = BPSParseSchema.parseMetadata(metadataPath)(job.spark)
+                    val providers = metadata.getOrElse("providers", List("")).asInstanceOf[List[String]].mkString(",")
+
+                    job.addJobConfig(config ++ Map("providers" -> providers))
+                } else {
+                    //todo: test用
+                    logger.error(s"row record path: ${listenerConfig.getString(ROW_RECORD_PATH_CONFIG_KEY)}")
+                    logger.error(s"rows: $rows")
+                    logger.error(s"length: ${listenerConfig.getLong(LENGTH_CONFIG_KEY)}")
+                }
         }
         deActive()
     }
@@ -51,4 +59,13 @@ case class BPStreamOverListener(job: BPSqlTableJobContainer, config: Map[String,
     override def active(s: DataFrame): Unit = BPSLocalChannel.registerListener(this)
 
     override def deActive(): Unit = BPSLocalChannel.unRegisterListener(this)
+}
+
+object BPStreamOverListener{
+    lazy final val LENGTH_CONFIG_KEY = "length"
+    lazy final val LENGTH_CONFIG_DOC = "end length"
+    lazy final val ROW_RECORD_PATH_CONFIG_KEY = "rowRecordPath"
+    lazy final val ROW_RECORD_PATH_CONFIG_DOC = "already read row record path"
+    final val METADATA_PATH_CONFIG_KEY = "metadataPath"
+    final val METADATA_PATH_CONFIG_DOC = "metadataPath"
 }

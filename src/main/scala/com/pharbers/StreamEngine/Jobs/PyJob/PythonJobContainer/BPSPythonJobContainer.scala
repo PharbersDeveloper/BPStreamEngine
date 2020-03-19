@@ -82,6 +82,8 @@ class BPSPythonJobContainer(override val spark: SparkSession,
         val reading = spark.readStream
                 .schema(loadSchema)
                 .option("startingOffsets", "earliest")
+                //todo: 设置触发的文件数，以控制内存 效果待测试
+                .option("maxFilesPerTrigger", 4)
                 .parquet(filesPath)
 
         inputStream = Some(reading)
@@ -94,7 +96,7 @@ class BPSPythonJobContainer(override val spark: SparkSession,
             id,
             Collections.emptyList(),
             "",
-            metadata("length").asInstanceOf[Double].toInt,
+            metadata("length").asInstanceOf[Double].toLong,
             s"$resultPath/$id/contents",
             "Python 清洗 Job")
         BPSBloodJob("data_set_job", dfs).exec()

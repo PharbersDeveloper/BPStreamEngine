@@ -5,12 +5,12 @@ import java.util.UUID
 import java.util.concurrent.TimeUnit
 
 import com.pharbers.StreamEngine.Utils.Component.Dynamic.JobMsg
-import com.pharbers.StreamEngine.Utils.Kafka.ProducerSingleton
 import com.pharbers.kafka.producer.PharbersKafkaProducer
 import com.pharbers.kafka.schema.{BPJob, HiveTask, OssTask}
 import io.confluent.ksql.avro_schemas.KsqlDataSourceSchema
 import org.apache.avro.Schema
 import org.apache.avro.generic.{GenericData, GenericRecord}
+import org.apache.avro.specific.SpecificRecord
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.scalatest.FunSuite
 
@@ -105,6 +105,7 @@ class PushJobTest extends FunSuite {
             ("001" :: Nil).mkString(",")
         )
     }
+
     
     // TODO：因还未曾与老齐对接口，暂时放到这里
     private def pushPyjob(runId: String,
@@ -140,8 +141,10 @@ class PushJobTest extends FunSuite {
         val jobMsg = write(job)
         val topic = "stream_job_submit"
         val bpJob = new BPJob(parentJobId, traceId, `type`, jobMsg)
-        val fu = ProducerSingleton.getIns.produce(topic, parentJobId, bpJob)
+        val producerInstance = new PharbersKafkaProducer[String, SpecificRecord]
+        val fu = producerInstance.produce(topic, parentJobId, bpJob)
         println(fu.get(10, TimeUnit.SECONDS))
+        producerInstance.producer.close()
         
     }
 }
