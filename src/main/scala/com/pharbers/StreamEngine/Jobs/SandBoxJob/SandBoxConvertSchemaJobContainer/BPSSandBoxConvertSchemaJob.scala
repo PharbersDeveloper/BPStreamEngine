@@ -42,10 +42,10 @@ class BPSSandBoxConvertSchemaJob(val id: String,
     import spark.implicits._
 
     // TODO: 想个办法把这个东西搞出去
-    var totalRow: Long = 0
+    var totalRow: Option[Long] = None
     var columnNames: List[CharSequence] = Nil
-    var sheetName: String = ""
-    var dataAssetId: String = ""
+    var sheetName: Option[String] = None
+    var dataAssetId: Option[String] = None
 
     override def open(): Unit = {
             // TODO 在我这里基本没啥用
@@ -53,10 +53,10 @@ class BPSSandBoxConvertSchemaJob(val id: String,
         val metaData = spark.sparkContext.textFile(s"${jobParam("parentMetaData")}/${jobParam("parentJobId")}")
         val (schemaData, colNames, tabName, length, assetId) =
             writeMetaData(metaData, s"${jobParam("metaDataSavePath")}")
-        totalRow = length
+        totalRow = Some(length)
         columnNames = colNames
-        sheetName = tabName
-        dataAssetId = assetId
+        sheetName = Some(tabName)
+        dataAssetId = Some(assetId)
 
         if (schemaData.isEmpty || assetId.isEmpty) {
             // TODO: metadata中缺少schema 和 asset标识，走错误流程
@@ -69,7 +69,13 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 //            notFoundShouldWait(jobParam("parentSampleData"))
             logger.info(s"parentSampleData Info ${jobParam("parentSampleData")}")
             setInputStream(schema)
-	        
+            pushPyjob(
+                id,
+                s"${jobParam("metaDataSavePath")}",
+                s"${jobParam("parquetSavePath")}",
+                UUID.randomUUID().toString,
+                (dataSetId :: Nil).mkString(",")
+            )
         }
     }
 
@@ -86,7 +92,7 @@ class BPSSandBoxConvertSchemaJob(val id: String,
                 logger.debug(s"Parquet Save Path Your Path =======> ${jobParam("parquetSavePath")}")
 
                 outputStream = query :: outputStream
-                val listener = ConvertSchemaListener(id, jobParam("parentJobId"), spark, this, query, totalRow)
+                val listener = ConvertSchemaListener(id, jobParam("parentJobId"), spark, this, query, totalRow.get)
                 listener.active(null)
                 listeners = listener :: listeners
             case None => logger.warn("Stream Is Null")
@@ -103,26 +109,26 @@ class BPSSandBoxConvertSchemaJob(val id: String,
                 dataSetId,
                 jobParam("jobContainerId"),
                 columnNames.asJava,
-                sheetName,
-                totalRow,
+                sheetName.get,
+                totalRow.get,
                 s"${jobParam("parquetSavePath")}",
                 "SampleData")).exec()
     
-        val uploadEnd = new UploadEnd(dataSetId, dataAssetId)
+        val uploadEnd = new UploadEnd(dataSetId, dataAssetId.get)
         BPSUploadEndJob("upload_end_job", uploadEnd).exec()
+	    
+//        pushPyjob(
+//            id,
+//            s"${jobParam("metaDataSavePath")}",
+//            s"${jobParam("parquetSavePath")}",
+//            UUID.randomUUID().toString,
+//            (dataSetId :: Nil).mkString(",")
+//        )
     
-        pushPyjob(
-            id,
-            s"${jobParam("metaDataSavePath")}",
-            s"${jobParam("parquetSavePath")}",
-            UUID.randomUUID().toString,
-            (dataSetId :: Nil).mkString(",")
-        )
-    
-        totalRow = null
-        columnNames = null
-        sheetName = null
-        dataAssetId = null
+        totalRow = None
+        columnNames = Nil
+        sheetName = None
+        dataAssetId = None
         logger.debug(s"Self Close Job With ID == =====>${id}")
         super.close()
         outputStream.foreach(_.stop())
@@ -198,13 +204,13 @@ class BPSSandBoxConvertSchemaJob(val id: String,
     def setInputStream(schema: DataType): Unit ={
         val reading = spark.readStream
                 //todo: 控制文件大小，使后序流不至于一次读取太多文件，效果待测试
-                .option("maxFilesPerTrigger", 10)
+//                .option("maxFilesPerTrigger", 10)
                 .schema(StructType(
                     StructField("traceId", StringType) ::
-                            StructField("type", StringType) ::
-                            StructField("data", StringType) ::
-                            StructField("timestamp", TimestampType) ::
-                            StructField("jobId", StringType) :: Nil
+                    StructField("type", StringType) ::
+                    StructField("data", StringType) ::
+                    StructField("timestamp", TimestampType) ::
+                    StructField("jobId", StringType) :: Nil
                 ))
                 .parquet(s"${jobParam("parentSampleData")}")
                 .filter($"jobId" === jobParam("parentJobId") and $"type" === "SandBox")

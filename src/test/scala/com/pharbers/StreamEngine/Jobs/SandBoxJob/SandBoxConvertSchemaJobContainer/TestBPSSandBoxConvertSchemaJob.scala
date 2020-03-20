@@ -52,7 +52,7 @@ class TestBPSSandBoxConvertSchemaJob extends FunSuite with PhLogable{
         val convertContent = primitive ++ SchemaConverter.column2legalWithMetaDataSchema(primitive)
         implicit val formats: DefaultFormats.type = DefaultFormats
         val schemaData = write(convertContent("schema").asInstanceOf[List[Map[String, Any]]])
-        convertJob.totalRow = 4029864
+        convertJob.totalRow = Some(4029864)
         convertJob.setInputStream(SchemaConverter.str2SqlType(schemaData))
         convertJob.exec()
         ThreadExecutor.waitForShutdown()
