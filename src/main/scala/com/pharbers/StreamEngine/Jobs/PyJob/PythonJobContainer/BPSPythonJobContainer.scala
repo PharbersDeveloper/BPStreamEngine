@@ -111,7 +111,8 @@ class BPSPythonJobContainer(override val spark: SparkSession,
             val job = BPSPythonJob(id, spark, inputStream, this, Map(
                 "resultPath" -> resultPath,
                 "lastMetadata" -> metadata,
-                "partition" -> partition
+                "partition" -> partition,
+                "mongoId" -> mongoOId
             ))
             job.open()
             job.exec()

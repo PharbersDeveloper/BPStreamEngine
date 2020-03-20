@@ -7,7 +7,7 @@ import org.apache.kafka.common.config.ConfigDef.{Importance, Type}
 import org.apache.spark.sql.catalyst.encoders.RowEncoder
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 import org.apache.spark.sql.functions._
-import BPEditDistance._
+import com.pharbers.StreamEngine.Jobs.EditDistanceJob.BPEditDistance.{TABLE_NAME_CONFIG_DOC, TABLE_NAME_CONFIG_KEY, DATA_SETS_CONFIG_KEY, DATA_SETS_CONFIG_DOC}
 
 /** 功能描述
   *
