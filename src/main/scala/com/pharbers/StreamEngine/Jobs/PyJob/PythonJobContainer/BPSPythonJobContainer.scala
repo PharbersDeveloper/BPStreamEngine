@@ -74,8 +74,8 @@ class BPSPythonJobContainer(override val spark: SparkSession,
 
     override def open(): Unit = {
         notFoundShouldWait(metadataPath)
-        notFoundShouldWait(filesPath)
-
+//        notFoundShouldWait(filesPath)
+        logger.info(s"执行Python Container")
         metadata = BPSParseSchema.parseMetadata(metadataPath)(spark)
         val loadSchema = BPSParseSchema.parseSchema(metadata("schema").asInstanceOf[List[_]])
 
