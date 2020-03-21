@@ -1,10 +1,10 @@
-package com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxConvertSchemaJobContainer
+package com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxConvertSchemaJob
 
 import java.util.{Collections, UUID}
 import java.util.concurrent.TimeUnit
 
 import com.pharbers.StreamEngine.Jobs.SandBoxJob.BloodJob.BPSBloodJob
-import com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxConvertSchemaJobContainer.Listener.ConvertSchemaListener
+import com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxConvertSchemaJob.Listener.ConvertSchemaListener
 import com.pharbers.StreamEngine.Jobs.SandBoxJob.UploadEndJob.BPSUploadEndJob
 import com.pharbers.StreamEngine.Utils.Component.Dynamic.JobMsg
 import com.pharbers.StreamEngine.Utils.HDFS.BPSHDFSFile
@@ -16,7 +16,7 @@ import com.pharbers.kafka.schema.{BPJob, DataSet, UploadEnd}
 import org.apache.avro.specific.SpecificRecord
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.types._
 import org.json4s.DefaultFormats
 import org.json4s.jackson.Serialization._
@@ -27,14 +27,14 @@ object BPSSandBoxConvertSchemaJob {
     def apply(id: String,
               jobParam: Map[String, String],
               spark: SparkSession,
-              dataSetId: String): BPSSandBoxConvertSchemaJob =
-        new BPSSandBoxConvertSchemaJob(id, jobParam, spark, dataSetId)
+              df: Option[DataFrame]): BPSSandBoxConvertSchemaJob =
+        new BPSSandBoxConvertSchemaJob(id, jobParam, spark, df)
 }
 
 class BPSSandBoxConvertSchemaJob(val id: String,
                                  jobParam: Map[String, String],
                                  val spark: SparkSession,
-                                 dataSetId: String) extends BPSJobContainer {
+                                 df: Option[DataFrame]) extends BPSJobContainer {
 
     type T = BPSKfkJobStrategy
     val strategy: Null = null
@@ -66,15 +66,15 @@ class BPSSandBoxConvertSchemaJob(val id: String,
             this.close()
         } else {
             val schema = SchemaConverter.str2SqlType(schemaData)
-//            notFoundShouldWait(jobParam("parentSampleData"))
             logger.info(s"parentSampleData Info ${jobParam("parentSampleData")}")
-            setInputStream(schema)
+            setInputStream(schema, df)
+	        
             pushPyjob(
                 id,
                 s"${jobParam("metaDataSavePath")}",
                 s"${jobParam("parquetSavePath")}",
                 UUID.randomUUID().toString,
-                (dataSetId :: Nil).mkString(",")
+                (jobParam("dataSetId") :: Nil).mkString(",")
             )
         }
     }
@@ -106,7 +106,7 @@ class BPSSandBoxConvertSchemaJob(val id: String,
             "data_set_job",
             new DataSet(
                 Collections.emptyList(),
-                dataSetId,
+                jobParam("dataSetId"),
                 jobParam("jobContainerId"),
                 columnNames.asJava,
                 sheetName.get,
@@ -114,7 +114,7 @@ class BPSSandBoxConvertSchemaJob(val id: String,
                 s"${jobParam("parquetSavePath")}",
                 "SampleData")).exec()
     
-        val uploadEnd = new UploadEnd(dataSetId, dataAssetId.get)
+        val uploadEnd = new UploadEnd(jobParam("dataSetId"), dataAssetId.get)
         BPSUploadEndJob("upload_end_job", uploadEnd).exec()
 	    
 //        pushPyjob(
@@ -122,7 +122,7 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 //            s"${jobParam("metaDataSavePath")}",
 //            s"${jobParam("parquetSavePath")}",
 //            UUID.randomUUID().toString,
-//            (dataSetId :: Nil).mkString(",")
+//            (jobParam("dataSetId") :: Nil).mkString(",")
 //        )
     
         totalRow = None
@@ -171,27 +171,6 @@ class BPSSandBoxConvertSchemaJob(val id: String,
                 }
             }
             (schema, colNames, tabName, convertContent("length").toString.toLong, assetId)
-
-
-            //			val metaDataDF = SchemaConverter.column2legalWithDF("MetaData", metaData.toDF("MetaData"))
-            //			val contentMap = BPSMetaData2Map.
-            //				list2Map(metaDataDF.select("MetaData").collect().toList.map(_.getAs[String]("MetaData")))
-            //			implicit val formats: DefaultFormats.type = DefaultFormats
-            //			val schema  = write(contentMap("schema").asInstanceOf[List[Map[String, Any]]])
-            //			metaDataDF.collect().foreach(x => BPSHDFSFile.appendLine2HDFS(path, x.getAs[String]("MetaData")))
-            //
-            //			val colNames =  contentMap("schema").asInstanceOf[List[Map[String, Any]]].map(_("key").toString)
-            //			val tabName = contentMap.
-            //				getOrElse("tag", Map.empty).
-            //				asInstanceOf[Map[String, Any]].
-            //				getOrElse("sheetName", "").toString
-            //
-            //			val assetId = contentMap.
-            //				getOrElse("tag", Map.empty).
-            //				asInstanceOf[Map[String, Any]].
-            //				getOrElse("assetId", "").toString
-            //
-            //			(schema, colNames, tabName, contentMap("length").toString.toInt, assetId)
         } catch {
             case e: Exception =>
                 // TODO: 处理不了发送重试
@@ -201,25 +180,19 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 
     }
 
-    def setInputStream(schema: DataType): Unit ={
-        val reading = spark.readStream
-                //todo: 控制文件大小，使后序流不至于一次读取太多文件，效果待测试
-//                .option("maxFilesPerTrigger", 10)
-                .schema(StructType(
-                    StructField("traceId", StringType) ::
-                    StructField("type", StringType) ::
-                    StructField("data", StringType) ::
-                    StructField("timestamp", TimestampType) ::
-                    StructField("jobId", StringType) :: Nil
-                ))
-                .parquet(s"${jobParam("parentSampleData")}")
-                .filter($"jobId" === jobParam("parentJobId") and $"type" === "SandBox")
-
-        inputStream = Some(
-            SchemaConverter.column2legalWithDF("data", reading)
-                    .select(from_json($"data", schema).as("data"))
-                    .select("data.*")
-        )
+    def setInputStream(schema: DataType, df: Option[DataFrame]): Unit = {
+         df match {
+            case Some(reading) => {
+                reading.filter($"jobId" === jobParam("parentJobId") and $"type" === "SandBox")
+    
+                inputStream = Some(
+                    SchemaConverter.column2legalWithDF("data", reading)
+                        .select(from_json($"data", schema).as("data"))
+                        .select("data.*")
+                )
+            }
+            case None => logger.info("reading is none")
+        }
     }
 
     // TODO：因还未曾与老齐对接口，暂时放到这里
