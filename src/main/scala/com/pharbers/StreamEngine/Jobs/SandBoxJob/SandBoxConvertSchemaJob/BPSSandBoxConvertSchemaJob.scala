@@ -48,7 +48,7 @@ class BPSSandBoxConvertSchemaJob(val id: String,
     var dataAssetId: Option[String] = None
 
     override def open(): Unit = {
-            // TODO 在我这里基本没啥用
+        // TODO 在我这里基本没啥用
 //        notFoundShouldWait(s"${jobParam("parentMetaData")}/${jobParam("parentJobId")}")
         val metaData = spark.sparkContext.textFile(s"${jobParam("parentMetaData")}/${jobParam("parentJobId")}")
         val (schemaData, colNames, tabName, length, assetId) =
@@ -66,9 +66,9 @@ class BPSSandBoxConvertSchemaJob(val id: String,
             this.close()
         } else {
             val schema = SchemaConverter.str2SqlType(schemaData)
-            logger.info(s"parentSampleData Info ${jobParam("parentSampleData")}")
+            logger.info(s"ParentSampleData Info ${jobParam("parentSampleData")}")
             setInputStream(schema, df)
-	        
+            
             pushPyjob(
                 id,
                 s"${jobParam("metaDataSavePath")}",
@@ -82,7 +82,8 @@ class BPSSandBoxConvertSchemaJob(val id: String,
     override def exec(): Unit = {
         inputStream match {
             case Some(is) =>
-                val query = is.writeStream
+                val query = is.filter($"jobId" === jobParam("parentJobId") and $"type" === "SandBox")
+                        .writeStream
                         .outputMode("append")
                         .format("parquet")
                         .option("checkpointLocation", jobParam("checkPointSavePath"))

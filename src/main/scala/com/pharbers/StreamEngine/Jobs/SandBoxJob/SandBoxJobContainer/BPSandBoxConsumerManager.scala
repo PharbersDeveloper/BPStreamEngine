@@ -44,6 +44,8 @@ class BPSandBoxConsumerManager(topics: List[String], spark: SparkSession) extend
 				"dataSetId" ->  new ObjectId().toString
 			)
 			
+			logger.info(s"ParentJobId ======> ${record.value().getJobId.toString}")
+			
 			if (record.value().getSampleDataPath.toString != hisSampleDataPath) {
 				 hisSampleDataPath = record.value().getSampleDataPath.toString
 				 reading = Some(spark.readStream
