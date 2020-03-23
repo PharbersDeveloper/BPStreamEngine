@@ -48,8 +48,6 @@ class BPSSandBoxConvertSchemaJob(val id: String,
     var dataAssetId: Option[String] = None
 
     override def open(): Unit = {
-        // TODO 在我这里基本没啥用
-//        notFoundShouldWait(s"${jobParam("parentMetaData")}/${jobParam("parentJobId")}")
         val metaData = spark.sparkContext.textFile(s"${jobParam("parentMetaData")}/${jobParam("parentJobId")}")
         val (schemaData, colNames, tabName, length, assetId) =
             writeMetaData(metaData, s"${jobParam("metaDataSavePath")}")
@@ -69,13 +67,13 @@ class BPSSandBoxConvertSchemaJob(val id: String,
             logger.info(s"ParentSampleData Info ${jobParam("parentSampleData")}")
             setInputStream(schema, df)
             
-            pushPyjob(
-                id,
-                s"${jobParam("metaDataSavePath")}",
-                s"${jobParam("parquetSavePath")}",
-                UUID.randomUUID().toString,
-                (jobParam("dataSetId") :: Nil).mkString(",")
-            )
+//            pushPyjob(
+//                id,
+//                s"${jobParam("metaDataSavePath")}",
+//                s"${jobParam("parquetSavePath")}",
+//                UUID.randomUUID().toString,
+//                (jobParam("dataSetId") :: Nil).mkString(",")
+//            )
         }
     }
 
@@ -118,14 +116,6 @@ class BPSSandBoxConvertSchemaJob(val id: String,
         val uploadEnd = new UploadEnd(jobParam("dataSetId"), dataAssetId.get)
         BPSUploadEndJob("upload_end_job", uploadEnd).exec()
 	    
-//        pushPyjob(
-//            id,
-//            s"${jobParam("metaDataSavePath")}",
-//            s"${jobParam("parquetSavePath")}",
-//            UUID.randomUUID().toString,
-//            (jobParam("dataSetId") :: Nil).mkString(",")
-//        )
-    
         totalRow = None
         columnNames = Nil
         sheetName = None
@@ -137,14 +127,6 @@ class BPSSandBoxConvertSchemaJob(val id: String,
     
         
     }
-
-//    def notFoundShouldWait(path: String): Unit = {
-//        if (!BPSHDFSFile.checkPath(path)) {
-//            logger.debug(path + "文件不存在，等待 1s")
-//            Thread.sleep(1000)
-//            notFoundShouldWait(path)
-//        }
-//    }
 
     def writeMetaData(metaData: RDD[String], path: String): (String, List[CharSequence], String, Long, String) = {
         try {
