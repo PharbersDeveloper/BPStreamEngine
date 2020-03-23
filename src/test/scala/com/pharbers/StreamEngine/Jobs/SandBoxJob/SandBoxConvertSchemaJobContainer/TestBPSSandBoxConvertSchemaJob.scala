@@ -2,6 +2,7 @@ package com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxConvertSchemaJobContain
 
 import java.util.{Date, UUID}
 
+import com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxConvertSchemaJob.BPSSandBoxConvertSchemaJob
 import com.pharbers.StreamEngine.Utils.Channel.Local.BPSLocalChannel
 import com.pharbers.StreamEngine.Utils.Schema.Spark.{BPSMetaData2Map, SchemaConverter}
 import com.pharbers.StreamEngine.Utils.Session.Spark.BPSparkSession
@@ -24,7 +25,6 @@ import org.scalatest.FunSuite
 class TestBPSSandBoxConvertSchemaJob extends FunSuite with PhLogable{
     test("test open and exec"){
         BPSLocalChannel(Map())
-        val dataSetId = new ObjectId().toString
         val jobContainerId: String = UUID.randomUUID().toString
         val date = new Date().getTime
         val metaDataSavePath: String = s"/user/dcs/test/BPStreamEngine/$date/$jobContainerId/metadata"
@@ -38,7 +38,8 @@ class TestBPSSandBoxConvertSchemaJob extends FunSuite with PhLogable{
             "jobContainerId" -> jobContainerId,
             "metaDataSavePath" -> metaDataSavePath,
             "checkPointSavePath" -> checkPointSavePath,
-            "parquetSavePath" -> parquetSavePath
+            "parquetSavePath" -> parquetSavePath,
+            "dataSetId" -> new ObjectId().toString
         )
         val spark = BPSparkSession()
         val convertJob: BPSSandBoxConvertSchemaJob =
@@ -46,14 +47,14 @@ class TestBPSSandBoxConvertSchemaJob extends FunSuite with PhLogable{
                 "test_" + UUID.randomUUID().toString,
                 jobParam,
                 spark,
-                dataSetId)
+                None)
         val metaData = spark.sparkContext.textFile(s"${jobParam("parentMetaData")}/${jobParam("parentJobId")}")
         val primitive = BPSMetaData2Map.list2Map(metaData.collect().toList)
         val convertContent = primitive ++ SchemaConverter.column2legalWithMetaDataSchema(primitive)
         implicit val formats: DefaultFormats.type = DefaultFormats
         val schemaData = write(convertContent("schema").asInstanceOf[List[Map[String, Any]]])
-        convertJob.totalRow = 4029864
-        convertJob.setInputStream(SchemaConverter.str2SqlType(schemaData))
+        convertJob.totalRow = Some(4029864)
+        convertJob.setInputStream(SchemaConverter.str2SqlType(schemaData), None)
         convertJob.exec()
         ThreadExecutor.waitForShutdown()
     }
