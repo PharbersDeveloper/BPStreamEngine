@@ -42,6 +42,7 @@ object BPSHDFSFile {
         bufferedWriter.write(line)
         bufferedWriter.newLine()
         bufferedWriter.close()
+        fileSystem.close()
     }
 
     // 支持文件和目录，但不支持递归型目录
