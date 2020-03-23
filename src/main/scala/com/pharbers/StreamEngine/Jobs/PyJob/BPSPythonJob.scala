@@ -1,9 +1,11 @@
 package com.pharbers.StreamEngine.Jobs.PyJob
 
 import java.util.UUID
+
 import org.apache.spark.sql
 import org.json4s.DefaultFormats
 import java.util.concurrent.TimeUnit
+
 import org.apache.spark.sql.types.StringType
 import org.json4s.jackson.Serialization.write
 import com.pharbers.kafka.producer.PharbersKafkaProducer
@@ -12,6 +14,7 @@ import com.pharbers.StreamEngine.Jobs.PyJob.Py4jServer.BPSPy4jManager
 import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSJobStrategy
 import com.pharbers.StreamEngine.Utils.StreamJob.{BPSJobContainer, BPStreamJob}
 import com.pharbers.StreamEngine.Jobs.PyJob.Listener.BPSProgressListenerAndClose
+import com.pharbers.kafka.schema.HiveTask
 
 object BPSPythonJob {
     def apply(id: String,
@@ -53,17 +56,17 @@ class BPSPythonJob(override val id: String,
     val lastMetadata: Map[String, Any] = jobConf("lastMetadata").asInstanceOf[Map[String, Any]]
     val partition: Int = jobConf.getOrElse("partition", "4").asInstanceOf[String].toInt
 
+    val checkpointPath = resultPath + "/checkpoint"
+    val rowRecordPath = resultPath + "/row_record"
+    val metadataPath = resultPath + "/metadata"
+    val successPath = resultPath + "/contents"
+    val errPath = resultPath + "/err"
+
     override def open(): Unit = {
         inputStream = is
     }
 
     override def exec(): Unit = {
-        val checkpointPath = resultPath + "/checkpoint"
-        val rowRecordPath = resultPath + "/row_record"
-        val metadataPath = resultPath + "/metadata"
-        val successPath = resultPath + "/contents"
-        val errPath = resultPath + "/err"
-
         implicit val py4jManager: BPSPy4jManager = BPSPy4jManager()
 
         inputStream match {
@@ -127,6 +130,16 @@ class BPSPythonJob(override val id: String,
 
     override def close(): Unit = {
         super.close()
+        //todo： 这儿需要配置
+        val topic = "HiveTask"
+        val pkp = new PharbersKafkaProducer[String, HiveTask]
+        val msg = new HiveTask(id, "", jobConf("mongoId").toString, "append", successPath, lastMetadata("length").asInstanceOf[Int], "")
+        val end = new HiveTask(id, "", "", "end", "", 0, "")
+        List(msg, end).foreach(x => {
+            val fu = pkp.produce(topic, "", x)
+            logger.info(fu.get(10, TimeUnit.SECONDS))
+        })
+        pkp.producer.close()
         container.finishJobWithId(id)
     }
 }
