@@ -1,0 +1,27 @@
+{
+  "type": "record",
+  "name": "GenCubeJobSubmit",
+  "namespace": "com.pharbers.kafka.schema",
+  "fields": [
+    {
+      "name": "InputDataType",
+      "type": "string"
+    },
+    {
+      "name": "InputPath",
+      "type": "string"
+    },
+    {
+      "name": "OutputDataType",
+      "type": "string"
+    },
+    {
+      "name": "OutputPath",
+      "type": "string"
+    },
+    {
+      "name": "Strategy",
+      "type": "string"
+    }
+  ]
+}
