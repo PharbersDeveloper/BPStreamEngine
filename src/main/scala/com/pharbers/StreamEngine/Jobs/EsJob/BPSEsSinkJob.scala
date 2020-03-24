@@ -2,6 +2,7 @@ package com.pharbers.StreamEngine.Jobs.EsJob
 
 import com.pharbers.StreamEngine.Jobs.EsJob.Listener.EsSinkJobCloseListener
 import com.pharbers.StreamEngine.Utils.Component2
+import com.pharbers.StreamEngine.Utils.Component2.BPSConcertEntry
 import com.pharbers.StreamEngine.Utils.Strategy.hdfs.BPSHDFSFile
 import com.pharbers.StreamEngine.Utils.Strategy.Schema.BPSParseSchema
 import org.apache.spark.sql
@@ -39,10 +40,13 @@ class BPSEsSinkJob(override val id: String,
     val filesPath: String = jobConf("filesPath").toString
     val indexName: String = jobConf("indexName").toString
     val checkpointLocation: String = jobConf("checkpointLocation").toString
+    lazy val hdfsfile: BPSHDFSFile =
+        BPSConcertEntry.queryComponentWithId("hdfs").asInstanceOf[BPSHDFSFile]
 
     // 当所需文件未准备完毕，则等待
     def notFoundShouldWait(path: String): Unit = {
-        if (!BPSHDFSFile.checkPath(path)) {
+//        if (!BPSHDFSFile.checkPath(path)) {
+        if (!hdfsfile.checkPath(path)) {
             logger.debug(path + "文件不存在，等待 1s")
             Thread.sleep(1000)
             notFoundShouldWait(path)
@@ -91,6 +95,5 @@ class BPSEsSinkJob(override val id: String,
     }
 
     override val componentProperty: Component2.BPComponentConfig = null
-
     override def createConfigDef(): ConfigDef = ???
 }

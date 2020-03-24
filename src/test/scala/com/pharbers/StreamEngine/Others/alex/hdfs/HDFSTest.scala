@@ -8,13 +8,13 @@ import scala.io.Source
 
 class HDFSTest extends FunSuite {
 	test("HDFS Append Test") {
-		try {
-			1 to 100 foreach { x =>
-				BPSHDFSFile.appendLine2HDFS(s"/jobs/test/$x", "Fuck")
-			}
-		} catch {
-			case e: Exception => e.printStackTrace()
-		}
+//		try {
+//			1 to 100 foreach { x =>
+//				BPSHDFSFile.appendLine2HDFS(s"/jobs/test/$x", "Fuck")
+//			}
+//		} catch {
+//			case e: Exception => e.printStackTrace()
+//		}
 	}
 
 	test("Read Parquet Test") {

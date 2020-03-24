@@ -2,8 +2,10 @@ package com.pharbers.StreamEngine.Jobs.OssPartitionJob.OssListener
 
 import java.util.UUID
 import java.util.concurrent.TimeUnit
+
 import com.pharbers.StreamEngine.Utils.Channel.Driver.BPSDriverChannel
 import com.pharbers.StreamEngine.Utils.Channel.Worker.BPSWorkerChannel
+import com.pharbers.StreamEngine.Utils.Component2.BPSConcertEntry
 import com.pharbers.StreamEngine.Utils.Job.{BPSJobContainer, BPStreamJob}
 import com.pharbers.StreamEngine.Utils.Event.BPSEvents
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamRemoteListener
@@ -28,6 +30,8 @@ case class BPSOssListener(spark: SparkSession, job: BPStreamJob, jobId: String) 
     import spark.implicits._
     def event2JobId(e: BPSEvents): String = e.jobId
     val runId = job.asInstanceOf[BPSJobContainer].id
+    lazy val hdfsfile: BPSHDFSFile =
+        BPSConcertEntry.queryComponentWithId("hdfs").asInstanceOf[BPSHDFSFile]
 
     override def trigger(e: BPSEvents): Unit = {
         // TODO: 后面可变配置化
@@ -38,13 +42,16 @@ case class BPSOssListener(spark: SparkSession, job: BPStreamJob, jobId: String) 
         e.`type` match {
             case "SandBox-Schema" => {
 //                BPSOssPartitionMeta.pushLineToHDFS(runId.id, event2JobId(e), e.data)
-                BPSHDFSFile.appendLine2HDFS(s"$metaDataPath/${event2JobId(e)}", e.data)
+//                BPSHDFSFile.appendLine2HDFS(s"$metaDataPath/${event2JobId(e)}", e.data)
+                hdfsfile.appendLine2HDFS(s"$metaDataPath/${event2JobId(e)}", e.data)
             }
             case "SandBox-Labels" => {
-                BPSHDFSFile.appendLine2HDFS(s"$metaDataPath/${event2JobId(e)}", e.data)
+//                BPSHDFSFile.appendLine2HDFS(s"$metaDataPath/${event2JobId(e)}", e.data)
+                hdfsfile.appendLine2HDFS(s"$metaDataPath/${event2JobId(e)}", e.data)
             }
             case "SandBox-Length" => {
-                BPSHDFSFile.appendLine2HDFS(s"$metaDataPath/${event2JobId(e)}", e.data)
+//                BPSHDFSFile.appendLine2HDFS(s"$metaDataPath/${event2JobId(e)}", e.data)
+                hdfsfile.appendLine2HDFS(s"$metaDataPath/${event2JobId(e)}", e.data)
 	            //TODO： 需要改TS的接口,后面改成Kafka
 //                post(s"""{"traceId": "${e.traceId}","jobId": "${e.jobId}"}""", "application/json")
 	            try {

@@ -29,6 +29,14 @@
             "config": {
 
             }
+        },
+        {
+            "id": "hdfs",
+            "name": "BPSHDFSFile",
+            "args": [],
+            "config": {
+                "hdfsAddr": "hdfs://StarLord:8020"
+            }
         }
     ],
     "channels": [
@@ -52,13 +60,6 @@
         }
     ],
     "jobs": [
-        {
-            "id": "git repo",
-            "name": "BPSGithubHelper",
-            "args": [],
-            "config": {
 
-            }
-        }
     ]
 }

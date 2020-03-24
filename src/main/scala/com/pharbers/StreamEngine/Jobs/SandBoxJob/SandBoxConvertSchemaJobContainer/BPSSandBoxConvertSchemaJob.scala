@@ -8,6 +8,7 @@ import com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxConvertSchemaJobContaine
 import com.pharbers.StreamEngine.Jobs.SandBoxJob.UploadEndJob.BPSUploadEndJob
 import com.pharbers.StreamEngine.Utils.Component.Dynamic.JobMsg
 import com.pharbers.StreamEngine.Utils.Component2
+import com.pharbers.StreamEngine.Utils.Component2.BPSConcertEntry
 import com.pharbers.StreamEngine.Utils.Strategy.hdfs.BPSHDFSFile
 import com.pharbers.StreamEngine.Utils.Strategy.Schema.{BPSMetaData2Map, SchemaConverter}
 import com.pharbers.StreamEngine.Utils.Job.BPSJobContainer
@@ -37,6 +38,9 @@ class BPSSandBoxConvertSchemaJob(val id: String,
                                  jobParam: Map[String, String],
                                  val spark: SparkSession,
                                  dataSetId: String) extends BPSJobContainer {
+
+    lazy val hdfsfile: BPSHDFSFile =
+        BPSConcertEntry.queryComponentWithId("hdfs").asInstanceOf[BPSHDFSFile]
 
     type T = BPSKfkBaseStrategy
     val strategy: Null = null
@@ -140,7 +144,8 @@ class BPSSandBoxConvertSchemaJob(val id: String,
     }
 
     def notFoundShouldWait(path: String): Unit = {
-        if (!BPSHDFSFile.checkPath(path)) {
+        if (!hdfsfile.checkPath(path)) {
+//      if (!BPSHDFSFile.checkPath(path)) {
             logger.debug(path + "文件不存在，等待 1s")
             Thread.sleep(1000)
             notFoundShouldWait(path)
@@ -167,9 +172,11 @@ class BPSSandBoxConvertSchemaJob(val id: String,
             // TODO: 这块儿还要改进
             convertContent.foreach { x =>
                 if (x._1 == "length") {
-                    BPSHDFSFile.appendLine2HDFS(path, s"""{"length": ${x._2}}""")
+//                    BPSHDFSFile.appendLine2HDFS(path, s"""{"length": ${x._2}}""")
+                    hdfsfile.appendLine2HDFS(path, s"""{"length": ${x._2}}""")
                 } else {
-                    BPSHDFSFile.appendLine2HDFS(path, write(x._2))
+//                    BPSHDFSFile.appendLine2HDFS(path, write(x._2))
+                    hdfsfile.appendLine2HDFS(path, write(x._2))
                 }
             }
             (schema, colNames, tabName, convertContent("length").toString.toLong, assetId)

@@ -35,7 +35,8 @@ class BPSComponentContext {
                 .find(x => x.asMethod.paramLists.map(_.map(_.typeSignature)).head.length == 1).get.asMethod
 //                .find(x => x.asMethod.paramLists.map(_.map(_.typeSignature)).head.length == args.length + 1).get.asMethod
         val component = objMirror.reflectMethod(method)(config)
-        print(component.asInstanceOf[BPComponent])
+        println("alfred pharbers context constructed ===============>>>>>>>>>>")
+        println(component.asInstanceOf[BPComponent])
         component.asInstanceOf[T]
     }
 }

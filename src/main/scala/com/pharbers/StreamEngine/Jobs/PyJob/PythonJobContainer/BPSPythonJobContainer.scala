@@ -10,6 +10,7 @@ import com.pharbers.StreamEngine.Jobs.PyJob.BPSPythonJob
 import com.pharbers.StreamEngine.Utils.Strategy.Schema.BPSParseSchema
 import com.pharbers.StreamEngine.Jobs.SandBoxJob.BloodJob.BPSBloodJob
 import com.pharbers.StreamEngine.Utils.Component2
+import com.pharbers.StreamEngine.Utils.Component2.BPSConcertEntry
 import com.pharbers.StreamEngine.Utils.Event.EventHandler.BPSEventHandler
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamListener
 import com.pharbers.StreamEngine.Utils.Job.{BPDynamicStreamJob, BPSJobContainer}
@@ -46,6 +47,8 @@ class BPSPythonJobContainer(override val spark: SparkSession,
 
     override val strategy: BPSKfkBaseStrategy = null
     type T = BPSKfkBaseStrategy
+    lazy val hdfsfile: BPSHDFSFile =
+        BPSConcertEntry.queryComponentWithId("hdfs").asInstanceOf[BPSHDFSFile]
 
     val id: String = config.getOrElse("jobId", UUID.randomUUID().toString)
     val metadataPath: String = config("metadataPath")
@@ -68,7 +71,8 @@ class BPSPythonJobContainer(override val spark: SparkSession,
 
     // 当所需文件未准备完毕，则等待
     def notFoundShouldWait(path: String): Unit = {
-        if (!BPSHDFSFile.checkPath(path)) {
+//        if (!BPSHDFSFile.checkPath(path)) {
+        if (!hdfsfile.checkPath(path)) {
             logger.debug(path + "文件不存在，等待 1s")
             Thread.sleep(1000)
             notFoundShouldWait(path)

@@ -2,12 +2,22 @@ package com.pharbers.StreamEngine.Utils.Strategy.hdfs
 
 import java.net.URI
 import java.nio.charset.StandardCharsets
+
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FSDataOutputStream, FileSystem, Path}
 import java.io.{BufferedReader, BufferedWriter, InputStreamReader, OutputStreamWriter}
 
-object BPSHDFSFile {
-    val hdfsAddr: String = "hdfs://StarLord:8020"
+import com.pharbers.StreamEngine.Utils.Annotation.Component
+import com.pharbers.StreamEngine.Utils.Component2
+import com.pharbers.StreamEngine.Utils.Strategy.BPStrategyComponent
+import org.apache.kafka.common.config.ConfigDef
+
+@Component(name = "BPSHDFSFile", `type` = "BPSHDFSFile")
+case class BPSHDFSFile(override val componentProperty: Component2.BPComponentConfig)
+    extends BPStrategyComponent {
+
+//    val hdfsAddr: String = "hdfs://StarLord:8020"
+    val hdfsAddr: String = componentProperty.config("hdfsAddr") //"hdfs://StarLord:8020"
 
     val configuration: Configuration = new Configuration
     configuration.set("fs.defaultFS", hdfsAddr)
@@ -79,4 +89,7 @@ object BPSHDFSFile {
         fs.close()
         result
     }
+
+    override val strategyName: String = "hdfs"
+    override def createConfigDef(): ConfigDef = ???
 }

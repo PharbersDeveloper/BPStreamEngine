@@ -42,16 +42,16 @@ class BPStreamOverListener extends FunSuite with PhLogable{
         }
     }
     def trigger(rowRecordPath: String, path: String, length: Int, jobId: String): Unit = {
-        val rows = BPSHDFSFile.readHDFS(rowRecordPath).map(_.toLong).sum
-        val count = spark.read.csv(path).count()
-        logger.debug(s"row record path: $rowRecordPath")
-        logger.debug(s"rows: $rows")
-        logger.debug(s"count: $count")
-        logger.debug(s"length: $length")
-        if (count >= length) {
-            logger.info(s"启动py ok")
-        } else {
-            logger.error(s"jobId: $jobId, count: $count, length: $length, path: $path")
-        }
+//        val rows = BPSHDFSFile.readHDFS(rowRecordPath).map(_.toLong).sum
+//        val count = spark.read.csv(path).count()
+//        logger.debug(s"row record path: $rowRecordPath")
+//        logger.debug(s"rows: $rows")
+//        logger.debug(s"count: $count")
+//        logger.debug(s"length: $length")
+//        if (count >= length) {
+//            logger.info(s"启动py ok")
+//        } else {
+//            logger.error(s"jobId: $jobId, count: $count, length: $length, path: $path")
+//        }
     }
 }
