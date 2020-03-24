@@ -1,14 +1,5 @@
-package com.pharbers.StreamEngine.Others.sandbox.run
+package com.pharbers.StreamEngine.Others.alex.run
 
-import java.util.{Collections, UUID}
-import java.util.concurrent.TimeUnit
-
-import com.pharbers.StreamEngine.Jobs.SandBoxJob.BloodJob.BPSBloodJob
-import com.pharbers.StreamEngine.Jobs.SandBoxJob.UploadEndJob.BPSUploadEndJob
-import com.pharbers.StreamEngine.Utils.Component.Dynamic.JobMsg
-import com.pharbers.kafka.producer.PharbersKafkaProducer
-import com.pharbers.kafka.schema.{BPJob, DataSet, UploadEnd}
-import org.mongodb.scala.bson.ObjectId
 import org.scalatest.FunSuite
 
 class PushJobTest extends FunSuite {
