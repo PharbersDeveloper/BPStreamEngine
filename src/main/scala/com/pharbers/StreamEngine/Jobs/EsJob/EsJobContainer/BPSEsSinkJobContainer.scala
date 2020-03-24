@@ -9,14 +9,14 @@ import com.pharbers.StreamEngine.Utils.Event.EventHandler.BPSEventHandler
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamListener
 import com.pharbers.StreamEngine.Utils.Strategy.hdfs.BPSHDFSFile
 import com.pharbers.StreamEngine.Utils.Job.{BPDynamicStreamJob, BPSJobContainer}
-import com.pharbers.StreamEngine.Utils.Strategy.BPSKfkJobStrategy
+import com.pharbers.StreamEngine.Utils.Strategy.BPSKfkBaseStrategy
 import com.pharbers.StreamEngine.Utils.ThreadExecutor.ThreadExecutor
 import com.pharbers.kafka.consumer.PharbersKafkaConsumer
 import com.pharbers.kafka.schema.EsSinkJobSubmit
 import org.apache.kafka.common.config.ConfigDef
 
 object BPSEsSinkJobContainer {
-    def apply(strategy: BPSKfkJobStrategy,
+    def apply(strategy: BPSKfkBaseStrategy,
               spark: SparkSession,
               config: Map[String, String]): BPSEsSinkJobContainer =
         new BPSEsSinkJobContainer(spark, config)
@@ -33,8 +33,8 @@ class BPSEsSinkJobContainer(override val spark: SparkSession,
                             config: Map[String, String])
         extends BPSJobContainer with BPDynamicStreamJob {
 
-    override val strategy: BPSKfkJobStrategy = null
-    type T = BPSKfkJobStrategy
+    override val strategy: BPSKfkBaseStrategy = null
+    type T = BPSKfkBaseStrategy
 
     var metadata: Map[String, Any] = Map.empty
     final val DEFAULT_LISTENING_TOPIC = "EsSinkJobSubmit"

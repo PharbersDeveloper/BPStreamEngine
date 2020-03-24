@@ -9,7 +9,7 @@ import com.pharbers.StreamEngine.Utils.Config.BPSConfig
 
 import collection.JavaConverters._
 import com.pharbers.StreamEngine.Utils.Job.{BPSJobContainer, BPStreamJob}
-import com.pharbers.StreamEngine.Utils.Strategy.BPSDataMartJobStrategy
+import com.pharbers.StreamEngine.Utils.Strategy.BPSDataMartBaseStrategy
 import com.pharbers.kafka.schema.{AssetDataMart, DataSet}
 import org.apache.kafka.common.config.ConfigDef
 import org.apache.kafka.common.config.ConfigDef.{Importance, Type}
@@ -36,8 +36,8 @@ case class BPSCpaCleanJob(jobContainer: BPSJobContainer, spark: SparkSession, co
             .define(MKT_MAPPING_PATH_KEY, Type.STRING, UUID.randomUUID().toString, Importance.HIGH, MKT_MAPPING_PATH_DOC)
             .define(PARENTS_CONFIG_KEY, Type.LIST,  Importance.HIGH, PARENTS_CONFIG_DOC)
 
-    override type T = BPSDataMartJobStrategy
-    override val strategy: BPSDataMartJobStrategy = new BPSDataMartJobStrategy(config_map, configDef)
+    override type T = BPSDataMartBaseStrategy
+    override val strategy: BPSDataMartBaseStrategy = new BPSDataMartBaseStrategy(config_map, configDef)
     private val jobConfig: BPSConfig = strategy.getJobConfig
     val jobId: String = strategy.getJobId
     val runId: String = strategy.getRunId

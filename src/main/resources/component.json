@@ -21,6 +21,14 @@
                 "url": "http://123.56.179.133:9092",
                 "schema": "http://123.56.179.133:8081"
             }
+        },
+        {
+            "id": "git repo",
+            "name": "BPSGithubHelper",
+            "args": [],
+            "config": {
+
+            }
         }
     ],
     "channels": [
@@ -44,6 +52,13 @@
         }
     ],
     "jobs": [
+        {
+            "id": "git repo",
+            "name": "BPSGithubHelper",
+            "args": [],
+            "config": {
 
+            }
+        }
     ]
 }

@@ -8,7 +8,7 @@ import com.pharbers.StreamEngine.Jobs.OssPartitionJob.OssListener.BPSOssListener
 import com.pharbers.StreamEngine.Utils.Component2
 import com.pharbers.StreamEngine.Utils.Event.EventHandler.BPSEventHandler
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamListener
-import com.pharbers.StreamEngine.Utils.Strategy.BPSKfkJobStrategy
+import com.pharbers.StreamEngine.Utils.Strategy.BPSKfkBaseStrategy
 import org.apache.kafka.common.config.ConfigDef
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions._
@@ -16,14 +16,14 @@ import org.apache.spark.sql.functions._
 import scala.collection.JavaConversions.mapAsScalaMap
 
 object BPSOssPartitionJobContainer {
-    def apply(strategy: BPSKfkJobStrategy, spark: SparkSession): BPSOssPartitionJobContainer =
+    def apply(strategy: BPSKfkBaseStrategy, spark: SparkSession): BPSOssPartitionJobContainer =
         new BPSOssPartitionJobContainer(strategy, spark, Map.empty)
 }
 
-class BPSOssPartitionJobContainer(override val strategy: BPSKfkJobStrategy, val spark: SparkSession, config: Map[String, String]) extends BPSJobContainer with BPDynamicStreamJob{
+class BPSOssPartitionJobContainer(override val strategy: BPSKfkBaseStrategy, val spark: SparkSession, config: Map[String, String]) extends BPSJobContainer with BPDynamicStreamJob{
     val id: String = UUID.randomUUID().toString
     val jobId = UUID.randomUUID().toString
-    type T = BPSKfkJobStrategy
+    type T = BPSKfkBaseStrategy
     import spark.implicits._
 
     override def open(): Unit = {

@@ -4,7 +4,7 @@ import com.pharbers.StreamEngine.Utils.Config.BPSConfig
 import BPSqlTableJob._
 import com.pharbers.StreamEngine.Utils.Component2
 import com.pharbers.StreamEngine.Utils.Job.{BPSJobContainer, BPStreamJob}
-import com.pharbers.StreamEngine.Utils.Strategy.BPSDataMartJobStrategy
+import com.pharbers.StreamEngine.Utils.Strategy.BPSDataMartBaseStrategy
 import org.apache.kafka.common.config.ConfigDef
 import org.apache.kafka.common.config.ConfigDef.{Importance, Type}
 import org.apache.spark.sql.SparkSession
@@ -29,8 +29,8 @@ case class BPSqlTableJob(jobContainer: BPSJobContainer, spark: SparkSession, con
             .define(ERROR_PATH_CONFIG_KEY, Type.STRING, "", Importance.HIGH, ERROR_PATH_CONFIG_DOC)
             //            .define(VERSION_CONFIG_KEY, Type.STRING, Importance.HIGH, VERSION_CONFIG_DOC)
             .define(DATA_SETS_CONFIG_KEY, Type.LIST, "", Importance.HIGH, DATA_SETS_CONFIG_DOC)
-    override type T = BPSDataMartJobStrategy
-    override val strategy: BPSDataMartJobStrategy = new BPSDataMartJobStrategy(config_map, configDef)
+    override type T = BPSDataMartBaseStrategy
+    override val strategy: BPSDataMartBaseStrategy = new BPSDataMartBaseStrategy(config_map, configDef)
     private val jobConfig: BPSConfig = strategy.getJobConfig
     val jobId: String = strategy.getJobId
     val runId: String = strategy.getRunId

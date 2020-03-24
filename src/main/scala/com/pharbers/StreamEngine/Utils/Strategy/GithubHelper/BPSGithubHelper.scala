@@ -1,6 +1,11 @@
 package com.pharbers.StreamEngine.Utils.Strategy.GithubHelper
 
 import java.io.File
+
+import com.pharbers.StreamEngine.Utils.Annotation.Component
+import com.pharbers.StreamEngine.Utils.Component2
+import com.pharbers.StreamEngine.Utils.Strategy.BPStrategyComponent
+import org.apache.kafka.common.config.ConfigDef
 import org.eclipse.jgit.api.Git
 
 /** github 常用的操作接口
@@ -9,7 +14,14 @@ import org.eclipse.jgit.api.Git
  * @version 0.1
  * @since 2019/12/09 16:48
  */
-case class BPSGithubHelper() {
+object BPSGithubHelper {
+    def apply(componentProperty: Component2.BPComponentConfig): BPSGithubHelper =
+        new BPSGithubHelper(componentProperty)
+}
+
+@Component(name = "BPSGithubHelper", `type` = "BPSGithubHelper")
+class BPSGithubHelper(override val componentProperty: Component2.BPComponentConfig)
+    extends BPStrategyComponent {
 
     def cloneByBranch(dir: String, uri: String, branch: String = "master"): Unit = {
         val file = new File(dir)
@@ -46,4 +58,7 @@ case class BPSGithubHelper() {
             file.delete()
         } else file.delete()
     }
+
+    override def createConfigDef(): ConfigDef = new ConfigDef()
+    override val strategyName: String = "git repo"
 }

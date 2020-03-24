@@ -14,7 +14,7 @@ import com.pharbers.StreamEngine.Jobs.PyJob.Py4jServer.BPSPy4jManager
 import com.pharbers.StreamEngine.Utils.Job.{BPSJobContainer, BPStreamJob}
 import com.pharbers.StreamEngine.Jobs.PyJob.Listener.BPSProgressListenerAndClose
 import com.pharbers.StreamEngine.Utils.Component2
-import com.pharbers.StreamEngine.Utils.Strategy.BPSJobStrategy
+import com.pharbers.StreamEngine.Utils.Strategy.BPStrategyComponent
 import com.pharbers.kafka.schema.HiveTask
 import org.apache.kafka.common.config.ConfigDef
 
@@ -45,8 +45,8 @@ class BPSPythonJob(override val id: String,
                    container: BPSJobContainer,
                    jobConf: Map[String, Any]) extends BPStreamJob with Serializable {
 
-    type T = BPSJobStrategy
-    override val strategy: BPSJobStrategy = null
+    type T = BPStrategyComponent
+    override val strategy: BPStrategyComponent = null
 
     val fileSuffix: String = jobConf.getOrElse("fileSuffix", "csv").toString
     val resultPath: String = {

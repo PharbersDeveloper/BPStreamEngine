@@ -8,7 +8,7 @@ import com.pharbers.StreamEngine.Utils.Config.BPSConfig
 import com.pharbers.StreamEngine.Utils.Event.EventHandler.BPSEventHandler
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamListener
 import com.pharbers.StreamEngine.Utils.Job.{BPDynamicStreamJob, BPSJobContainer}
-import com.pharbers.StreamEngine.Utils.Strategy.BPSKfkJobStrategy
+import com.pharbers.StreamEngine.Utils.Strategy.BPSKfkBaseStrategy
 import com.pharbers.StreamEngine.Utils.ThreadExecutor.ThreadExecutor
 import com.pharbers.kafka.consumer.PharbersKafkaConsumer
 import com.pharbers.kafka.schema.Hive2EsJobSubmit
@@ -17,7 +17,7 @@ import org.apache.kafka.common.config.ConfigDef.{Importance, Type}
 import org.apache.spark.sql.SparkSession
 
 object BPSHive2EsJobContainer {
-    def apply(strategy: BPSKfkJobStrategy,
+    def apply(strategy: BPSKfkBaseStrategy,
               spark: SparkSession,
               config: Map[String, String]): BPSHive2EsJobContainer =
         new BPSHive2EsJobContainer(spark, config)
@@ -33,8 +33,8 @@ class BPSHive2EsJobContainer(override val spark: SparkSession,
                              config: Map[String, String])
         extends BPSJobContainer with BPDynamicStreamJob {
 
-    override val strategy: BPSKfkJobStrategy = null
-    type T = BPSKfkJobStrategy
+    override val strategy: BPSKfkBaseStrategy = null
+    type T = BPSKfkBaseStrategy
 
     var metadata: Map[String, Any] = Map.empty
 

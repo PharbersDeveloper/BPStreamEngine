@@ -10,7 +10,7 @@ import com.pharbers.StreamEngine.Utils.Config.BPSConfig
 import com.pharbers.StreamEngine.Utils.Event.EventHandler.BPSEventHandler
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamListener
 import com.pharbers.StreamEngine.Utils.Job.{BPDynamicStreamJob, BPSJobContainer, BPStreamJob}
-import com.pharbers.StreamEngine.Utils.Strategy.BPSJobStrategy
+import com.pharbers.StreamEngine.Utils.Strategy.BPStrategyComponent
 import com.pharbers.StreamEngine.Utils.ThreadExecutor.ThreadExecutor.executorService
 import com.pharbers.kafka.schema.HiveTask
 import org.apache.kafka.common.config.ConfigDef
@@ -28,8 +28,8 @@ import org.apache.spark.sql.SparkSession
   */
 class BPSqlTableJobContainer(val spark: SparkSession, config: Map[String, String]) extends BPSJobContainer with BPDynamicStreamJob{
 
-    override type T = BPSJobStrategy
-    override val strategy: BPSJobStrategy = null
+    override type T = BPStrategyComponent
+    override val strategy: BPStrategyComponent = null
     final val TOPIC_CONFIG_KEY = "topic"
     final val TOPIC_CONFIG_DOC = "kafka topic"
     final val RUN_ID_CONFIG_KEY = "runId"

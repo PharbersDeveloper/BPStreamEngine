@@ -7,7 +7,7 @@ import com.pharbers.StreamEngine.Utils.Strategy.Schema.BPSParseSchema
 import org.apache.spark.sql
 import org.apache.spark.sql.SparkSession
 import com.pharbers.StreamEngine.Utils.Job.{BPSJobContainer, BPStreamJob}
-import com.pharbers.StreamEngine.Utils.Strategy.BPSJobStrategy
+import com.pharbers.StreamEngine.Utils.Strategy.BPStrategyComponent
 import org.apache.kafka.common.config.ConfigDef
 
 object BPSEsSinkJob {
@@ -31,8 +31,8 @@ class BPSEsSinkJob(override val id: String,
                    jobConf: Map[String, Any])
         extends BPStreamJob {
 
-    type T = BPSJobStrategy
-    override val strategy: BPSJobStrategy = null
+    type T = BPStrategyComponent
+    override val strategy: BPStrategyComponent = null
 
     var metadata: Map[String, Any] = Map.empty
     val metadataPath: String = jobConf("metadataPath").toString

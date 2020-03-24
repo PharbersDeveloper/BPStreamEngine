@@ -11,7 +11,7 @@ import com.pharbers.StreamEngine.Utils.Component2
 import com.pharbers.StreamEngine.Utils.Strategy.hdfs.BPSHDFSFile
 import com.pharbers.StreamEngine.Utils.Strategy.Schema.{BPSMetaData2Map, SchemaConverter}
 import com.pharbers.StreamEngine.Utils.Job.BPSJobContainer
-import com.pharbers.StreamEngine.Utils.Strategy.BPSKfkJobStrategy
+import com.pharbers.StreamEngine.Utils.Strategy.BPSKfkBaseStrategy
 import com.pharbers.kafka.producer.PharbersKafkaProducer
 import com.pharbers.kafka.schema.{BPJob, DataSet, UploadEnd}
 import org.apache.avro.specific.SpecificRecord
@@ -38,7 +38,7 @@ class BPSSandBoxConvertSchemaJob(val id: String,
                                  val spark: SparkSession,
                                  dataSetId: String) extends BPSJobContainer {
 
-    type T = BPSKfkJobStrategy
+    type T = BPSKfkBaseStrategy
     val strategy: Null = null
 
     import spark.implicits._

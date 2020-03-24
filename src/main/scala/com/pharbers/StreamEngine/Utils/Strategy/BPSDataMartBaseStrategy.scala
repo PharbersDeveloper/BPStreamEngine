@@ -20,8 +20,8 @@ import collection.JavaConverters._
   * @since 2020/03/19 15:36
   * @note 一些值得注意的地方
   */
-class BPSDataMartJobStrategy(config: Map[String, String],@transient inoutConfigDef: ConfigDef = new ConfigDef())
-        extends BPSCommonJoBStrategy(config, inoutConfigDef) {
+class BPSDataMartBaseStrategy(config: Map[String, String], @transient inoutConfigDef: ConfigDef = new ConfigDef())
+        extends BPSCommonJobStrategy(config, inoutConfigDef) {
 
     def pushDataSet(tableName: String, version: String, url: String, saveMode: String): Unit ={
         val spark = SparkSession.getActiveSession.getOrElse(throw new Exception("需要先初始化spark"))

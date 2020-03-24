@@ -8,7 +8,7 @@ class BPSGithubHelperTest extends FunSuite {
     val branch = "v0.0.1"
 
     test("Test Clone By Branch") {
-        val helper = BPSGithubHelper()
+        val helper = BPSGithubHelper(null)
         helper.cloneByBranch(dir, uri, branch)
         assert(helper.listFile(dir, ".py") != Nil)
         helper.delDir(dir)

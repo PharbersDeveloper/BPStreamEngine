@@ -2,7 +2,7 @@ package com.pharbers.StreamEngine.Jobs.OssJob
 
 import com.pharbers.StreamEngine.Utils.Component2
 import com.pharbers.StreamEngine.Utils.Job.{BPSJobContainer, BPStreamJob}
-import com.pharbers.StreamEngine.Utils.Strategy.BPSJobStrategy
+import com.pharbers.StreamEngine.Utils.Strategy.BPStrategyComponent
 import org.apache.kafka.common.config.ConfigDef
 import org.apache.spark.sql
 import org.apache.spark.sql.SparkSession
@@ -21,7 +21,7 @@ class BPSOssJob(
                    val spark: SparkSession,
                    val is: Option[sql.DataFrame],
                    val container: BPSJobContainer) extends BPStreamJob {
-    type T = BPSJobStrategy
+    type T = BPStrategyComponent
     override val strategy = null
 
     override def exec(): Unit = {

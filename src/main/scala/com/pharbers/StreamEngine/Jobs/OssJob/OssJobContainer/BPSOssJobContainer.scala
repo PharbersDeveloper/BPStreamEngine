@@ -8,20 +8,20 @@ import com.pharbers.StreamEngine.Jobs.OssJob.OssListenerV2.BPSOssListenerV2
 import com.pharbers.StreamEngine.Utils.Component2
 import com.pharbers.StreamEngine.Utils.Event.EventHandler.BPSEventHandler
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamListener
-import com.pharbers.StreamEngine.Utils.Strategy.BPSKfkJobStrategy
+import com.pharbers.StreamEngine.Utils.Strategy.BPSKfkBaseStrategy
 import org.apache.kafka.common.config.ConfigDef
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions._
 
 object BPSOssJobContainer {
-    def apply(strategy: BPSKfkJobStrategy, spark: SparkSession): BPSOssJobContainer = new BPSOssJobContainer(strategy, spark, Map.empty)
+    def apply(strategy: BPSKfkBaseStrategy, spark: SparkSession): BPSOssJobContainer = new BPSOssJobContainer(strategy, spark, Map.empty)
 
-    def apply(strategy: BPSKfkJobStrategy, spark: SparkSession, config: Map[String, String]): BPSOssJobContainer = new BPSOssJobContainer(strategy, spark, config)
+    def apply(strategy: BPSKfkBaseStrategy, spark: SparkSession, config: Map[String, String]): BPSOssJobContainer = new BPSOssJobContainer(strategy, spark, config)
 }
 
-class BPSOssJobContainer(override val strategy: BPSKfkJobStrategy, val spark: SparkSession, config: Map[String, String]) extends BPSJobContainer{
+class BPSOssJobContainer(override val strategy: BPSKfkBaseStrategy, val spark: SparkSession, config: Map[String, String]) extends BPSJobContainer{
     val id = UUID.randomUUID().toString
-    type T = BPSKfkJobStrategy
+    type T = BPSKfkBaseStrategy
     import spark.implicits._
     //    val listener = new BPSOssListener(spark, this)
 

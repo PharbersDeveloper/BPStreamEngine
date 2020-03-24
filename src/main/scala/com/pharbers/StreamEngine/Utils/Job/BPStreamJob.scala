@@ -3,7 +3,7 @@ package com.pharbers.StreamEngine.Utils.Job
 import com.pharbers.StreamEngine.Utils.Component2.BPComponent
 import com.pharbers.StreamEngine.Utils.Event.EventHandler.BPSEventHandler
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamListener
-import com.pharbers.StreamEngine.Utils.Strategy.BPSJobStrategy
+import com.pharbers.StreamEngine.Utils.Strategy.BPStrategyComponent
 import com.pharbers.util.log.PhLogable
 import org.apache.spark.sql
 import org.apache.spark.sql.SparkSession
@@ -11,7 +11,7 @@ import org.apache.spark.sql.streaming.StreamingQuery
 
 trait BPStreamJob extends PhLogable with BPComponent {
     @transient
-    type T <: BPSJobStrategy
+    type T <: BPStrategyComponent
     @transient
     val strategy: T
     @transient

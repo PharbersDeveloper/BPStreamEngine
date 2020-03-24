@@ -42,6 +42,7 @@ object BPSConcertEntry extends BPSComponentFactory with BPSEntry {
 
     def start(): Unit = {
         val result = startStrategies() | startChannels() | startJobs()
+//        val result = startJobs()
         if (!result) {
             // TODO: exist
             println("Entry: start job error")
@@ -70,6 +71,14 @@ object BPSConcertEntry extends BPSComponentFactory with BPSEntry {
     }
 
     def startJobs(): Boolean = {
-        return true
+        try {
+            if (!useLazyConstruction)
+                cf.jobs.foreach(x => queryComponentWithId(x.id))
+            return true
+        } catch {
+            case ex: Exception =>
+                ex.printStackTrace()
+                return false
+        }
     }
 }

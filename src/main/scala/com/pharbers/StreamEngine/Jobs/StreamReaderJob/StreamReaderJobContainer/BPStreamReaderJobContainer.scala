@@ -5,7 +5,7 @@ import java.util.UUID
 
 import com.pharbers.StreamEngine.Utils.Component2
 import com.pharbers.StreamEngine.Utils.Job.BPSJobContainer
-import com.pharbers.StreamEngine.Utils.Strategy.BPSKfkJobStrategy
+import com.pharbers.StreamEngine.Utils.Strategy.BPSKfkBaseStrategy
 import org.apache.kafka.common.config.ConfigDef
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.types._
@@ -16,7 +16,7 @@ object BPStreamReaderJobContainer {
 
 class BPStreamReaderJobContainer(override val spark: SparkSession) extends BPSJobContainer {
     val id = UUID.randomUUID().toString
-    type T = BPSKfkJobStrategy
+    type T = BPSKfkBaseStrategy
     override val strategy = null
 
     import spark.implicits._

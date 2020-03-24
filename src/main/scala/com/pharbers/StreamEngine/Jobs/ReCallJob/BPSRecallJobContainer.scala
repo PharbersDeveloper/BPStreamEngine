@@ -8,7 +8,7 @@ import com.pharbers.StreamEngine.Utils.Config.BPSConfig
 import com.pharbers.StreamEngine.Utils.Event.EventHandler.BPSEventHandler
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamListener
 import com.pharbers.StreamEngine.Utils.Job.{BPDynamicStreamJob, BPSJobContainer}
-import com.pharbers.StreamEngine.Utils.Strategy.BPSJobStrategy
+import com.pharbers.StreamEngine.Utils.Strategy.BPStrategyComponent
 import org.apache.kafka.common.config.ConfigDef
 import org.apache.kafka.common.config.ConfigDef.{Importance, Type}
 import org.apache.spark.sql.SparkSession
@@ -24,8 +24,8 @@ import org.apache.spark.sql.SparkSession
   */
 case class BPSRecallJobContainer(config: Map[String, String]) extends BPSJobContainer with BPDynamicStreamJob {
 
-    override type T = BPSJobStrategy
-    override val strategy: BPSJobStrategy = null
+    override type T = BPStrategyComponent
+    override val strategy: BPStrategyComponent = null
     override val spark: SparkSession = null
 
     override val componentProperty: Component2.BPComponentConfig = null

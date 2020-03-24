@@ -13,11 +13,11 @@ import com.pharbers.StreamEngine.Utils.Component2
 import com.pharbers.StreamEngine.Utils.Event.EventHandler.BPSEventHandler
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamListener
 import com.pharbers.StreamEngine.Utils.Job.{BPDynamicStreamJob, BPSJobContainer}
-import com.pharbers.StreamEngine.Utils.Strategy.BPSKfkJobStrategy
+import com.pharbers.StreamEngine.Utils.Strategy.BPSKfkBaseStrategy
 import org.apache.kafka.common.config.ConfigDef
 
 object BPSPythonJobContainer {
-    def apply(strategy: BPSKfkJobStrategy,
+    def apply(strategy: BPSKfkBaseStrategy,
               spark: SparkSession,
               config: Map[String, String]): BPSPythonJobContainer =
         new BPSPythonJobContainer(spark, config)
@@ -44,8 +44,8 @@ class BPSPythonJobContainer(override val spark: SparkSession,
                             config: Map[String, String])
         extends BPSJobContainer with BPDynamicStreamJob with Serializable {
 
-    override val strategy: BPSKfkJobStrategy = null
-    type T = BPSKfkJobStrategy
+    override val strategy: BPSKfkBaseStrategy = null
+    type T = BPSKfkBaseStrategy
 
     val id: String = config.getOrElse("jobId", UUID.randomUUID().toString)
     val metadataPath: String = config("metadataPath")

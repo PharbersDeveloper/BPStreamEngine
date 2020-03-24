@@ -4,7 +4,7 @@ import java.util.concurrent.TimeUnit
 
 import com.pharbers.StreamEngine.Utils.Component2
 import com.pharbers.StreamEngine.Utils.Job.BPStreamJob
-import com.pharbers.StreamEngine.Utils.Strategy.BPSJobStrategy
+import com.pharbers.StreamEngine.Utils.Strategy.BPStrategyComponent
 import com.pharbers.kafka.producer.PharbersKafkaProducer
 import org.apache.avro.specific.SpecificRecord
 import org.apache.kafka.common.config.ConfigDef
@@ -21,7 +21,7 @@ object BPSBloodJob {
 class BPSBloodJob(topic: String,
                   msg: SpecificRecord) extends BPStreamJob {
 	val id: String = ""
-	type T = BPSJobStrategy
+	type T = BPStrategyComponent
 	override val strategy = null
 	val is: Option[sql.DataFrame] = None
 	val spark: SparkSession = null
