@@ -3,7 +3,6 @@ package com.pharbers.StreamEngine.Utils.Channel.Local
 import com.pharbers.StreamEngine.Utils.Annotation.Component
 import com.pharbers.StreamEngine.Utils.Channel.ChannelComponent
 import com.pharbers.StreamEngine.Utils.Component2
-import com.pharbers.StreamEngine.Utils.Component2.BPComponent
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamListener
 import com.pharbers.StreamEngine.Utils.ThreadExecutor.ThreadExecutor
 import com.pharbers.util.log.PhLogable
@@ -49,7 +48,8 @@ class BPSLocalChannel(override val componentProperty: Component2.BPComponentConf
         logger.info("Local Channel Server")
         while (true) {
             trigger()
-            Thread.sleep(1000)
+//            Thread.sleep(1000)
+            Thread.sleep(componentProperty.config("sleep").toInt)
         }
     }
 

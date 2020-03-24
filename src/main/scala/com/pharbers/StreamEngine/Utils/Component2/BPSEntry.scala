@@ -62,6 +62,7 @@ object BPSConcertEntry extends BPSComponentFactory with BPSEntry {
     def startChannels(): Boolean = {
         try {
             BPSConcertEntry.queryComponentWithId("local channel")
+            BPSConcertEntry.queryComponentWithId("driver channel")
             return true
         } catch {
             case _:Throwable => return false

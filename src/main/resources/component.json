@@ -32,6 +32,15 @@
                 "port": 56789,
                 "sleep": 1000
             }
+        },
+        {
+            "id": "driver channel",
+            "name": "BPSDriverChannel",
+            "args": [],
+            "config": {
+                "port": 56789,
+                "sleep": 10
+            }
         }
     ],
     "jobs": [
