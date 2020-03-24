@@ -39,4 +39,36 @@ object BPSConcertEntry extends BPSComponentFactory with BPSEntry {
             case None => None
         }
     }
+
+    def start(): Unit = {
+        val result = startStrategies() | startChannels() | startJobs()
+        if (!result) {
+            // TODO: exist
+            println("Entry: start job error")
+            sys.exit(-1)
+        }
+    }
+
+    def startStrategies(): Boolean = {
+        try {
+            BPSConcertEntry.queryComponentWithId("spark")
+            BPSConcertEntry.queryComponentWithId("kafka")
+            return true
+        } catch {
+            case _:Throwable => return false
+        }
+    }
+
+    def startChannels(): Boolean = {
+        try {
+            BPSConcertEntry.queryComponentWithId("local channel")
+            return true
+        } catch {
+            case _:Throwable => return false
+        }
+    }
+
+    def startJobs(): Boolean = {
+        return true
+    }
 }

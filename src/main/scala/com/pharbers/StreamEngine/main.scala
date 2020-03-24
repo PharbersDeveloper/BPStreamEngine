@@ -13,7 +13,6 @@ object main extends App {
 
 object main_oom extends App {
     BPSLogContext.init()
-    BPSConcertEntry.queryComponentWithId("spark")
-    BPSConcertEntry.queryComponentWithId("kafka")
+    BPSConcertEntry.start()
     ThreadExecutor.waitForShutdown()
 }

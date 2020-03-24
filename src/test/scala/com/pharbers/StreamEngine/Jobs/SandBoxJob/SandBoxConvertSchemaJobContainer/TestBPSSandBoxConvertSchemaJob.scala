@@ -24,7 +24,8 @@ import org.scalatest.FunSuite
   */
 class TestBPSSandBoxConvertSchemaJob extends FunSuite with PhLogable{
     test("test open and exec"){
-        BPSLocalChannel(Map())
+//        BPSLocalChannel(Map())
+        BPSLocalChannel(null)
         val dataSetId = new ObjectId().toString
         val jobContainerId: String = UUID.randomUUID().toString
         val date = new Date().getTime

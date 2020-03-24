@@ -24,7 +24,15 @@
         }
     ],
     "channels": [
-
+        {
+            "id": "local channel",
+            "name": "BPSLocalChannel",
+            "args": [],
+            "config": {
+                "port": 56789,
+                "sleep": 1000
+            }
+        }
     ],
     "jobs": [
 
