@@ -1,4 +1,4 @@
-package com.pharbers.StreamEngine.Utils.Schema.Spark
+package com.pharbers.StreamEngine.Utils.Strategy.Schema
 
 import org.scalatest.FunSuite
 import org.apache.spark.sql.SparkSession

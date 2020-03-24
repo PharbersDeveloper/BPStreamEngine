@@ -1,4 +1,4 @@
-package com.pharbers.StreamEngine.Utils.GithubHelper
+package com.pharbers.StreamEngine.Utils.Strategy.GithubHelper
 
 import org.scalatest.FunSuite
 

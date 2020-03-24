@@ -1,6 +1,6 @@
 package com.pharbers.StreamEngine.Others.clock
 
-import com.pharbers.StreamEngine.Utils.Schema.Spark.BPSParseSchema
+import com.pharbers.StreamEngine.Utils.Strategy.Schema.BPSParseSchema
 import com.pharbers.StreamEngine.Utils.Strategy.Session.Spark.BPSparkSession
 
 /** 查看Parquet的脚本

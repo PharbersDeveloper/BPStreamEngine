@@ -1,4 +1,4 @@
-package com.pharbers.StreamEngine.Utils.Schema.Spark
+package com.pharbers.StreamEngine.Utils.Strategy.Schema
 
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions._
@@ -26,7 +26,7 @@ object SchemaConverter extends Serializable {
 			}))
 		)
 	}
-	
+
 	def column2legalWithDF(colu: String, df: DataFrame): DataFrame = {
 		def replaceJsonStr(json: String) = {
 			implicit val formats: DefaultFormats.type = DefaultFormats
@@ -36,7 +36,7 @@ object SchemaConverter extends Serializable {
 		val udf_rep = udf(replaceJsonStr _)
 		df.withColumn(colu, udf_rep(col(colu)))
 	}
-	
+
 	def column2legalWithMetaDataSchema(data: Map[String, AnyRef]): Map[String, AnyRef] = {
 		val schema = data("schema").asInstanceOf[List[Map[String, AnyRef]]].map { m =>
 			val key = m("key").toString.replaceAll("""[,;{}()\s\t\n]""", "")

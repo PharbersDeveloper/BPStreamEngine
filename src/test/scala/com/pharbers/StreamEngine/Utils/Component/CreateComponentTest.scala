@@ -1,7 +1,7 @@
 package com.pharbers.StreamEngine.Utils.Component
 
 import org.scalatest.FunSuite
-import com.pharbers.StreamEngine.Utils.Log.BPSLogContext
+import com.pharbers.StreamEngine.Utils.Strategy.Log.BPSLogContext
 
 /** 功能描述
  *

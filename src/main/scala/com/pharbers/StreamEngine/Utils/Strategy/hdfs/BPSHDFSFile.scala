@@ -1,4 +1,4 @@
-package com.pharbers.StreamEngine.Utils.HDFS
+package com.pharbers.StreamEngine.Utils.Strategy.hdfs
 
 import java.net.URI
 import java.nio.charset.StandardCharsets

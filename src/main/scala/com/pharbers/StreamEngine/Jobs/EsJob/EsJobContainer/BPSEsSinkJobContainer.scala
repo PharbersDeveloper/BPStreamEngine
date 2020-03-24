@@ -7,7 +7,7 @@ import com.pharbers.StreamEngine.Utils.Component2
 import org.apache.spark.sql.SparkSession
 import com.pharbers.StreamEngine.Utils.Event.EventHandler.BPSEventHandler
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamListener
-import com.pharbers.StreamEngine.Utils.HDFS.BPSHDFSFile
+import com.pharbers.StreamEngine.Utils.Strategy.hdfs.BPSHDFSFile
 import com.pharbers.StreamEngine.Utils.Job.{BPDynamicStreamJob, BPSJobContainer}
 import com.pharbers.StreamEngine.Utils.Strategy.BPSKfkJobStrategy
 import com.pharbers.StreamEngine.Utils.ThreadExecutor.ThreadExecutor

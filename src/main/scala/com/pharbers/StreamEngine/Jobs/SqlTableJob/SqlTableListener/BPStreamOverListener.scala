@@ -6,12 +6,12 @@ import com.pharbers.StreamEngine.Utils.Channel.Local.BPSLocalChannel
 import com.pharbers.StreamEngine.Utils.Config.BPSConfig
 import com.pharbers.StreamEngine.Utils.Event.BPSEvents
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamListener
-import com.pharbers.StreamEngine.Utils.HDFS.BPSHDFSFile
+import com.pharbers.StreamEngine.Utils.Strategy.hdfs.BPSHDFSFile
 import org.apache.kafka.common.config.ConfigDef
 import org.apache.kafka.common.config.ConfigDef.{Importance, Type}
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import BPStreamOverListener._
-import com.pharbers.StreamEngine.Utils.Schema.Spark.BPSParseSchema
+import com.pharbers.StreamEngine.Utils.Strategy.Schema.BPSParseSchema
 
 /** 功能描述
   *

@@ -2,7 +2,7 @@ package com.pharbers.StreamEngine.Jobs.PyJob.Listener
 
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import com.pharbers.StreamEngine.Utils.Event.BPSEvents
-import com.pharbers.StreamEngine.Utils.HDFS.BPSHDFSFile
+import com.pharbers.StreamEngine.Utils.Strategy.hdfs.BPSHDFSFile
 import com.pharbers.StreamEngine.Jobs.PyJob.BPSPythonJob
 import com.pharbers.StreamEngine.Utils.Channel.Local.BPSLocalChannel
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamListener

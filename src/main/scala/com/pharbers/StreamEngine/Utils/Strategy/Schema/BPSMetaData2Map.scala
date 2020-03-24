@@ -1,4 +1,4 @@
-package com.pharbers.StreamEngine.Utils.Schema.Spark
+package com.pharbers.StreamEngine.Utils.Strategy.Schema
 
 import org.json4s.DefaultFormats
 import org.json4s.jackson.Serialization.read

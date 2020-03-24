@@ -7,7 +7,7 @@ import org.json4s.DefaultFormats
 import scala.util.parsing.json.JSON
 import org.json4s.jackson.Serialization.write
 import py4j.{GatewayServer, Py4JNetworkException}
-import com.pharbers.StreamEngine.Utils.HDFS.BPSHDFSFile
+import com.pharbers.StreamEngine.Utils.Strategy.hdfs.BPSHDFSFile
 
 
 //object BPSPy4jServer extends Serializable {

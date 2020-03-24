@@ -1,4 +1,4 @@
-package com.pharbers.StreamEngine.Utils.Log
+package com.pharbers.StreamEngine.Utils.Strategy.Log
 
 import java.io.{File, FileInputStream}
 import com.pharbers.StreamEngine.Utils.Config.AppConfig

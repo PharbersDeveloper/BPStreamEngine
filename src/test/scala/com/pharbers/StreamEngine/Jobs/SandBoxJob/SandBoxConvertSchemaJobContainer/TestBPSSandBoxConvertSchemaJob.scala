@@ -3,7 +3,7 @@ package com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxConvertSchemaJobContain
 import java.util.{Date, UUID}
 
 import com.pharbers.StreamEngine.Utils.Channel.Local.BPSLocalChannel
-import com.pharbers.StreamEngine.Utils.Schema.Spark.{BPSMetaData2Map, SchemaConverter}
+import com.pharbers.StreamEngine.Utils.Strategy.Schema.{BPSMetaData2Map, SchemaConverter}
 import com.pharbers.StreamEngine.Utils.Strategy.Session.Spark.BPSparkSession
 import com.pharbers.StreamEngine.Utils.Strategy.Session.Spark.BPSparkSession._
 import com.pharbers.StreamEngine.Utils.ThreadExecutor.ThreadExecutor

@@ -2,8 +2,8 @@ package com.pharbers.StreamEngine.Jobs.EsJob
 
 import com.pharbers.StreamEngine.Jobs.EsJob.Listener.EsSinkJobCloseListener
 import com.pharbers.StreamEngine.Utils.Component2
-import com.pharbers.StreamEngine.Utils.HDFS.BPSHDFSFile
-import com.pharbers.StreamEngine.Utils.Schema.Spark.BPSParseSchema
+import com.pharbers.StreamEngine.Utils.Strategy.hdfs.BPSHDFSFile
+import com.pharbers.StreamEngine.Utils.Strategy.Schema.BPSParseSchema
 import org.apache.spark.sql
 import org.apache.spark.sql.SparkSession
 import com.pharbers.StreamEngine.Utils.Job.{BPSJobContainer, BPStreamJob}
