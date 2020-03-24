@@ -16,6 +16,6 @@ class BPSContextTest extends FunSuite {
     }
 
     test("Init BPSLogContext") {
-        BPSLogContext.init()
+        BPSLogContext(null)
     }
 }

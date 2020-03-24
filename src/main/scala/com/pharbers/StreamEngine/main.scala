@@ -6,13 +6,12 @@ import com.pharbers.StreamEngine.Utils.Component2.BPSConcertEntry
 import com.pharbers.StreamEngine.Utils.ThreadExecutor.ThreadExecutor
 
 object main extends App {
-    BPSLogContext.init()
+    BPSLogContext(null)
     ComponentContext.init()
     ThreadExecutor.waitForShutdown()
 }
 
 object main_oom extends App {
-    BPSLogContext.init()
     BPSConcertEntry.start()
     ThreadExecutor.waitForShutdown()
 }

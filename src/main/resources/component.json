@@ -1,6 +1,13 @@
 {
     "strategies": [
         {
+            "id": "log4j",
+            "name": "BPSLogContext",
+            "args": [],
+            "config": {
+            }
+        },
+        {
             "id": "spark",
             "name": "BPSparkSession",
             "args": [],
