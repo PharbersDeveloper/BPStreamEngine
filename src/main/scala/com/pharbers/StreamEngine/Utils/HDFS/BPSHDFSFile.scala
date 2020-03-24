@@ -44,7 +44,16 @@ object BPSHDFSFile {
         bufferedWriter.close()
         fileSystem.close()
     }
-
+    
+    // TODO: 临时
+    def createPath(path: String): Unit = {
+        val fileSystem: FileSystem = FileSystem.newInstance(configuration)
+        val hdfsWritePath: Path = new Path(path)
+        if (!fileSystem.exists(hdfsWritePath))
+            fileSystem.create(hdfsWritePath)
+        fileSystem.close()
+    }
+    
     // 支持文件和目录，但不支持递归型目录
     def readHDFS(path: String): List[String] = {
         if(!checkPath(path)) return Nil

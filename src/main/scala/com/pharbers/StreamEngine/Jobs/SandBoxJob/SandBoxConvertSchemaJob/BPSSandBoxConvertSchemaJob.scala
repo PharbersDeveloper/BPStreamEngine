@@ -67,6 +67,9 @@ class BPSSandBoxConvertSchemaJob(val id: String,
             logger.info(s"ParentSampleData Info ${jobParam("parentSampleData")}")
             setInputStream(schema, df)
     
+            // TODO: 临时
+            BPSHDFSFile.createPath(jobParam("parquetSavePath"))
+            
             pushPyJob(Map(
                 "parentsId" -> (jobParam("dataSetId") :: Nil).mkString(","),
                 "noticeTopic" -> "HiveTaskNone",
