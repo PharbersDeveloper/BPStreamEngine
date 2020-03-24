@@ -6,7 +6,7 @@
             "args": [],
             "config": {
                 "app.name": "bp-stream-engine",
-                "master": "local",
+                "master": "local[2]",
                 "spark.configs.path": "src/main/resources/sparkConfig.properties",
                 "log.level": "INFO",
                 "run.model": "client"

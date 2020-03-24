@@ -13,7 +13,7 @@ import com.pharbers.StreamEngine.Utils.Strategy.Session.Kafka.Avro.BPSAvroDeseri
 object BPKafkaSession {
     def apply(compoentProperty: Component2.BPComponentConfig): BPKafkaSession = {
         val tmp = new BPKafkaSession(compoentProperty)
-        val spark = BPSConcertEntry.queryComponentWithId("spark").asInstanceOf[BPSparkSession]
+        val spark = BPSConcertEntry.queryComponentWithId("spark").get.asInstanceOf[BPSparkSession]
         spark.udf.register("deserialize", (bytes: Array[Byte]) => BPSAvroDeserializer(bytes))
         tmp
     }
