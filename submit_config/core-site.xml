@@ -17,20 +17,24 @@
 <!-- Put site-specific property overrides in this file. -->
 
 <configuration>
-    <property>  
-        <name>fs.defaultFS</name>  
-        <value>hdfs://starLord:8020</value>
+    <property>
+        <name>fs.defaultFS</name>
+        <value>hdfs://StarLord:8020</value>  <!--TODO: 注意修改主机名和端口-->
+        <description>描述集群中NameNode结点的URI(包括协议、主机名称、端口号)，集群里面的每一台机器都需要知道NameNode的地址。DataNode结点会先在NameNode上注册，这样它们的数据才可以被使用。独立的客户端程序通过这个URI跟DataNode交互，以取得文件的块列表。</description>
     </property>
-    <property>  
-        <name>hadoop.tmp.dir</name>  
-        <value>/home/spark/data/tmp</value>
+    <property>
+        <name>hadoop.tmp.dir</name>
+        <value>/tmp/hadoop</value>
+        <description>hadoop文件系统依赖的基础配置，很多路径都依赖它。如果hdfs-site.xml中不配置namenode和datanode的存放位置，默认就放在这个路径中。默认为/tmp/hadoop-${user.name}</description>
     </property>
     <property>
         <name>hadoop.proxyuser.super.hosts</name>
         <value>*</value>
+        <description>任何主机都可以模拟root用户</description>
     </property>
     <property>
         <name>hadoop.proxyuser.super.groups</name>
         <value>*</value>
+        <description>任何用户都可以模拟root用户</description>
     </property>
 </configuration>

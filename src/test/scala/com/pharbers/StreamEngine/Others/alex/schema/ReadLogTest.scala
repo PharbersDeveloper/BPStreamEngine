@@ -1,4 +1,4 @@
-package com.pharbers.StreamEngine.Others.sandbox.schema
+package com.pharbers.StreamEngine.Others.alex.schema
 
 import com.pharbers.StreamEngine.Utils.Session.Spark.BPSparkSession
 import org.scalatest.FunSuite
