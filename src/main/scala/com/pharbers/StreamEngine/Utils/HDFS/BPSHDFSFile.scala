@@ -50,7 +50,7 @@ object BPSHDFSFile {
         val fileSystem: FileSystem = FileSystem.newInstance(configuration)
         val hdfsWritePath: Path = new Path(path)
         if (!fileSystem.exists(hdfsWritePath))
-            fileSystem.create(hdfsWritePath)
+            fileSystem.mkdirs(hdfsWritePath)
         fileSystem.close()
     }
     
