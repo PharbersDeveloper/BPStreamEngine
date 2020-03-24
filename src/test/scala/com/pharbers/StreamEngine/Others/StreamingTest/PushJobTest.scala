@@ -62,14 +62,13 @@ class PushJobTest extends FunSuite {
         val jobs =
             JobMsg("ossStreamJob", "job", "com.pharbers.StreamEngine.Jobs.OssPartitionJob.OssJobContainer.BPSOssPartitionJobContainer", List("$BPSKfkJobStrategy", "$BPSparkSession"), Nil, Nil, Map.empty, "", "oss job") ::
             JobMsg("sandBoxJob", "job", "com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxJobContainer.BPSSandBoxJobContainer", List("$BPSparkSession"), Nil, Nil, Map.empty, "", "sandbox job") ::
-//            JobMsg("sql job", "job", "com.pharbers.StreamEngine.Jobs.SqlTableJob.SqlTableJobContainer.BPSqlTableJobContainer", List("$BPSparkSession"), Nil, Nil, Map("runId" -> runId), "", "oss job") ::
-                //                JobMsg("pyBoxJob", "job", "com.pharbers.StreamEngine.Jobs.PyJob.PythonJobContainer.BPSPythonJobContainer", List("$BPSparkSession"), Nil, Nil, Map(
-                //                    "jobId" -> "20796d42-c177-4838-9a20-79bfba60d036",
-                //                    "matedataPath" -> "/test/alex2/b1b6875c-a590-4dfd-9aa7-f852596266ef/metadata/",
-                //                    "filesPath" -> "/test/alex2/b1b6875c-a590-4dfd-9aa7-f852596266ef/files/20796d42-c177-4838-9a20-79bfba60d036",
-                //                    "resultPath" -> "hdfs:///test/dcs/testPy2"
-                //                ), "", "py job") ::
-                Nil
+            JobMsg("BPSPythonJobContainer", "job", "com.pharbers.StreamEngine.Jobs.PyJob.PythonJobContainer.BPSPythonJobContainer", List("$BPSparkSession"), Nil, Nil,
+                     Map(
+                        "listenerTopic" -> "PyJobContainerListenerTopic",
+                        "defaultNoticeTopic" -> "HiveTask",
+                        "pythonUri" -> "https://github.com/PharbersDeveloper/bp-data-clean.git",
+                        "pythonBranch" -> "v0.0.1"
+                    ), "", "python clean job") :: Nil
         
         val jobMsg = write(jobs)
         val topic = "stream_job_submit"
