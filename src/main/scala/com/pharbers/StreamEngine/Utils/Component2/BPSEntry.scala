@@ -3,6 +3,7 @@ import com.pharbers.StreamEngine.Utils.Config.AppConfig
 import org.apache.kafka.common.config.ConfigDef
 import org.json4s.DefaultFormats
 import org.json4s.jackson.Serialization.read
+import org.mongodb.scala.bson.ObjectId
 
 import scala.io.Source
 
@@ -14,6 +15,7 @@ trait BPSEntry {
 }
 
 object BPSConcertEntry extends BPSComponentFactory with BPSEntry {
+    lazy val runner_id: String = new ObjectId().toString
     override val componentProperty: BPComponentConfig = null
     override def createConfigDef(): ConfigDef = new ConfigDef()
     lazy val useLazyConstruction = false
