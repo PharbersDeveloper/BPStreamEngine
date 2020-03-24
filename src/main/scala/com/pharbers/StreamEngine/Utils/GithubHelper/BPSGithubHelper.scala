@@ -11,6 +11,16 @@ import org.eclipse.jgit.api.Git
  */
 case class BPSGithubHelper() {
 
+    /** 克隆指定分支的 github 仓库
+     *
+     * @param dir 项目存放位置
+     * @param uri 仓库位置
+     * @param branch 仓库分支，默认是 master
+     * @return Unit
+     * @author clock
+     * @version 0.1
+     * @since 2020/3/23 16:43
+     */
     def cloneByBranch(dir: String, uri: String, branch: String = "master"): Unit = {
         val file = new File(dir)
 
@@ -25,6 +35,16 @@ case class BPSGithubHelper() {
         def pull(): Unit = Git.open(file).pull().call()
     }
 
+    /** 获得目录下所有指定后缀的文件全路径
+     *
+     * @param dir 目录名称
+     * @param suffix 指定的后缀
+     * @return scala.List[_root_.scala.Predef.String]
+     * @throws
+     * @author clock
+     * @version 0.1
+     * @since 2020/3/23 16:44
+     */
     def listFile(dir: String, suffix: String = ""): List[String] = {
         var result: List[String] = Nil
         val file = new File(dir)

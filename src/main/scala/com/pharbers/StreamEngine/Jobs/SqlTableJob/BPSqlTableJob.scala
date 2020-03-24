@@ -1,16 +1,9 @@
 package com.pharbers.StreamEngine.Jobs.SqlTableJob
 
-import java.util.{Collections, UUID}
-import java.util.concurrent.TimeUnit
-
 import com.pharbers.StreamEngine.Utils.Config.BPSConfig
-import com.pharbers.StreamEngine.Utils.Schema.Spark.BPSParseSchema
 import BPSqlTableJob._
-import com.pharbers.StreamEngine.Jobs.SandBoxJob.BloodJob.BPSBloodJob
-import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.{BPSCommonJoBStrategy, BPSJobStrategy}
+import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.{BPSCommonJoBStrategy, BPSDataMartJobStrategy, BPSJobStrategy}
 import com.pharbers.StreamEngine.Utils.StreamJob.{BPSJobContainer, BPStreamJob}
-import com.pharbers.kafka.producer.PharbersKafkaProducer
-import com.pharbers.kafka.schema.{AssetDataMart, DataSet}
 import org.apache.kafka.common.config.ConfigDef
 import org.apache.kafka.common.config.ConfigDef.{Importance, Type}
 import org.apache.spark.sql.SparkSession
@@ -35,8 +28,8 @@ case class BPSqlTableJob(jobContainer: BPSJobContainer, spark: SparkSession, con
             .define(ERROR_PATH_CONFIG_KEY, Type.STRING, "", Importance.HIGH, ERROR_PATH_CONFIG_DOC)
             //            .define(VERSION_CONFIG_KEY, Type.STRING, Importance.HIGH, VERSION_CONFIG_DOC)
             .define(DATA_SETS_CONFIG_KEY, Type.LIST, "", Importance.HIGH, DATA_SETS_CONFIG_DOC)
-    override type T = BPSCommonJoBStrategy
-    override val strategy: BPSCommonJoBStrategy = BPSCommonJoBStrategy(config, configDef)
+    override type T = BPSDataMartJobStrategy
+    override val strategy: BPSDataMartJobStrategy = new BPSDataMartJobStrategy(config, configDef)
     private val jobConfig: BPSConfig = strategy.getJobConfig
     val jobId: String = strategy.getJobId
     val runId: String = strategy.getRunId
@@ -68,18 +61,19 @@ case class BPSqlTableJob(jobContainer: BPSJobContainer, spark: SparkSession, con
         } else {
             "0.0.1"
         }
+        val url = s"/common/public/$tableName/$version"
         logger.info(s"start save table $tableName, mode: $saveMode")
         saveMode match {
-            case "append" => saveTable(tableName, saveMode, version)
+            case "append" => saveTable(tableName, saveMode, version, url)
             //todo: 全量数据处理
             case "overwrite" =>
                 spark.sql(s"drop table $tableName")
-                saveTable(tableName, saveMode, version)
+                saveTable(tableName, saveMode, version, url)
             case _ => ???
         }
         logger.info(s"save $tableName over, job: $id")
         logger.info(s"push data set")
-        pushDataSet(tableName, version)
+        strategy.pushDataSet(tableName, version, url, saveMode)
         logger.info(s"close job $id")
         close()
     }
@@ -89,53 +83,18 @@ case class BPSqlTableJob(jobContainer: BPSJobContainer, spark: SparkSession, con
         jobContainer.finishJobWithId(id)
     }
 
-    def saveTable(tableName: String, mode: String, version: String): Unit = {
+    def saveTable(tableName: String, mode: String, version: String, url: String): Unit = {
         //todo: 需要检查已经有的
         inputStream match {
             case Some(df) =>
                 df.coalesce(4).withColumn("version", lit(version)).write
                         .mode(mode)
-                        .option("path", s"/common/public/$tableName/$version")
+                        .option("path", url)
                         .saveAsTable(tableName)
             case _ =>
         }
         val errorHead = spark.sparkContext.textFile(jobConfig.getString(ERROR_PATH_CONFIG_KEY)).take(1).headOption.getOrElse("")
         if (errorHead.length > 0) logger.info(s"error path: ${jobConfig.getString(ERROR_PATH_CONFIG_KEY)} ,error: $errorHead")
-    }
-
-    def pushDataSet(tableName: String, version: String): Unit ={
-        val producer = new PharbersKafkaProducer[String, AssetDataMart]()
-        val mongoOId = new ObjectId().toString
-        val dfs = new DataSet(
-            List[CharSequence](jobConfig.getList(DATA_SETS_CONFIG_KEY).asScala: _*).asJava,
-            mongoOId,
-            id,
-            Collections.emptyList(),
-            "",
-            spark.sql(s"select * from $tableName").count(),
-            s"/common/public/$tableName/$version",
-            "hive table")
-        BPSBloodJob("data_set_job", dfs).exec()
-
-        val value = new AssetDataMart(
-            tableName,
-            "",
-            version,
-            "mart",
-            List[CharSequence]("*").asJava,
-            List[CharSequence]("*").asJava,
-            List[CharSequence]("*").asJava,
-            List[CharSequence]("*").asJava,
-            List[CharSequence]("*").asJava,
-            List[CharSequence]("*").asJava,
-            List[CharSequence](mongoOId).asJava,
-            tableName,
-            s"/common/public/$tableName/$version",
-            "hive",
-            saveMode
-        )
-        val fu = producer.produce("AssetDataMart", "", value)
-        logger.info(fu.get(10, TimeUnit.SECONDS))
     }
 }
 
@@ -150,8 +109,5 @@ object BPSqlTableJob {
     final val ERROR_PATH_CONFIG_DOC = "error row  path"
     final val DATA_SETS_CONFIG_KEY = "dataSets"
     final val DATA_SETS_CONFIG_DOC = "dataSet ids"
-    //    final val VERSION_CONFIG_KEY = "version"
-    //    final val VERSION_CONFIG_DOC = "version in asset"
-
 }
 
