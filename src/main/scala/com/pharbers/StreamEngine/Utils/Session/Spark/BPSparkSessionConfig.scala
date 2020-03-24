@@ -1,9 +1,10 @@
 package com.pharbers.StreamEngine.Utils.Session.Spark
 
+import com.pharbers.StreamEngine.Utils.Component2.{BPComponent}
 import org.apache.kafka.common.config.ConfigDef
 import org.apache.kafka.common.config.ConfigDef.{Importance, Type}
 
-trait BPSparkSessionConfig {
+trait BPSparkSessionConfig extends BPComponent {
     val defaultSparkConfigsPath = "src/main/resources/sparkConfig.properties"
     val defaultAppName = "bp-stream-engine"
     val defaultMaster = "yarn"
@@ -21,7 +22,7 @@ trait BPSparkSessionConfig {
     final val RUN_MODEL_KEY = "run.model"
     final val RUN_MODEL_DOC = "运行的模式client, 或者cluster"
 
-    final val configDef: ConfigDef = new ConfigDef()
+    override def createConfigDef(): ConfigDef = new ConfigDef()
             .define(SPARK_CONFIGS_PATH_KEY, Type.STRING, defaultSparkConfigsPath, Importance.HIGH, SPARK_CONFIGS_PATH_DOC)
             .define(APP_NAME_KEY, Type.STRING, defaultAppName, Importance.HIGH, APP_NAME_DOC)
             .define(MASTER_KEY, Type.STRING, defaultMaster, Importance.HIGH, MASTER_DOC)

@@ -18,7 +18,7 @@ class BPSComponentContext {
             .flatMap(x => AnnotationSelector.getAnnotationClass(x, classOf[Component], true))
             .map(x => (x._2.name, (x._1, x._2))).toMap
 
-    def buildComponent[T](config: BPConfig): T = {
+    def buildComponent[T](config: BPComponentConfig): T = {
         val args = config.args
         //todo: 检查是否是可用的factory
         // TODO: 统一Factory, 这里要避免递归构造
@@ -34,7 +34,7 @@ class BPSComponentContext {
                 //todo: 根据type来确定方法，而不是参数数量
                 .find(x => x.asMethod.paramLists.map(_.map(_.typeSignature)).head.length == 1).get.asMethod
 //                .find(x => x.asMethod.paramLists.map(_.map(_.typeSignature)).head.length == args.length + 1).get.asMethod
-        val component = objMirror.reflectMethod(method)(config.config)
+        val component = objMirror.reflectMethod(method)(config)
         print(component.asInstanceOf[BPComponent])
         component.asInstanceOf[T]
     }

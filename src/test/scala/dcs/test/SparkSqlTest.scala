@@ -13,7 +13,7 @@ import org.apache.spark.sql.functions.lit
   * @note 一些值得注意的地方
   */
 object SparkSqlTest extends App {
-    val spark = BPSparkSession()
+    val spark = BPSparkSession(null)
     val df = spark.read.parquet("/common/public/cpa/0.0.11")
             .filter("company != 'Janssen'")
             .withColumn("version", lit("0.0.12"))
@@ -37,7 +37,7 @@ object SparkSqlTest extends App {
 }
 
 object SparkSql extends App{
-    val spark = BPSparkSession()
+    val spark = BPSparkSession(null)
     val df = spark.read.format("csv")
             .option("header", true)
             .option("delimiter", ",")
@@ -47,7 +47,7 @@ object SparkSql extends App{
 }
 
 object ReadParquet extends App{
-    val spark = BPSparkSession()
+    val spark = BPSparkSession(null)
     val df = spark.read.parquet("/jobs/f9b76128-8019-4d1a-bf6c-b12b683f778c/c2ed46c4-c8b8-488f-944e-29c39b695e43/contents/part-00000-604be270-2ee4-400a-91d9-9309fce61454-c000.snappy.parquet")
     println(df.count())
 }

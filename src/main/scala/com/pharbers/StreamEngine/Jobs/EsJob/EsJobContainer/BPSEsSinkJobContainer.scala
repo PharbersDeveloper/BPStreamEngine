@@ -3,6 +3,7 @@ package com.pharbers.StreamEngine.Jobs.EsJob.EsJobContainer
 import java.util.UUID
 
 import com.pharbers.StreamEngine.Jobs.EsJob.Listener.EsSinkJobStartListener
+import com.pharbers.StreamEngine.Utils.Component2
 import org.apache.spark.sql.SparkSession
 import com.pharbers.StreamEngine.Utils.Event.EventHandler.BPSEventHandler
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamListener
@@ -12,6 +13,7 @@ import com.pharbers.StreamEngine.Utils.StreamJob.{BPDynamicStreamJob, BPSJobCont
 import com.pharbers.StreamEngine.Utils.ThreadExecutor.ThreadExecutor
 import com.pharbers.kafka.consumer.PharbersKafkaConsumer
 import com.pharbers.kafka.schema.EsSinkJobSubmit
+import org.apache.kafka.common.config.ConfigDef
 
 object BPSEsSinkJobContainer {
     def apply(strategy: BPSKfkJobStrategy,
@@ -66,4 +68,8 @@ class BPSEsSinkJobContainer(override val spark: SparkSession,
     override def handlerExec(handler: BPSEventHandler): Unit = {}
 
     override def registerListeners(listener: BPStreamListener): Unit = {}
+
+    override val componentProperty: Component2.BPComponentConfig = null
+
+    override def createConfigDef(): ConfigDef = ???
 }

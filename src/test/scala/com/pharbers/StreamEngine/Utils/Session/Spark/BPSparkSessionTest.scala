@@ -18,15 +18,17 @@ import org.scalatest.FunSuite
   */
 class BPSparkSessionTest extends FunSuite with PhLogable {
     test("Create BPSparkSession By Default Config") {
-        assert(BPSparkSession() != null)
+        assert(BPSparkSession(null) != null)
     }
 
     test("Create BPSparkSession By Args Config") {
-        assert(BPSparkSession(Map("app.name" -> "BPSparkSessionTest")) != null)
+//        assert(BPSparkSession(Map("app.name" -> "BPSparkSessionTest")) != null)
+        assert(BPSparkSession(null) != null)
     }
 
     test("Read Hive And Convert MaxDashboard") {
-        val spark = BPSparkSession(Map("app.name" -> "ReadHive"))
+//        val spark = BPSparkSession(Map("app.name" -> "ReadHive"))
+        val spark = BPSparkSession(null)
         val reading = spark.sql("SELECT * FROM result")
 
         //去除无效数据后的条数5564902

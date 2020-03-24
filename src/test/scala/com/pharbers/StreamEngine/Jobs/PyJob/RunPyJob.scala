@@ -10,12 +10,13 @@ import org.json4s.jackson.Serialization.write
 import com.pharbers.kafka.producer.PharbersKafkaProducer
 import com.pharbers.StreamEngine.Utils.Component.Dynamic.JobMsg
 import com.pharbers.StreamEngine.Utils.Session.Spark.BPSparkSession
+import com.pharbers.StreamEngine.Utils.Session.Spark.BPSparkSession._
 import com.pharbers.StreamEngine.Jobs.PyJob.PythonJobContainer.BPSPythonJobContainer
 
 object RunPyJob extends App {
 
     def directStart(): Unit = {
-        val job = BPSPythonJobContainer(null, BPSparkSession(), Map.empty)
+        val job = BPSPythonJobContainer(null, BPSparkSession(null), Map.empty)
         job.open()
         job.exec()
     }

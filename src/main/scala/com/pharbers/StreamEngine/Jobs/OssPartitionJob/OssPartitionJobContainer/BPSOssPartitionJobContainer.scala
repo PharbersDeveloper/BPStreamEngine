@@ -5,9 +5,11 @@ import java.util.UUID
 import com.pharbers.StreamEngine.Jobs.OssPartitionJob.BPSOssPartitionJob
 import com.pharbers.StreamEngine.Utils.StreamJob.{BPDynamicStreamJob, BPSJobContainer, BPStreamJob}
 import com.pharbers.StreamEngine.Jobs.OssPartitionJob.OssListener.BPSOssListener
+import com.pharbers.StreamEngine.Utils.Component2
 import com.pharbers.StreamEngine.Utils.Event.EventHandler.BPSEventHandler
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamListener
 import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSKfkJobStrategy
+import org.apache.kafka.common.config.ConfigDef
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions._
 
@@ -87,4 +89,8 @@ class BPSOssPartitionJobContainer(override val strategy: BPSKfkJobStrategy, val 
     override def registerListeners(listener: BPStreamListener): Unit = {}
 
     override def handlerExec(handler: BPSEventHandler): Unit = {}
+
+    override val componentProperty: Component2.BPComponentConfig = null
+
+    override def createConfigDef(): ConfigDef = ???
 }

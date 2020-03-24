@@ -4,6 +4,7 @@ import java.util.{Collections, UUID}
 
 import BPSCpaCleanJob._
 import com.pharbers.StreamEngine.Jobs.SandBoxJob.BloodJob.BPSBloodJob
+import com.pharbers.StreamEngine.Utils.Component2
 import com.pharbers.StreamEngine.Utils.Config.BPSConfig
 
 import collection.JavaConverters._
@@ -25,17 +26,18 @@ import org.bson.types.ObjectId
   * @since 2020/01/02 15:10
   * @note 一些值得注意的地方
   */
-case class BPSCpaCleanJob(jobContainer: BPSJobContainer, spark: SparkSession, config: Map[String, String]) extends BPStreamJob {
+case class BPSCpaCleanJob(jobContainer: BPSJobContainer, spark: SparkSession, config_map: Map[String, String]) extends BPStreamJob {
 
     import spark.implicits._
 
-    val configDef: ConfigDef = new ConfigDef()
+    override val componentProperty: Component2.BPComponentConfig = null
+    override def createConfigDef(): ConfigDef = new ConfigDef()
             .define(HOSP_MAPPING_PATH_KEY, Type.STRING, UUID.randomUUID().toString, Importance.HIGH, HOSP_MAPPING_PATH_DOC)
             .define(MKT_MAPPING_PATH_KEY, Type.STRING, UUID.randomUUID().toString, Importance.HIGH, MKT_MAPPING_PATH_DOC)
             .define(PARENTS_CONFIG_KEY, Type.LIST,  Importance.HIGH, PARENTS_CONFIG_DOC)
 
     override type T = BPSDataMartJobStrategy
-    override val strategy: BPSDataMartJobStrategy = new BPSDataMartJobStrategy(config, configDef)
+    override val strategy: BPSDataMartJobStrategy = new BPSDataMartJobStrategy(config_map, configDef)
     private val jobConfig: BPSConfig = strategy.getJobConfig
     val jobId: String = strategy.getJobId
     val runId: String = strategy.getRunId

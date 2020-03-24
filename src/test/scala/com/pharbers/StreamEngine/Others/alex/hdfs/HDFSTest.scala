@@ -16,9 +16,9 @@ class HDFSTest extends FunSuite {
 			case e: Exception => e.printStackTrace()
 		}
 	}
-	
+
 	test("Read Parquet Test") {
-		val spark = BPSparkSession()
+		val spark = BPSparkSession(null)
 		val hdfsUrl = "/jobs/16574115-67b0-4c0a-8aea-8121abc8b3a0/35a7202c-1358-426c-b4fb-4ae4914c5153/contents"
 		val reading = spark.read.parquet(hdfsUrl)
 		reading.show()

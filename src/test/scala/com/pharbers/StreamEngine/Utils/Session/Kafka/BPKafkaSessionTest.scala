@@ -12,7 +12,7 @@ import com.pharbers.StreamEngine.Utils.Session.Spark.BPSparkSession
  */
 class BPKafkaSessionTest extends FunSuite {
     test("Create BPKafkaSession By Default Config") {
-        val spark = BPSparkSession()
+        val spark = BPSparkSession(null)
         val session = BPKafkaSession(spark, Map.empty)
         assert(session.kafkaUrl == session.kafkaUrl)
         assert(session.schemaRegistryUrl == session.schemaRegistryUrl)
@@ -21,7 +21,7 @@ class BPKafkaSessionTest extends FunSuite {
     }
 
     test("Create BPKafkaSession By Args Config ") {
-        val spark = BPSparkSession()
+        val spark = BPSparkSession(null)
         val session = BPKafkaSession(spark, Map("topic" -> "testTopic"))
         assert(session.kafkaUrl == session.kafkaUrl)
         assert(session.schemaRegistryUrl == session.schemaRegistryUrl)

@@ -1,8 +1,10 @@
 package com.pharbers.StreamEngine.Jobs.KfkSinkJob
 import java.util.UUID
 
+import com.pharbers.StreamEngine.Utils.Component2
 import com.pharbers.StreamEngine.Utils.StreamJob.{BPSJobContainer, BPStreamJob}
 import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.{BPSJobStrategy, BPSKfkJobStrategy}
+import org.apache.kafka.common.config.ConfigDef
 import org.apache.spark.sql
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
@@ -59,4 +61,8 @@ class BPSKfkSinkJob(
         super.close()
         container.finishJobWithId(id)
     }
+
+    override val componentProperty: Component2.BPComponentConfig = null
+
+    override def createConfigDef(): ConfigDef = ???
 }

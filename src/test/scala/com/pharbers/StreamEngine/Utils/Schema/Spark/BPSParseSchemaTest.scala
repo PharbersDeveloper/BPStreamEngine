@@ -16,7 +16,7 @@ class BPSParseSchemaTest extends FunSuite {
     val matedataPath = "hdfs:///jobs/83ee0f2a-360a-4236-ba26-afa09d58e01d/ea293f1b-a66d-44fb-95ff-49a009840ed4/metadata"
 
     test("解析在 Parquet 中 Metadata 的 Schema") {
-        implicit val spark: SparkSession = BPSparkSession()
+        implicit val spark: SparkSession = BPSparkSession(null)
         val metadata = BPSParseSchema.parseMetadata(matedataPath)
         assert(metadata.isDefinedAt("schema"))
 

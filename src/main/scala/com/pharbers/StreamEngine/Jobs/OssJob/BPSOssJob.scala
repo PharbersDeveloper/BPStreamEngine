@@ -1,7 +1,9 @@
 package com.pharbers.StreamEngine.Jobs.OssJob
 
+import com.pharbers.StreamEngine.Utils.Component2
 import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSJobStrategy
 import com.pharbers.StreamEngine.Utils.StreamJob.{BPSJobContainer, BPStreamJob}
+import org.apache.kafka.common.config.ConfigDef
 import org.apache.spark.sql
 import org.apache.spark.sql.SparkSession
 
@@ -30,4 +32,8 @@ class BPSOssJob(
         super.close()
         container.finishJobWithId(id)
     }
+
+    override val componentProperty: Component2.BPComponentConfig = null
+
+    override def createConfigDef(): ConfigDef = ???
 }

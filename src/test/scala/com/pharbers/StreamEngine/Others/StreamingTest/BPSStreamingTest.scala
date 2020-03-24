@@ -78,7 +78,7 @@ class BPSStreamingTest extends FunSuite {
     }
 
     test("test file stream"){
-        val spark = BPSparkSession()
+        val spark = BPSparkSession(null)
         val df = spark.read.csv("/test/dcs/testFile")
         val schema = df.schema
         df.write.mode("overwrite").parquet("/test/dcs/testFile/parquet")

@@ -16,7 +16,7 @@ object ReadParquetScript extends App {
 //    val matedataPath = s"/jobs/$runId/$jobId/metadata"
 //    val filesPath = s"/jobs/$runId/$jobId/contents/$jobId"
 
-    val spark = BPSparkSession()
+    val spark = BPSparkSession(null)
     val id = "08d72f26-f5cc-4618-911c-812a4a4e1cec"
     def byBatchForCsv(): Unit = {
         val jobId = "0090df5d-8858-46e3-a4fa-ce53e183e905"

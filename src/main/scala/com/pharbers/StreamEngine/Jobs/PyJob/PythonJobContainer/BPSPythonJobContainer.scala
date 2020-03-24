@@ -1,6 +1,7 @@
 package com.pharbers.StreamEngine.Jobs.PyJob.PythonJobContainer
 
 import java.util.{Collections, UUID}
+
 import org.mongodb.scala.bson.ObjectId
 import com.pharbers.kafka.schema.DataSet
 import org.apache.spark.sql.SparkSession
@@ -8,10 +9,12 @@ import com.pharbers.StreamEngine.Utils.HDFS.BPSHDFSFile
 import com.pharbers.StreamEngine.Jobs.PyJob.BPSPythonJob
 import com.pharbers.StreamEngine.Utils.Schema.Spark.BPSParseSchema
 import com.pharbers.StreamEngine.Jobs.SandBoxJob.BloodJob.BPSBloodJob
+import com.pharbers.StreamEngine.Utils.Component2
 import com.pharbers.StreamEngine.Utils.Event.EventHandler.BPSEventHandler
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamListener
 import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSKfkJobStrategy
 import com.pharbers.StreamEngine.Utils.StreamJob.{BPDynamicStreamJob, BPSJobContainer}
+import org.apache.kafka.common.config.ConfigDef
 
 object BPSPythonJobContainer {
     def apply(strategy: BPSKfkJobStrategy,
@@ -122,4 +125,8 @@ class BPSPythonJobContainer(override val spark: SparkSession,
     override def registerListeners(listener: BPStreamListener): Unit = {}
 
     override def handlerExec(handler: BPSEventHandler): Unit = {}
+
+    override val componentProperty: Component2.BPComponentConfig = null
+
+    override def createConfigDef(): ConfigDef = ???
 }

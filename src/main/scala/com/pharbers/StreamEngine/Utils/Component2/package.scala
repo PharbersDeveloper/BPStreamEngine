@@ -1,7 +1,7 @@
 package com.pharbers.StreamEngine.Utils
 
 package object Component2 {
-    trait BPConfig {
+    trait BPComponentConfig {
         val id: String
         val name: String
 //        val factory: String
@@ -18,14 +18,11 @@ package object Component2 {
         }
     }
 
-    case class BPStgConfig(
+    case class BPStgComponentConfig(
                               id: String,
                               name: String,
                               args: List[String],
-                              config: Map[String, String]) extends BPConfig
-    trait BPJobConfig extends BPConfig
+                              config: Map[String, String]) extends BPComponentConfig
+    trait BPJobComponentConfig extends BPComponentConfig
 
-    trait BPComponent {
-        val config: BPConfig
-    }
 }

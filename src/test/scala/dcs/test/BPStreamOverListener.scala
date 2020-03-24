@@ -20,7 +20,7 @@ import org.scalatest.FunSuite
   * @note 一些值得注意的地方
   */
 class BPStreamOverListener extends FunSuite with PhLogable{
-    val spark = BPSparkSession()
+    val spark = BPSparkSession(null)
     test("test pyjob ok"){
         val scan = new Scanner(new File("D:\\文件\\weixin\\WeChat Files\\dengcao1993\\FileStorage\\File\\2019-12\\data.csv"))
         while (scan.hasNextLine){

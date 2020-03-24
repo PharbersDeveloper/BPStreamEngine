@@ -7,7 +7,8 @@ import org.apache.kafka.common.config.ConfigDef.{Importance, Type}
 import org.apache.spark.sql.catalyst.encoders.RowEncoder
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 import org.apache.spark.sql.functions._
-import com.pharbers.StreamEngine.Jobs.EditDistanceJob.BPEditDistance.{TABLE_NAME_CONFIG_DOC, TABLE_NAME_CONFIG_KEY, DATA_SETS_CONFIG_KEY, DATA_SETS_CONFIG_DOC}
+import com.pharbers.StreamEngine.Jobs.EditDistanceJob.BPEditDistance.{DATA_SETS_CONFIG_DOC, DATA_SETS_CONFIG_KEY, TABLE_NAME_CONFIG_DOC, TABLE_NAME_CONFIG_KEY}
+import com.pharbers.StreamEngine.Utils.Component2
 
 /** 功能描述
   *
@@ -16,15 +17,16 @@ import com.pharbers.StreamEngine.Jobs.EditDistanceJob.BPEditDistance.{TABLE_NAME
   * @since 2020/02/04 13:38
   * @note 一些值得注意的地方
   */
-case class BPEditDistance(jobContainer: BPSJobContainer, spark: SparkSession, config: Map[String, String]) extends BPStreamJob {
+case class BPEditDistance(jobContainer: BPSJobContainer, spark: SparkSession, config_map: Map[String, String]) extends BPStreamJob {
 
     import spark.implicits._
 
-    val configDef: ConfigDef = new ConfigDef()
+    override val componentProperty: Component2.BPComponentConfig = null
+    override def createConfigDef(): ConfigDef = new ConfigDef()
             .define(TABLE_NAME_CONFIG_KEY, Type.STRING, "cpa", Importance.HIGH, TABLE_NAME_CONFIG_DOC)
             .define(DATA_SETS_CONFIG_KEY, Type.LIST, Importance.HIGH, DATA_SETS_CONFIG_DOC)
     override type T = BPSDataMartJobStrategy
-    override val strategy: BPSDataMartJobStrategy = new BPSDataMartJobStrategy(config)
+    override val strategy: BPSDataMartJobStrategy = new BPSDataMartJobStrategy(config_map)
     val jobId: String = strategy.getJobId
     val runId: String = strategy.getRunId
     override val id: String = jobId

@@ -5,6 +5,7 @@ import java.util.{Date, UUID}
 import com.pharbers.StreamEngine.Utils.Channel.Local.BPSLocalChannel
 import com.pharbers.StreamEngine.Utils.Schema.Spark.{BPSMetaData2Map, SchemaConverter}
 import com.pharbers.StreamEngine.Utils.Session.Spark.BPSparkSession
+import com.pharbers.StreamEngine.Utils.Session.Spark.BPSparkSession._
 import com.pharbers.StreamEngine.Utils.ThreadExecutor.ThreadExecutor
 import com.pharbers.util.log.PhLogable
 import org.json4s.DefaultFormats
@@ -40,7 +41,7 @@ class TestBPSSandBoxConvertSchemaJob extends FunSuite with PhLogable{
             "checkPointSavePath" -> checkPointSavePath,
             "parquetSavePath" -> parquetSavePath
         )
-        val spark = BPSparkSession()
+        val spark = BPSparkSession(null)
         val convertJob: BPSSandBoxConvertSchemaJob =
             BPSSandBoxConvertSchemaJob(
                 "test_" + UUID.randomUUID().toString,

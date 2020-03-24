@@ -2,6 +2,7 @@ package com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy
 
 import java.util.UUID
 
+import com.pharbers.StreamEngine.Utils.Component2
 import com.pharbers.StreamEngine.Utils.Config.BPSConfig
 import org.apache.kafka.common.config.ConfigDef
 import org.apache.kafka.common.config.ConfigDef.{Importance, Type}
@@ -19,7 +20,7 @@ case class BPSCommonJoBStrategy(config: Map[String, String],@transient inoutConf
     val JOB_ID_CONFIG_DOC = "job id"
     val RUN_ID_CONFIG_KEY = "runId"
     val RUN_ID_CONFIG_DOC = "run id"
-    val configDef = inoutConfigDef
+    override def createConfigDef(): ConfigDef = inoutConfigDef
             .define(JOB_ID_CONFIG_KEY, Type.STRING, UUID.randomUUID().toString, Importance.HIGH, JOB_ID_CONFIG_DOC)
             .define(RUN_ID_CONFIG_KEY, Type.STRING, UUID.randomUUID().toString, Importance.HIGH, RUN_ID_CONFIG_DOC)
     val jobConfig = BPSConfig(configDef, config)
@@ -33,4 +34,6 @@ case class BPSCommonJoBStrategy(config: Map[String, String],@transient inoutConf
     override def getRunId: String = jobConfig.getString(RUN_ID_CONFIG_KEY)
 
     override def getJobId: String = jobConfig.getString(JOB_ID_CONFIG_KEY)
+
+    override val componentProperty: Component2.BPComponentConfig = null
 }

@@ -5,6 +5,7 @@ import java.util.concurrent.{Executors, LinkedBlockingQueue, ThreadPoolExecutor,
 
 import com.pharbers.StreamEngine.Jobs.SqlTableJob.BPSqlTableJob
 import com.pharbers.StreamEngine.Jobs.SqlTableJob.SqlTableListener.{BPSqlTableKafkaListener, BPStreamOverListener}
+import com.pharbers.StreamEngine.Utils.Component2
 import com.pharbers.StreamEngine.Utils.Config.BPSConfig
 import com.pharbers.StreamEngine.Utils.Event.EventHandler.BPSEventHandler
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamListener
@@ -35,7 +36,8 @@ class BPSqlTableJobContainer(val spark: SparkSession, config: Map[String, String
     final val RUN_ID_CONFIG_DOC = "run id"
     final val VERSIONS_CONFIG_KEY = "version"
     final val VERSIONS_CONFIG_DOC = "version"
-    val configDef: ConfigDef = new ConfigDef()
+    override val componentProperty: Component2.BPComponentConfig = null
+    override def createConfigDef(): ConfigDef = new ConfigDef()
             .define(TOPIC_CONFIG_KEY, Type.STRING, "HiveTask", Importance.HIGH, TOPIC_CONFIG_DOC)
             .define(RUN_ID_CONFIG_KEY, Type.STRING, UUID.randomUUID().toString, Importance.HIGH, RUN_ID_CONFIG_DOC)
             .define(VERSIONS_CONFIG_KEY, Type.STRING, UUID.randomUUID().toString, Importance.HIGH, VERSIONS_CONFIG_DOC)

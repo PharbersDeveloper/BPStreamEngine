@@ -3,6 +3,7 @@ package com.pharbers.StreamEngine.Jobs.ReCallJob
 import java.util.UUID
 
 import com.pharbers.StreamEngine.Jobs.ReCallJob.BPSRecallJobContainer._
+import com.pharbers.StreamEngine.Utils.Component2
 import com.pharbers.StreamEngine.Utils.Config.BPSConfig
 import com.pharbers.StreamEngine.Utils.Event.EventHandler.BPSEventHandler
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamListener
@@ -26,6 +27,9 @@ case class BPSRecallJobContainer(config: Map[String, String]) extends BPSJobCont
     override type T = BPSJobStrategy
     override val strategy: BPSJobStrategy = null
     override val spark: SparkSession = null
+
+    override val componentProperty: Component2.BPComponentConfig = null
+    override def createConfigDef(): ConfigDef = ???
 
     val jobConfig: BPSConfig = BPSConfig(configDef, config)
     val runId: String = jobConfig.getString(RUN_ID_CONFIG_KEY)

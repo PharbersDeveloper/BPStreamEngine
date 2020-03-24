@@ -1,7 +1,9 @@
 package com.pharbers.StreamEngine.Jobs.EditDistanceJob
 
+import com.pharbers.StreamEngine.Utils.Component2
 import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSCommonJoBStrategy
 import com.pharbers.StreamEngine.Utils.StreamJob.{BPSJobContainer, BPStreamJob}
+import org.apache.kafka.common.config.ConfigDef
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.functions._
@@ -14,12 +16,15 @@ import org.apache.spark.sql.functions._
  * @since 2020/03/03 10:05
  * @note 一些值得注意的地方
  */
-case class HumanReplaceJob(jobContainer: BPSJobContainer, spark: SparkSession, config: Map[String, String]) extends BPStreamJob {
+case class HumanReplaceJob(jobContainer: BPSJobContainer, spark: SparkSession, config_map: Map[String, String]) extends BPStreamJob {
 
     import spark.implicits._
 
+    override val componentProperty: Component2.BPComponentConfig = null
+    override def createConfigDef(): ConfigDef = ???
+
     override type T = BPSCommonJoBStrategy
-    override val strategy: BPSCommonJoBStrategy = BPSCommonJoBStrategy(config)
+    override val strategy: BPSCommonJoBStrategy = BPSCommonJoBStrategy(config_map)
     val jobId: String = strategy.getJobId
     val runId: String = strategy.getRunId
     override val id: String = jobId

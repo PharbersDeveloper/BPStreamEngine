@@ -14,7 +14,9 @@ import com.pharbers.StreamEngine.Jobs.PyJob.Py4jServer.BPSPy4jManager
 import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSJobStrategy
 import com.pharbers.StreamEngine.Utils.StreamJob.{BPSJobContainer, BPStreamJob}
 import com.pharbers.StreamEngine.Jobs.PyJob.Listener.BPSProgressListenerAndClose
+import com.pharbers.StreamEngine.Utils.Component2
 import com.pharbers.kafka.schema.HiveTask
+import org.apache.kafka.common.config.ConfigDef
 
 object BPSPythonJob {
     def apply(id: String,
@@ -142,4 +144,8 @@ class BPSPythonJob(override val id: String,
         pkp.producer.close()
         container.finishJobWithId(id)
     }
+
+    override val componentProperty: Component2.BPComponentConfig = null
+
+    override def createConfigDef(): ConfigDef = ???
 }

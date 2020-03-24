@@ -3,6 +3,7 @@ package com.pharbers.StreamEngine.Jobs.Hive2EsJob
 import java.util.UUID
 
 import com.pharbers.StreamEngine.Jobs.Hive2EsJob.Listener.Hive2EsJobStartListener
+import com.pharbers.StreamEngine.Utils.Component2
 import com.pharbers.StreamEngine.Utils.Config.BPSConfig
 import com.pharbers.StreamEngine.Utils.Event.EventHandler.BPSEventHandler
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamListener
@@ -45,7 +46,8 @@ class BPSHive2EsJobContainer(override val spark: SparkSession,
     final val CONTAINER_LISTENING_TOPIC_KEY = "container.listening.topic"
     final val CONTAINER_LISTENING_TOPIC_DOC = "The value is a topic which is this container listened to and send job request."
 
-    val configDef: ConfigDef = new ConfigDef()
+    override val componentProperty: Component2.BPComponentConfig = null
+    override def createConfigDef(): ConfigDef = new ConfigDef()
         .define(CONTAINER_ID_KEY, Type.STRING, UUID.randomUUID().toString, Importance.HIGH, CONTAINER_ID_DOC)
         .define(CONTAINER_LISTENING_TOPIC_KEY, Type.STRING, DEFAULT_LISTENING_TOPIC, Importance.HIGH, CONTAINER_LISTENING_TOPIC_DOC)
     private val jobConfig: BPSConfig = BPSConfig(configDef, config)

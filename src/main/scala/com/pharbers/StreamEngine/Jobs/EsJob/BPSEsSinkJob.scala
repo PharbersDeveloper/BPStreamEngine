@@ -1,12 +1,14 @@
 package com.pharbers.StreamEngine.Jobs.EsJob
 
 import com.pharbers.StreamEngine.Jobs.EsJob.Listener.EsSinkJobCloseListener
+import com.pharbers.StreamEngine.Utils.Component2
 import com.pharbers.StreamEngine.Utils.HDFS.BPSHDFSFile
 import com.pharbers.StreamEngine.Utils.Schema.Spark.BPSParseSchema
 import org.apache.spark.sql
 import org.apache.spark.sql.SparkSession
 import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSJobStrategy
 import com.pharbers.StreamEngine.Utils.StreamJob.{BPSJobContainer, BPStreamJob}
+import org.apache.kafka.common.config.ConfigDef
 
 object BPSEsSinkJob {
     def apply(id: String,
@@ -87,4 +89,8 @@ class BPSEsSinkJob(override val id: String,
         container.finishJobWithId(id)
         logger.info("es sink job closed with id ========>" + id)
     }
+
+    override val componentProperty: Component2.BPComponentConfig = null
+
+    override def createConfigDef(): ConfigDef = ???
 }

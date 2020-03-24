@@ -3,16 +3,18 @@ package com.pharbers.StreamEngine.Utils.Session.Spark
 import java.net.InetAddress
 import java.util.Properties
 import java.io.FileInputStream
+
 import collection.JavaConverters._
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.SparkSession
 import com.pharbers.StreamEngine.Utils.Config.BPSConfig
 import com.pharbers.StreamEngine.Utils.Annotation.Component
+import com.pharbers.StreamEngine.Utils.Component2.BPComponentConfig
 
 object BPSparkSession {
-    def apply(): SparkSession = new BPSparkSession(Map.empty).spark
+    def apply(config: BPComponentConfig): BPSparkSession = new BPSparkSession(config)
 
-    def apply(config: Map[String, String]): SparkSession = new BPSparkSession(config).spark
+    implicit def typeConvertor(in: BPSparkSession): SparkSession = in.spark
 }
 
 /** 创建 SparkSession 实例
@@ -30,9 +32,11 @@ object BPSparkSession {
  * @example {{{val spark = new BPSparkSession(Map("log.level" -> "INFO"))}}}
  */
 @Component(name = "BPSparkSession", `type` = "session")
-class BPSparkSession(config: Map[String, String]) extends BPSparkSessionConfig {
+class BPSparkSession(override val componentProperty: BPComponentConfig) extends BPSparkSessionConfig {
     // 此处 Config 的配置优先级高于 Submit 时设置的配置
-    private val sparkConfigs = new BPSConfig(configDef, config.asJava)
+    private val sparkConfigs =
+        if (componentProperty != null) BPSConfig(configDef, componentProperty.config.asJava)
+        else BPSConfig(configDef, Map.empty[String, String])
     private val pops = new Properties()
     pops.load(new FileInputStream(sparkConfigs.getString(SPARK_CONFIGS_PATH_KEY)))
 
