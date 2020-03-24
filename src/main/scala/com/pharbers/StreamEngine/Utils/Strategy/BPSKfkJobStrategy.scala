@@ -7,11 +7,10 @@ import org.apache.kafka.common.config.ConfigDef
 
 @Component(name = "BPSKfkJobStrategy", `type` = "strategy")
 case class BPSKfkJobStrategy(kfk: BPKafkaSession) extends BPSJobStrategy {
-    override def getTopic: String = kfk.topic
-    override def getSchema: org.apache.spark.sql.types.DataType = kfk.sparkSchema
+    def getTopic: String = kfk.topic
+    def getSchema: org.apache.spark.sql.types.DataType = kfk.sparkSchema
 
     override val componentProperty: Component2.BPComponentConfig = null
-
     override def createConfigDef(): ConfigDef = ???
 }
 

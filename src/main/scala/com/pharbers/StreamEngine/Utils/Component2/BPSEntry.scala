@@ -16,7 +16,7 @@ trait BPSEntry {
 object BPSConcertEntry extends BPSComponentFactory with BPSEntry {
     override val componentProperty: BPComponentConfig = null
     override def createConfigDef(): ConfigDef = new ConfigDef()
-    def getStrategy(name: String): AnyRef = null
+    lazy val useLazyConstruction = false
 
     lazy val cf: BPSEntryConfig = initConfigs()
     def initConfigs(): BPSEntryConfig = {
@@ -51,8 +51,8 @@ object BPSConcertEntry extends BPSComponentFactory with BPSEntry {
 
     def startStrategies(): Boolean = {
         try {
-            BPSConcertEntry.queryComponentWithId("spark")
-            BPSConcertEntry.queryComponentWithId("kafka")
+            if (!useLazyConstruction)
+                cf.strategies.foreach(x => queryComponentWithId(x.id))
             return true
         } catch {
             case _:Throwable => return false
@@ -61,8 +61,8 @@ object BPSConcertEntry extends BPSComponentFactory with BPSEntry {
 
     def startChannels(): Boolean = {
         try {
-            BPSConcertEntry.queryComponentWithId("local channel")
-            BPSConcertEntry.queryComponentWithId("driver channel")
+            if (!useLazyConstruction)
+                cf.channels.foreach(x => queryComponentWithId(x.id))
             return true
         } catch {
             case _:Throwable => return false

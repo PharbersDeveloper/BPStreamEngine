@@ -25,9 +25,8 @@ case class BPSCommonJoBStrategy(config: Map[String, String],@transient inoutConf
             .define(RUN_ID_CONFIG_KEY, Type.STRING, UUID.randomUUID().toString, Importance.HIGH, RUN_ID_CONFIG_DOC)
     val jobConfig = BPSConfig(configDef, config)
 
-    override def getTopic: String = ""
-
-    override def getSchema: DataType = null
+//    override def getTopic: String = ""
+//    override def getSchema: DataType = null
 
     override def getJobConfig: BPSConfig = jobConfig
 
