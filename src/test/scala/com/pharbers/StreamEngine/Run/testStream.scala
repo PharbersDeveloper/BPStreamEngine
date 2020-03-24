@@ -25,22 +25,22 @@ class testStream extends FunSuite  {
         val spark = BPSparkSession(null)
         import spark.spark.implicits._
 
-        val metaData = SchemaConverter.column2legalWithDF("MetaData",spark.sparkContext
-                .textFile("/workData/streamingV2/0829b025-48ac-450c-843c-6d4ee91765ca/metadata/bc6b6-3048-434a-a51a-a80c10")
-                .toDF("MetaData"))
-
-        if (metaData.count() > 0) {
-            val jobIdRow = metaData
-                    .withColumn("MetaData", lit(s"""{"jobId":"$jobId"}"""))
-
-            val traceIdRow = jobIdRow
-                    .withColumn("MetaData", lit(s"""{"traceId":"${jobId.substring(0, jobId.length - 1)}"}"""))
-
-            val metaDataStream = metaData.union(jobIdRow).union(traceIdRow).distinct()
-
-            val repMetaDataStream = metaData.head()
-                    .getAs[String]("MetaData")
-
+//        val metaData = SchemaConverter.column2legalWithDF("MetaData",spark.sparkContext
+//                .textFile("/workData/streamingV2/0829b025-48ac-450c-843c-6d4ee91765ca/metadata/bc6b6-3048-434a-a51a-a80c10")
+//                .toDF("MetaData"))
+//
+//        if (metaData.count() > 0) {
+//            val jobIdRow = metaData
+//                    .withColumn("MetaData", lit(s"""{"jobId":"$jobId"}"""))
+//
+//            val traceIdRow = jobIdRow
+//                    .withColumn("MetaData", lit(s"""{"traceId":"${jobId.substring(0, jobId.length - 1)}"}"""))
+//
+//            val metaDataStream = metaData.union(jobIdRow).union(traceIdRow).distinct()
+//
+//            val repMetaDataStream = metaData.head()
+//                    .getAs[String]("MetaData")
+//
 //            metaDataStream.collect().foreach { x =>
 //                val line = x.getAs[String]("MetaData")
 //                if (line.contains("""{"length":""")) {
@@ -49,44 +49,44 @@ class testStream extends FunSuite  {
 //                }
 //            }
 
-            val schema = SchemaConverter.str2SqlType(repMetaDataStream)
-
-            val is = spark.readStream
-                    .schema(StructType(
-                        StructField("traceId", StringType) ::
-                                StructField("type", StringType) ::
-                                StructField("data", StringType) ::
-                                StructField("timestamp", TimestampType) ::
-                                StructField("jobId", StringType) :: Nil
-                    ))
-                    .parquet("/workData/streamingV2/0829b025-48ac-450c-843c-6d4ee91765ca/files")
-                    .filter($"jobId" === "bc6b6-3048-434a-a51a-a80c10" and $"type" === "SandBox")
-                    .withColumn("data", regexp_replace($"data", """\\"""", ""))
-                    .withColumn("data", regexp_replace($"data", " ", "_"))
-                    .withColumn("data", regexp_replace($"data", "\\(", ""))
-                    .withColumn("data", regexp_replace($"data", "\\)", ""))
-                    .withColumn("data", regexp_replace($"data", "=", ""))
-                    .withColumn("data", regexp_replace($"data", "\\\\n|\\\\\t", ""))
-                    .select(
-                        from_json($"data", schema).as("data")
-                    ).select("data.*")
-            val query = is.writeStream
-                    .outputMode("append")
-                    .format("parquet")
-                    //					.format("console")
-                    .option("checkpointLocation", s"/test/dcs/$jobId/files/$jobId/checkpoint")
-                    .option("path", s"/test/dcs/$jobId/files/$jobId")
-                    .start()
-            while (true){
-                val cumulative = query.recentProgress.map(_.numInputRows).sum
-
-                if(query.lastProgress != null) {
-                    println("---->" + query.lastProgress.numInputRows)
-                }
-                println("=====>" + cumulative)
-                Thread.sleep(1000)
-            }
-        }
+//            val schema = SchemaConverter.str2SqlType(repMetaDataStream)
+//
+//            val is = spark.readStream
+//                    .schema(StructType(
+//                        StructField("traceId", StringType) ::
+//                                StructField("type", StringType) ::
+//                                StructField("data", StringType) ::
+//                                StructField("timestamp", TimestampType) ::
+//                                StructField("jobId", StringType) :: Nil
+//                    ))
+//                    .parquet("/workData/streamingV2/0829b025-48ac-450c-843c-6d4ee91765ca/files")
+//                    .filter($"jobId" === "bc6b6-3048-434a-a51a-a80c10" and $"type" === "SandBox")
+//                    .withColumn("data", regexp_replace($"data", """\\"""", ""))
+//                    .withColumn("data", regexp_replace($"data", " ", "_"))
+//                    .withColumn("data", regexp_replace($"data", "\\(", ""))
+//                    .withColumn("data", regexp_replace($"data", "\\)", ""))
+//                    .withColumn("data", regexp_replace($"data", "=", ""))
+//                    .withColumn("data", regexp_replace($"data", "\\\\n|\\\\\t", ""))
+//                    .select(
+//                        from_json($"data", schema).as("data")
+//                    ).select("data.*")
+//            val query = is.writeStream
+//                    .outputMode("append")
+//                    .format("parquet")
+//                    					.format("console")
+//                    .option("checkpointLocation", s"/test/dcs/$jobId/files/$jobId/checkpoint")
+//                    .option("path", s"/test/dcs/$jobId/files/$jobId")
+//                    .start()
+//            while (true){
+//                val cumulative = query.recentProgress.map(_.numInputRows).sum
+//
+//                if(query.lastProgress != null) {
+//                    println("---->" + query.lastProgress.numInputRows)
+//                }
+//                println("=====>" + cumulative)
+//                Thread.sleep(1000)
+//            }
+//        }
     }
 
     test("parquet stream"){

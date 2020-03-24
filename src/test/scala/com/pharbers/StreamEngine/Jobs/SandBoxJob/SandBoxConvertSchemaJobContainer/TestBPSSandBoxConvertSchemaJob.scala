@@ -51,11 +51,11 @@ class TestBPSSandBoxConvertSchemaJob extends FunSuite with PhLogable{
                 dataSetId)
         val metaData = spark.sparkContext.textFile(s"${jobParam("parentMetaData")}/${jobParam("parentJobId")}")
         val primitive = BPSMetaData2Map(null).list2Map(metaData.collect().toList)
-        val convertContent = primitive ++ SchemaConverter.column2legalWithMetaDataSchema(primitive)
+        val convertContent = primitive //++ SchemaConverter.column2legalWithMetaDataSchema(primitive)
         implicit val formats: DefaultFormats.type = DefaultFormats
         val schemaData = write(convertContent("schema").asInstanceOf[List[Map[String, Any]]])
         convertJob.totalRow = 4029864
-        convertJob.setInputStream(SchemaConverter.str2SqlType(schemaData))
+//        convertJob.setInputStream(SchemaConverter.str2SqlType(schemaData))
         convertJob.exec()
         ThreadExecutor.waitForShutdown()
     }

@@ -52,7 +52,7 @@ class RenameColumnTest extends FunSuite with PhLogable {
 		try {
 			val m2m = BPSConcertEntry.queryComponentWithId("meta2map").asInstanceOf[BPSMetaData2Map]
 			val primitive = m2m.list2Map(metaData.collect().toList)
-			val convertContent = primitive ++ SchemaConverter.column2legalWithMetaDataSchema(primitive)
+			val convertContent = primitive //++ SchemaConverter.column2legalWithMetaDataSchema(primitive)
 
 			implicit val formats: DefaultFormats.type = DefaultFormats
 			val schema  = write(convertContent("schema").asInstanceOf[List[Map[String, Any]]])

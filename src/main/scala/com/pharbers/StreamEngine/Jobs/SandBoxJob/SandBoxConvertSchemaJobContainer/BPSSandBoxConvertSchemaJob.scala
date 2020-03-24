@@ -71,7 +71,9 @@ class BPSSandBoxConvertSchemaJob(val id: String,
             logger.error(s"AssetId Is Null ====> $assetId, Path ====> ${jobParam("metaDataSavePath")}")
             this.close()
         } else {
-            val schema = SchemaConverter.str2SqlType(schemaData)
+            val sc = BPSConcertEntry.queryComponentWithId("schema convert")
+                .asInstanceOf[SchemaConverter]
+            val schema = sc.str2SqlType(schemaData)
             notFoundShouldWait(jobParam("parentSampleData"))
             logger.info(s"Fuck Info ${jobParam("parentSampleData")}")
             setInputStream(schema)
@@ -156,7 +158,9 @@ class BPSSandBoxConvertSchemaJob(val id: String,
         try {
             val m2m = BPSConcertEntry.queryComponentWithId("meta2map").asInstanceOf[BPSMetaData2Map]
             val primitive = m2m.list2Map(metaData.collect().toList)
-            val convertContent = primitive ++ SchemaConverter.column2legalWithMetaDataSchema(primitive)
+            val sc = BPSConcertEntry.queryComponentWithId("schema convert")
+                .asInstanceOf[SchemaConverter]
+            val convertContent = primitive ++ sc.column2legalWithMetaDataSchema(primitive)
 
             implicit val formats: DefaultFormats.type = DefaultFormats
             val schema = write(convertContent("schema").asInstanceOf[List[Map[String, Any]]])
@@ -225,8 +229,10 @@ class BPSSandBoxConvertSchemaJob(val id: String,
                 .parquet(s"${jobParam("parentSampleData")}")
                 .filter($"jobId" === jobParam("parentJobId") and $"type" === "SandBox")
 
+        val sc = BPSConcertEntry.queryComponentWithId("schema convert")
+            .asInstanceOf[SchemaConverter]
         inputStream = Some(
-            SchemaConverter.column2legalWithDF("data", reading)
+            sc.column2legalWithDF("data", reading)
                     .select(from_json($"data", schema).as("data"))
                     .select("data.*")
         )

@@ -1,5 +1,9 @@
 package com.pharbers.StreamEngine.Utils.Strategy.Schema
 
+import com.pharbers.StreamEngine.Utils.Annotation.Component
+import com.pharbers.StreamEngine.Utils.Component2
+import com.pharbers.StreamEngine.Utils.Strategy.BPStrategyComponent
+import org.apache.kafka.common.config.ConfigDef
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
@@ -8,7 +12,10 @@ import org.json4s.jackson.Serialization._
 
 case class BPSchemaParseElement(key: String, `type`: String)
 
-object SchemaConverter extends Serializable {
+//object SchemaConverter extends Serializable {
+@Component(name = "SchemaConverter", `type` = "SchemaConverter")
+case class SchemaConverter(override val componentProperty: Component2.BPComponentConfig)
+	extends Serializable with BPStrategyComponent {
 	def str2SqlType(data: String): org.apache.spark.sql.types.DataType = {
 		implicit val formats: DefaultFormats.type = DefaultFormats
 		val lstData: List[BPSchemaParseElement] = read[List[BPSchemaParseElement]](data)
@@ -45,5 +52,8 @@ object SchemaConverter extends Serializable {
 		}
 		Map("schema" -> schema)
 	}
+
+	override val strategyName: String = "schema convert"
+	override def createConfigDef(): ConfigDef = ???
 }
 

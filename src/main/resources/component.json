@@ -51,6 +51,13 @@
             "args": [],
             "config": {
             }
+        },
+        {
+            "id": "schema convert",
+            "name": "SchemaConverter",
+            "args": [],
+            "config": {
+            }
         }
     ],
     "channels": [
