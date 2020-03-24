@@ -1,5 +1,6 @@
 package com.pharbers.StreamEngine.Others.sandbox.schema
 
+import com.pharbers.StreamEngine.Utils.Component2.BPSConcertEntry
 import com.pharbers.StreamEngine.Utils.Strategy.hdfs.BPSHDFSFile
 import com.pharbers.StreamEngine.Utils.Strategy.Schema.{BPSMetaData2Map, SchemaConverter}
 import com.pharbers.StreamEngine.Utils.Strategy.Session.Spark.BPSparkSession
@@ -49,7 +50,8 @@ class RenameColumnTest extends FunSuite with PhLogable {
 
 	def writeMetaData(metaData: RDD[String], path: String): (String, List[CharSequence], String, Int, String) = {
 		try {
-			val primitive = BPSMetaData2Map.list2Map(metaData.collect().toList)
+			val m2m = BPSConcertEntry.queryComponentWithId("meta2map").asInstanceOf[BPSMetaData2Map]
+			val primitive = m2m.list2Map(metaData.collect().toList)
 			val convertContent = primitive ++ SchemaConverter.column2legalWithMetaDataSchema(primitive)
 
 			implicit val formats: DefaultFormats.type = DefaultFormats

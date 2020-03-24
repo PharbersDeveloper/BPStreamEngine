@@ -83,8 +83,9 @@ class BPSPythonJobContainer(override val spark: SparkSession,
         notFoundShouldWait(metadataPath)
         notFoundShouldWait(filesPath)
 
-        metadata = BPSParseSchema.parseMetadata(metadataPath)(spark)
-        val loadSchema = BPSParseSchema.parseSchema(metadata("schema").asInstanceOf[List[_]])
+        val ps = BPSConcertEntry.queryComponentWithId("parse schema").asInstanceOf[BPSParseSchema]
+        metadata = ps.parseMetadata(metadataPath)(spark)
+        val loadSchema = ps.parseSchema(metadata("schema").asInstanceOf[List[_]])
 
         val reading = spark.readStream
                 .schema(loadSchema)

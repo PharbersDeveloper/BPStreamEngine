@@ -37,6 +37,20 @@
             "config": {
                 "hdfsAddr": "hdfs://StarLord:8020"
             }
+        },
+        {
+            "id": "meta2map",
+            "name": "BPSMetaData2Map",
+            "args": [],
+            "config": {
+            }
+        },
+        {
+            "id": "parse schema",
+            "name": "BPSParseSchema",
+            "args": [],
+            "config": {
+            }
         }
     ],
     "channels": [

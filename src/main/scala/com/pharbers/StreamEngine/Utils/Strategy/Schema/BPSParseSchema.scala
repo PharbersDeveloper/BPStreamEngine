@@ -1,5 +1,10 @@
 package com.pharbers.StreamEngine.Utils.Strategy.Schema
 
+import com.pharbers.StreamEngine.Utils.Annotation.Component
+import com.pharbers.StreamEngine.Utils.Component2
+import com.pharbers.StreamEngine.Utils.Strategy.BPStrategyComponent
+import org.apache.kafka.common.config.ConfigDef
+
 import scala.util.parsing.json.JSON
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.types.{StringType, StructField, StructType}
@@ -12,7 +17,9 @@ import scala.collection.mutable
  * @version 0.1
  * @since 2019/11/06 15:41
  */
-object BPSParseSchema {
+@Component(name = "BPSParseSchema", `type` = "BPSParseSchema")
+case class BPSParseSchema(override val componentProperty: Component2.BPComponentConfig)
+    extends BPStrategyComponent {
 
     /** 从 hdfs 的 txt 中，解析出 Map 格式的 metadata
      *
@@ -76,4 +83,7 @@ object BPSParseSchema {
         val matadataMap = parseMetadata(metadataPath)
         parseSchema(matadataMap("schema").asInstanceOf[List[_]])
     }
+
+    override val strategyName: String = "parse schema"
+    override def createConfigDef(): ConfigDef = ???
 }

@@ -1,5 +1,9 @@
 package com.pharbers.StreamEngine.Utils.Strategy.Schema
 
+import com.pharbers.StreamEngine.Utils.Annotation.Component
+import com.pharbers.StreamEngine.Utils.Component2
+import com.pharbers.StreamEngine.Utils.Strategy.BPStrategyComponent
+import org.apache.kafka.common.config.ConfigDef
 import org.json4s.DefaultFormats
 import org.json4s.jackson.Serialization.read
 
@@ -12,7 +16,11 @@ import org.json4s.jackson.Serialization.read
  * @since 2019/11/21 18:18
  * @note 一些值得注意的地方
  */
-object BPSMetaData2Map {
+
+@Component(name = "BPSMetaData2Map", `type` = "BPSMetaData2Map")
+case class BPSMetaData2Map(override val componentProperty: Component2.BPComponentConfig)
+	extends BPStrategyComponent {
+
 	def list2Map(jsonList: List[String]): Map[String, AnyRef] = {
 		implicit val formats: DefaultFormats.type = DefaultFormats
 		var jsonMap: Map[String, AnyRef] = Map()
@@ -35,4 +43,6 @@ object BPSMetaData2Map {
 
 	def str2Map(jsonObjectStr: String): Map[String, AnyRef] = ???
 
+	override val strategyName: String = "mate2map"
+	override def createConfigDef(): ConfigDef = ???
 }

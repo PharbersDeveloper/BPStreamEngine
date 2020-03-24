@@ -46,7 +46,8 @@ case class BPStreamOverListener(job: BPSqlTableJobContainer, config: Map[String,
                 if (rows >= listenerConfig.getLong(LENGTH_CONFIG_KEY)) {
                     logger.info(s"启动sql job")
                     val metadataPath: String = listenerConfig.getString(METADATA_PATH_CONFIG_KEY)
-                    val metadata = BPSParseSchema.parseMetadata(metadataPath)(job.spark)
+                    val ps = BPSConcertEntry.queryComponentWithId("parse schema").asInstanceOf[BPSParseSchema]
+                    val metadata = ps.parseMetadata(metadataPath)(job.spark)
                     val providers = metadata.getOrElse("providers", List("")).asInstanceOf[List[String]].mkString(",")
 
                     job.addJobConfig(config ++ Map("providers" -> providers))

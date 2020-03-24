@@ -154,7 +154,8 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 
     def writeMetaData(metaData: RDD[String], path: String): (String, List[CharSequence], String, Long, String) = {
         try {
-            val primitive = BPSMetaData2Map.list2Map(metaData.collect().toList)
+            val m2m = BPSConcertEntry.queryComponentWithId("meta2map").asInstanceOf[BPSMetaData2Map]
+            val primitive = m2m.list2Map(metaData.collect().toList)
             val convertContent = primitive ++ SchemaConverter.column2legalWithMetaDataSchema(primitive)
 
             implicit val formats: DefaultFormats.type = DefaultFormats
