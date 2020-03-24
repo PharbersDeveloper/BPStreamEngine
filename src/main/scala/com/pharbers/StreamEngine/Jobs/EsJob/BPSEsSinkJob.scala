@@ -6,8 +6,8 @@ import com.pharbers.StreamEngine.Utils.HDFS.BPSHDFSFile
 import com.pharbers.StreamEngine.Utils.Schema.Spark.BPSParseSchema
 import org.apache.spark.sql
 import org.apache.spark.sql.SparkSession
-import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSJobStrategy
-import com.pharbers.StreamEngine.Utils.StreamJob.{BPSJobContainer, BPStreamJob}
+import com.pharbers.StreamEngine.Utils.Job.{BPSJobContainer, BPStreamJob}
+import com.pharbers.StreamEngine.Utils.Strategy.BPSJobStrategy
 import org.apache.kafka.common.config.ConfigDef
 
 object BPSEsSinkJob {

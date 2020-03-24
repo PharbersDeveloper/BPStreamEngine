@@ -6,7 +6,7 @@ import java.sql.Timestamp
 import java.text.SimpleDateFormat
 
 import com.pharbers.StreamEngine.Utils.Channel.Local.BPSLocalChannel
-import com.pharbers.StreamEngine.Utils.StreamJob.BPStreamJob
+import com.pharbers.StreamEngine.Utils.Job.BPStreamJob
 import com.pharbers.StreamEngine.Utils.Event.BPSEvents
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamListener
 import org.apache.spark.sql.streaming.StreamingQuery

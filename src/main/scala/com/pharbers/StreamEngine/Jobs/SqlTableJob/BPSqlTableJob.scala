@@ -3,13 +3,12 @@ package com.pharbers.StreamEngine.Jobs.SqlTableJob
 import com.pharbers.StreamEngine.Utils.Config.BPSConfig
 import BPSqlTableJob._
 import com.pharbers.StreamEngine.Utils.Component2
-import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.{BPSCommonJoBStrategy, BPSDataMartJobStrategy, BPSJobStrategy}
-import com.pharbers.StreamEngine.Utils.StreamJob.{BPSJobContainer, BPStreamJob}
+import com.pharbers.StreamEngine.Utils.Job.{BPSJobContainer, BPStreamJob}
+import com.pharbers.StreamEngine.Utils.Strategy.BPSDataMartJobStrategy
 import org.apache.kafka.common.config.ConfigDef
 import org.apache.kafka.common.config.ConfigDef.{Importance, Type}
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions._
-import org.mongodb.scala.bson.ObjectId
 
 import collection.JavaConverters._
 import scala.collection.mutable

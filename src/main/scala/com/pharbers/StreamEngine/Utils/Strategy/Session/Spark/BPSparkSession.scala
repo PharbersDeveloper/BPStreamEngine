@@ -1,4 +1,4 @@
-package com.pharbers.StreamEngine.Utils.Session.Spark
+package com.pharbers.StreamEngine.Utils.Strategy.Session.Spark
 
 import java.net.InetAddress
 import java.util.Properties
@@ -68,4 +68,5 @@ class BPSparkSession(override val componentProperty: BPComponentConfig) extends 
             spark.sparkContext.addJar("./jars/spark-sql-kafka-0-10_2.11-2.3.0.jar")
         case _ =>
     }
+    override val sessionType: String = "spark"
 }

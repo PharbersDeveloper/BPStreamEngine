@@ -18,11 +18,17 @@ package object Component2 {
         }
     }
 
-    case class BPStgComponentConfig(
+    case class BPSComponentConfig(
                               id: String,
                               name: String,
                               args: List[String],
                               config: Map[String, String]) extends BPComponentConfig
+
+    case class BPSEntryConfig(
+                                 strategies: List[BPSComponentConfig],
+                                 channels: List[BPSComponentConfig],
+                                 jobs: List[BPSComponentConfig]
+                             )
     trait BPJobComponentConfig extends BPComponentConfig
 
 }

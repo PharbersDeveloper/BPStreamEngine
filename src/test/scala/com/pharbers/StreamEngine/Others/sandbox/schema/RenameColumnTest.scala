@@ -2,7 +2,7 @@ package com.pharbers.StreamEngine.Others.sandbox.schema
 
 import com.pharbers.StreamEngine.Utils.HDFS.BPSHDFSFile
 import com.pharbers.StreamEngine.Utils.Schema.Spark.{BPSMetaData2Map, SchemaConverter}
-import com.pharbers.StreamEngine.Utils.Session.Spark.BPSparkSession
+import com.pharbers.StreamEngine.Utils.Strategy.Session.Spark.BPSparkSession
 import com.pharbers.util.log.PhLogable
 import org.apache.spark.rdd.RDD
 import org.scalatest.FunSuite

@@ -1,8 +1,8 @@
-package com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy
+package com.pharbers.StreamEngine.Utils.Strategy
 
 import com.pharbers.StreamEngine.Utils.Annotation.Component
 import com.pharbers.StreamEngine.Utils.Component2
-import com.pharbers.StreamEngine.Utils.Session.Kafka.BPKafkaSession
+import com.pharbers.StreamEngine.Utils.Strategy.Session.Kafka.BPKafkaSession
 import org.apache.kafka.common.config.ConfigDef
 
 @Component(name = "BPSKfkJobStrategy", `type` = "strategy")

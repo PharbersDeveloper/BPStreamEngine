@@ -4,7 +4,7 @@ import java.util.UUID
 import java.util.concurrent.TimeUnit
 import com.pharbers.StreamEngine.Utils.Channel.Driver.BPSDriverChannel
 import com.pharbers.StreamEngine.Utils.Channel.Worker.BPSWorkerChannel
-import com.pharbers.StreamEngine.Utils.StreamJob.{BPSJobContainer, BPStreamJob}
+import com.pharbers.StreamEngine.Utils.Job.{BPSJobContainer, BPStreamJob}
 import com.pharbers.StreamEngine.Utils.Event.BPSEvents
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamRemoteListener
 import com.pharbers.StreamEngine.Utils.HDFS.BPSHDFSFile
@@ -34,7 +34,7 @@ case class BPSOssListener(spark: SparkSession, job: BPStreamJob, jobId: String) 
         val genPath = s"/jobs/$runId/$jobId"
 	    val metaDataPath = s"$genPath/metadata"
         val sampleDataPath = s"$genPath/contents"
-        
+
         e.`type` match {
             case "SandBox-Schema" => {
 //                BPSOssPartitionMeta.pushLineToHDFS(runId.id, event2JobId(e), e.data)
@@ -53,7 +53,7 @@ case class BPSOssListener(spark: SparkSession, job: BPStreamJob, jobId: String) 
                     case ex: Exception =>
                         pollKafka(new FileMetaData(runId, e.jobId, metaDataPath, sampleDataPath, ""))
                 }
-                
+
             }
         }
     }

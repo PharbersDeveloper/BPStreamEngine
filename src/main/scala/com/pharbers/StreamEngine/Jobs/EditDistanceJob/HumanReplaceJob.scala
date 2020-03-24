@@ -1,8 +1,8 @@
 package com.pharbers.StreamEngine.Jobs.EditDistanceJob
 
 import com.pharbers.StreamEngine.Utils.Component2
-import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSCommonJoBStrategy
-import com.pharbers.StreamEngine.Utils.StreamJob.{BPSJobContainer, BPStreamJob}
+import com.pharbers.StreamEngine.Utils.Job.{BPSJobContainer, BPStreamJob}
+import com.pharbers.StreamEngine.Utils.Strategy.BPSCommonJoBStrategy
 import org.apache.kafka.common.config.ConfigDef
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.{DataFrame, SparkSession}
@@ -60,7 +60,7 @@ case class HumanReplaceJob(jobContainer: BPSJobContainer, spark: SparkSession, c
 
 object TestHumanReplaceJob extends App {
 
-    import com.pharbers.StreamEngine.Utils.Session.Spark.BPSparkSession
+    import com.pharbers.StreamEngine.Utils.Strategy.Session.Spark.BPSparkSession
 
 //    val spark = BPSparkSession()
 //    spark.sparkContext.setLogLevel("INFO")

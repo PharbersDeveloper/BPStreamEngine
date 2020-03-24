@@ -2,8 +2,8 @@ package com.pharbers.StreamEngine.Jobs.KfkSinkJob
 import java.util.UUID
 
 import com.pharbers.StreamEngine.Utils.Component2
-import com.pharbers.StreamEngine.Utils.StreamJob.{BPSJobContainer, BPStreamJob}
-import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.{BPSJobStrategy, BPSKfkJobStrategy}
+import com.pharbers.StreamEngine.Utils.Job.{BPSJobContainer, BPStreamJob}
+import com.pharbers.StreamEngine.Utils.Strategy.{BPSJobStrategy, BPSKfkJobStrategy}
 import org.apache.kafka.common.config.ConfigDef
 import org.apache.spark.sql
 import org.apache.spark.sql.{DataFrame, SparkSession}

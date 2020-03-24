@@ -1,4 +1,4 @@
-package com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy
+package com.pharbers.StreamEngine.Utils.Strategy
 
 import java.util.UUID
 

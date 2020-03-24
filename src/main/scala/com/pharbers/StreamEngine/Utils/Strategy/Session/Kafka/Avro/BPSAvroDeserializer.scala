@@ -1,4 +1,4 @@
-package com.pharbers.StreamEngine.Utils.Session.Kafka.Avro
+package com.pharbers.StreamEngine.Utils.Strategy.Session.Kafka.Avro
 
 import com.databricks.spark.avro.SchemaConverters
 import io.confluent.kafka.schemaregistry.client.{CachedSchemaRegistryClient, SchemaRegistryClient}

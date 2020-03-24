@@ -1,7 +1,7 @@
 package com.pharbers.StreamEngine.Jobs.OssJob.OssListener
 
 import com.pharbers.StreamEngine.Utils.Channel.Local.BPSLocalChannel
-import com.pharbers.StreamEngine.Utils.StreamJob.BPStreamJob
+import com.pharbers.StreamEngine.Utils.Job.BPStreamJob
 import com.pharbers.StreamEngine.Utils.Event.BPSEvents
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamListener
 import org.apache.spark.sql.{DataFrame, SparkSession}

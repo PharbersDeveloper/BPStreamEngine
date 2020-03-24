@@ -1,7 +1,7 @@
 package com.pharbers.StreamEngine.Others.alex.hdfs
 
 import com.pharbers.StreamEngine.Utils.HDFS.BPSHDFSFile
-import com.pharbers.StreamEngine.Utils.Session.Spark.BPSparkSession
+import com.pharbers.StreamEngine.Utils.Strategy.Session.Spark.BPSparkSession
 import org.scalatest.FunSuite
 
 import scala.io.Source

@@ -1,14 +1,32 @@
-[
-  {
-    "id": "BPSparkSession",
-    "name": "BPSparkSession",
-    "args": [],
-    "config": {
-      "app.name": "bp-stream-engine",
-      "master": "local",
-      "spark.configs.path": "src/main/resources/sparkConfig.properties",
-      "log.level": "INFO",
-      "run.model": "client"
-    }
-  }
-]
+{
+    "strategies": [
+        {
+            "id": "spark",
+            "name": "BPSparkSession",
+            "args": [],
+            "config": {
+                "app.name": "bp-stream-engine",
+                "master": "local",
+                "spark.configs.path": "src/main/resources/sparkConfig.properties",
+                "log.level": "INFO",
+                "run.model": "client"
+            }
+        },
+        {
+            "id": "kafka",
+            "name": "BPKafkaSession",
+            "args": [],
+            "config": {
+                "topic": "oss_source",
+                "url": "http://123.56.179.133:9092",
+                "schema": "http://123.56.179.133:8081"
+            }
+        }
+    ],
+    "channels": [
+
+    ],
+    "jobs": [
+
+    ]
+}

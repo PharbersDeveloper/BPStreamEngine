@@ -3,7 +3,7 @@ package com.pharbers.StreamEngine.Utils.Schema.Spark
 import org.scalatest.FunSuite
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.types.StructType
-import com.pharbers.StreamEngine.Utils.Session.Spark.BPSparkSession
+import com.pharbers.StreamEngine.Utils.Strategy.Session.Spark.BPSparkSession
 
 /** Parse Schema Test
  *

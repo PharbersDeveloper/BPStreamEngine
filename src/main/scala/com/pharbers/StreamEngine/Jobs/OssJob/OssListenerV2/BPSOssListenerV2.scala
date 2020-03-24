@@ -4,7 +4,7 @@ import java.util.UUID
 
 import com.pharbers.StreamEngine.Utils.Channel.Driver.BPSDriverChannel
 import com.pharbers.StreamEngine.Utils.Channel.Worker.BPSWorkerChannel
-import com.pharbers.StreamEngine.Utils.StreamJob.{BPSJobContainer, BPStreamJob}
+import com.pharbers.StreamEngine.Utils.Job.{BPSJobContainer, BPStreamJob}
 import com.pharbers.StreamEngine.Utils.Event.BPSEvents
 import com.pharbers.StreamEngine.Jobs.OssJob.OssListenerV2.OssEventsHandler.BPSSchemaHandlerV2BPS
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamRemoteListener

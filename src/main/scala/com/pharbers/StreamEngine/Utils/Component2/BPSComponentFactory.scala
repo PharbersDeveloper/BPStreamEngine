@@ -8,7 +8,9 @@ trait BPSComponentFactory extends BPComponent {
     def getOrCreateInstance(cf: BPComponentConfig): BPComponent = {
         container.get(cf.id) match {
             case Some(ins) => ins
-            case None => context.buildComponent(cf)
+            case None =>
+                container = container ++ Map(cf.id -> context.buildComponent(cf))
+                getOrCreateInstance(cf)
         }
     }
 }

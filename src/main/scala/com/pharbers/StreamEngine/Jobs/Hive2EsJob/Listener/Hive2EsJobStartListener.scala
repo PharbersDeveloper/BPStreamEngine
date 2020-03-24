@@ -3,7 +3,7 @@ package com.pharbers.StreamEngine.Jobs.Hive2EsJob.Listener
 import java.util.UUID
 
 import com.pharbers.StreamEngine.Jobs.Hive2EsJob.BPSHive2EsJob
-import com.pharbers.StreamEngine.Utils.StreamJob.BPSJobContainer
+import com.pharbers.StreamEngine.Utils.Job.BPSJobContainer
 import com.pharbers.kafka.schema.Hive2EsJobSubmit
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.spark.sql.SparkSession

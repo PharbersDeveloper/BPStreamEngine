@@ -1,4 +1,4 @@
-package com.pharbers.StreamEngine.Utils.Session.Spark
+package com.pharbers.StreamEngine.Utils.Strategy.Session.Spark
 
 import com.pharbers.util.log.PhLogable
 import org.apache.spark.sql.{DataFrame, SparkSession}

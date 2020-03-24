@@ -1,4 +1,4 @@
-package com.pharbers.StreamEngine.Utils.StreamJob
+package com.pharbers.StreamEngine.Utils.Job
 
 import com.pharbers.StreamEngine.Utils.Event.EventHandler.BPSEventHandler
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamListener

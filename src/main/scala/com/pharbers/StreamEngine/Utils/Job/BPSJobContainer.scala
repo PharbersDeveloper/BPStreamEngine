@@ -1,4 +1,4 @@
-package com.pharbers.StreamEngine.Utils.StreamJob
+package com.pharbers.StreamEngine.Utils.Job
 
 trait BPSJobContainer extends BPStreamJob {
     var jobs: Map[String, BPStreamJob] = Map.empty

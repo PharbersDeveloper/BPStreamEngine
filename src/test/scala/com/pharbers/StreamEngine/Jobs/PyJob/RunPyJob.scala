@@ -9,8 +9,8 @@ import com.pharbers.kafka.schema.BPJob
 import org.json4s.jackson.Serialization.write
 import com.pharbers.kafka.producer.PharbersKafkaProducer
 import com.pharbers.StreamEngine.Utils.Component.Dynamic.JobMsg
-import com.pharbers.StreamEngine.Utils.Session.Spark.BPSparkSession
-import com.pharbers.StreamEngine.Utils.Session.Spark.BPSparkSession._
+import com.pharbers.StreamEngine.Utils.Strategy.Session.Spark.BPSparkSession
+import com.pharbers.StreamEngine.Utils.Strategy.Session.Spark.BPSparkSession._
 import com.pharbers.StreamEngine.Jobs.PyJob.PythonJobContainer.BPSPythonJobContainer
 
 object RunPyJob extends App {

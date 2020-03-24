@@ -11,10 +11,10 @@ import org.json4s.jackson.Serialization.write
 import com.pharbers.kafka.producer.PharbersKafkaProducer
 import org.apache.spark.sql.{ForeachWriter, Row, SparkSession}
 import com.pharbers.StreamEngine.Jobs.PyJob.Py4jServer.BPSPy4jManager
-import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSJobStrategy
-import com.pharbers.StreamEngine.Utils.StreamJob.{BPSJobContainer, BPStreamJob}
+import com.pharbers.StreamEngine.Utils.Job.{BPSJobContainer, BPStreamJob}
 import com.pharbers.StreamEngine.Jobs.PyJob.Listener.BPSProgressListenerAndClose
 import com.pharbers.StreamEngine.Utils.Component2
+import com.pharbers.StreamEngine.Utils.Strategy.BPSJobStrategy
 import com.pharbers.kafka.schema.HiveTask
 import org.apache.kafka.common.config.ConfigDef
 

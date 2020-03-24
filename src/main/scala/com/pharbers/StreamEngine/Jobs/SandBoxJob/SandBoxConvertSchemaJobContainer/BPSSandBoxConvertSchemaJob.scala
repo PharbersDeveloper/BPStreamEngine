@@ -10,8 +10,8 @@ import com.pharbers.StreamEngine.Utils.Component.Dynamic.JobMsg
 import com.pharbers.StreamEngine.Utils.Component2
 import com.pharbers.StreamEngine.Utils.HDFS.BPSHDFSFile
 import com.pharbers.StreamEngine.Utils.Schema.Spark.{BPSMetaData2Map, SchemaConverter}
-import com.pharbers.StreamEngine.Utils.StreamJob.BPSJobContainer
-import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSKfkJobStrategy
+import com.pharbers.StreamEngine.Utils.Job.BPSJobContainer
+import com.pharbers.StreamEngine.Utils.Strategy.BPSKfkJobStrategy
 import com.pharbers.kafka.producer.PharbersKafkaProducer
 import com.pharbers.kafka.schema.{BPJob, DataSet, UploadEnd}
 import org.apache.avro.specific.SpecificRecord

@@ -4,7 +4,7 @@ package com.pharbers.StreamTest
 import java.net.{URL, URLClassLoader}
 import java.util.UUID
 
-import com.pharbers.StreamEngine.Utils.Session.Spark.BPSparkSession
+import com.pharbers.StreamEngine.Utils.Strategy.Session.Spark.BPSparkSession
 import org.scalatest.FunSuite
 import java.util.jar.JarFile
 

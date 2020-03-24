@@ -1,6 +1,6 @@
 package com.pharbers.StreamEngine.Others.sandbox.schema
 
-import com.pharbers.StreamEngine.Utils.Session.Spark.BPSparkSession
+import com.pharbers.StreamEngine.Utils.Strategy.Session.Spark.BPSparkSession
 import org.scalatest.FunSuite
 
 import scala.io.Source

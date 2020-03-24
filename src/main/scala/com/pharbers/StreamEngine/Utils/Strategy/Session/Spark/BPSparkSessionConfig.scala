@@ -1,10 +1,11 @@
-package com.pharbers.StreamEngine.Utils.Session.Spark
+package com.pharbers.StreamEngine.Utils.Strategy.Session.Spark
 
-import com.pharbers.StreamEngine.Utils.Component2.{BPComponent}
+import com.pharbers.StreamEngine.Utils.Component2.BPComponent
+import com.pharbers.StreamEngine.Utils.Strategy.Session.SessionStrategy
 import org.apache.kafka.common.config.ConfigDef
 import org.apache.kafka.common.config.ConfigDef.{Importance, Type}
 
-trait BPSparkSessionConfig extends BPComponent {
+trait BPSparkSessionConfig extends SessionStrategy {
     val defaultSparkConfigsPath = "src/main/resources/sparkConfig.properties"
     val defaultAppName = "bp-stream-engine"
     val defaultMaster = "yarn"

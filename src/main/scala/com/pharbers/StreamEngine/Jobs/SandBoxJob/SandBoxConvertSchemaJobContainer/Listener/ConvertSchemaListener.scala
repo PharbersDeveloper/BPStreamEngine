@@ -4,7 +4,7 @@ package com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxConvertSchemaJobContain
 import com.pharbers.StreamEngine.Utils.Channel.Local.BPSLocalChannel
 import com.pharbers.StreamEngine.Utils.Event.BPSEvents
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamListener
-import com.pharbers.StreamEngine.Utils.StreamJob.BPStreamJob
+import com.pharbers.StreamEngine.Utils.Job.BPStreamJob
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.streaming.StreamingQuery
 
@@ -22,8 +22,8 @@ case class ConvertSchemaListener(id: String,
 			job.close()
 		}
 	}
-	
+
 	override def active(s: DataFrame): Unit = BPSLocalChannel.registerListener(this)
-	
+
 	override def deActive(): Unit = BPSLocalChannel.unRegisterListener(this)
 }

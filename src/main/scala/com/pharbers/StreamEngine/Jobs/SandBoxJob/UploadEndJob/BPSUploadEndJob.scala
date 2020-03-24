@@ -3,8 +3,8 @@ package com.pharbers.StreamEngine.Jobs.SandBoxJob.UploadEndJob
 import java.util.concurrent.TimeUnit
 
 import com.pharbers.StreamEngine.Utils.Component2
-import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSJobStrategy
-import com.pharbers.StreamEngine.Utils.StreamJob.BPStreamJob
+import com.pharbers.StreamEngine.Utils.Job.BPStreamJob
+import com.pharbers.StreamEngine.Utils.Strategy.BPSJobStrategy
 import com.pharbers.kafka.producer.PharbersKafkaProducer
 import org.apache.avro.specific.SpecificRecord
 import org.apache.kafka.common.config.ConfigDef
