@@ -1,0 +1,33 @@
+{
+    "dimensions": [
+        {
+            "name": "time",
+            "hierarchy": [
+                "YEAR",
+                "QUARTER",
+                "MONTH"
+            ]
+        },
+        {
+            "name": "geo",
+            "hierarchy": [
+                "COUNTRY_NAME",
+                "PROVINCE_NAME",
+                "CITY_NAME"
+            ]
+        },
+        {
+            "name": "prod",
+            "hierarchy": [
+                "COMPANY",
+                "MKT",
+                "MOLE_NAME",
+                "PRODUCT_NAME"
+            ]
+        }
+    ],
+    "measures": [
+        "SALES_QTY",
+        "SALES_VALUE"
+    ]
+}
