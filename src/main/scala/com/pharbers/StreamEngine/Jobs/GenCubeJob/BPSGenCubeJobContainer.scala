@@ -6,8 +6,8 @@ import com.pharbers.StreamEngine.Jobs.GenCubeJob.Listener.GenCubeJobStartListene
 import com.pharbers.StreamEngine.Utils.Config.BPSConfig
 import com.pharbers.StreamEngine.Utils.Event.EventHandler.BPSEventHandler
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamListener
-import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSKfkJobStrategy
-import com.pharbers.StreamEngine.Utils.StreamJob.{BPDynamicStreamJob, BPSJobContainer}
+import com.pharbers.StreamEngine.Utils.Strategy.BPSKfkBaseStrategy
+import com.pharbers.StreamEngine.Utils.Job.{BPDynamicStreamJob, BPSJobContainer}
 import com.pharbers.StreamEngine.Utils.ThreadExecutor.ThreadExecutor
 import com.pharbers.kafka.consumer.PharbersKafkaConsumer
 import com.pharbers.kafka.schema.GenCubeJobSubmit
@@ -16,7 +16,7 @@ import org.apache.kafka.common.config.ConfigDef.{Importance, Type}
 import org.apache.spark.sql.SparkSession
 
 object BPSGenCubeJobContainer {
-    def apply(strategy: BPSKfkJobStrategy,
+    def apply(strategy: BPSKfkBaseStrategy,
               spark: SparkSession,
               config: Map[String, String]): BPSGenCubeJobContainer =
         new BPSGenCubeJobContainer(spark, config)
@@ -32,8 +32,8 @@ class BPSGenCubeJobContainer(override val spark: SparkSession,
                              config: Map[String, String])
         extends BPSJobContainer with BPDynamicStreamJob {
 
-    override val strategy: BPSKfkJobStrategy = null
-    type T = BPSKfkJobStrategy
+    override val strategy: BPSKfkBaseStrategy = null
+    type T = BPSKfkBaseStrategy
 
     var metadata: Map[String, Any] = Map.empty
 

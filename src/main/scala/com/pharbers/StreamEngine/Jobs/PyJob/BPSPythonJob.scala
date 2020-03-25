@@ -4,7 +4,7 @@ import org.apache.spark.sql
 import java.util.Collections
 import com.pharbers.kafka.schema.DataSet
 import org.apache.spark.sql.SparkSession
-import com.pharbers.StreamEngine.Utils.StreamJob.BPStreamJob
+import com.pharbers.StreamEngine.Utils.Job.BPStreamJob
 import com.pharbers.StreamEngine.Jobs.SandBoxJob.BloodJob.BPSBloodJob
 import com.pharbers.StreamEngine.Jobs.PyJob.Py4jServer.BPSPy4jManager
 import com.pharbers.StreamEngine.Utils.Job.{BPSJobContainer, BPStreamJob}

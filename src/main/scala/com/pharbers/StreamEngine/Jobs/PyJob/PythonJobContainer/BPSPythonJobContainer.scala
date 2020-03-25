@@ -2,6 +2,7 @@ package com.pharbers.StreamEngine.Jobs.PyJob.PythonJobContainer
 
 import java.util.UUID
 import java.util.concurrent.TimeUnit
+
 import org.mongodb.scala.bson.ObjectId
 import org.apache.spark.sql.SparkSession
 import com.pharbers.kafka.schema.{BPJob, HiveTask}
@@ -13,8 +14,8 @@ import com.pharbers.StreamEngine.Utils.Schema.Spark.BPSParseSchema
 import com.pharbers.StreamEngine.Utils.Event.EventHandler.BPSEventHandler
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamListener
 import com.pharbers.StreamEngine.Utils.GithubHelper.BPSGithubHelper
-import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSKfkJobStrategy
-import com.pharbers.StreamEngine.Utils.StreamJob.{BPDynamicStreamJob, BPSJobContainer}
+import com.pharbers.StreamEngine.Utils.Job.{BPDynamicStreamJob, BPSJobContainer}
+import com.pharbers.StreamEngine.Utils.Strategy.BPSKfkBaseStrategy
 import com.pharbers.StreamEngine.Utils.ThreadExecutor.ThreadExecutor
 
 object BPSPythonJobContainer {
@@ -47,8 +48,8 @@ class BPSPythonJobContainer(override val spark: SparkSession,
                             config: Map[String, String])
         extends BPSJobContainer with BPDynamicStreamJob with Serializable {
 
-    type T = BPSKfkJobStrategy
-    override val strategy: BPSKfkJobStrategy = null
+    type T = BPSKfkBaseStrategy
+    override val strategy: BPSKfkBaseStrategy = null
 
     override val id: String = config.getOrElse("containerId", UUID.randomUUID().toString)
     val containerId: String = id
