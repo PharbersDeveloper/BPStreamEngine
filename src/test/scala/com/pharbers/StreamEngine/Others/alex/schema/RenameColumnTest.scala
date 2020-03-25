@@ -1,4 +1,4 @@
-package com.pharbers.StreamEngine.Others.sandbox.schema
+package com.pharbers.StreamEngine.Others.alex.schema
 
 import com.pharbers.StreamEngine.Utils.Component2.BPSConcertEntry
 import com.pharbers.StreamEngine.Utils.Strategy.hdfs.BPSHDFSFile
@@ -6,12 +6,9 @@ import com.pharbers.StreamEngine.Utils.Strategy.Schema.{BPSMetaData2Map, SchemaC
 import com.pharbers.StreamEngine.Utils.Strategy.Session.Spark.BPSparkSession
 import com.pharbers.util.log.PhLogable
 import org.apache.spark.rdd.RDD
-import org.scalatest.FunSuite
 import org.json4s._
 import org.json4s.jackson.Serialization.write
-import org.apache.spark.sql.functions._
-
-import scala.io.Source
+import org.scalatest.FunSuite
 
 class RenameColumnTest extends FunSuite with PhLogable {
 //	test("rename column") {
@@ -114,4 +111,3 @@ class RenameColumnTest extends FunSuite with PhLogable {
 		result.printSchema()
 	}
 }
-

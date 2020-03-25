@@ -2,6 +2,7 @@ package com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxConvertSchemaJobContain
 
 import java.util.{Date, UUID}
 
+import com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxConvertSchemaJob.BPSSandBoxConvertSchemaJob
 import com.pharbers.StreamEngine.Utils.Channel.Local.BPSLocalChannel
 import com.pharbers.StreamEngine.Utils.Strategy.Schema.{BPSMetaData2Map, SchemaConverter}
 import com.pharbers.StreamEngine.Utils.Strategy.Session.Spark.BPSparkSession
@@ -40,7 +41,8 @@ class TestBPSSandBoxConvertSchemaJob extends FunSuite with PhLogable{
             "jobContainerId" -> jobContainerId,
             "metaDataSavePath" -> metaDataSavePath,
             "checkPointSavePath" -> checkPointSavePath,
-            "parquetSavePath" -> parquetSavePath
+            "parquetSavePath" -> parquetSavePath,
+            "dataSetId" -> new ObjectId().toString
         )
         val spark = BPSparkSession(null)
         val convertJob: BPSSandBoxConvertSchemaJob =
@@ -48,7 +50,7 @@ class TestBPSSandBoxConvertSchemaJob extends FunSuite with PhLogable{
                 "test_" + UUID.randomUUID().toString,
                 jobParam,
                 spark,
-                dataSetId)
+                None)
         val metaData = spark.sparkContext.textFile(s"${jobParam("parentMetaData")}/${jobParam("parentJobId")}")
         val primitive = BPSMetaData2Map(null).list2Map(metaData.collect().toList)
         val convertContent = primitive //++ SchemaConverter.column2legalWithMetaDataSchema(primitive)

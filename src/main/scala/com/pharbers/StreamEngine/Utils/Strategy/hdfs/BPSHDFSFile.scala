@@ -36,7 +36,7 @@ case class BPSHDFSFile(override val componentProperty: Component2.BPComponentCon
     }
 
     def checkPath(path: String): Boolean = {
-        val fileSystem: FileSystem = FileSystem.newInstance(configuration)
+        val fileSystem: FileSystem = FileSystem.get(configuration)
         fileSystem.exists(new Path(path))
     }
 
@@ -52,6 +52,16 @@ case class BPSHDFSFile(override val componentProperty: Component2.BPComponentCon
         bufferedWriter.write(line)
         bufferedWriter.newLine()
         bufferedWriter.close()
+        fileSystem.close()
+    }
+
+    // TODO: 临时
+    def createPath(path: String): Unit = {
+        val fileSystem: FileSystem = FileSystem.newInstance(configuration)
+        val hdfsWritePath: Path = new Path(path)
+        if (!fileSystem.exists(hdfsWritePath))
+            fileSystem.mkdirs(hdfsWritePath)
+        fileSystem.close()
     }
 
     // 支持文件和目录，但不支持递归型目录

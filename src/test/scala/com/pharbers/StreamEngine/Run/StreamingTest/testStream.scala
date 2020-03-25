@@ -1,4 +1,4 @@
-package com.pharbers.StreamEngine.Run
+package com.pharbers.StreamEngine.Run.StreamingTest
 
 import com.pharbers.StreamEngine.Utils.Component.ComponentContext
 import com.pharbers.StreamEngine.Utils.Strategy.Schema.SchemaConverter

@@ -1,5 +1,4 @@
-package com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxConvertSchemaJobContainer.Listener
-
+package com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxConvertSchemaJob.Listener
 
 import com.pharbers.StreamEngine.Utils.Channel.Local.BPSLocalChannel
 import com.pharbers.StreamEngine.Utils.Event.BPSEvents
@@ -16,7 +15,7 @@ case class ConvertSchemaListener(id: String,
                                  sumRow: Long) extends BPStreamListener {
 	override def trigger(e: BPSEvents): Unit = {
 		val cumulative = query.recentProgress.map(_.numInputRows).sum
-
+		
 		if (cumulative >= sumRow) {
 			logger.debug(s"ConvertSchemaListener End Of The Job，The total number of records ========>$cumulative")
 			job.close()
