@@ -25,9 +25,7 @@ class BPSandBoxConsumerManager(topics: List[String], spark: SparkSession) extend
 	var hisSampleDataPath = ""
 	var reading: Option[org.apache.spark.sql.DataFrame] = None
 	var sandBoxConsumer: Option[PharbersKafkaConsumer[String, FileMetaData]] = None
-	val jobQueue = new mutable.Queue[Map[String, String]]
-	val maxQueueJob = 3
-	var execQueueJob = new AtomicInteger(0)
+	val execQueueIns: Queue = Queue(spark)
 	
 	private val process: ConsumerRecord[String, FileMetaData] => Unit = (record: ConsumerRecord[String, FileMetaData]) => {
 		if (record.value().getJobId.toString != hisJobId) {
@@ -50,9 +48,6 @@ class BPSandBoxConsumerManager(topics: List[String], spark: SparkSession) extend
 				"parquetSavePath" -> parquetSavePath,
 				"dataSetId" ->  new ObjectId().toString
 			)
-			// TODO 无界队列，有危险
-			jobQueue.enqueue(jobParam)
-			
 			logger.info(s"ParentJobId ======> ${record.value().getJobId.toString}")
 			
 			if (record.value().getSampleDataPath.toString != hisSampleDataPath) {
@@ -70,28 +65,11 @@ class BPSandBoxConsumerManager(topics: List[String], spark: SparkSession) extend
 					.parquet(s"${jobParam("parentSampleData")}"))
 				logger.info("Init reading")
 			}
+			execQueueIns.reading = reading
+			// TODO 无界队列，有危险
+			execQueueIns.jobQueue.enqueue(jobParam)
 		} else {
 			logger.error("this is repetitive job", hisJobId)
-		}
-	}
-	
-	def execQueue(): Unit = {
-		while (true) {
-			logger.info(s"jobQueue Num =====> ${jobQueue.length}")
-			if (execQueueJob.get() <= maxQueueJob && jobQueue.nonEmpty) {
-				val parm = jobQueue.dequeue()
-				execQueueJob.incrementAndGet()
-				val convertJob: BPSSandBoxConvertSchemaJob =
-					BPSSandBoxConvertSchemaJob(
-						parm("runId"),
-						parm,
-						spark,
-						reading,
-						execQueueJob)
-				convertJob.open()
-				convertJob.exec()
-			}
-			Thread.sleep(1 * 1000)
 		}
 	}
 	
@@ -103,7 +81,8 @@ class BPSandBoxConsumerManager(topics: List[String], spark: SparkSession) extend
 		)
 		ThreadExecutor().execute(pkc)
 		sandBoxConsumer = Some(pkc)
-		execQueue()
+		ThreadExecutor().execute(execQueueIns)
+		
 	}
 	
 	def close(): Unit = {
