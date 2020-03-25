@@ -3,6 +3,7 @@ package com.pharbers.StreamEngine.Jobs.GenCubeJob
 import java.util.UUID
 
 import com.pharbers.StreamEngine.Jobs.GenCubeJob.Listener.GenCubeJobStartListener
+import com.pharbers.StreamEngine.Utils.Component2
 import com.pharbers.StreamEngine.Utils.Config.BPSConfig
 import com.pharbers.StreamEngine.Utils.Event.EventHandler.BPSEventHandler
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamListener
@@ -45,7 +46,7 @@ class BPSGenCubeJobContainer(override val spark: SparkSession,
     final val CONTAINER_LISTENING_TOPIC_KEY = "container.listening.topic"
     final val CONTAINER_LISTENING_TOPIC_DOC = "The value is a topic which is this container listened to and send job request."
 
-    val configDef: ConfigDef = new ConfigDef()
+    override def createConfigDef(): ConfigDef = new ConfigDef()
         .define(CONTAINER_ID_KEY, Type.STRING, UUID.randomUUID().toString, Importance.HIGH, CONTAINER_ID_DOC)
         .define(CONTAINER_LISTENING_TOPIC_KEY, Type.STRING, DEFAULT_LISTENING_TOPIC, Importance.HIGH, CONTAINER_LISTENING_TOPIC_DOC)
     private val jobConfig: BPSConfig = BPSConfig(configDef, config)
@@ -79,4 +80,7 @@ class BPSGenCubeJobContainer(override val spark: SparkSession,
     override def handlerExec(handler: BPSEventHandler): Unit = {}
 
     override def registerListeners(listener: BPStreamListener): Unit = {}
+
+    override val description: String = "cube_gen"
+    override val componentProperty: Component2.BPComponentConfig = null
 }

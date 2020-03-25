@@ -7,16 +7,19 @@ import org.mongodb.scala.bson.ObjectId
 import org.apache.spark.sql.SparkSession
 import com.pharbers.kafka.schema.{BPJob, HiveTask}
 import com.pharbers.StreamEngine.Jobs.PyJob.BPSPythonJob
+import com.pharbers.StreamEngine.Utils.Component2
+import com.pharbers.StreamEngine.Utils.Component2.BPSConcertEntry
 import com.pharbers.kafka.consumer.PharbersKafkaConsumer
 import com.pharbers.kafka.producer.PharbersKafkaProducer
 import org.apache.kafka.clients.consumer.ConsumerRecord
-import com.pharbers.StreamEngine.Utils.Schema.Spark.BPSParseSchema
 import com.pharbers.StreamEngine.Utils.Event.EventHandler.BPSEventHandler
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamListener
-import com.pharbers.StreamEngine.Utils.GithubHelper.BPSGithubHelper
 import com.pharbers.StreamEngine.Utils.Job.{BPDynamicStreamJob, BPSJobContainer}
 import com.pharbers.StreamEngine.Utils.Strategy.BPSKfkBaseStrategy
+import com.pharbers.StreamEngine.Utils.Strategy.GithubHelper.BPSGithubHelper
+import com.pharbers.StreamEngine.Utils.Strategy.Schema.BPSParseSchema
 import com.pharbers.StreamEngine.Utils.ThreadExecutor.ThreadExecutor
+import org.apache.kafka.common.config.ConfigDef
 
 object BPSPythonJobContainer {
     def apply(strategy: BPSKfkBaseStrategy,
@@ -65,7 +68,8 @@ class BPSPythonJobContainer(override val spark: SparkSession,
 
     // 将 python 清洗文件发送到 spark
     def sendPy2Spark(): Unit = {
-        val helper: BPSGithubHelper = BPSGithubHelper()
+        val helper: BPSGithubHelper =
+            BPSConcertEntry.queryComponentWithId("").get.asInstanceOf[BPSGithubHelper]
         helper.cloneByBranch(containerId, pythonUri, pythonBranch)
         val pyFiles: List[String] = helper.listFile(containerId, ".py")
         pyFiles.foreach(spark.sparkContext.addFile)
@@ -115,8 +119,8 @@ class BPSPythonJobContainer(override val spark: SparkSession,
             else path + "/" + containerId
         }
 
-        val ps = BPSConcertEntry.queryComponentWithId("parse schema").asInstanceOf[BPSParseSchema]
-        metadata = ps.parseMetadata(metadataPath)(spark)
+        val ps = BPSConcertEntry.queryComponentWithId("parse schema").get.asInstanceOf[BPSParseSchema]
+        val metadata = ps.parseMetadata(metadataPath)(spark)
         val loadSchema = ps.parseSchema(metadata("schema").asInstanceOf[List[_]])
 
         // 读取输入流
@@ -178,7 +182,9 @@ class BPSPythonJobContainer(override val spark: SparkSession,
     override def close(): Unit = {
         logger.info(s"close kafka consumer, listener topic is `$listenerTopic`")
         pyConsumer.get.close()
-        BPSGithubHelper().delDir(id)
+        val helper: BPSGithubHelper =
+            BPSConcertEntry.queryComponentWithId("").get.asInstanceOf[BPSGithubHelper]
+        helper.delDir(id)
         super.close()
     }
 
@@ -187,7 +193,6 @@ class BPSPythonJobContainer(override val spark: SparkSession,
     override def handlerExec(handler: BPSEventHandler): Unit = {}
 
     override val componentProperty: Component2.BPComponentConfig = null
-
     override def createConfigDef(): ConfigDef = ???
 
     override val description: String = "py_clean_job"

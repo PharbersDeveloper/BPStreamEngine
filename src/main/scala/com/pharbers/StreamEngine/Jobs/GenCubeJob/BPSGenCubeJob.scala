@@ -3,6 +3,7 @@ package com.pharbers.StreamEngine.Jobs.GenCubeJob
 import java.util.UUID
 
 import com.pharbers.StreamEngine.Jobs.GenCubeJob.strategy.{BPSHandleHiveResultStrategy, BPSStrategy}
+import com.pharbers.StreamEngine.Utils.Component2
 import com.pharbers.StreamEngine.Utils.Config.BPSConfig
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import com.pharbers.StreamEngine.Utils.Strategy.BPStrategyComponent
@@ -128,4 +129,7 @@ class BPSGenCubeJob(override val id: String,
         logger.info("gen-cube job closed with id ========>" + id)
     }
 
+    override val description: String = "cube gen"
+    override val componentProperty: Component2.BPComponentConfig = null
+    override def createConfigDef(): ConfigDef = ???
 }
