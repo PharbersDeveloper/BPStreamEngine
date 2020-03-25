@@ -27,7 +27,8 @@ package object Component2 {
     case class BPSEntryConfig(
                                  strategies: List[BPSComponentConfig],
                                  channels: List[BPSComponentConfig],
-                                 jobs: List[BPSComponentConfig]
+                                 jobs: List[BPSComponentConfig],
+                                 starts: List[String]
                              )
     trait BPJobComponentConfig extends BPComponentConfig
 

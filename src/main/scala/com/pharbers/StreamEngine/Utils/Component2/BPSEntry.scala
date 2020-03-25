@@ -1,5 +1,6 @@
 package com.pharbers.StreamEngine.Utils.Component2
 import com.pharbers.StreamEngine.Utils.Config.AppConfig
+import com.pharbers.StreamEngine.Utils.Job.BPStreamJob
 import org.apache.kafka.common.config.ConfigDef
 import org.json4s.DefaultFormats
 import org.json4s.jackson.Serialization.read
@@ -44,12 +45,11 @@ object BPSConcertEntry extends BPSComponentFactory with BPSEntry {
 
     def start(): Unit = {
         val result = startStrategies() | startChannels() | startJobs()
-//        val result = startJobs()
         if (!result) {
-            // TODO: exist
             println("Entry: start job error")
             sys.exit(-1)
         }
+        exec()
     }
 
     def startStrategies(): Boolean = {
@@ -85,6 +85,13 @@ object BPSConcertEntry extends BPSComponentFactory with BPSEntry {
             case ex: Exception =>
                 ex.printStackTrace()
                 return false
+        }
+    }
+
+    def exec(): Unit = {
+        cf.starts.map(x => queryComponentWithId(x).get.asInstanceOf[BPStreamJob]).foreach { x =>
+            x.open()
+            x.exec()
         }
     }
 }
