@@ -1,33 +1,30 @@
-//package com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxConvertSchemaJobContainer
-//
-//import java.util.{Date, UUID}
-//
-//import com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxConvertSchemaJob.BPSSandBoxConvertSchemaJob
-//import com.pharbers.StreamEngine.Utils.Channel.Local.BPSLocalChannel
-//import com.pharbers.StreamEngine.Utils.Strategy.Schema.{BPSMetaData2Map, SchemaConverter}
-//import com.pharbers.StreamEngine.Utils.Strategy.Session.Spark.BPSparkSession
-//import com.pharbers.StreamEngine.Utils.Strategy.Session.Spark.BPSparkSession._
-//import com.pharbers.StreamEngine.Utils.ThreadExecutor.ThreadExecutor
-//import com.pharbers.util.log.PhLogable
-//import org.json4s.DefaultFormats
-//import org.json4s.jackson.Serialization.write
-//import org.mongodb.scala.bson.ObjectId
-//import org.scalatest.FunSuite
-//
-///** 功能描述
-//  *
-//  * @param args 构造参数
-//  * @tparam T 构造泛型参数
-//  * @author dcs
-//  * @version 0.0
-//  * @since 2020/01/15 10:42
-//  * @note 一些值得注意的地方
-//  */
-//class TestBPSSandBoxConvertSchemaJob extends FunSuite with PhLogable{
-//    test("test open and exec"){
-////        BPSLocalChannel(Map())
-//        BPSLocalChannel(null)
-//        val dataSetId = new ObjectId().toString
+package com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxConvertSchemaJobContainer
+
+import java.util.{Date, UUID}
+
+import com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxConvertSchemaJob.BPSSandBoxConvertSchemaJob
+import com.pharbers.StreamEngine.Utils.Channel.Local.BPSLocalChannel
+import com.pharbers.StreamEngine.Utils.Schema.Spark.{BPSMetaData2Map, SchemaConverter}
+import com.pharbers.StreamEngine.Utils.Session.Spark.BPSparkSession
+import com.pharbers.StreamEngine.Utils.ThreadExecutor.ThreadExecutor
+import com.pharbers.util.log.PhLogable
+import org.json4s.DefaultFormats
+import org.json4s.jackson.Serialization.write
+import org.mongodb.scala.bson.ObjectId
+import org.scalatest.FunSuite
+
+/** 功能描述
+  *
+  * @param args 构造参数
+  * @tparam T 构造泛型参数
+  * @author dcs
+  * @version 0.0
+  * @since 2020/01/15 10:42
+  * @note 一些值得注意的地方
+  */
+class TestBPSSandBoxConvertSchemaJob extends FunSuite with PhLogable{
+    test("test open and exec"){
+//        BPSLocalChannel(Map())
 //        val jobContainerId: String = UUID.randomUUID().toString
 //        val date = new Date().getTime
 //        val metaDataSavePath: String = s"/user/dcs/test/BPStreamEngine/$date/$jobContainerId/metadata"
@@ -44,7 +41,7 @@
 //            "parquetSavePath" -> parquetSavePath,
 //            "dataSetId" -> new ObjectId().toString
 //        )
-//        val spark = BPSparkSession(null)
+//        val spark = BPSparkSession()
 //        val convertJob: BPSSandBoxConvertSchemaJob =
 //            BPSSandBoxConvertSchemaJob(
 //                "test_" + UUID.randomUUID().toString,
@@ -52,13 +49,13 @@
 //                spark,
 //                None)
 //        val metaData = spark.sparkContext.textFile(s"${jobParam("parentMetaData")}/${jobParam("parentJobId")}")
-//        val primitive = BPSMetaData2Map(null).list2Map(metaData.collect().toList)
-//        val convertContent = primitive //++ SchemaConverter.column2legalWithMetaDataSchema(primitive)
+//        val primitive = BPSMetaData2Map.list2Map(metaData.collect().toList)
+//        val convertContent = primitive ++ SchemaConverter.column2legalWithMetaDataSchema(primitive)
 //        implicit val formats: DefaultFormats.type = DefaultFormats
 //        val schemaData = write(convertContent("schema").asInstanceOf[List[Map[String, Any]]])
-//        convertJob.totalRow = 4029864
-////        convertJob.setInputStream(SchemaConverter.str2SqlType(schemaData))
+//        convertJob.totalRow = Some(4029864)
+//        convertJob.setInputStream(SchemaConverter.str2SqlType(schemaData), None)
 //        convertJob.exec()
 //        ThreadExecutor.waitForShutdown()
-//    }
-//}
+    }
+}

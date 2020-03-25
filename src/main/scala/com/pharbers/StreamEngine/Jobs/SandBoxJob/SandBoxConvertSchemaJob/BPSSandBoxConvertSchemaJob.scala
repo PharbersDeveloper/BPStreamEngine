@@ -2,6 +2,7 @@ package com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxConvertSchemaJob
 
 import java.util.{Collections, UUID}
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
 
 import com.pharbers.StreamEngine.Jobs.SandBoxJob.BloodJob.BPSBloodJob
 import com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxConvertSchemaJob.Listener.ConvertSchemaListener
@@ -28,14 +29,16 @@ object BPSSandBoxConvertSchemaJob {
     def apply(id: String,
               jobParam: Map[String, String],
               spark: SparkSession,
-              df: Option[DataFrame]): BPSSandBoxConvertSchemaJob =
-        new BPSSandBoxConvertSchemaJob(id, jobParam, spark, df)
+              df: Option[DataFrame],
+              execQueueJob: AtomicInteger): BPSSandBoxConvertSchemaJob =
+        new BPSSandBoxConvertSchemaJob(id, jobParam, spark, df, execQueueJob)
 }
 
 class BPSSandBoxConvertSchemaJob(val id: String,
                                  jobParam: Map[String, String],
                                  val spark: SparkSession,
-                                 df: Option[DataFrame]) extends BPSJobContainer {
+                                 df: Option[DataFrame],
+                                 execQueueJob: AtomicInteger) extends BPSJobContainer {
 
     type T = BPSKfkBaseStrategy
     val strategy: BPSKfkBaseStrategy = null
@@ -81,13 +84,6 @@ class BPSSandBoxConvertSchemaJob(val id: String,
                 "resultPath" -> s"/jobs/$id"
             ))
 
-//            pushPyjob(
-//                id,
-//                s"${jobParam("metaDataSavePath")}",
-//                s"${jobParam("parquetSavePath")}",
-//                UUID.randomUUID().toString,
-//                (jobParam("dataSetId") :: Nil).mkString(",")
-//            )
         }
     }
 
@@ -115,7 +111,6 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 
     override def close(): Unit = {
     // TODO 将处理好的Schema发送邮件
-    // TODO: 这部分拿到任务结束在创建否则中间崩溃又要重新创建一次
         BPSBloodJob(
             "data_set_job",
             new DataSet(
@@ -131,11 +126,13 @@ class BPSSandBoxConvertSchemaJob(val id: String,
         val uploadEnd = new UploadEnd(jobParam("dataSetId"), dataAssetId.get)
         BPSUploadEndJob("upload_end_job", uploadEnd).exec()
 
+        execQueueJob.decrementAndGet()
         totalRow = None
         columnNames = Nil
         sheetName = None
         dataAssetId = None
         logger.debug(s"Self Close Job With ID == =====>${id}")
+
         super.close()
         outputStream.foreach(_.stop())
         listeners.foreach(_.deActive())
@@ -206,46 +203,6 @@ class BPSSandBoxConvertSchemaJob(val id: String,
         println(fu.get(10, TimeUnit.SECONDS))
         pkp.producer.close()
     }
-
-//    // TODO：因还未曾与老齐对接口，暂时放到这里
-//    private def pushPyjob(runId: String,
-//                          metadataPath: String,
-//                          filesPath: String,
-//                          parentJobId: String,
-//                          dsIds: String): Unit = {
-//        val resultPath = s"hdfs:///jobs/$runId/"
-//        //		val resultPath = s"hdfs:///user/alex/jobs/$runId"
-//
-//        import org.json4s._
-//        import org.json4s.jackson.Serialization.write
-//        implicit val formats: DefaultFormats.type = DefaultFormats
-//        val traceId = ""
-//        val `type` = "add"
-//        val jobConfig = Map(
-//            "jobId" -> parentJobId,
-//            "parentsOId" -> dsIds,
-//            "metadataPath" -> metadataPath,
-//            "filesPath" -> filesPath,
-//            "resultPath" -> resultPath
-//        )
-//        val job = JobMsg(
-//            s"ossPyJob$parentJobId",
-//            "job",
-//            "com.pharbers.StreamEngine.Jobs.PyJob.PythonJobContainer.BPSPythonJobContainer",
-//            List("$BPSparkSession"),
-//            Nil,
-//            Nil,
-//            jobConfig,
-//            "",
-//            "temp job")
-//        val jobMsg = write(job)
-//        val topic = "stream_job_submit"
-//        val bpJob = new BPJob(parentJobId, traceId, `type`, jobMsg)
-//        val producerInstance = new PharbersKafkaProducer[String, SpecificRecord]
-//        val fu = producerInstance.produce(topic, parentJobId, bpJob)
-//        logger.debug(fu.get(10, TimeUnit.SECONDS))
-//        producerInstance.producer.close()
-//    }
     override val description: String = "schema_job"
     override val componentProperty: Component2.BPComponentConfig = null
     override def createConfigDef(): ConfigDef = ???

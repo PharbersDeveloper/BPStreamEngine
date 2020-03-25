@@ -1,6 +1,7 @@
 package com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxJobContainer
 
 import java.util.UUID
+import java.util.concurrent.atomic.{AtomicInteger, AtomicReference}
 
 import com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxConvertSchemaJob.BPSSandBoxConvertSchemaJob
 import com.pharbers.StreamEngine.Utils.ThreadExecutor.ThreadExecutor
@@ -12,7 +13,8 @@ import org.mongodb.scala.bson.ObjectId
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.types.{StringType, StructField, StructType, TimestampType}
 
-// TODO: 该类将管理Consumer并行与销毁，目前先实现单一为主
+import scala.collection.mutable
+
 object BPSandBoxConsumerManager {
 	def apply(topics: List[String],spark: SparkSession): BPSandBoxConsumerManager =
 		new BPSandBoxConsumerManager(topics, spark)
@@ -23,6 +25,8 @@ class BPSandBoxConsumerManager(topics: List[String], spark: SparkSession) extend
 	var hisSampleDataPath = ""
 	var reading: Option[org.apache.spark.sql.DataFrame] = None
 	var sandBoxConsumer: Option[PharbersKafkaConsumer[String, FileMetaData]] = None
+	val execQueueIns: Queue = Queue(spark)
+	
 	private val process: ConsumerRecord[String, FileMetaData] => Unit = (record: ConsumerRecord[String, FileMetaData]) => {
 		if (record.value().getJobId.toString != hisJobId) {
 			val jobContainerId: String = UUID.randomUUID().toString
@@ -34,6 +38,7 @@ class BPSandBoxConsumerManager(topics: List[String], spark: SparkSession) extend
 			val parquetSavePath: String = s"/jobs/${record.value().getRunId.toString}/$jobContainerId/contents"
 			
 			val jobParam = Map(
+				"runId" -> record.value().getRunId.toString,
 				"parentJobId" -> record.value().getJobId.toString,
 				"parentMetaData" -> record.value().getMetaDataPath.toString,
 				"parentSampleData" -> record.value().getSampleDataPath.toString,
@@ -43,7 +48,6 @@ class BPSandBoxConsumerManager(topics: List[String], spark: SparkSession) extend
 				"parquetSavePath" -> parquetSavePath,
 				"dataSetId" ->  new ObjectId().toString
 			)
-			
 			logger.info(s"ParentJobId ======> ${record.value().getJobId.toString}")
 			
 			if (record.value().getSampleDataPath.toString != hisSampleDataPath) {
@@ -61,15 +65,9 @@ class BPSandBoxConsumerManager(topics: List[String], spark: SparkSession) extend
 					.parquet(s"${jobParam("parentSampleData")}"))
 				logger.info("Init reading")
 			}
-			
-			val convertJob: BPSSandBoxConvertSchemaJob =
-				BPSSandBoxConvertSchemaJob(
-					record.value().getRunId.toString,
-					jobParam,
-					spark,
-					reading)
-			convertJob.open()
-			convertJob.exec()
+			execQueueIns.reading = reading
+			// TODO 无界队列，有危险
+			execQueueIns.jobQueue.enqueue(jobParam)
 		} else {
 			logger.error("this is repetitive job", hisJobId)
 		}
@@ -83,6 +81,8 @@ class BPSandBoxConsumerManager(topics: List[String], spark: SparkSession) extend
 		)
 		ThreadExecutor().execute(pkc)
 		sandBoxConsumer = Some(pkc)
+		ThreadExecutor().execute(execQueueIns)
+		
 	}
 	
 	def close(): Unit = {
