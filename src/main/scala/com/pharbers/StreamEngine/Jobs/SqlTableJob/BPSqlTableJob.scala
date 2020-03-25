@@ -97,6 +97,8 @@ case class BPSqlTableJob(jobContainer: BPSJobContainer, spark: SparkSession, con
         val errorHead = spark.sparkContext.textFile(jobConfig.getString(ERROR_PATH_CONFIG_KEY)).take(1).headOption.getOrElse("")
         if (errorHead.length > 0) logger.info(s"error path: ${jobConfig.getString(ERROR_PATH_CONFIG_KEY)} ,error: $errorHead")
     }
+
+    override val description: String = "sql_table"
 }
 
 object BPSqlTableJob {

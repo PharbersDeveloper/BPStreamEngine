@@ -81,4 +81,6 @@ class BPSHive2EsJobContainer(override val spark: SparkSession,
     override def handlerExec(handler: BPSEventHandler): Unit = {}
 
     override def registerListeners(listener: BPStreamListener): Unit = {}
+
+    override val description: String = "hive2es_job"
 }

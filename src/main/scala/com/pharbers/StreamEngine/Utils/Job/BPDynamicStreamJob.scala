@@ -12,7 +12,7 @@ import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamListener
   * @since 2019/10/22 15:36
   * @note 一些值得注意的地方
   */
-trait BPDynamicStreamJob extends BPStreamJob{
+trait BPDynamicStreamJob extends BPStreamJob {
     def registerListeners(listener: BPStreamListener)
     def handlerExec(handler: BPSEventHandler)
 

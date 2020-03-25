@@ -11,6 +11,7 @@ import org.apache.kafka.common.config.ConfigDef
 import org.apache.spark.sql
 import org.apache.spark.sql.SparkSession
 
+@deprecated
 object BPSUploadEndJob {
 	def apply(topic: String,
 	          msg: SpecificRecord): BPSUploadEndJob =
@@ -18,9 +19,11 @@ object BPSUploadEndJob {
 }
 
 // TODO：后续改为一个函数即可，无需使用Job
+@deprecated
 class BPSUploadEndJob(topic: String,
                   msg: SpecificRecord) extends BPStreamJob {
 	val id: String = ""
+	override val description: String = "upload_end"
 	type T = BPStrategyComponent
 	override val strategy = null
 	val is: Option[sql.DataFrame] = None

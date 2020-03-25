@@ -72,4 +72,6 @@ class BPSEsSinkJobContainer(override val spark: SparkSession,
     override val componentProperty: Component2.BPComponentConfig = null
 
     override def createConfigDef(): ConfigDef = ???
+
+    override val description: String = "es_sink_job"
 }

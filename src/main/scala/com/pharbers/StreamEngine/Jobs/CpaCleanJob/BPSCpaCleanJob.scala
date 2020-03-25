@@ -42,6 +42,7 @@ case class BPSCpaCleanJob(jobContainer: BPSJobContainer, spark: SparkSession, co
     val jobId: String = strategy.getJobId
     val runId: String = strategy.getRunId
     override val id: String = jobId
+    override val description: String = "cpa_clean_job"
 
     override def open(): Unit = {
         spark.read

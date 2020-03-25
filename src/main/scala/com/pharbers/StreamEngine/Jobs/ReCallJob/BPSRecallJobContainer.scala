@@ -35,6 +35,7 @@ case class BPSRecallJobContainer(config: Map[String, String]) extends BPSJobCont
     val runId: String = jobConfig.getString(RUN_ID_CONFIG_KEY)
     val jobId: String = UUID.randomUUID().toString
     val id: String = runId
+    override val description: String = "recall_job"
 
     override def open(): Unit = super.open()
 

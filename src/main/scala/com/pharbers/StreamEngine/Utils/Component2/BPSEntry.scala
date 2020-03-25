@@ -58,7 +58,9 @@ object BPSConcertEntry extends BPSComponentFactory with BPSEntry {
                 cf.strategies.foreach(x => queryComponentWithId(x.id))
             return true
         } catch {
-            case _:Throwable => return false
+            case ex: Exception =>
+                ex.printStackTrace()
+                return false
         }
     }
 
@@ -68,7 +70,9 @@ object BPSConcertEntry extends BPSComponentFactory with BPSEntry {
                 cf.channels.foreach(x => queryComponentWithId(x.id))
             return true
         } catch {
-            case _:Throwable => return false
+            case ex: Exception =>
+                ex.printStackTrace()
+                return false
         }
     }
 

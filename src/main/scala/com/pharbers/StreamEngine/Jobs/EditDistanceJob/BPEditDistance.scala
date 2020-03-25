@@ -208,6 +208,8 @@ case class BPEditDistance(jobContainer: BPSJobContainer, spark: SparkSession, co
             )
         }).drop("in_min" +: humanDf.columns: _*)
     }
+
+    override val description: String = "EditDistanceJob"
 }
 
 object BPEditDistance extends Serializable {

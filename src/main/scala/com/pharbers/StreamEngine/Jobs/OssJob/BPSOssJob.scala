@@ -36,4 +36,6 @@ class BPSOssJob(
     override val componentProperty: Component2.BPComponentConfig = null
 
     override def createConfigDef(): ConfigDef = ???
+
+    override val description: String = "oss_job"
 }

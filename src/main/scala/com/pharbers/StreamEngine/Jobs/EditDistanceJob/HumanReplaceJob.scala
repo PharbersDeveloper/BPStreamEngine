@@ -28,6 +28,7 @@ case class HumanReplaceJob(jobContainer: BPSJobContainer, spark: SparkSession, c
     val jobId: String = strategy.getJobId
     val runId: String = strategy.getRunId
     override val id: String = jobId
+    override val description: String = "human_replace_job"
 
     implicit val mappingConfig = List("MOLE_NAME", "PRODUCT_NAME", "SPEC", "DOSAGE", "PACK_QTY", "MANUFACTURER_NAME")
 

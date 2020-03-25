@@ -16,6 +16,7 @@ object BPStreamReaderJobContainer {
 
 class BPStreamReaderJobContainer(override val spark: SparkSession) extends BPSJobContainer {
     val id = UUID.randomUUID().toString
+    override val description: String = "stream_reader"
     type T = BPSKfkBaseStrategy
     override val strategy = null
 

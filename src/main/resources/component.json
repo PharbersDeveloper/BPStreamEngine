@@ -88,6 +88,14 @@
         }
     ],
     "jobs": [
-
+        {
+            "id": "OssJobContainer",
+            "name": "BPSOssPartitionJobContainer",
+            "args": [],
+            "config": {
+                "port": 56789,
+                "sleep": 1000
+            }
+        }
     ]
 }

@@ -17,6 +17,7 @@ class BPSSandBoxJobContainer( val spark: SparkSession, config: Map[String, Strin
 	extends BPSJobContainer with BPDynamicStreamJob {
 
 	val id: String = ""//UUID.randomUUID().toString
+	override val description: String = "schema_convert"
 	type T = BPSKfkBaseStrategy
 	val strategy: T  = null
 	var sbcm: Option[BPSandBoxConsumerManager] = None

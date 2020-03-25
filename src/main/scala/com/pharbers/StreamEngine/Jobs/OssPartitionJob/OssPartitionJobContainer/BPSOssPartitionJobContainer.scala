@@ -5,25 +5,40 @@ import java.util.UUID
 import com.pharbers.StreamEngine.Jobs.OssPartitionJob.BPSOssPartitionJob
 import com.pharbers.StreamEngine.Utils.Job.{BPDynamicStreamJob, BPSJobContainer, BPStreamJob}
 import com.pharbers.StreamEngine.Jobs.OssPartitionJob.OssListener.BPSOssListener
+import com.pharbers.StreamEngine.Utils.Annotation.Component
 import com.pharbers.StreamEngine.Utils.Component2
+import com.pharbers.StreamEngine.Utils.Component2.BPSConcertEntry
 import com.pharbers.StreamEngine.Utils.Event.EventHandler.BPSEventHandler
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamListener
 import com.pharbers.StreamEngine.Utils.Strategy.BPSKfkBaseStrategy
+import com.pharbers.StreamEngine.Utils.Strategy.Session.Kafka.BPKafkaSession
 import org.apache.kafka.common.config.ConfigDef
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions._
+import com.pharbers.StreamEngine.Utils.Strategy.Session.Spark.BPSparkSession
+import com.pharbers.StreamEngine.Utils.Strategy.Session.Spark.BPSparkSession._
 
 import scala.collection.JavaConversions.mapAsScalaMap
 
 object BPSOssPartitionJobContainer {
     def apply(strategy: BPSKfkBaseStrategy, spark: SparkSession): BPSOssPartitionJobContainer =
-        new BPSOssPartitionJobContainer(strategy, spark, Map.empty)
+        new BPSOssPartitionJobContainer(null)
+
+    def apply(componentProperty: Component2.BPComponentConfig): BPSOssPartitionJobContainer =
+        new BPSOssPartitionJobContainer(componentProperty)
 }
 
-class BPSOssPartitionJobContainer(override val strategy: BPSKfkBaseStrategy, val spark: SparkSession, config: Map[String, String]) extends BPSJobContainer with BPDynamicStreamJob{
+@Component(name = "BPSOssPartitionJobContainer", `type` = "BPSOssPartitionJobContainer")
+class BPSOssPartitionJobContainer(override val componentProperty: Component2.BPComponentConfig)
+    extends BPSJobContainer with BPDynamicStreamJob{
+
+    // TODO: Stream Job 下移
     val id: String = UUID.randomUUID().toString
-    val jobId = UUID.randomUUID().toString
-    type T = BPSKfkBaseStrategy
+    val jobId: String = UUID.randomUUID().toString
+    val description: String = "InputStream"
+
+    type T = BPKafkaSession
+    val strategy: BPKafkaSession = BPSConcertEntry.queryComponentWithId("kafka").get.asInstanceOf[BPKafkaSession]
     import spark.implicits._
 
     override def open(): Unit = {
@@ -67,8 +82,8 @@ class BPSOssPartitionJobContainer(override val strategy: BPSKfkBaseStrategy, val
                 .partitionBy("jobId")
                 .format("parquet")
                 .outputMode("append")
-                .option("checkpointLocation", s"/jobs/${this.id}/$jobId/checkpoint")
-                .option("path", s"/jobs/${this.id}/$jobId/contents")
+                .option("checkpointLocation", getCheckpointPath)
+                .option("path", getOutputPath)
                 .start()
         }
         case None => ???
@@ -87,10 +102,7 @@ class BPSOssPartitionJobContainer(override val strategy: BPSKfkBaseStrategy, val
     }
 
     override def registerListeners(listener: BPStreamListener): Unit = {}
-
     override def handlerExec(handler: BPSEventHandler): Unit = {}
-
-    override val componentProperty: Component2.BPComponentConfig = null
 
     override def createConfigDef(): ConfigDef = ???
 }

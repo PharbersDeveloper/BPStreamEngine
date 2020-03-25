@@ -109,4 +109,6 @@ class BPSHive2EsJob(override val id: String,
     override val componentProperty: Component2.BPComponentConfig = null
 
     override def createConfigDef(): ConfigDef = ???
+
+    override val description: String = "hive2es_job"
 }

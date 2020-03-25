@@ -11,6 +11,7 @@ import org.apache.kafka.common.config.ConfigDef
 import org.apache.spark.sql
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
+@deprecated
 object BPSBloodJob {
 	def apply(topic: String,
 	          msg: SpecificRecord): BPSBloodJob =
@@ -18,6 +19,7 @@ object BPSBloodJob {
 }
 
 // TODO：后续改为一个函数即可，无需使用Job
+@deprecated
 class BPSBloodJob(topic: String,
                   msg: SpecificRecord) extends BPStreamJob {
 	val id: String = ""
@@ -41,4 +43,6 @@ class BPSBloodJob(topic: String,
 	override val componentProperty: Component2.BPComponentConfig = null
 
 	override def createConfigDef(): ConfigDef = ???
+
+	override val description: String = "blood_job"
 }

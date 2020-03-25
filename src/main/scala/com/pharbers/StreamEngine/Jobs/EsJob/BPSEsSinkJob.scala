@@ -36,7 +36,7 @@ class BPSEsSinkJob(override val id: String,
     override val strategy: BPStrategyComponent = null
 
     var metadata: Map[String, Any] = Map.empty
-    val metadataPath: String = jobConf("metadataPath").toString
+    val metadataPath2: String = jobConf("metadataPath").toString
     val filesPath: String = jobConf("filesPath").toString
     val indexName: String = jobConf("indexName").toString
     val checkpointLocation: String = jobConf("checkpointLocation").toString
@@ -56,10 +56,10 @@ class BPSEsSinkJob(override val id: String,
     override def open(): Unit = {
         logger.info("es sink job start with id ========>" + id)
         container.jobs += id -> this
-        notFoundShouldWait(metadataPath)
+        notFoundShouldWait(metadataPath2)
         notFoundShouldWait(filesPath )
         val ps = BPSConcertEntry.queryComponentWithId("parse schema").asInstanceOf[BPSParseSchema]
-        metadata = ps.parseMetadata(metadataPath)(spark)
+        metadata = ps.parseMetadata(metadataPath2)(spark)
         val loadSchema = ps.parseSchema(metadata("schema").asInstanceOf[List[_]])
 
         val reading = spark.readStream
@@ -97,4 +97,6 @@ class BPSEsSinkJob(override val id: String,
 
     override val componentProperty: Component2.BPComponentConfig = null
     override def createConfigDef(): ConfigDef = ???
+
+    override val description: String = "es_sink_job"
 }

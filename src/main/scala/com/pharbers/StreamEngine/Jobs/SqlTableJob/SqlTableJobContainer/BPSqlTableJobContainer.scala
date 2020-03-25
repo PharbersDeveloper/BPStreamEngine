@@ -46,6 +46,7 @@ class BPSqlTableJobContainer(val spark: SparkSession, config: Map[String, String
     val runId: String = jobConfig.getString(RUN_ID_CONFIG_KEY)
     val jobId: String = UUID.randomUUID().toString
     val id: String = runId
+    val description: String = "sql_table"
 
     val executorService = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue[Runnable])
     //todo: 配置文件

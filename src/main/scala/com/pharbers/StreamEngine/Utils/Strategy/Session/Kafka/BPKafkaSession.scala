@@ -43,4 +43,7 @@ class BPKafkaSession(override val componentProperty: Component2.BPComponentConfi
     lazy val topic: String = kafkaConfigs.getString(TOPIC_KEY)
     lazy val sparkSchema: DataType = BPSAvroDeserializer.getSchema(topic)
     override val sessionType: String = "kafka"
+
+    def getTopic: String = this.topic
+    def getSchema: org.apache.spark.sql.types.DataType = this.sparkSchema
 }
