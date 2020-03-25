@@ -162,6 +162,7 @@ class BPSPythonJobContainer(override val spark: SparkSession,
     var pyConsumer: Option[PharbersKafkaConsumer[String, BPJob]] = None
 
     override def open(): Unit = {
+        logger.info(s"BPSPythonJobContainer containerID is `$containerId`")
         sendPy2Spark()
         if (pyConsumer.isEmpty) {
             logger.info(s"open kafka consumer, listener topic is `$listenerTopic`")
@@ -174,6 +175,7 @@ class BPSPythonJobContainer(override val spark: SparkSession,
     }
 
     override def close(): Unit = {
+        logger.info(s"close kafka consumer, listener topic is `$listenerTopic`")
         pyConsumer.get.close()
         BPSGithubHelper().delDir(id)
         super.close()

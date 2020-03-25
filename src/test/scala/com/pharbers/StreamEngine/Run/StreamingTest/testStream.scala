@@ -1,9 +1,7 @@
-package com.pharbers.StreamEngine.Run
+package com.pharbers.StreamEngine.Run.StreamingTest
 
-import com.pharbers.StreamEngine.Utils.Component.ComponentContext
 import com.pharbers.StreamEngine.Utils.Schema.Spark.SchemaConverter
 import com.pharbers.StreamEngine.Utils.Session.Spark.BPSparkSession
-import com.pharbers.StreamEngine.Utils.ThreadExecutor.ThreadExecutor
 import org.apache.spark.sql.functions.{from_json, lit, regexp_replace}
 import org.apache.spark.sql.types.{StringType, StructField, StructType, TimestampType}
 import org.scalatest.FunSuite

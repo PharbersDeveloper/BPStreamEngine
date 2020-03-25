@@ -66,6 +66,17 @@ class BPSSandBoxConvertSchemaJob(val id: String,
             val schema = SchemaConverter.str2SqlType(schemaData)
             logger.info(s"ParentSampleData Info ${jobParam("parentSampleData")}")
             setInputStream(schema, df)
+    
+            // TODO: 临时
+            BPSHDFSFile.createPath(jobParam("parquetSavePath"))
+            
+            pushPyJob(Map(
+                "parentsId" -> (jobParam("dataSetId") :: Nil).mkString(","),
+                "noticeTopic" -> "HiveTaskNone",
+                "metadataPath" -> jobParam("metaDataSavePath"),
+                "filesPath" -> jobParam("parquetSavePath"),
+                "resultPath" -> s"/jobs/$id"
+            ))
             
 //            pushPyjob(
 //                id,
@@ -165,57 +176,67 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 
     def setInputStream(schema: DataType, df: Option[DataFrame]): Unit = {
          df match {
-            case Some(reading) => {
+            case Some(reading) =>
                 reading.filter($"jobId" === jobParam("parentJobId") and $"type" === "SandBox")
-    
                 inputStream = Some(
                     SchemaConverter.column2legalWithDF("data", reading)
                         .select(from_json($"data", schema).as("data"))
                         .select("data.*")
                 )
-            }
             case None => logger.info("reading is none")
         }
     }
-
-    // TODO：因还未曾与老齐对接口，暂时放到这里
-    private def pushPyjob(runId: String,
-                          metadataPath: String,
-                          filesPath: String,
-                          parentJobId: String,
-                          dsIds: String): Unit = {
-        val resultPath = s"hdfs:///jobs/$runId/"
-        //		val resultPath = s"hdfs:///user/alex/jobs/$runId"
-
-        import org.json4s._
-        import org.json4s.jackson.Serialization.write
+    
+    private def pushPyJob(job: Map[String, String]) {
         implicit val formats: DefaultFormats.type = DefaultFormats
-        val traceId = ""
-        val `type` = "add"
-        val jobConfig = Map(
-            "jobId" -> parentJobId,
-            "parentsOId" -> dsIds,
-            "metadataPath" -> metadataPath,
-            "filesPath" -> filesPath,
-            "resultPath" -> resultPath
-        )
-        val job = JobMsg(
-            s"ossPyJob$parentJobId",
-            "job",
-            "com.pharbers.StreamEngine.Jobs.PyJob.PythonJobContainer.BPSPythonJobContainer",
-            List("$BPSparkSession"),
-            Nil,
-            Nil,
-            jobConfig,
-            "",
-            "temp job")
         val jobMsg = write(job)
-        val topic = "stream_job_submit"
-        val bpJob = new BPJob(parentJobId, traceId, `type`, jobMsg)
-        val producerInstance = new PharbersKafkaProducer[String, SpecificRecord]
-        val fu = producerInstance.produce(topic, parentJobId, bpJob)
-        logger.debug(fu.get(10, TimeUnit.SECONDS))
-        producerInstance.producer.close()
+        val topic = "PyJobContainerListenerTopic"
+        
+        val pkp = new PharbersKafkaProducer[String, BPJob]
+        val bpJob = new BPJob("", "", "", jobMsg)
+        val fu = pkp.produce(topic, id, bpJob)
+        println(fu.get(10, TimeUnit.SECONDS))
+        pkp.producer.close()
     }
+    
+//    // TODO：因还未曾与老齐对接口，暂时放到这里
+//    private def pushPyjob(runId: String,
+//                          metadataPath: String,
+//                          filesPath: String,
+//                          parentJobId: String,
+//                          dsIds: String): Unit = {
+//        val resultPath = s"hdfs:///jobs/$runId/"
+//        //		val resultPath = s"hdfs:///user/alex/jobs/$runId"
+//
+//        import org.json4s._
+//        import org.json4s.jackson.Serialization.write
+//        implicit val formats: DefaultFormats.type = DefaultFormats
+//        val traceId = ""
+//        val `type` = "add"
+//        val jobConfig = Map(
+//            "jobId" -> parentJobId,
+//            "parentsOId" -> dsIds,
+//            "metadataPath" -> metadataPath,
+//            "filesPath" -> filesPath,
+//            "resultPath" -> resultPath
+//        )
+//        val job = JobMsg(
+//            s"ossPyJob$parentJobId",
+//            "job",
+//            "com.pharbers.StreamEngine.Jobs.PyJob.PythonJobContainer.BPSPythonJobContainer",
+//            List("$BPSparkSession"),
+//            Nil,
+//            Nil,
+//            jobConfig,
+//            "",
+//            "temp job")
+//        val jobMsg = write(job)
+//        val topic = "stream_job_submit"
+//        val bpJob = new BPJob(parentJobId, traceId, `type`, jobMsg)
+//        val producerInstance = new PharbersKafkaProducer[String, SpecificRecord]
+//        val fu = producerInstance.produce(topic, parentJobId, bpJob)
+//        logger.debug(fu.get(10, TimeUnit.SECONDS))
+//        producerInstance.producer.close()
+//    }
 
 }

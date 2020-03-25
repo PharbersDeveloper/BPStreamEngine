@@ -15,10 +15,12 @@ jars/*
 *.swp
 .idea/*
 logs/
-kafka-jks/*
+kafka_jks/*
 kafka.broker1.keystore.jks
 kafka.broker1.truststore.jks
 *.jar
 
 venv/
 *.pyc
+
+.DS_Store

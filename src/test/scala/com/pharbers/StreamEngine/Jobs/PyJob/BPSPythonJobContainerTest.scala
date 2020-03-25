@@ -62,7 +62,7 @@ class BPSPythonJobContainerTest extends FunSuite {
 
         val job = Map(
             "parentsId" -> "parentsId",
-            "noticeTopic" -> "HiveTask",
+            "noticeTopic" -> "HiveTaskNone",
             "metadataPath" -> "/jobs/02c07385-39fa-496a-a9ac-029ed09aa79c/0db59660-056f-4d48-9ade-90b8ceaadc57/metadata",
             "filesPath" -> "/jobs/02c07385-39fa-496a-a9ac-029ed09aa79c/0db59660-056f-4d48-9ade-90b8ceaadc57/contents",
             "resultPath" -> s"./jobs/$runId"
