@@ -175,26 +175,36 @@ case class BPSHandleHiveResultStrategy(spark: SparkSession) extends BPSStrategy[
             .drop(measures: _*)
             .withColumnRenamed("sum(SALES_VALUE)", "SALES_VALUE")
             .withColumnRenamed("sum(SALES_QTY)", "SALES_QTY")
+            .withColumn("dimension.name", lit("apex"))
+            .withColumn("dimension.value", lit("*"))
 
         fillLostKeys(apexDF)
 
     }
 
     //TODO:根据  python 项目 gen-cube 来看，base-cube 什么也没做，待确认
-    def genBaseCube(df: DataFrame): DataFrame = fillLostKeys(df)
+    def genBaseCube(df: DataFrame): DataFrame = fillLostKeys(df.withColumn("dimension.name", lit("base")).withColumn("dimension.value", lit("*")))
 
     def genMultiDimensionsCube(df: DataFrame, cuboid: Map[String, List[String]]): List[DataFrame] = {
 
         var listDF: List[DataFrame] = List.empty
+        val dimensionsName = getDimensionsName(cuboid)
         for (one_hierarchies_group <- genCartesianHierarchies(cuboid)) {
             val tmpDF = df.groupBy(one_hierarchies_group.head, one_hierarchies_group.tail.toList: _*).sum(measures: _*)
                 .drop(measures: _*)
                 .withColumnRenamed("sum(SALES_VALUE)", "SALES_VALUE")
                 .withColumnRenamed("sum(SALES_QTY)", "SALES_QTY")
+                .withColumn("dimension.name", lit(dimensionsName))
+                .withColumn("dimension.value", lit(one_hierarchies_group.mkString("-")))
             listDF = listDF :+ fillLostKeys(tmpDF)
         }
         listDF
 
+    }
+
+    def getDimensionsName(cuboid: Map[String, List[String]]): String = {
+        if (cuboid.isEmpty) return "*"
+        cuboid.size + "-" + cuboid.keySet.mkString("-")
     }
 
     def fillLostKeys(df: DataFrame): DataFrame = {

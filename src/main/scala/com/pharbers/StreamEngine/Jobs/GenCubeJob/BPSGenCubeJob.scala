@@ -107,9 +107,12 @@ class BPSGenCubeJob(override val id: String,
 
                     val uuid = UUID.randomUUID().toString
                     val savePath = outputPath + s"/${uuid}"
-                    newDF.write
+                    newDF
+//                        .coalesce(1)
+                        .write
                         .option("checkpointLocation", checkpointLocation)
                         .format(outputDataType)
+                        .option("header", value = true)
                         .save(savePath)
                     logger.info(s"Succeed save cube in path=${savePath}.")
                 }
