@@ -236,6 +236,7 @@
                     <version>3.9.1</version>
                 </dependency>
 
+                <!-- https://mvnrepository.com/artifact/org.eclipse.jgit/org.eclipse.jgit -->
                 <dependency>
                     <groupId>org.eclipse.jgit</groupId>
                     <artifactId>org.eclipse.jgit</artifactId>
