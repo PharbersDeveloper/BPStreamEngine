@@ -39,6 +39,7 @@ class BPSOssPartitionJobContainer(override val componentProperty: Component2.BPC
 
     type T = BPKafkaSession
     val strategy: BPKafkaSession = BPSConcertEntry.queryComponentWithId("kafka").get.asInstanceOf[BPKafkaSession]
+    val spark: SparkSession = BPSConcertEntry.queryComponentWithId("spark").get.asInstanceOf[BPSparkSession]
     import spark.implicits._
 
     override def open(): Unit = {
@@ -105,4 +106,5 @@ class BPSOssPartitionJobContainer(override val componentProperty: Component2.BPC
     override def handlerExec(handler: BPSEventHandler): Unit = {}
 
     override def createConfigDef(): ConfigDef = ???
+
 }
