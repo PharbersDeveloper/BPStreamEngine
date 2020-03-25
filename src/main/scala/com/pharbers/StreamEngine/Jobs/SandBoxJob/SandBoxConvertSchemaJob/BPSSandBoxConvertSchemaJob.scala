@@ -107,22 +107,27 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 
     override def close(): Unit = {
     // TODO 将处理好的Schema发送邮件
-        BPSBloodJob(
-            "data_set_job",
-            new DataSet(
-                Collections.emptyList(),
-                jobParam("dataSetId"),
-                jobParam("jobContainerId"),
-                columnNames.asJava,
-                sheetName.get,
-                totalRow.get,
-                s"${jobParam("parquetSavePath")}",
-                "SampleData")).exec()
-
-        val uploadEnd = new UploadEnd(jobParam("dataSetId"), dataAssetId.get)
-        BPSUploadEndJob("upload_end_job", uploadEnd).exec()
-    
         execQueueJob.decrementAndGet()
+	    
+        try {
+            BPSBloodJob(
+                "data_set_job",
+                new DataSet(
+                    Collections.emptyList(),
+                    jobParam("dataSetId"),
+                    jobParam("jobContainerId"),
+                    columnNames.asJava,
+                    sheetName.get,
+                    totalRow.get,
+                    s"${jobParam("parquetSavePath")}",
+                    "SampleData")).exec()
+    
+            val uploadEnd = new UploadEnd(jobParam("dataSetId"), dataAssetId.get)
+            BPSUploadEndJob("upload_end_job", uploadEnd).exec()
+        } catch {
+            case e: Exception => logger.error("Kafka 又给我timeout")
+        }
+        
         totalRow = None
         columnNames = Nil
         sheetName = None
