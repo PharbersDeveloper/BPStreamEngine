@@ -2,15 +2,15 @@ package com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxConvertSchemaJobContain
 
 import java.util.{Date, UUID}
 
-import com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxConvertSchemaJob.BPSSandBoxConvertSchemaJob
-import com.pharbers.StreamEngine.Utils.Channel.Local.BPSLocalChannel
-import com.pharbers.StreamEngine.Utils.Schema.Spark.{BPSMetaData2Map, SchemaConverter}
-import com.pharbers.StreamEngine.Utils.Session.Spark.BPSparkSession
-import com.pharbers.StreamEngine.Utils.ThreadExecutor.ThreadExecutor
+//import com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxConvertSchemaJob.BPSSandBoxConvertSchemaJob
+//import com.pharbers.StreamEngine.Utils.Channel.Local.BPSLocalChannel
+//import com.pharbers.StreamEngine.Utils.Schema.Spark.{BPSMetaData2Map, SchemaConverter}
+//import com.pharbers.StreamEngine.Utils.Session.Spark.BPSparkSession
+//import com.pharbers.StreamEngine.Utils.ThreadExecutor.ThreadExecutor
 import com.pharbers.util.log.PhLogable
-import org.json4s.DefaultFormats
-import org.json4s.jackson.Serialization.write
-import org.mongodb.scala.bson.ObjectId
+//import org.json4s.DefaultFormats
+//import org.json4s.jackson.Serialization.write
+//import org.mongodb.scala.bson.ObjectId
 import org.scalatest.FunSuite
 
 /** 功能描述
