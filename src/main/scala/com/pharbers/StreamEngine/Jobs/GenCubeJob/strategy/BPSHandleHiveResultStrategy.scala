@@ -13,6 +13,7 @@ case class BPSHandleHiveResultStrategy(spark: SparkSession) extends BPSStrategy[
     var measures: List[String] = List.empty
     var allHierarchies: List[String] = List.empty
     var cuboids: List[Map[String, List[String]]] = List.empty
+    var unifiedColumns: Array[String] = Array.empty
 
     override def convert(data: DataFrame): DataFrame = {
 
@@ -175,15 +176,17 @@ case class BPSHandleHiveResultStrategy(spark: SparkSession) extends BPSStrategy[
             .drop(measures: _*)
             .withColumnRenamed("sum(SALES_VALUE)", "SALES_VALUE")
             .withColumnRenamed("sum(SALES_QTY)", "SALES_QTY")
-            .withColumn("dimension.name", lit("apex"))
-            .withColumn("dimension.value", lit("*"))
+            .withColumn("DIMENSION_NAME", lit("apex"))
+            .withColumn("DIMENSION_VALUE", lit("*"))
 
-        fillLostKeys(apexDF)
+        val apexCube = fillLostKeys(apexDF)
+        unifiedColumns = apexCube.columns
+        apexCube
 
     }
 
     //TODO:根据  python 项目 gen-cube 来看，base-cube 什么也没做，待确认
-    def genBaseCube(df: DataFrame): DataFrame = fillLostKeys(df.withColumn("dimension.name", lit("base")).withColumn("dimension.value", lit("*")))
+    def genBaseCube(df: DataFrame): DataFrame = fillLostKeys(df.withColumn("DIMENSION_NAME", lit("base")).withColumn("DIMENSION_VALUE", lit("*")))
 
     def genMultiDimensionsCube(df: DataFrame, cuboid: Map[String, List[String]]): List[DataFrame] = {
 
@@ -194,8 +197,8 @@ case class BPSHandleHiveResultStrategy(spark: SparkSession) extends BPSStrategy[
                 .drop(measures: _*)
                 .withColumnRenamed("sum(SALES_VALUE)", "SALES_VALUE")
                 .withColumnRenamed("sum(SALES_QTY)", "SALES_QTY")
-                .withColumn("dimension.name", lit(dimensionsName))
-                .withColumn("dimension.value", lit(one_hierarchies_group.mkString("-")))
+                .withColumn("DIMENSION_NAME", lit(dimensionsName))
+                .withColumn("DIMENSION_VALUE", lit(one_hierarchies_group.mkString("-")))
             listDF = listDF :+ fillLostKeys(tmpDF)
         }
         listDF
@@ -229,7 +232,7 @@ case class BPSHandleHiveResultStrategy(spark: SparkSession) extends BPSStrategy[
         }
 
     def unionListDF(listDF: List[DataFrame]): DataFrame = {
-        listDF.reduce((x, y) => x union y)
+        listDF.reduce((x, y) => x.select(unifiedColumns.head, unifiedColumns.tail: _*) union y.select(unifiedColumns.head, unifiedColumns.tail: _*))
     }
 
 }

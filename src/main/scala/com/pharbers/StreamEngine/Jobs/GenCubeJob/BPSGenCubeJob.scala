@@ -12,10 +12,13 @@ import org.apache.kafka.common.config.ConfigDef.{Importance, Type}
 
 object BPSGenCubeJob {
 
-    final val INPUT_DATA_TYPE_KEY = "InputDataType"
-    final val INPUT_DATA_TYPE_DOC = "The value is input data type."
     final val HIVE_DATA_TYPE = "hive"
     final val DF_DATA_TYPE = "df"
+    final val CSV_DATA_TYPE = "csv"
+    final val ES_DATA_TYPE = "es"
+
+    final val INPUT_DATA_TYPE_KEY = "InputDataType"
+    final val INPUT_DATA_TYPE_DOC = "The value is input data type."
 
     final val INPUT_PATH_KEY = "InputPath"
     final val INPUT_PATH_DOC = "The value is input data path."
@@ -59,7 +62,7 @@ class BPSGenCubeJob(override val id: String,
                     override val spark: SparkSession,
                     container: BPSJobContainer,
                     jobConf: Map[String, String])
-        extends BPStreamJob {
+    extends BPStreamJob {
 
     type T = BPSJobStrategy
     override val strategy: BPSJobStrategy = null
@@ -68,6 +71,7 @@ class BPSGenCubeJob(override val id: String,
     var InnerJobStrategy: BPSStrategy[InnerJobDataType] = null
 
     import BPSGenCubeJob._
+
     private val jobConfig: BPSConfig = BPSConfig(configDef, jobConf)
     val inputDataType: String = jobConfig.getString(INPUT_DATA_TYPE_KEY)
     val inputPath: String = jobConfig.getString(INPUT_PATH_KEY)
@@ -100,21 +104,35 @@ class BPSGenCubeJob(override val id: String,
             case Some(df) =>
                 val length = df.count()
                 logger.info("gen-cube job length =  ========>" + length)
-                if(length != 0){
+                if (length != 0) {
 
                     //根据不同策略指令来选用策略函数处理job内部数据，默认空指令则不处理
-                    val newDF: InnerJobDataType = if (InnerJobStrategy != null) { InnerJobStrategy.convert(df) } else df
+                    val newDF: InnerJobDataType = if (InnerJobStrategy != null) {
+                        InnerJobStrategy.convert(df)
+                    } else df
 
-                    val uuid = UUID.randomUUID().toString
-                    val savePath = outputPath + s"/${uuid}"
-                    newDF
-//                        .coalesce(1)
-                        .write
-                        .option("checkpointLocation", checkpointLocation)
-                        .format(outputDataType)
-                        .option("header", value = true)
-                        .save(savePath)
-                    logger.info(s"Succeed save cube in path=${savePath}.")
+                    outputDataType match {
+                        case CSV_DATA_TYPE => {
+                            val uuid = UUID.randomUUID().toString
+                            val savePath = outputPath + s"/${uuid}"
+                            newDF
+                                .write
+                                .option("checkpointLocation", checkpointLocation)
+                                .format(outputDataType)
+                                .option("header", value = true)
+                                .save(savePath)
+                            logger.info(s"Succeed save cube in hdfs-path=${savePath}.")
+                        }
+                        case ES_DATA_TYPE => {
+                            newDF.write
+                                .option("checkpointLocation", checkpointLocation)
+                                .format("es")
+                                .save(outputPath)
+                            logger.info(s"Succeed save cube in es-index=${outputPath}.")
+                        }
+                        case _ => ???
+                    }
+
                 }
 
             case None => ???
