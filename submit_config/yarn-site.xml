@@ -14,19 +14,100 @@
 -->
 <configuration>
     <property>
-        <name>yarn.nodemanager.aux-services</name>
-        <value>mapreduce_shuffle</value>
+        <name>yarn.resourcemanager.scheduler.address</name>
+        <value>StarLord:8030</value>  <!--TODO: 注意修改主机名 -->
+        <description>RM中调度程序的地址，默认为0.0.0.0:8030。</description>
     </property>
     <property>
-        <name>yarn.resourcemanager.hostname</name>
-        <value>starLord</value>
+        <name>yarn.resourcemanager.resource-tracker.address</name>
+        <value>StarLord:8031</value>  <!--TODO: 注意修改主机名 -->
+        <description>RM中资源反馈的地址，Slave一定要配置正确，分布式不要用默认值，默认为0.0.0.0:8031。</description>
+    </property>
+    <property>
+        <name>yarn.resourcemanager.address</name>
+        <value>StarLord:8032</value>  <!--TODO: 注意修改主机名 -->
+        <description>RM中应用程序管理器接口的地址，客户端向这个地址提交任务，默认为0.0.0.0:8032。</description>
+    </property>
+    <property>
+        <name>yarn.resourcemanager.webapp.address</name>
+        <value>StarLord:8088</value>  <!--TODO: 注意修改主机名 -->
+        <description>RM中web页面的地址，默认为0.0.0.0:8088。</description>
+    </property>
+
+    <property>
+        <name>yarn.nodemanager.resource.cpu-vcores</name>
+        <value>5</value>
+        <description>每个nodemanager管理的核心数，默认为8。</description>
+    </property>
+    <property>
+        <name>yarn.nodemanager.resource.memory-mb</name>
+        <value>30720</value>
+        <description>RM中web页面的地址，默认为8192。</description>
+    </property>
+    <property>
+        <name>yarn.nodemanager.vmem-pmem-ratio</name>
+        <value>1.0</value>
+        <description>虚拟内存（实际分配内存）与物理内存的比例，因为K8S禁用Swap，所以虚拟内存要和物理内存相等，默认值为2.1。</description>
+    </property>
+
+    <property>
+        <name>yarn.nodemanager.pmem-check-enabled</name>
+        <value>false</value>
+        <description>是否对容器实施物理内存（physical memory）限制。</description>
     </property>
     <property>
         <name>yarn.nodemanager.vmem-check-enabled</name>
         <value>false</value>
+        <description>是否对容器实施虚拟内存（virtual memory）限制。</description>
+    </property>
+
+    <property>
+        <name>yarn.acl.enable</name>
+        <value>true</value>
+        <description>是否启用yarn资源的ACL管理，默认false。</description>
     </property>
     <property>
-        <name>yarn.nodemanager.vmem-pmem-ratio</name>
-        <value>4</value>
+        <name>yarn.admin.acl</name>
+        <value>*</value>
+        <description>结合yarn.acl.enable使用，逗号分割的列表，描述哪些用户可以控制（停止）yarn中的任务，默认为*（所有用户都可以）。</description>
     </property>
+
+    <property>
+        <name>yarn.log-aggregation-enable</name>
+        <value>true</value>
+        <description>是否启用日志聚合的配置，默认false。</description>
+    </property>
+    <property>
+        <name>yarn.nodemanager.remote-app-log-dir</name>
+        <value>hdfs://StarLord:8020/logs/yarnLogs</value>  <!--TODO: 注意修改主机名 -->
+        <description>日志聚合功能下，在HDFS目录下的应用程序日志位置。目录需要具有相应的权限。</description>
+    </property>
+    <property>
+        <name>yarn.nodemanager.remote-app-log-dir-suffix</name>
+        <value>logs</value>
+        <description>远程日志的目录后缀。</description>
+    </property>
+
+    <property>
+        <name>yarn.nodemanager.aux-services</name>
+        <value>mapreduce_shuffle</value>
+        <description>我也不知道是干嘛的，好像只对MapReduce应用需要。</description>
+    </property>
+
+    <property>
+        <name>yarn.resourcemanager.recovery.enabled</name>
+        <value>true</value>
+        <description>是否启用yarn重启后RM的自恢复功能。启用后必须配置yarn.resourcemanager.store.class。</description>
+    </property>
+    <property>
+        <name>yarn.resourcemanager.store.class</name>
+        <value>org.apache.hadoop.yarn.server.resourcemanager.recovery.FileSystemRMStateStore</value>
+        <description>用作持久化RM的类。</description>
+    </property>
+    <property>
+        <name>yarn.resourcemanager.fs.state-store.uri</name>
+        <value>hdfs://StarLord:8020/logs/rmstore</value>  <!--TODO: 注意修改主机名 -->
+        <description>持久化RM的类后存放的位置。</description>
+    </property>
+
 </configuration>
