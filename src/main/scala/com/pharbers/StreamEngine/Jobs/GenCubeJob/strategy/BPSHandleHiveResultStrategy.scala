@@ -7,7 +7,7 @@ import org.apache.spark.sql.types.DataTypes
 
 case class BPSHandleHiveResultStrategy(spark: SparkSession) extends BPSStrategy[DataFrame] with PhLogable {
 
-//    val DATA_CUBE_DIMENSION_DEFINE_JSON = "./data-cube-dimension-define.json"
+    //    val DATA_CUBE_DIMENSION_DEFINE_JSON = "./data-cube-dimension-define.json"
 
     var dimensions: Map[String, List[String]] = Map.empty
     var measures: List[String] = List.empty
@@ -83,7 +83,7 @@ case class BPSHandleHiveResultStrategy(spark: SparkSession) extends BPSStrategy[
     }
 
     def initAllHierarchies(): List[String] = {
-        dimensions.values.reduce((x,y) => x ::: y)
+        dimensions.values.reduce((x, y) => x ::: y)
     }
 
     //补齐所需列 QUARTER COUNTRY MKT
@@ -232,7 +232,12 @@ case class BPSHandleHiveResultStrategy(spark: SparkSession) extends BPSStrategy[
         }
 
     def unionListDF(listDF: List[DataFrame]): DataFrame = {
-        listDF.reduce((x, y) => x.select(unifiedColumns.head, unifiedColumns.tail: _*) union y.select(unifiedColumns.head, unifiedColumns.tail: _*))
+        listDF.reduce(
+            (x, y) =>
+                //TODO: 按排序度量需求动态变化，求top-k
+                x.select(unifiedColumns.head, unifiedColumns.tail: _*).orderBy(desc("SALES_VALUE")).limit(100) union
+                    y.select(unifiedColumns.head, unifiedColumns.tail: _*).orderBy(desc("SALES_VALUE")).limit(100)
+        )
     }
 
 }
