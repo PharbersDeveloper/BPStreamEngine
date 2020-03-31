@@ -24,7 +24,7 @@ case class BPEditDistance(jobContainer: BPSJobContainer, spark: SparkSession, co
             .define(TABLE_NAME_CONFIG_KEY, Type.STRING, "cpa", Importance.HIGH, TABLE_NAME_CONFIG_DOC)
             .define(DATA_SETS_CONFIG_KEY, Type.LIST, Importance.HIGH, DATA_SETS_CONFIG_DOC)
     override type T = BPSDataMartJobStrategy
-    override val strategy: BPSDataMartJobStrategy = new BPSDataMartJobStrategy(config)
+    override val strategy: BPSDataMartJobStrategy = new BPSDataMartJobStrategy(config, configDef)
     val jobId: String = strategy.getJobId
     val runId: String = strategy.getRunId
     override val id: String = jobId
@@ -38,7 +38,7 @@ case class BPEditDistance(jobContainer: BPSJobContainer, spark: SparkSession, co
     )
 
     override def open(): Unit = {
-        //        inputStream = Some(spark.sql("select * from cpa"))
+//                inputStream = Some(spark.sql("select * from cpa"))
         inputStream = jobContainer.inputStream
     }
 
@@ -120,7 +120,7 @@ case class BPEditDistance(jobContainer: BPSJobContainer, spark: SparkSession, co
                 .selectExpr(List("ID", "COL_NAME", "ORIGIN", "check as DEST") ++ in.columns.zipWithIndex.map(x => s"cols[${x._2}] as ORIGIN_${x._1}").toList: _*)
                 .write
                 //                .bucketBy(11, "ORIGIN_MOLE_NAME")
-                .partitionBy("ORIGIN_MOLE_NAME")
+//                .partitionBy("ORIGIN_MOLE_NAME")
                 .mode("overwrite")
                 .option("path", replaceUrl)
                 .saveAsTable(s"${tableName}_replace")
@@ -132,7 +132,7 @@ case class BPEditDistance(jobContainer: BPSJobContainer, spark: SparkSession, co
                 .withColumn("CANDIDATE", array($"CANDIDATE"))
                 .write
                 //                .bucketBy(11, "ORIGIN_MOLE_NAME")
-                .partitionBy("ORIGIN_MOLE_NAME")
+//                .partitionBy("ORIGIN_MOLE_NAME")
                 .mode("overwrite")
                 .option("path", noReplaceUrl)
                 .saveAsTable(s"${tableName}_no_replace")
@@ -146,7 +146,7 @@ case class BPEditDistance(jobContainer: BPSJobContainer, spark: SparkSession, co
                 .mode("overwrite")
                 .option("path", newCpaUrl)
                 .saveAsTable(s"${tableName}_new")
-        strategy.pushDataSet(s"${tableName}_new", version, noReplaceUrl, "overwrite")
+//        strategy.pushDataSet(s"${tableName}_new", version, noReplaceUrl, "overwrite")
     }
 
 
