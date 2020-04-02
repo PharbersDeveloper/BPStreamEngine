@@ -61,25 +61,25 @@ case class BPEditDistance(jobContainer: BPSJobContainer, spark: SparkSession, co
     def check(in: DataFrame, checkDf: DataFrame, tableName: String): Unit = {
         val mapping = Map() ++ mappingConfig
         //        todo: 配置传入
-//        val repartitionByIdNum = 50
-//        val inDfRename = in.columns.foldLeft(in)((l, r) =>
-//            l.withColumnRenamed(r, s"in_$r"))
-//        val checkDfRename = checkDf.columns.foldLeft(checkDf)((l, r) =>
-//            l.withColumnRenamed(r, s"check_$r"))
-//
-//        val joinDf = inDfRename
-//                .withColumn("id", monotonically_increasing_id())
-//                .withColumn("partition_id", $"id" % repartitionByIdNum)
-//                .join(checkDfRename, col("in_MOLE_NAME") === col("check_MOLE_NAME_CH"), "left")
-//                .na.fill("")
-//
-//        val distanceDfTmp = mapping.foldLeft(joinDf)((l, r) => getColumnDistance(l, r._1, r._2))
+        val repartitionByIdNum = 50
+        val inDfRename = in.columns.foldLeft(in)((l, r) =>
+            l.withColumnRenamed(r, s"in_$r"))
+        val checkDfRename = checkDf.columns.foldLeft(checkDf)((l, r) =>
+            l.withColumnRenamed(r, s"check_$r"))
+
+        val joinDf = inDfRename
+                .withColumn("id", monotonically_increasing_id())
+                .withColumn("partition_id", $"id" % repartitionByIdNum)
+                .join(checkDfRename, col("in_MOLE_NAME") === col("check_MOLE_NAME_CH"), "left")
+                .na.fill("")
+
+        val distanceDfTmp = mapping.foldLeft(joinDf)((l, r) => getColumnDistance(l, r._1, r._2))
         //                .persist(StorageLevel.DISK_ONLY_2)
 
-//        distanceDfTmp.write
-//                .partitionBy("partition_id")
-//                .mode("overwrite")
-//                .parquet(s"/user/dcs/test/tmp/distanceDf_$id")
+        distanceDfTmp.write
+                .partitionBy("partition_id")
+                .mode("overwrite")
+                .parquet(s"/user/dcs/test/tmp/distanceDf_$id")
 
         //同一个id取编辑距离和最小的一行
 
