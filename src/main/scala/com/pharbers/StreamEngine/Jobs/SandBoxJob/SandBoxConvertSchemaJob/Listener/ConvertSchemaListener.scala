@@ -16,6 +16,7 @@ case class ConvertSchemaListener(id: String,
 	override def trigger(e: BPSEvents): Unit = {
 		val cumulative = query.recentProgress.map(_.numInputRows).sum
 		
+		logger.debug(s"Listener number of records ========>$cumulative")
 		if (cumulative >= sumRow) {
 			logger.debug(s"ConvertSchemaListener End Of The Job，The total number of records ========>$cumulative")
 			job.close()
