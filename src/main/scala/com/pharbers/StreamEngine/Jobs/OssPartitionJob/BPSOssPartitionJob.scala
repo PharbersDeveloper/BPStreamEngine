@@ -1,5 +1,6 @@
 package com.pharbers.StreamEngine.Jobs.OssPartitionJob
 
+import com.pharbers.StreamEngine.Jobs.OssPartitionJob.OssListener.BPSOssListener
 import com.pharbers.StreamEngine.Utils.Component2
 import com.pharbers.StreamEngine.Utils.Job.{BPSJobContainer, BPStreamJob}
 import com.pharbers.StreamEngine.Utils.Strategy.BPStrategyComponent
@@ -23,8 +24,26 @@ class BPSOssPartitionJob(
     type T = BPStrategyComponent
     override val strategy = null
 
-    override def exec(): Unit = {
+    override def open(): Unit = {
         inputStream = is
+    }
+
+    override def exec(): Unit = {
+        case Some(is) => {
+            val listener = BPSOssListener(spark, this, jobId)
+            listener.active(is)
+
+            listeners = listener :: listeners
+
+            is.filter($"type" === "SandBox").writeStream
+                    .partitionBy("jobId")
+                    .format("parquet")
+                    .outputMode("append")
+                    .option("checkpointLocation", getCheckpointPath)
+                    .option("path", getOutputPath)
+                    .start()
+        }
+        case None => ???
     }
 
     override def close(): Unit = {

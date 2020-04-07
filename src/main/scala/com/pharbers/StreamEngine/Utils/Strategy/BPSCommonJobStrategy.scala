@@ -18,6 +18,7 @@ import org.apache.spark.sql.types.DataType
 case class BPSCommonJobStrategy(config: Map[String, String], @transient inoutConfigDef: ConfigDef = new ConfigDef()) extends BPStrategyComponent with BPSJobIdConfigStrategy {
     val JOB_ID_CONFIG_KEY = "jobId"
     val JOB_ID_CONFIG_DOC = "job id"
+    //todo: 不需要runid了，runid应该跟着bpstream进程
     val RUN_ID_CONFIG_KEY = "runId"
     val RUN_ID_CONFIG_DOC = "run id"
     override def createConfigDef(): ConfigDef = inoutConfigDef
