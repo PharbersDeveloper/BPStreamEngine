@@ -1,14 +1,19 @@
 package com.pharbers.StreamEngine.Utils.Strategy.Session.Kafka
 
+import java.util.concurrent.TimeUnit
+
 import collection.JavaConverters._
 import org.apache.spark.sql.types.DataType
 import com.pharbers.StreamEngine.Utils.Config.BPSConfig
 import com.pharbers.StreamEngine.Utils.Annotation.Component
 import com.pharbers.StreamEngine.Utils.Component2
 import com.pharbers.StreamEngine.Utils.Component2.BPSConcertEntry
+import com.pharbers.StreamEngine.Utils.Event.BPSEvents
 import com.pharbers.StreamEngine.Utils.Strategy.Session.Spark.BPSparkSession
 import com.pharbers.StreamEngine.Utils.Strategy.Session.Spark.BPSparkSession._
 import com.pharbers.StreamEngine.Utils.Strategy.Session.Kafka.Avro.BPSAvroDeserializer
+import com.pharbers.kafka.producer.PharbersKafkaProducer
+import com.pharbers.kafka.schema.EventMsg
 
 object BPKafkaSession {
     def apply(compoentProperty: Component2.BPComponentConfig): BPKafkaSession = {
@@ -40,10 +45,18 @@ class BPKafkaSession(override val componentProperty: Component2.BPComponentConfi
 
     lazy val kafkaUrl: String = kafkaConfigs.getString(KAFKA_URL_KEY)
     lazy val schemaRegistryUrl: String = kafkaConfigs.getString(SCHEMA_URL_KEY)
-    lazy val topic: String = kafkaConfigs.getString(TOPIC_KEY)
-    lazy val sparkSchema: DataType = BPSAvroDeserializer.getSchema(topic)
+    lazy val dataTopic: String = kafkaConfigs.getString(DATA_TOPIC_KEY)
+    lazy val msgTopic: String = kafkaConfigs.getString(MSG_TOPIC_KEY)
+    lazy val sparkSchema: DataType = BPSAvroDeserializer.getSchema(dataTopic)
+    val pkp = new PharbersKafkaProducer[String, EventMsg]
     override val sessionType: String = "kafka"
 
-    def getTopic: String = this.topic
+    def getDataTopic: String = this.dataTopic
+    def getMsgTopic: String = this.msgTopic
     def getSchema: org.apache.spark.sql.types.DataType = this.sparkSchema
+
+    def callKafka(msg: BPSEvents): Unit ={
+        val res = pkp.produce(msgTopic, "", new EventMsg(msg.jobId, msg.traceId, msg.`type`, msg.data))
+        logger.info(res.get(10, TimeUnit.SECONDS))
+    }
 }

@@ -1,13 +1,11 @@
 package com.pharbers.StreamEngine.Utils.Channel.Driver
 
-import java.lang.Exception
 import java.net.{InetAddress, InetSocketAddress}
 import java.nio.ByteBuffer
 import java.nio.channels.SelectionKey
 import java.nio.channels.Selector
 import java.nio.channels.ServerSocketChannel
 import java.nio.channels.SocketChannel
-
 import com.pharbers.StreamEngine.Utils.Annotation.Component
 import com.pharbers.StreamEngine.Utils.Channel.ChannelComponent
 import com.pharbers.StreamEngine.Utils.Component2
