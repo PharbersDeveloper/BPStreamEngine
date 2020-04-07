@@ -1,6 +1,7 @@
 package com.pharbers.StreamEngine.Jobs.GenCubeJob.strategy
 
 import com.pharbers.util.log.PhLogable
+import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.DataTypes
@@ -164,7 +165,7 @@ case class BPSHandleHiveResultStrategy(spark: SparkSession) extends BPSStrategy[
 
         cuboid.size match {
             case 0 => genApexCube(df) :: Nil
-            case x if x == dimensions.size => genBaseCube(df) :: Nil
+//            case x if x == dimensions.size => genBaseCube(df) :: Nil
             case _ => genMultiDimensionsCube(df, cuboid)
         }
 
@@ -178,6 +179,7 @@ case class BPSHandleHiveResultStrategy(spark: SparkSession) extends BPSStrategy[
             .withColumnRenamed("sum(SALES_QTY)", "SALES_QTY")
             .withColumn("DIMENSION_NAME", lit("apex"))
             .withColumn("DIMENSION_VALUE", lit("*"))
+            .withColumn("SALES_RANK", dense_rank.over(Window.partitionBy("APEX").orderBy(desc("SALES_VALUE"))))  //以SALES_VALUE降序排序
 
         val apexCube = fillLostKeys(apexDF)
         unifiedColumns = apexCube.columns
@@ -185,8 +187,12 @@ case class BPSHandleHiveResultStrategy(spark: SparkSession) extends BPSStrategy[
 
     }
 
-    //TODO:根据  python 项目 gen-cube 来看，base-cube 什么也没做，待确认
-    def genBaseCube(df: DataFrame): DataFrame = fillLostKeys(df.withColumn("DIMENSION_NAME", lit("base")).withColumn("DIMENSION_VALUE", lit("*")))
+    //TODO:不用baseCube了，直接求multiDimensionsCube
+    def genBaseCube(df: DataFrame): DataFrame = fillLostKeys(
+        df
+            .withColumn("DIMENSION_NAME", lit("base"))
+            .withColumn("DIMENSION_VALUE", lit("*"))
+    )
 
     def genMultiDimensionsCube(df: DataFrame, cuboid: Map[String, List[String]]): List[DataFrame] = {
 
@@ -199,6 +205,7 @@ case class BPSHandleHiveResultStrategy(spark: SparkSession) extends BPSStrategy[
                 .withColumnRenamed("sum(SALES_QTY)", "SALES_QTY")
                 .withColumn("DIMENSION_NAME", lit(dimensionsName))
                 .withColumn("DIMENSION_VALUE", lit(one_hierarchies_group.mkString("-")))
+                .withColumn("SALES_RANK", dense_rank.over(Window.partitionBy("DIMENSION_VALUE").orderBy(desc("SALES_VALUE"))))  //以DIMENSION_VALUE分partition，以SALES_VALUE降序排序
             listDF = listDF :+ fillLostKeys(tmpDF)
         }
         listDF
@@ -232,12 +239,11 @@ case class BPSHandleHiveResultStrategy(spark: SparkSession) extends BPSStrategy[
         }
 
     def unionListDF(listDF: List[DataFrame]): DataFrame = {
-        listDF.reduce(
-            (x, y) =>
-                //TODO: 按排序度量需求动态变化，求top-k
-                x.select(unifiedColumns.head, unifiedColumns.tail: _*).orderBy(desc("SALES_VALUE")).limit(100) union
-                    y.select(unifiedColumns.head, unifiedColumns.tail: _*).orderBy(desc("SALES_VALUE")).limit(100)
-        )
+
+        //TODO: 按排序度量需求动态变化，求top-k，暂时只取前100
+        val listDfTopK = listDF.map(x => x.select(unifiedColumns.head, unifiedColumns.tail: _*).orderBy(desc("SALES_VALUE")).limit(100))
+        listDfTopK.reduce(_ union _)
+
     }
 
 }

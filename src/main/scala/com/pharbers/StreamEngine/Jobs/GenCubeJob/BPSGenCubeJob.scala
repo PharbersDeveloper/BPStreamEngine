@@ -103,7 +103,7 @@ class BPSGenCubeJob(override val id: String,
         inputStream match {
             case Some(df) =>
                 val length = df.count()
-                logger.info("gen-cube job length =  ========>" + length)
+                logger.info("gen-cube job origin length =  ========>" + length)
                 if (length != 0) {
 
                     //根据不同策略指令来选用策略函数处理job内部数据，默认空指令则不处理
@@ -132,6 +132,8 @@ class BPSGenCubeJob(override val id: String,
                         }
                         case _ => ???
                     }
+
+                    logger.info("gen-cube job result length =  ========>" + newDF.count())
 
                 }
 
