@@ -59,7 +59,7 @@ case class BPSHandleHiveResultStrategy(spark: SparkSession) extends BPSStrategy[
     //TODO:关于Dimensions和Measures的定义，是放在文件(local/hdfs)里定义，还是在启动job时以参数传递？待优化
     def initDimensions(): Map[String, List[String]] = {
         Map(
-            "time" -> List("DATE", "QUARTER"), // QUARTER 是 result 原数据中没有的
+            "time" -> List("YEAR", "QUARTER", "MONTH"), // "YEAR", "QUARTER", "MONTH" 是 result 原数据中没有的, 由DATE(YM)转变
             "geo" -> List("COUNTRY", "PROVINCE", "CITY"), // COUNTRY 是 result 原数据中没有的
             "prod" -> List("COMPANY", "MKT", "PRODUCT_NAME", "MOLE_NAME") // MKT 是 result 原数据中没有的
         )
@@ -110,13 +110,14 @@ case class BPSHandleHiveResultStrategy(spark: SparkSession) extends BPSStrategy[
         //删除不需列 MONTH
         val moleLevelDF = formatDF.groupBy("COMPANY", "DATE", "PROVINCE", "CITY", "PRODUCT_NAME", "MOLE_NAME")
             .agg(expr("SUM(SALES_VALUE) as SALES_VALUE"), expr("SUM(SALES_QTY) as SALES_QTY"))
-            .withColumn("MONTH", col("DATE").substr(-2, 2).cast(DataTypes.IntegerType))
-            .withColumn("QUARTER", ((col("MONTH") - 1) / 3) + 1)
+            .withColumn("YEAR", col("DATE").substr(0, 4).cast(DataTypes.IntegerType))
             .withColumn("DATE", col("DATE").cast(DataTypes.IntegerType))
+            .withColumn("MONTH", col("DATE") - col("YEAR") * 100)
+            .withColumn("QUARTER", ((col("MONTH") - 1) / 3) + 1)
             .withColumn("QUARTER", col("QUARTER").cast(DataTypes.IntegerType))
             .withColumn("COUNTRY", lit("CHINA"))
             .withColumn("APEX", lit("PHARBERS"))
-            .drop("MONTH")
+            .drop("DATE")
 
         //TODO:临时处理信立泰
         val moleLevelDF1 = moleLevelDF.filter(col("COMPANY") === "信立泰")
@@ -179,7 +180,7 @@ case class BPSHandleHiveResultStrategy(spark: SparkSession) extends BPSStrategy[
             .withColumnRenamed("sum(SALES_QTY)", "SALES_QTY")
             .withColumn("DIMENSION_NAME", lit("apex"))
             .withColumn("DIMENSION_VALUE", lit("*"))
-            .withColumn("SALES_RANK", dense_rank.over(Window.partitionBy("APEX").orderBy(desc("SALES_VALUE"))))  //以SALES_VALUE降序排序
+//            .withColumn("SALES_RANK", dense_rank.over(Window.partitionBy("APEX").orderBy(desc("SALES_VALUE"))))  //以SALES_VALUE降序排序
 
         val apexCube = fillLostKeys(apexDF)
         unifiedColumns = apexCube.columns
@@ -199,13 +200,14 @@ case class BPSHandleHiveResultStrategy(spark: SparkSession) extends BPSStrategy[
         var listDF: List[DataFrame] = List.empty
         val dimensionsName = getDimensionsName(cuboid)
         for (one_hierarchies_group <- genCartesianHierarchies(cuboid)) {
-            val tmpDF = df.groupBy(one_hierarchies_group.head, one_hierarchies_group.tail.toList: _*).sum(measures: _*)
+            val one_group = fillFullHierarchies(one_hierarchies_group.toList, dimensions)
+            val tmpDF = df.groupBy(one_group.head, one_group.tail: _*).sum(measures: _*)
                 .drop(measures: _*)
                 .withColumnRenamed("sum(SALES_VALUE)", "SALES_VALUE")
                 .withColumnRenamed("sum(SALES_QTY)", "SALES_QTY")
                 .withColumn("DIMENSION_NAME", lit(dimensionsName))
                 .withColumn("DIMENSION_VALUE", lit(one_hierarchies_group.mkString("-")))
-                .withColumn("SALES_RANK", dense_rank.over(Window.partitionBy("DIMENSION_VALUE").orderBy(desc("SALES_VALUE"))))  //以DIMENSION_VALUE分partition，以SALES_VALUE降序排序
+//                .withColumn("SALES_RANK", dense_rank.over(Window.partitionBy("DATE").orderBy(desc("SALES_VALUE"))))  //以DIMENSION_VALUE分partition，以SALES_VALUE降序排序
             listDF = listDF :+ fillLostKeys(tmpDF)
         }
         listDF
@@ -241,8 +243,26 @@ case class BPSHandleHiveResultStrategy(spark: SparkSession) extends BPSStrategy[
     def unionListDF(listDF: List[DataFrame]): DataFrame = {
 
         //TODO: 按排序度量需求动态变化，求top-k，暂时只取前100
-        val listDfTopK = listDF.map(x => x.select(unifiedColumns.head, unifiedColumns.tail: _*).orderBy(desc("SALES_VALUE")).limit(100))
+//        val listDfTopK = listDF.map(x => x.select(unifiedColumns.head, unifiedColumns.tail: _*).orderBy(desc("SALES_VALUE")).limit(100))
+        val listDfTopK = listDF.map(x => x.select(unifiedColumns.head, unifiedColumns.tail: _*))
         listDfTopK.reduce(_ union _)
+
+    }
+
+    def fillFullHierarchies(oneHierarchies: List[String], dimensions: Map[String, List[String]]): List[String]= {
+
+        var result: List[String] = List.empty
+
+        for (oneHierarchy <- oneHierarchies) {
+            for (oneDimension <- dimensions.values) {
+                if (oneDimension.contains(oneHierarchy)) {
+                    for (i <- 0 to oneDimension.indexOf(oneHierarchy)) {
+                        result = result :+ oneDimension(i)
+                    }
+                }
+            }
+        }
+        result
 
     }
 
