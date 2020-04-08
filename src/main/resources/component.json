@@ -24,7 +24,8 @@
             "name": "BPKafkaSession",
             "args": [],
             "config": {
-                "topic": "oss_source",
+                "data.topic": "oss_source",
+                "msg.topic": "oss_msg",
                 "url": "http://123.56.179.133:9092",
                 "schema": "http://123.56.179.133:8081"
             }
@@ -93,7 +94,7 @@
             "name": "BPSOssPartitionJobContainer",
             "args": [],
             "config": {
-
+                "listens": "SandBox-Start"
             }
         }
     ],
