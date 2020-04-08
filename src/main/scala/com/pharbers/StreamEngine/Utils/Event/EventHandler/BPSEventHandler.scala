@@ -1,6 +1,6 @@
 package com.pharbers.StreamEngine.Utils.Event.EventHandler
 
-import com.pharbers.StreamEngine.Utils.StreamJob.BPStreamJob
+import com.pharbers.StreamEngine.Utils.Job.BPStreamJob
 import com.pharbers.StreamEngine.Utils.Event.BPSEvents
 
 trait BPSEventHandler {

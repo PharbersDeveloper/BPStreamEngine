@@ -2,7 +2,7 @@ package com.pharbers.StreamEngine.Jobs.OssJob.OssListener.OssEventsHandler
 
 import java.util.UUID
 
-import com.pharbers.StreamEngine.Utils.StreamJob.BPStreamJob
+import com.pharbers.StreamEngine.Utils.Job.BPStreamJob
 import com.pharbers.StreamEngine.Jobs.OssJob.OssListener.BPSOssEndListener
 import com.pharbers.StreamEngine.Utils.Event.EventHandler.BPSEventHandler
 import com.pharbers.StreamEngine.Utils.Event.BPSEvents

@@ -20,7 +20,7 @@ object ComponentContext {
     )
     def init(): ComponentContext = inst
 
-    private def getComponentConfigLst(path: String): List[ComponentConfig] = {
+    def getComponentConfigLst(path: String): List[ComponentConfig] = {
         implicit val formats: DefaultFormats.type = DefaultFormats
         val bs = Source.fromFile(path, "UTF-8")
         val content = bs.mkString

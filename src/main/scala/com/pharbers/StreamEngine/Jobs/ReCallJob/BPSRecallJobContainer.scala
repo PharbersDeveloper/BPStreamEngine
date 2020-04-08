@@ -3,11 +3,12 @@ package com.pharbers.StreamEngine.Jobs.ReCallJob
 import java.util.UUID
 
 import com.pharbers.StreamEngine.Jobs.ReCallJob.BPSRecallJobContainer._
+import com.pharbers.StreamEngine.Utils.Component2
 import com.pharbers.StreamEngine.Utils.Config.BPSConfig
 import com.pharbers.StreamEngine.Utils.Event.EventHandler.BPSEventHandler
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamListener
-import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSJobStrategy
-import com.pharbers.StreamEngine.Utils.StreamJob.{BPDynamicStreamJob, BPSJobContainer}
+import com.pharbers.StreamEngine.Utils.Job.{BPDynamicStreamJob, BPSJobContainer}
+import com.pharbers.StreamEngine.Utils.Strategy.BPStrategyComponent
 import org.apache.kafka.common.config.ConfigDef
 import org.apache.kafka.common.config.ConfigDef.{Importance, Type}
 import org.apache.spark.sql.SparkSession
@@ -23,14 +24,18 @@ import org.apache.spark.sql.SparkSession
   */
 case class BPSRecallJobContainer(config: Map[String, String]) extends BPSJobContainer with BPDynamicStreamJob {
 
-    override type T = BPSJobStrategy
-    override val strategy: BPSJobStrategy = null
+    override type T = BPStrategyComponent
+    override val strategy: BPStrategyComponent = null
     override val spark: SparkSession = null
+
+    override val componentProperty: Component2.BPComponentConfig = null
+    override def createConfigDef(): ConfigDef = ???
 
     val jobConfig: BPSConfig = BPSConfig(configDef, config)
     val runId: String = jobConfig.getString(RUN_ID_CONFIG_KEY)
     val jobId: String = UUID.randomUUID().toString
     val id: String = runId
+    override val description: String = "recall_job"
 
     override def open(): Unit = super.open()
 

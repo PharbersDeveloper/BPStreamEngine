@@ -1,72 +1,103 @@
-[
-  {
-    "id": "BPSparkSession",
-    "name": "BPSparkSession",
-    "args": [],
-    "config": {
-      "app.name": "bp-stream-engine",
-      "master": "yarn",
-      "spark.configs.path": "src/main/resources/sparkConfig.properties",
-      "log.level": "ERROR",
-      "run.model": "client"
-    }
-  },
-  {
-    "id": "BPKafkaSession",
-    "name": "BPKafkaSession",
-    "args": ["$BPSparkSession"],
-    "config": {
-      "topic": "oss_source",
-      "url": "http://123.56.179.133:9092",
-      "schema": "http://123.56.179.133:8081"
-    }
-  },
-  {
-    "id": "BPSKfkJobStrategy",
-    "name": "BPSKfkJobStrategy",
-    "args": ["$BPKafkaSession"],
-    "config": {
-      "": ""
-    }
-  },
-  {
-    "id": "NodeMsgHandler",
-    "name": "BaseNodeMsgHandler",
-    "args": [],
-    "config": {
-      "path": "/test/clock/nodeMsg/"
-    }
-  },
-  {
-    "id": "BPDynamicStreamJobBuilder",
-    "name": "BaseDynamicStreamJobBuilder",
-    "args": ["$NodeMsgHandler"],
-    "config": {
-      "": ""
-    }
-  },
-  {
-    "id": "JobHandler",
-    "name": "BaseJobHandler",
-    "args": ["$NodeMsgHandler", "$BPDynamicStreamJobBuilder"],
-    "config": {
-      "topic": "stream_job_submit"
-    }
-  },
-  {
-    "id": "BPSDriverChannel",
-    "name": "BPSDriverChannel",
-    "args": [],
-    "config": {
-      "": ""
-    }
-  },
-  {
-    "id": "BPSLocalChannel",
-    "name": "BPSLocalChannel",
-    "args": [],
-    "config": {
-      "": ""
-    }
-  }
-]
+{
+    "strategies": [
+        {
+            "id": "log4j",
+            "name": "BPSLogContext",
+            "args": [],
+            "config": {
+            }
+        },
+        {
+            "id": "spark",
+            "name": "BPSparkSession",
+            "args": [],
+            "config": {
+                "app.name": "bp-stream-engine",
+                "master": "local[2]",
+                "spark.configs.path": "src/main/resources/sparkConfig.properties",
+                "log.level": "INFO",
+                "run.model": "client"
+            }
+        },
+        {
+            "id": "kafka",
+            "name": "BPKafkaSession",
+            "args": [],
+            "config": {
+                "topic": "oss_source",
+                "url": "http://123.56.179.133:9092",
+                "schema": "http://123.56.179.133:8081"
+            }
+        },
+        {
+            "id": "git repo",
+            "name": "BPSGithubHelper",
+            "args": [],
+            "config": {
+
+            }
+        },
+        {
+            "id": "hdfs",
+            "name": "BPSHDFSFile",
+            "args": [],
+            "config": {
+                "hdfsAddr": "hdfs://StarLord:8020"
+            }
+        },
+        {
+            "id": "meta2map",
+            "name": "BPSMetaData2Map",
+            "args": [],
+            "config": {
+            }
+        },
+        {
+            "id": "parse schema",
+            "name": "BPSParseSchema",
+            "args": [],
+            "config": {
+            }
+        },
+        {
+            "id": "schema convert",
+            "name": "SchemaConverter",
+            "args": [],
+            "config": {
+            }
+        }
+    ],
+    "channels": [
+        {
+            "id": "local channel",
+            "name": "BPSLocalChannel",
+            "args": [],
+            "config": {
+                "port": 56789,
+                "sleep": 1000
+            }
+        },
+        {
+            "id": "driver channel",
+            "name": "BPSDriverChannel",
+            "args": [],
+            "config": {
+                "port": 56789,
+                "sleep": 10
+            }
+        }
+    ],
+    "jobs": [
+        {
+            "id": "OssJobContainer",
+            "name": "BPSOssPartitionJobContainer",
+            "args": [],
+            "config": {
+
+            }
+        }
+    ],
+    "starts": [
+        "OssJobContainer"
+    ]
+}

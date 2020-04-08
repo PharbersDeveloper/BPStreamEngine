@@ -1,6 +1,6 @@
 package com.pharbers.StreamEngine.Utils.Component.Dynamic
 
-import com.pharbers.StreamEngine.Utils.StreamJob.BPDynamicStreamJob
+import com.pharbers.StreamEngine.Utils.Job.BPDynamicStreamJob
 import com.pharbers.util.log.PhLogable
 import org.apache.kafka.common.config.ConfigDef
 

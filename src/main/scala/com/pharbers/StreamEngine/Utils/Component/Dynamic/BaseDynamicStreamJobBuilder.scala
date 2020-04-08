@@ -5,7 +5,7 @@ import com.pharbers.StreamEngine.Utils.Annotation.Component
 import com.pharbers.StreamEngine.Utils.Component.Node.{NodeMsg, NodeMsgHandler}
 import com.pharbers.StreamEngine.Utils.Event.EventHandler.BPSEventHandler
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamListener
-import com.pharbers.StreamEngine.Utils.StreamJob.BPDynamicStreamJob
+import com.pharbers.StreamEngine.Utils.Job.BPDynamicStreamJob
 
 object BaseDynamicStreamJobBuilder {
     def apply(msgHandler: NodeMsgHandler,

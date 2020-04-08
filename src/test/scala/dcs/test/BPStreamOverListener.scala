@@ -5,8 +5,8 @@ import java.util.Scanner
 
 import com.pharbers.StreamEngine.Jobs.SqlTableJob.BPSqlTableJob
 import com.pharbers.StreamEngine.Utils.Event.BPSEvents
-import com.pharbers.StreamEngine.Utils.HDFS.BPSHDFSFile
-import com.pharbers.StreamEngine.Utils.Session.Spark.BPSparkSession
+import com.pharbers.StreamEngine.Utils.Strategy.hdfs.BPSHDFSFile
+import com.pharbers.StreamEngine.Utils.Strategy.Session.Spark.BPSparkSession
 import com.pharbers.util.log.PhLogable
 import org.scalatest.FunSuite
 
@@ -20,7 +20,7 @@ import org.scalatest.FunSuite
   * @note 一些值得注意的地方
   */
 class BPStreamOverListener extends FunSuite with PhLogable{
-    val spark = BPSparkSession()
+    val spark = BPSparkSession(null)
     test("test pyjob ok"){
         val scan = new Scanner(new File("D:\\文件\\weixin\\WeChat Files\\dengcao1993\\FileStorage\\File\\2019-12\\data.csv"))
         while (scan.hasNextLine){
@@ -42,16 +42,16 @@ class BPStreamOverListener extends FunSuite with PhLogable{
         }
     }
     def trigger(rowRecordPath: String, path: String, length: Int, jobId: String): Unit = {
-        val rows = BPSHDFSFile.readHDFS(rowRecordPath).map(_.toLong).sum
-        val count = spark.read.csv(path).count()
-        logger.debug(s"row record path: $rowRecordPath")
-        logger.debug(s"rows: $rows")
-        logger.debug(s"count: $count")
-        logger.debug(s"length: $length")
-        if (count >= length) {
-            logger.info(s"启动py ok")
-        } else {
-            logger.error(s"jobId: $jobId, count: $count, length: $length, path: $path")
-        }
+//        val rows = BPSHDFSFile.readHDFS(rowRecordPath).map(_.toLong).sum
+//        val count = spark.read.csv(path).count()
+//        logger.debug(s"row record path: $rowRecordPath")
+//        logger.debug(s"rows: $rows")
+//        logger.debug(s"count: $count")
+//        logger.debug(s"length: $length")
+//        if (count >= length) {
+//            logger.info(s"启动py ok")
+//        } else {
+//            logger.error(s"jobId: $jobId, count: $count, length: $length, path: $path")
+//        }
     }
 }

@@ -9,7 +9,7 @@ import com.pharbers.StreamEngine.Utils.Component.Node.NodeMsgHandler
 import com.pharbers.StreamEngine.Utils.Config.BPSConfig
 import com.pharbers.StreamEngine.Utils.Event.EventHandler.BPSEventHandler
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamListener
-import com.pharbers.StreamEngine.Utils.StreamJob.BPDynamicStreamJob
+import com.pharbers.StreamEngine.Utils.Job.BPDynamicStreamJob
 import com.pharbers.StreamEngine.Utils.ThreadExecutor.ThreadExecutor
 import com.pharbers.kafka.consumer.PharbersKafkaConsumer
 import com.pharbers.kafka.schema.BPJob

@@ -8,7 +8,7 @@ import com.pharbers.StreamEngine.Utils.Channel.Local.BPSLocalChannel
 import com.pharbers.StreamEngine.Utils.Component.Dynamic.JobMsg
 import com.pharbers.StreamEngine.Utils.Event.BPSEvents
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamListener
-import com.pharbers.StreamEngine.Utils.StreamJob.BPStreamJob
+import com.pharbers.StreamEngine.Utils.Job.BPStreamJob
 import com.pharbers.kafka.consumer.PharbersKafkaConsumer
 import com.pharbers.kafka.producer.PharbersKafkaProducer
 import com.pharbers.kafka.schema.{BPJob, HiveTracebackTask}

@@ -1,6 +1,5 @@
 package com.pharbers.StreamEngine.Utils.Channel.Driver
 
-import java.lang.Exception
 import java.net.{InetAddress, InetSocketAddress}
 import java.nio.ByteBuffer
 import java.nio.channels.SelectionKey
@@ -8,19 +7,23 @@ import java.nio.channels.Selector
 import java.nio.channels.ServerSocketChannel
 import java.nio.channels.SocketChannel
 import com.pharbers.StreamEngine.Utils.Annotation.Component
+import com.pharbers.StreamEngine.Utils.Channel.ChannelComponent
+import com.pharbers.StreamEngine.Utils.Component2
 import com.pharbers.StreamEngine.Utils.Event.BPSEvents
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamRemoteListener
 import com.pharbers.StreamEngine.Utils.ThreadExecutor.ThreadExecutor
 import com.pharbers.util.log.PhLogable
+import org.apache.kafka.common.config.ConfigDef
 import org.json4s._
 import org.json4s.jackson.Serialization.read
 
 object BPSDriverChannel {
     var channel: Option[BPSDriverChannel] = None
 
-    def apply(config: Map[String, String]): BPSDriverChannel = {
+//    def apply(config: Map[String, String]): BPSDriverChannel = {
+    def apply(componentProperty: Component2.BPComponentConfig): BPSDriverChannel = {
         channel = channel match {
-            case None => Some(new BPSDriverChannel(config))
+            case None => Some(new BPSDriverChannel(componentProperty))
             case _ => channel
         }
         ThreadExecutor().execute(channel.get)
@@ -47,10 +50,12 @@ object BPSDriverChannel {
 
 // TODO 希望可以补全注释
 @Component(name = "BPSDriverChannel", `type` = "BPSDriverChannel")
-class BPSDriverChannel(config: Map[String, String]) extends Runnable with PhLogable {
+class BPSDriverChannel(override val componentProperty: Component2.BPComponentConfig)
+    extends Runnable with PhLogable with ChannelComponent {
 
     lazy val host: String = InetAddress.getLocalHost.getHostAddress
-    lazy val port: Int = 56789
+//    lazy val port: Int = 56789
+    lazy val port: Int = componentProperty.config("port").toInt
 //    lazy val port: Int = 56780
     var lst: List[BPStreamRemoteListener] = Nil
 
@@ -153,7 +158,8 @@ class BPSDriverChannel(config: Map[String, String]) extends Runnable with PhLoga
         while (buffer.hasRemaining && readTimes < 200) {
             client.read(buffer)
             readTimes += 1
-            Thread.sleep(10)
+//            Thread.sleep(10)
+            Thread.sleep(componentProperty.config("sleep").toInt)
         }
         if(readTimes >= 200) return
         val result = new String(buffer.array()).trim()
@@ -174,4 +180,7 @@ class BPSDriverChannel(config: Map[String, String]) extends Runnable with PhLoga
                 logger.error(e.getMessage, e)
         }
     }
+
+    override val channelName: String = "driver channel"
+    override def createConfigDef(): ConfigDef = new ConfigDef()
 }

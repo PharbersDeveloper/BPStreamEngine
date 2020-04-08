@@ -1,6 +1,6 @@
 package com.pharbers.StreamEngine.Others.alex.schema
 
-import com.pharbers.StreamEngine.Utils.Session.Spark.BPSparkSession
+import com.pharbers.StreamEngine.Utils.Strategy.Session.Spark.BPSparkSession
 import org.scalatest.FunSuite
 
 import scala.io.Source
@@ -16,26 +16,26 @@ class ReadLogTest extends FunSuite {
 		}
 		source.close()
 	}
-	
+
 	test("read exec count") {
 		val source = Source.fromFile("/Users/qianpeng/Desktop/app.log")
 		val liens = source.getLines().toList
 		source.close()
 		println(liens.map ( x => if (x.indexOf("***") > -1) 1 else 0).sum)
 	}
-	
+
 	test("read py save") {
 		val source = Source.fromFile("/Users/qianpeng/Desktop/aaa.csv")
 		val lines = source.getLines().toList
 		source.close()
-		
-		val spark = BPSparkSession()
+
+		val spark = BPSparkSession(null)
 		lines.foreach { line =>
 			val tmp = line.split(",")
 			val id = tmp(0)
 			val length = tmp(1)
 			val hdfsUrl = tmp(2)
-			
+
 			val reading = spark.read.csv(hdfsUrl)
 			val count = reading.count()
 //			println(s"$count <====> $length -----> ${count == length.toLong}")
@@ -43,22 +43,22 @@ class ReadLogTest extends FunSuite {
 //				println(s"$id,$hdfsUrl")
 				println(s"""ObjectId("$id"),""")
 			}
-		
+
 		}
 	}
-	
+
 	test("read parquet count") {
 		val source = Source.fromFile("/Users/qianpeng/Desktop/Untitled.csv")
 		val lines = source.getLines().toList
 		source.close()
-		
-		val spark = BPSparkSession()
+
+		val spark = BPSparkSession(null)
 		lines.foreach { line =>
 			val tmp = line.split(",")
 			val id = tmp(0)
 			val length = tmp(1)
 			val hdfsUrl = tmp(2)
-			
+
 			val reading = spark.read.parquet(hdfsUrl)
 			val count = reading.count()
 			if (length.toLong != count) {
@@ -66,7 +66,7 @@ class ReadLogTest extends FunSuite {
 			} else {
 				println(s"$count")
 			}
-			
+
 		}
 	}
 
@@ -74,24 +74,24 @@ class ReadLogTest extends FunSuite {
 		val source = Source.fromFile("/Users/qianpeng/Desktop/差的数据")
 		val lines = source.getLines().toList
 		source.close()
-		
+
 		lines.foreach { line =>
 			println(line.replaceAll("""\\""", """\\\\"""))
 		}
-		
+
 	}
-	
+
 	test("tmp") {
 		val source = Source.fromFile("/Users/qianpeng/GitHub/BPStreamEngine/logs/aaa")
 		val lines = source.getLines().toList
 		source.close()
-		
+
 		lines.foreach { line =>
 			println(line.split(":")(0))
 		}
 		lines.foreach { line =>
 			println(line.split(":")(1))
 		}
-		
+
 	}
 }
