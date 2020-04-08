@@ -1,5 +1,6 @@
 package com.pharbers.StreamEngine.Utils.Event.StreamListener
 import com.pharbers.StreamEngine.Utils.Channel.Driver.BPSDriverChannel
+import com.pharbers.StreamEngine.Utils.Component2.BPSConcertEntry
 import com.pharbers.StreamEngine.Utils.Event.{BPSEvents, BPSTypeEvents}
 import com.pharbers.StreamEngine.Utils.Job.BPStreamJob
 import org.apache.spark.sql.DataFrame
@@ -14,6 +15,7 @@ import org.apache.spark.sql.DataFrame
   * @note 如果在泛型方法中使用，需要定义泛型时继承Manifest
   */
 class BPJobRemoteListener[T](override val job: BPStreamJob, hitTypes: List[String])(trigFunc: BPSTypeEvents[T] => Unit) extends BPStreamRemoteListener{
+    val chanel: BPSDriverChannel = BPSConcertEntry.queryComponentWithId("driver channel").get.asInstanceOf[BPSDriverChannel]
 
     override def hit(e: BPSEvents): Boolean = e != null && hitTypes.contains(e.`type`)
 
@@ -22,11 +24,11 @@ class BPJobRemoteListener[T](override val job: BPStreamJob, hitTypes: List[Strin
     }
 
     override def active(s: DataFrame): Unit = {
-        BPSDriverChannel.registerListener(this)
+        chanel.registerListener(this)
     }
 
     override def deActive(): Unit = {
-        BPSDriverChannel.unRegisterListener(this)
+        chanel.unRegisterListener(this)
     }
 }
 

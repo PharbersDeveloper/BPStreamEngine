@@ -27,13 +27,13 @@ import collection.JavaConverters._
  */
 
 //todo：因为ConfigDef的原因，很难做到无状态
-case class BPSCommonJobStrategy(config: Map[String, String], inoutConfigDef: ConfigDef = new ConfigDef()) extends BPStrategyComponent {
+case class BPSCommonJobStrategy(inputConfig: Map[String, String], inoutConfigDef: ConfigDef = new ConfigDef()) extends BPStrategyComponent {
     final private val LISTEN_EVENTS_KEY = "listens"
     final private val LISTEN_EVENTS_DOC = "listener hit event type"
     final private val LISTEN_EVENTS_DEFAULT = new util.ArrayList[String]()
 
-    val jobIdConfigStrategy = new BPSJobIdConfigStrategy(config, configDef)
-    val jobConfig = BPSConfig(configDef, config)
+    val jobIdConfigStrategy = new BPSJobIdConfigStrategy(inputConfig, configDef)
+    val jobConfig = BPSConfig(configDef, inputConfig)
 
     override def createConfigDef(): ConfigDef = inoutConfigDef
             .define(LISTEN_EVENTS_KEY, Type.LIST, LISTEN_EVENTS_DEFAULT, Importance.HIGH, LISTEN_EVENTS_DOC)

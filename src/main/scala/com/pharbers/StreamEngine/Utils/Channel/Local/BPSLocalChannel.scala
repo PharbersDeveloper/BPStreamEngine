@@ -1,12 +1,16 @@
 package com.pharbers.StreamEngine.Utils.Channel.Local
 
+import java.util.concurrent.LinkedBlockingQueue
+
 import com.pharbers.StreamEngine.Utils.Annotation.Component
 import com.pharbers.StreamEngine.Utils.Channel.ChannelComponent
 import com.pharbers.StreamEngine.Utils.Component2
+import com.pharbers.StreamEngine.Utils.Event.BPSEvents
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamListener
 import com.pharbers.StreamEngine.Utils.ThreadExecutor.ThreadExecutor
 import com.pharbers.util.log.PhLogable
 import org.apache.kafka.common.config.ConfigDef
+
 
 object BPSLocalChannel {
     var channel: Option[BPSLocalChannel] = None
@@ -28,8 +32,14 @@ object BPSLocalChannel {
     }
 
     def unRegisterListener(listener: BPStreamListener): Unit = channel match {
-        case Some(c) => c.lst = c.lst.filterNot(_ == listener)
+        case Some(c) => c.unRegisterListener(listener)
         case None => sys.error("未创建BPSLocalChannel")
+    }
+
+    def offer(event: BPSEvents): Boolean = channel match {
+        case Some(c) => c.offer(event)
+        case None => sys.error("未创建BPSLocalChannel")
+
     }
 }
 
@@ -39,16 +49,24 @@ class BPSLocalChannel(override val componentProperty: Component2.BPComponentConf
     extends Runnable with PhLogable with ChannelComponent {
 
     var lst: List[BPStreamListener] = Nil
+    val events: LinkedBlockingQueue[BPSEvents] = new LinkedBlockingQueue[BPSEvents]()
 
     def registerListener(listener: BPStreamListener): Unit = lst = listener :: lst
 
-    def trigger(): Unit = lst.foreach(_.trigger(null))
+    def unRegisterListener(listener: BPStreamListener): Unit = lst = lst.filterNot(_ == listener)
+
+    def offer(event: BPSEvents): Boolean = events.offer(event)
+
+    def trigger(): Unit = {
+        //没有时会阻塞，根据业务需要之后可以修改为pull。但是资源消耗会增加
+        val event = events.take()
+        lst.filter(_.hit(event)).foreach(_.trigger(event))
+    }
 
     override def run(): Unit = {
         logger.info("Local Channel Server")
         while (true) {
             trigger()
-//            Thread.sleep(1000)
             Thread.sleep(componentProperty.config("sleep").toInt)
         }
     }
