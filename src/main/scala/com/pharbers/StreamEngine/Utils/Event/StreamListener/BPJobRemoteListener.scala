@@ -9,13 +9,13 @@ import scala.reflect.ClassTag
 /** 功能描述
   *
   * @param args 构造参数
-  * @tparam T 构造泛型参数
+  * @tparam T 构造泛型参数 case class，scala集合类，scala基本类
   * @author dcs
   * @version 0.0
   * @since 2020/04/07 15:58
-  * @note 一些值得注意的地方
+  * @note 如果在泛型方法中使用，需要定义泛型时继承Manifest
   */
-class BPJobRemoteListener[T: ClassTag](override val job: BPStreamJob, hitTypes: List[String])(trigFunc: BPSTypeEvents[T] => Unit) extends BPStreamRemoteListener{
+class BPJobRemoteListener[T](override val job: BPStreamJob, hitTypes: List[String])(trigFunc: BPSTypeEvents[T] => Unit) extends BPStreamRemoteListener{
 
     override def hit(e: BPSEvents): Boolean = hitTypes.contains(e.`type`)
 
@@ -33,6 +33,6 @@ class BPJobRemoteListener[T: ClassTag](override val job: BPStreamJob, hitTypes: 
 }
 
 object BPJobRemoteListener {
-    def apply[T: ClassTag](job: BPStreamJob, hitTypes: List[String])(trigFunc: BPSTypeEvents[T] => Unit): BPJobRemoteListener[T] =
+    def apply[T](job: BPStreamJob, hitTypes: List[String])(trigFunc: BPSTypeEvents[T] => Unit): BPJobRemoteListener[T] =
         new BPJobRemoteListener(job, hitTypes)(trigFunc)
 }
