@@ -20,7 +20,7 @@ class StartGenCubeJobTest extends FunSuite{
         val inputDataType = BPSGenCubeJob.HIVE_DATA_TYPE
         val inputPath = "SELECT * FROM result"
         val outputDataType = "es"
-        val outputPath = "fullcube"
+        val outputPath = "cube"
         val strategy = BPSGenCubeJob.STRATEGY_CMD_HANDLE_HIVE_RESULT
 
         val genCubeJob = new GenCubeJobSubmit(inputDataType, inputPath, outputDataType, outputPath, strategy)

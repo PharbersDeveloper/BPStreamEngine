@@ -2,9 +2,9 @@ package com.pharbers.StreamEngine.Jobs.GenCubeJob
 
 import java.util.UUID
 
-import com.pharbers.StreamEngine.Jobs.GenCubeJob.strategy.{BPSHandleHiveResultStrategy, BPSStrategy}
+import com.pharbers.StreamEngine.Jobs.GenCubeJob.strategy.{BPSGenCubeToEsStrategy, BPSStrategy}
 import com.pharbers.StreamEngine.Utils.Config.BPSConfig
-import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSJobStrategy
 import com.pharbers.StreamEngine.Utils.StreamJob.{BPSJobContainer, BPStreamJob}
 import org.apache.kafka.common.config.ConfigDef
@@ -93,7 +93,9 @@ class BPSGenCubeJob(override val id: String,
 
         //根据不同策略指令来选用策略函数处理job内部数据，默认空指令则不处理
         strategyCMD match {
-            case STRATEGY_CMD_HANDLE_HIVE_RESULT => InnerJobStrategy = BPSHandleHiveResultStrategy(spark)
+            case STRATEGY_CMD_HANDLE_HIVE_RESULT => InnerJobStrategy = new BPSGenCubeToEsStrategy(spark) {
+                override val DEFAULT_INDEX_NAME = outputPath
+            }
         }
 
     }
@@ -112,28 +114,13 @@ class BPSGenCubeJob(override val id: String,
                     } else df
 
                     outputDataType match {
-                        case CSV_DATA_TYPE => {
-                            val uuid = UUID.randomUUID().toString
-                            val savePath = outputPath + s"/${uuid}"
-                            newDF
-                                .write
-                                .option("checkpointLocation", checkpointLocation)
-                                .format(outputDataType)
-                                .option("header", value = true)
-                                .save(savePath)
-                            logger.info(s"Succeed save cube in hdfs-path=${savePath}.")
-                        }
                         case ES_DATA_TYPE => {
-                            newDF.write
-                                .option("checkpointLocation", checkpointLocation)
-                                .format("es")
-                                .save(outputPath)
-                            logger.info(s"Succeed save cube in es-index=${outputPath}.")
+                            //已在strategy中完成分批append输出，避免DriverOOM，产出DF为计数求和结果
+                            val count: Long = newDF.collect().last.getAs[Long]("count")
+                            logger.info(s"Succeed save cube to es and count = ${count}.")
                         }
                         case _ => ???
                     }
-
-                    logger.info("gen-cube job result length =  ========>" + newDF.count())
 
                 }
 

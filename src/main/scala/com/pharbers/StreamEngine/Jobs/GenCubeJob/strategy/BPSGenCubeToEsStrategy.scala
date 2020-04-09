@@ -6,9 +6,9 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.DataTypes
 
-case class BPSHandleHiveResultStrategy(spark: SparkSession) extends BPSStrategy[DataFrame] with PhLogable {
+class BPSGenCubeToEsStrategy(spark: SparkSession) extends BPSStrategy[DataFrame] with PhLogable {
 
-    //    val DATA_CUBE_DIMENSION_DEFINE_JSON = "./data-cube-dimension-define.json"
+    val DEFAULT_INDEX_NAME: String = "cube"
 
     var dimensions: Map[String, List[String]] = Map.empty
     var measures: List[String] = List.empty
@@ -52,7 +52,9 @@ case class BPSHandleHiveResultStrategy(spark: SparkSession) extends BPSStrategy[
         cuboids = initCuboids()
 
         val cuboidsData = genCuboidsData(cleanData)
-        unionListDF(cuboidsData)
+
+        //尝试分批写入
+        writeEsListDF(cuboidsData)
 
     }
 
@@ -166,7 +168,7 @@ case class BPSHandleHiveResultStrategy(spark: SparkSession) extends BPSStrategy[
 
         cuboid.size match {
             case 0 => genApexCube(df) :: Nil
-//            case x if x == dimensions.size => genBaseCube(df) :: Nil
+            //            case x if x == dimensions.size => genBaseCube(df) :: Nil
             case _ => genMultiDimensionsCube(df, cuboid)
         }
 
@@ -180,7 +182,7 @@ case class BPSHandleHiveResultStrategy(spark: SparkSession) extends BPSStrategy[
             .withColumnRenamed("sum(SALES_QTY)", "SALES_QTY")
             .withColumn("DIMENSION_NAME", lit("apex"))
             .withColumn("DIMENSION_VALUE", lit("*"))
-//            .withColumn("SALES_RANK", dense_rank.over(Window.partitionBy("APEX").orderBy(desc("SALES_VALUE"))))  //以SALES_VALUE降序排序
+            .withColumn("SALES_RANK", dense_rank.over(Window.partitionBy("APEX").orderBy(desc("SALES_VALUE"))))  //以SALES_VALUE降序排序
 
         val apexCube = fillLostKeys(apexDF)
         unifiedColumns = apexCube.columns
@@ -200,14 +202,15 @@ case class BPSHandleHiveResultStrategy(spark: SparkSession) extends BPSStrategy[
         var listDF: List[DataFrame] = List.empty
         val dimensionsName = getDimensionsName(cuboid)
         for (one_hierarchies_group <- genCartesianHierarchies(cuboid)) {
-            val one_group = fillFullHierarchies(one_hierarchies_group.toList, dimensions)
-            val tmpDF = df.groupBy(one_group.head, one_group.tail: _*).sum(measures: _*)
+            val agg_group = fillFullHierarchies(one_hierarchies_group.toList, dimensions)
+            val time_group = getTimeHierarchies(one_hierarchies_group.toList, dimensions)
+            val tmpDF = df.groupBy(agg_group.head, agg_group.tail: _*).sum(measures: _*)
                 .drop(measures: _*)
                 .withColumnRenamed("sum(SALES_VALUE)", "SALES_VALUE")
                 .withColumnRenamed("sum(SALES_QTY)", "SALES_QTY")
                 .withColumn("DIMENSION_NAME", lit(dimensionsName))
                 .withColumn("DIMENSION_VALUE", lit(one_hierarchies_group.mkString("-")))
-//                .withColumn("SALES_RANK", dense_rank.over(Window.partitionBy("DATE").orderBy(desc("SALES_VALUE"))))  //以DIMENSION_VALUE分partition，以SALES_VALUE降序排序
+                .withColumn("SALES_RANK", dense_rank.over(Window.partitionBy("DIMENSION_VALUE", time_group: _*).orderBy(desc("SALES_VALUE")))) //以时间维度分partition才有排名的意义，受限于时间维度上年/季/月层次
             listDF = listDF :+ fillLostKeys(tmpDF)
         }
         listDF
@@ -240,16 +243,25 @@ case class BPSHandleHiveResultStrategy(spark: SparkSession) extends BPSStrategy[
             } yield Traversable(i) ++ j
         }
 
-    def unionListDF(listDF: List[DataFrame]): DataFrame = {
+    //尝试分批append写入
+    def writeEsListDF(listDF: List[DataFrame]): DataFrame = {
 
-        //TODO: 按排序度量需求动态变化，求top-k，暂时只取前100
-//        val listDfTopK = listDF.map(x => x.select(unifiedColumns.head, unifiedColumns.tail: _*).orderBy(desc("SALES_VALUE")).limit(100))
-        val listDfTopK = listDF.map(x => x.select(unifiedColumns.head, unifiedColumns.tail: _*))
-        listDfTopK.reduce(_ union _)
+        var count: Long = 0
+
+        for (df <- listDF) {
+            count += df.count()
+            df.write
+                .format("es")
+//                .option("es.write.operation", "upsert")
+                .mode("append")
+                .save("fullcube2")
+        }
+
+        spark.emptyDataFrame.withColumn("count", lit(count))
 
     }
 
-    def fillFullHierarchies(oneHierarchies: List[String], dimensions: Map[String, List[String]]): List[String]= {
+    def fillFullHierarchies(oneHierarchies: List[String], dimensions: Map[String, List[String]]): List[String] = {
 
         var result: List[String] = List.empty
 
@@ -259,6 +271,21 @@ case class BPSHandleHiveResultStrategy(spark: SparkSession) extends BPSStrategy[
                     for (i <- 0 to oneDimension.indexOf(oneHierarchy)) {
                         result = result :+ oneDimension(i)
                     }
+                }
+            }
+        }
+        result
+
+    }
+
+    //从维度层次组合中拆出时间维度层次
+    def getTimeHierarchies(oneHierarchies: List[String], dimensions: Map[String, List[String]]): List[String] = {
+        var result: List[String] = List.empty
+        val timeHierarchies = dimensions("time")
+        for (oneHierarchy <- oneHierarchies) {
+            if (timeHierarchies.contains(oneHierarchy)) {
+                for (i <- 0 to timeHierarchies.indexOf(oneHierarchy)) {
+                    result = result :+ timeHierarchies(i)
                 }
             }
         }
