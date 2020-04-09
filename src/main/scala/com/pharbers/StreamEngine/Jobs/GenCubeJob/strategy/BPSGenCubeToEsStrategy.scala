@@ -246,10 +246,7 @@ class BPSGenCubeToEsStrategy(spark: SparkSession) extends BPSStrategy[DataFrame]
     //尝试分批append写入
     def writeEsListDF(listDF: List[DataFrame]): DataFrame = {
 
-        var count: Long = 0
-
         for (df <- listDF) {
-            count += df.count()
             df.write
                 .format("es")
 //                .option("es.write.operation", "upsert")
@@ -257,7 +254,7 @@ class BPSGenCubeToEsStrategy(spark: SparkSession) extends BPSStrategy[DataFrame]
                 .save("fullcube2")
         }
 
-        spark.emptyDataFrame.withColumn("count", lit(count))
+        spark.emptyDataFrame
 
     }
 

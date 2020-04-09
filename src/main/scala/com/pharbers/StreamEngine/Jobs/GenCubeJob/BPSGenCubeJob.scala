@@ -115,9 +115,8 @@ class BPSGenCubeJob(override val id: String,
 
                     outputDataType match {
                         case ES_DATA_TYPE => {
-                            //已在strategy中完成分批append输出，避免DriverOOM，产出DF为计数求和结果
-                            val count: Long = newDF.collect().last.getAs[Long]("count")
-                            logger.info(s"Succeed save cube to es and count = ${count}.")
+                            //已在strategy中完成分批append输出，避免DriverOOM，产出DF为emptyDataFrame
+                            logger.info(s"Succeed save cube to es.")
                         }
                         case _ => ???
                     }
