@@ -50,7 +50,7 @@ case class BPSCommonJobStrategy(inputConfig: Map[String, String], inoutConfigDef
 
     def getSpark: SparkSession = BPSConcertEntry.queryComponentWithId("spark").get.asInstanceOf[BPSparkSession]
 
-    def getHdfsFile: BPSHDFSFile = BPSConcertEntry.queryComponentWithId("hdfs").asInstanceOf[BPSHDFSFile]
+    def getHdfsFile: BPSHDFSFile = BPSConcertEntry.queryComponentWithId("hdfs").get.asInstanceOf[BPSHDFSFile]
 
     def pushMsg(msg: BPSEvents, isLocal: Boolean): Unit ={
         if (isLocal){

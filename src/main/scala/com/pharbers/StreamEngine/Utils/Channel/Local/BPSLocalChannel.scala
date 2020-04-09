@@ -49,7 +49,8 @@ class BPSLocalChannel(override val componentProperty: Component2.BPComponentConf
     extends Runnable with PhLogable with ChannelComponent {
 
     var lst: List[BPStreamListener] = Nil
-    val events: LinkedBlockingQueue[BPSEvents] = new LinkedBlockingQueue[BPSEvents]()
+    //todo: 使用配置
+    val events: LinkedBlockingQueue[BPSEvents] = new LinkedBlockingQueue[BPSEvents](10000)
 
     def registerListener(listener: BPStreamListener): Unit = lst = listener :: lst
 
