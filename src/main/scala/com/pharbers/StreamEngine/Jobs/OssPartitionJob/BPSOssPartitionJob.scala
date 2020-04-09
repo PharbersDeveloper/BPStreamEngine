@@ -30,7 +30,7 @@ case class BPSOssPartitionJob(container: BPSJobContainer, componentProperty: Com
 
     override def exec(): Unit = inputStream match {
         case Some(is) => {
-            outputStream = outputStream :+ startMsgJob(is) :+ startDataJob(is)
+            outputStream = outputStream :+ startDataJob(is)
         }
         case None => ???
     }
@@ -40,47 +40,12 @@ case class BPSOssPartitionJob(container: BPSJobContainer, componentProperty: Com
         container.finishJobWithId(id)
     }
 
-    def startMsgJob(df: DataFrame): StreamingQuery = {
-        df.filter(col("type") === "SandBox-Schema" || col("type") === "SandBox-Labels" || col("type") === "SandBox-Length").writeStream
-                .foreach(
-                    new ForeachWriter[Row] {
-
-                        var channel: Option[BPSWorkerChannel] = None
-
-                        def open(partitionId: Long, version: Long): Boolean = {
-                            if (channel.isEmpty) channel = Some(BPSWorkerChannel(TaskContext.get().getLocalProperty("host")))
-                            true
-                        }
-
-                        def process(value: Row): Unit = {
-
-                            implicit val formats: DefaultFormats.type = DefaultFormats
-
-                            val event = BPSEvents(
-                                value.getAs[String]("jobId"),
-                                value.getAs[String]("traceId"),
-                                value.getAs[String]("type"),
-                                value.getAs[String]("data"),
-                                value.getAs[java.sql.Timestamp]("timestamp")
-                            )
-                            channel.get.pushMessage(write(event))
-                        }
-
-                        def close(errorOrNull: scala.Throwable): Unit = {
-                            channel.get.close()
-                        }
-                    }
-                )
-                .option("checkpointLocation", s"$getCheckpointPath/msgJob")
-                .start()
-    }
-
     def startDataJob(df: DataFrame): StreamingQuery = {
         df.filter(col("type") === "SandBox").writeStream
                 .partitionBy("jobId")
                 .format("parquet")
                 .outputMode("append")
-                .option("checkpointLocation", s"$getCheckpointPath/dataJob")
+                .option("checkpointLocation", getCheckpointPath)
                 .option("path", getOutputPath)
                 .start()
     }

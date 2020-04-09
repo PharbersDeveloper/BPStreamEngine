@@ -129,7 +129,7 @@ private[Component] class BaseJobHandler(nodeHandler: NodeMsgHandler,
     private def addListener(jobMsg: JobMsg, args: Seq[Any]): Unit = {
         val listener = jobBuilder.buildListener(jobMsg, getMethodMirror(jobMsg.classPath)(args: _*).asInstanceOf[BPStreamListener])
         jobMsg.dependencies.foreach(x => {
-            jobs(x).listeners = jobs(x).listeners :+ listener
+//            jobs(x).listeners = jobs(x).listeners :+ listener
             jobs(x).registerListeners(listener)
         })
     }
@@ -137,7 +137,7 @@ private[Component] class BaseJobHandler(nodeHandler: NodeMsgHandler,
     private def addHandler(jobMsg: JobMsg, args: Seq[Any]): Unit = {
         val handler = jobBuilder.buildHandler(jobMsg, getMethodMirror(jobMsg.classPath)(args: _*).asInstanceOf[BPSEventHandler])
         jobMsg.dependencies.foreach(x => {
-            jobs(x).handlers = jobs(x).handlers :+ handler
+//            jobs(x).handlers = jobs(x).handlers :+ handler
             jobs(x).handlerExec(handler)
         })
     }
