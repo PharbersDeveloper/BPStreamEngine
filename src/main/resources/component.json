@@ -94,7 +94,9 @@
             "name": "BPSOssPartitionJobContainer",
             "args": [],
             "config": {
-                "listens": "SandBox-Start"
+                "starting.offsets": "latest",
+                "listens": "SandBox-Start",
+                "FileMetaData.msgType": "SandBox-FileMetaData"
             }
         }
     ],

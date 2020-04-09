@@ -2,14 +2,13 @@ package com.pharbers.StreamEngine.Jobs.OssPartitionJob.OssPartitionJobContainer
 
 import java.util.UUID
 
-import com.pharbers.StreamEngine.Jobs.OssPartitionJob.BPSOssPartitionJob
+import com.pharbers.StreamEngine.Jobs.OssPartitionJob.{BPSKafkaMsgJob, BPSOssPartitionJob}
 import com.pharbers.StreamEngine.Jobs.OssPartitionJob.OssListener.BPSOssListener
 import com.pharbers.StreamEngine.Utils.Job.{BPDynamicStreamJob, BPSJobContainer, BPStreamJob}
 import com.pharbers.StreamEngine.Utils.Annotation.Component
 import com.pharbers.StreamEngine.Utils.Component2
 import com.pharbers.StreamEngine.Utils.Component2.BPSComponentConfig
 import com.pharbers.StreamEngine.Utils.Event.BPSTypeEvents
-import com.pharbers.StreamEngine.Utils.Event.EventHandler.BPSEventHandler
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.{BPJobRemoteListener, BPStreamListener}
 import com.pharbers.StreamEngine.Utils.Strategy.BPSKfkBaseStrategy
 import com.pharbers.StreamEngine.Utils.Strategy.JobStrategy.BPSCommonJobStrategy
@@ -30,11 +29,14 @@ object BPSOssPartitionJobContainer {
 
 @Component(name = "BPSOssPartitionJobContainer", `type` = "BPSOssPartitionJobContainer")
 class BPSOssPartitionJobContainer(override val componentProperty: Component2.BPComponentConfig)
-        extends BPSJobContainer with BPDynamicStreamJob {
+        extends BPSJobContainer {
 
     final private val FILE_MSG_TYPE_KEY = "FileMetaData.msgType"
     final private val FILE_MSG_TYPE_DOC = "push FileMetaData msg type"
     final private val FILE_MSG_TYPE_DEFAULT = "FileMetaData.msgType"
+    final private val STARTING_OFFSETS_KEY = "starting.offsets"
+    final private val STARTING_OFFSETS_DOC = "kafka offsets begin"
+    final private val STARTING_OFFSETS_DEFAULT = "earliest" //可以分别指定{"topic1":{"0":23,"1":-2},"topic2":{"0":-2}} -2 = earliest， -1 = latest
 
     val description: String = "InputStream"
     type T = BPSCommonJobStrategy
@@ -57,7 +59,7 @@ class BPSOssPartitionJobContainer(override val componentProperty: Component2.BPC
                 .option("kafka.ssl.truststore.password", "pharbers")
                 .option("kafka.ssl.endpoint.identification.algorithm", " ")
                 .option("maxOffsetsPerTrigger", 100000)
-                .option("startingOffsets", "earliest")
+                .option("startingOffsets", strategy.jobConfig.getString(STARTING_OFFSETS_KEY))
                 .option("subscribe", s"${kafkaSession.getDataTopic}, ${kafkaSession.getMsgTopic}")
                 .load()
 
@@ -74,6 +76,10 @@ class BPSOssPartitionJobContainer(override val componentProperty: Component2.BPC
     }
 
     override def exec(): Unit = {
+        val msgJob = new BPSKafkaMsgJob(this, BPSComponentConfig(UUID.randomUUID().toString, "BPSOssPartitionJob", Nil, Map()))
+        msgJob.open()
+        msgJob.exec()
+        jobs += msgJob.id -> msgJob
         val listenEvent = strategy.getListens
         val listener = BPJobRemoteListener[Map[String, String]](this, listenEvent.toList)(x => starJob(x))
         listener.active(null)
@@ -92,22 +98,20 @@ class BPSOssPartitionJobContainer(override val componentProperty: Component2.BPC
         }
     }
 
-    override def registerListeners(listener: BPStreamListener): Unit = {}
-
-    override def handlerExec(handler: BPSEventHandler): Unit = {}
-
     override def createConfigDef(): ConfigDef = {
-        new ConfigDef().define(FILE_MSG_TYPE_KEY, Type.STRING, FILE_MSG_TYPE_DEFAULT, Importance.HIGH, FILE_MSG_TYPE_DOC)
+        new ConfigDef()
+                .define(FILE_MSG_TYPE_KEY, Type.STRING, FILE_MSG_TYPE_DEFAULT, Importance.HIGH, FILE_MSG_TYPE_DOC)
+                .define(STARTING_OFFSETS_KEY, Type.STRING, STARTING_OFFSETS_DEFAULT, Importance.HIGH, STARTING_OFFSETS_DOC)
     }
 
     def starJob(event: BPSTypeEvents[Map[String, String]]): Unit = {
-        val job = BPSOssPartitionJob(this, BPSComponentConfig(UUID.randomUUID().toString, "BPSOssPartitionJob", Nil, event.date))
+        val job = BPSOssPartitionJob(this, BPSComponentConfig(UUID.randomUUID().toString, "BPSKafkaMsgJob", Nil, event.date))
         jobs += job.id -> job
         job.open()
         job.exec()
         val lengthMsgType: String = strategy.jobConfig.getString(FILE_MSG_TYPE_KEY)
         val ossMetadataListener = BPSOssListener(job, lengthMsgType)
         ossMetadataListener.active(null)
-        listeners = listeners :: ossMetadataListener
+        listeners = listeners :+ ossMetadataListener
     }
 }

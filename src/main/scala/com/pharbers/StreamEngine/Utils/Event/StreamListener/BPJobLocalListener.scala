@@ -15,9 +15,9 @@ import org.apache.spark.sql.DataFrame
   * @since 2020/04/08 15:14
   * @note 如果在泛型方法中使用，需要定义泛型时继承Manifest
   */
-class BPJobLocalListener[T](override val job: BPStreamJob, hitTypes: List[String], needHitNull: Boolean = false)(trigFunc: BPSTypeEvents[T] => Unit) extends BPStreamRemoteListener{
+class BPJobLocalListener[T](override val job: BPStreamJob, hitTypes: List[String], needHitNull: Boolean = false)(trigFunc: BPSTypeEvents[T] => Unit) extends BPStreamLocalListener{
 
-    val chanel: BPSLocalChannel = BPSConcertEntry.queryComponentWithId("driver channel").get.asInstanceOf[BPSLocalChannel]
+    val chanel: BPSLocalChannel = BPSConcertEntry.queryComponentWithId("local channel").get.asInstanceOf[BPSLocalChannel]
 
     override def hit(e: BPSEvents): Boolean = (e != null || needHitNull) && hitTypes.contains(e.`type`)
 
