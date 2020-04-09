@@ -9,6 +9,7 @@ import com.pharbers.StreamEngine.Utils.Component2.BPSConcertEntry
 import com.pharbers.StreamEngine.Utils.Config.BPSConfig
 import com.pharbers.StreamEngine.Utils.Event.BPSEvents
 import com.pharbers.StreamEngine.Utils.Strategy.BPStrategyComponent
+import com.pharbers.StreamEngine.Utils.Strategy.Schema.SchemaConverter
 import com.pharbers.StreamEngine.Utils.Strategy.Session.Kafka.BPKafkaSession
 import com.pharbers.StreamEngine.Utils.Strategy.Session.Spark.BPSparkSession
 import com.pharbers.StreamEngine.Utils.Strategy.hdfs.BPSHDFSFile
@@ -51,6 +52,9 @@ case class BPSCommonJobStrategy(inputConfig: Map[String, String], inoutConfigDef
     def getSpark: SparkSession = BPSConcertEntry.queryComponentWithId("spark").get.asInstanceOf[BPSparkSession]
 
     def getHdfsFile: BPSHDFSFile = BPSConcertEntry.queryComponentWithId("hdfs").get.asInstanceOf[BPSHDFSFile]
+    
+    def getSchemaConverter: SchemaConverter =
+        BPSConcertEntry.queryComponentWithId("schema convert").get.asInstanceOf[SchemaConverter]
 
     def pushMsg(msg: BPSEvents, isLocal: Boolean): Unit ={
         if (isLocal){
