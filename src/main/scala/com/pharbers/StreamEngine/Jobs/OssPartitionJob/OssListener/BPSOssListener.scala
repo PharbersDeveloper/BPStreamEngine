@@ -23,9 +23,9 @@ import org.apache.spark.sql.DataFrame
 case class BPSOssListener(job: BPStreamJob, msgType: String) extends BPStreamRemoteListener {
     def event2JobId(e: BPSEvents): String = e.jobId
     lazy val hdfsfile: BPSHDFSFile =
-        BPSConcertEntry.queryComponentWithId("hdfs").asInstanceOf[BPSHDFSFile]
+        BPSConcertEntry.queryComponentWithId("hdfs").get.asInstanceOf[BPSHDFSFile]
 
-    lazy val kafka: BPKafkaSession = BPSConcertEntry.queryComponentWithId("kafka").asInstanceOf[BPKafkaSession]
+    lazy val kafka: BPKafkaSession = BPSConcertEntry.queryComponentWithId("kafka").get.asInstanceOf[BPKafkaSession]
 
     override def trigger(e: BPSEvents): Unit = {
         // TODO: 后面可变配置化
