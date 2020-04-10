@@ -49,17 +49,17 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer,
 					val cumulative = query.recentProgress.map(_.numInputRows).sum
 					println(s"cumulative num $cumulative")
 					if (cumulative >= totalNum) {
-						query.stop()
 						this.close()
 					}
 				})
 			rowNumListener.active(null)
+			listeners = listeners :+ rowNumListener
 		}
 		case None => ???
 	}
 	
 	override def close(): Unit = {
-		println("Job =====> Closed")
+		logger.info("Job =====> Closed")
 		super.close()
 		container.finishJobWithId(id)
 	}
