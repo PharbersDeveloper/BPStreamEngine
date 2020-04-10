@@ -1,6 +1,6 @@
 package com.pharbers.StreamEngine.Others.clock
 
-import com.pharbers.StreamEngine.Utils.Session.Spark.BPSparkSession
+import com.pharbers.StreamEngine.Utils.Strategy.Session.Spark.BPSparkSession
 
 /** 提取所有数据 metadata 中的表结构
  *

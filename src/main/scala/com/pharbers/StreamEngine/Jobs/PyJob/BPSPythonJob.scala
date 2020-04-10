@@ -2,15 +2,18 @@ package com.pharbers.StreamEngine.Jobs.PyJob
 
 import org.apache.spark.sql
 import java.util.Collections
+
+import com.pharbers.StreamEngine.Jobs.PyJob.ForeachWriter.PyCleanSinkHDFS
 import com.pharbers.kafka.schema.DataSet
 import org.apache.spark.sql.SparkSession
-import com.pharbers.StreamEngine.Utils.StreamJob.BPStreamJob
 import com.pharbers.StreamEngine.Jobs.SandBoxJob.BloodJob.BPSBloodJob
 import com.pharbers.StreamEngine.Jobs.PyJob.Py4jServer.BPSPy4jManager
-import com.pharbers.StreamEngine.Jobs.PyJob.ForeachWriter.PyCleanSinkHDFS
-import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSJobStrategy
-import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamListener
+import com.pharbers.StreamEngine.Utils.Job.BPStreamJob
 import com.pharbers.StreamEngine.Jobs.PyJob.Listener.BPSProgressListenerAndClose
+import com.pharbers.StreamEngine.Utils.Component2
+import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamListener
+import com.pharbers.StreamEngine.Utils.Strategy.BPStrategyComponent
+import org.apache.kafka.common.config.ConfigDef
 
 object BPSPythonJob {
     def apply(id: String,
@@ -49,8 +52,8 @@ class BPSPythonJob(override val id: String,
                    jobCloseFunc: String => Unit,
                    jobConf: Map[String, Any]) extends BPStreamJob with Serializable {
 
-    type T = BPSJobStrategy
-    override val strategy: BPSJobStrategy = null
+    type T = BPStrategyComponent
+    override val strategy: BPStrategyComponent = null
 
     val noticeTopic: String = jobConf("noticeTopic").toString
 
@@ -145,4 +148,10 @@ class BPSPythonJob(override val id: String,
         super.close()
         jobCloseFunc(id)
     }
+
+    override val componentProperty: Component2.BPComponentConfig = null
+
+    override def createConfigDef(): ConfigDef = ???
+
+    override val description: String = "py_clean_job"
 }

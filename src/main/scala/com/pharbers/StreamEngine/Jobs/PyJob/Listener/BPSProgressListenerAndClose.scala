@@ -2,9 +2,10 @@ package com.pharbers.StreamEngine.Jobs.PyJob.Listener
 
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import com.pharbers.StreamEngine.Utils.Event.BPSEvents
-import com.pharbers.StreamEngine.Utils.HDFS.BPSHDFSFile
+import com.pharbers.StreamEngine.Utils.Strategy.hdfs.BPSHDFSFile
 import com.pharbers.StreamEngine.Jobs.PyJob.BPSPythonJob
 import com.pharbers.StreamEngine.Utils.Channel.Local.BPSLocalChannel
+import com.pharbers.StreamEngine.Utils.Component2.BPSConcertEntry
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamListener
 
 /** 监控 PythonJob 的执行进度, 并在完成后关闭 PythonJob
@@ -22,8 +23,12 @@ case class BPSProgressListenerAndClose(override val job: BPSPythonJob,
                                        rowLength: Long,
                                        rowRecordPath: String) extends BPStreamListener {
 
+    lazy val hdfsfile: BPSHDFSFile =
+        BPSConcertEntry.queryComponentWithId("hdfs").asInstanceOf[BPSHDFSFile]
+
     override def trigger(e: BPSEvents): Unit = {
-        val rows = BPSHDFSFile.readHDFS(rowRecordPath).map(_.toLong).sum
+//        val rows = BPSHDFSFile.readHDFS(rowRecordPath).map(_.toLong).sum
+        val rows = hdfsfile.readHDFS(rowRecordPath).map(_.toLong).sum
 
         logger.debug(s"===${job.id}======> Total Row $rowLength")
         logger.debug(s"===${job.id}===>" + rows)

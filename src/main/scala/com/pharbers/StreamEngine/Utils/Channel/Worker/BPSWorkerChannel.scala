@@ -21,6 +21,7 @@ object BPSWorkerChannel {
 }
 
 // TODO 希望可以补全注释
+// TODO: 这是一个问题，外部创建，后期在做调整
 class BPSWorkerChannel(host: String, port: Int) extends Serializable with PhLogable {
 
     lazy val addr = new InetSocketAddress(host, port)

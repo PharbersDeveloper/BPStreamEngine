@@ -3,10 +3,11 @@ package com.pharbers.StreamEngine.Jobs.GenCubeJob
 import java.util.UUID
 
 import com.pharbers.StreamEngine.Jobs.GenCubeJob.strategy.{BPSGenCubeToEsStrategy, BPSStrategy}
+import com.pharbers.StreamEngine.Utils.Component2
 import com.pharbers.StreamEngine.Utils.Config.BPSConfig
-import org.apache.spark.sql.{DataFrame, Row, SparkSession}
-import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSJobStrategy
-import com.pharbers.StreamEngine.Utils.StreamJob.{BPSJobContainer, BPStreamJob}
+import org.apache.spark.sql.{DataFrame, SparkSession}
+import com.pharbers.StreamEngine.Utils.Strategy.BPStrategyComponent
+import com.pharbers.StreamEngine.Utils.Job.{BPSJobContainer, BPStreamJob}
 import org.apache.kafka.common.config.ConfigDef
 import org.apache.kafka.common.config.ConfigDef.{Importance, Type}
 
@@ -64,8 +65,8 @@ class BPSGenCubeJob(override val id: String,
                     jobConf: Map[String, String])
     extends BPStreamJob {
 
-    type T = BPSJobStrategy
-    override val strategy: BPSJobStrategy = null
+    type T = BPStrategyComponent
+    override val strategy: BPStrategyComponent = null
 
     type InnerJobDataType = DataFrame
     var InnerJobStrategy: BPSStrategy[InnerJobDataType] = null
@@ -134,4 +135,7 @@ class BPSGenCubeJob(override val id: String,
         logger.info("gen-cube job closed with id ========>" + id)
     }
 
+    override val description: String = "cube gen"
+    override val componentProperty: Component2.BPComponentConfig = null
+    override def createConfigDef(): ConfigDef = ???
 }

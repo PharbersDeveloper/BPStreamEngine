@@ -5,11 +5,12 @@ import java.util.concurrent.{Executors, LinkedBlockingQueue, ThreadPoolExecutor,
 
 import com.pharbers.StreamEngine.Jobs.SqlTableJob.BPSqlTableJob
 import com.pharbers.StreamEngine.Jobs.SqlTableJob.SqlTableListener.{BPSqlTableKafkaListener, BPStreamOverListener}
+import com.pharbers.StreamEngine.Utils.Component2
 import com.pharbers.StreamEngine.Utils.Config.BPSConfig
 import com.pharbers.StreamEngine.Utils.Event.EventHandler.BPSEventHandler
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamListener
-import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSJobStrategy
-import com.pharbers.StreamEngine.Utils.StreamJob.{BPDynamicStreamJob, BPSJobContainer, BPStreamJob}
+import com.pharbers.StreamEngine.Utils.Job.{BPDynamicStreamJob, BPSJobContainer, BPStreamJob}
+import com.pharbers.StreamEngine.Utils.Strategy.BPStrategyComponent
 import com.pharbers.StreamEngine.Utils.ThreadExecutor.ThreadExecutor.executorService
 import com.pharbers.kafka.schema.HiveTask
 import org.apache.kafka.common.config.ConfigDef
@@ -27,15 +28,16 @@ import org.apache.spark.sql.SparkSession
   */
 class BPSqlTableJobContainer(val spark: SparkSession, config: Map[String, String]) extends BPSJobContainer with BPDynamicStreamJob{
 
-    override type T = BPSJobStrategy
-    override val strategy: BPSJobStrategy = null
+    override type T = BPStrategyComponent
+    override val strategy: BPStrategyComponent = null
     final val TOPIC_CONFIG_KEY = "topic"
     final val TOPIC_CONFIG_DOC = "kafka topic"
     final val RUN_ID_CONFIG_KEY = "runId"
     final val RUN_ID_CONFIG_DOC = "run id"
     final val VERSIONS_CONFIG_KEY = "version"
     final val VERSIONS_CONFIG_DOC = "version"
-    val configDef: ConfigDef = new ConfigDef()
+    override val componentProperty: Component2.BPComponentConfig = null
+    override def createConfigDef(): ConfigDef = new ConfigDef()
             .define(TOPIC_CONFIG_KEY, Type.STRING, "HiveTask", Importance.HIGH, TOPIC_CONFIG_DOC)
             .define(RUN_ID_CONFIG_KEY, Type.STRING, UUID.randomUUID().toString, Importance.HIGH, RUN_ID_CONFIG_DOC)
             .define(VERSIONS_CONFIG_KEY, Type.STRING, UUID.randomUUID().toString, Importance.HIGH, VERSIONS_CONFIG_DOC)
@@ -44,6 +46,7 @@ class BPSqlTableJobContainer(val spark: SparkSession, config: Map[String, String
     val runId: String = jobConfig.getString(RUN_ID_CONFIG_KEY)
     val jobId: String = UUID.randomUUID().toString
     val id: String = runId
+    val description: String = "sql_table"
 
     val executorService = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue[Runnable])
     //todo: 配置文件

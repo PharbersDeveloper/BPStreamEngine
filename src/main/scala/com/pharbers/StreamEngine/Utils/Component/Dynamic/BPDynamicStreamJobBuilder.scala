@@ -2,7 +2,7 @@ package com.pharbers.StreamEngine.Utils.Component.Dynamic
 
 import com.pharbers.StreamEngine.Utils.Event.EventHandler.BPSEventHandler
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamListener
-import com.pharbers.StreamEngine.Utils.StreamJob.BPDynamicStreamJob
+import com.pharbers.StreamEngine.Utils.Job.BPDynamicStreamJob
 
 /** 功能描述
  *

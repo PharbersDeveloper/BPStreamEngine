@@ -7,14 +7,15 @@ import java.util.concurrent.atomic.AtomicInteger
 import com.pharbers.StreamEngine.Jobs.SandBoxJob.BloodJob.BPSBloodJob
 import com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxConvertSchemaJob.Listener.ConvertSchemaListener
 import com.pharbers.StreamEngine.Jobs.SandBoxJob.UploadEndJob.BPSUploadEndJob
-import com.pharbers.StreamEngine.Utils.Component.Dynamic.JobMsg
-import com.pharbers.StreamEngine.Utils.HDFS.BPSHDFSFile
-import com.pharbers.StreamEngine.Utils.Schema.Spark.{BPSMetaData2Map, SchemaConverter}
-import com.pharbers.StreamEngine.Utils.StreamJob.BPSJobContainer
-import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSKfkJobStrategy
+import com.pharbers.StreamEngine.Utils.Component2
+import com.pharbers.StreamEngine.Utils.Component2.BPSConcertEntry
+import com.pharbers.StreamEngine.Utils.Job.BPSJobContainer
+import com.pharbers.StreamEngine.Utils.Strategy.BPSKfkBaseStrategy
+import com.pharbers.StreamEngine.Utils.Strategy.Schema.{BPSMetaData2Map, SchemaConverter}
+import com.pharbers.StreamEngine.Utils.Strategy.hdfs.BPSHDFSFile
 import com.pharbers.kafka.producer.PharbersKafkaProducer
 import com.pharbers.kafka.schema.{BPJob, DataSet, UploadEnd}
-import org.apache.avro.specific.SpecificRecord
+import org.apache.kafka.common.config.ConfigDef
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, SparkSession}
@@ -39,8 +40,8 @@ class BPSSandBoxConvertSchemaJob(val id: String,
                                  df: Option[DataFrame],
                                  execQueueJob: AtomicInteger) extends BPSJobContainer {
 
-    type T = BPSKfkJobStrategy
-    val strategy: Null = null
+    type T = BPSKfkBaseStrategy
+    val strategy: BPSKfkBaseStrategy = null
 
     import spark.implicits._
 
@@ -66,13 +67,15 @@ class BPSSandBoxConvertSchemaJob(val id: String,
             logger.error(s"AssetId Is Null ====> $assetId, Path ====> ${jobParam("metaDataSavePath")}")
             this.close()
         } else {
-            val schema = SchemaConverter.str2SqlType(schemaData)
+            val sc = BPSConcertEntry.queryComponentWithId("schema convert").get.asInstanceOf[SchemaConverter]
+            val schema = sc.str2SqlType(schemaData)
             logger.info(s"ParentSampleData Info ${jobParam("parentSampleData")}")
             setInputStream(schema, df)
-    
+
             // TODO: 临时
-            BPSHDFSFile.createPath(jobParam("parquetSavePath"))
-            
+            val bs = BPSConcertEntry.queryComponentWithId("hdfs").get.asInstanceOf[BPSHDFSFile]
+            bs.createPath(jobParam("parquetSavePath"))
+
             pushPyJob(Map(
                 "parentsId" -> (jobParam("dataSetId") :: Nil).mkString(","),
                 "noticeTopic" -> "HiveTaskNone",
@@ -80,7 +83,7 @@ class BPSSandBoxConvertSchemaJob(val id: String,
                 "filesPath" -> jobParam("parquetSavePath"),
                 "resultPath" -> s"/jobs/$id"
             ))
-            
+
         }
     }
 
@@ -98,6 +101,7 @@ class BPSSandBoxConvertSchemaJob(val id: String,
                 logger.debug(s"Parquet Save Path Your Path =======> ${jobParam("parquetSavePath")}")
 
                 outputStream = query :: outputStream
+
                 val listener = ConvertSchemaListener(id, jobParam("parentJobId"), spark, this, query, totalRow.get)
                 listener.active(null)
                 listeners = listener :: listeners
@@ -107,44 +111,41 @@ class BPSSandBoxConvertSchemaJob(val id: String,
 
     override def close(): Unit = {
     // TODO 将处理好的Schema发送邮件
+        BPSBloodJob(
+            "data_set_job",
+            new DataSet(
+                Collections.emptyList(),
+                jobParam("dataSetId"),
+                jobParam("jobContainerId"),
+                columnNames.asJava,
+                sheetName.get,
+                totalRow.get,
+                s"${jobParam("parquetSavePath")}",
+                "SampleData")).exec()
+
+        val uploadEnd = new UploadEnd(jobParam("dataSetId"), dataAssetId.get)
+        BPSUploadEndJob("upload_end_job", uploadEnd).exec()
+
         execQueueJob.decrementAndGet()
-	    
-        try {
-            BPSBloodJob(
-                "data_set_job",
-                new DataSet(
-                    Collections.emptyList(),
-                    jobParam("dataSetId"),
-                    jobParam("jobContainerId"),
-                    columnNames.asJava,
-                    sheetName.get,
-                    totalRow.get,
-                    s"${jobParam("parquetSavePath")}",
-                    "SampleData")).exec()
-    
-            val uploadEnd = new UploadEnd(jobParam("dataSetId"), dataAssetId.get)
-            BPSUploadEndJob("upload_end_job", uploadEnd).exec()
-        } catch {
-            case e: Exception => logger.error("Kafka 又给我timeout")
-        }
-        
         totalRow = None
         columnNames = Nil
         sheetName = None
         dataAssetId = None
         logger.debug(s"Self Close Job With ID == =====>${id}")
-        
+
         super.close()
         outputStream.foreach(_.stop())
         listeners.foreach(_.deActive())
-    
-        
+
+
     }
 
     def writeMetaData(metaData: RDD[String], path: String): (String, List[CharSequence], String, Long, String) = {
         try {
-            val primitive = BPSMetaData2Map.list2Map(metaData.collect().toList)
-            val convertContent = primitive ++ SchemaConverter.column2legalWithMetaDataSchema(primitive)
+            val m2m = BPSConcertEntry.queryComponentWithId("meta2map").get.asInstanceOf[BPSMetaData2Map]
+            val sc = BPSConcertEntry.queryComponentWithId("schema convert").get.asInstanceOf[SchemaConverter]
+            val primitive = m2m.list2Map(metaData.collect().toList)
+            val convertContent = primitive ++ sc.column2legalWithMetaDataSchema(primitive)
 
             implicit val formats: DefaultFormats.type = DefaultFormats
             val schema = write(convertContent("schema").asInstanceOf[List[Map[String, Any]]])
@@ -160,10 +161,11 @@ class BPSSandBoxConvertSchemaJob(val id: String,
                     getOrElse("assetId", "").toString
             // TODO: 这块儿还要改进
             convertContent.foreach { x =>
+                val bs = BPSConcertEntry.queryComponentWithId("hdfs").get.asInstanceOf[BPSHDFSFile]
                 if (x._1 == "length") {
-                    BPSHDFSFile.appendLine2HDFS(path, s"""{"length": ${x._2}}""")
+                    bs.appendLine2HDFS(path, s"""{"length": ${x._2}}""")
                 } else {
-                    BPSHDFSFile.appendLine2HDFS(path, write(x._2))
+                    bs.appendLine2HDFS(path, write(x._2))
                 }
             }
             (schema, colNames, tabName, convertContent("length").toString.toLong, assetId)
@@ -180,24 +182,28 @@ class BPSSandBoxConvertSchemaJob(val id: String,
          df match {
             case Some(reading) =>
                 reading.filter($"jobId" === jobParam("parentJobId") and $"type" === "SandBox")
+                val sc = BPSConcertEntry.queryComponentWithId("schema convert").get.asInstanceOf[SchemaConverter]
                 inputStream = Some(
-                    SchemaConverter.column2legalWithDF("data", reading)
+                    sc.column2legalWithDF("data", reading)
                         .select(from_json($"data", schema).as("data"))
                         .select("data.*")
                 )
             case None => logger.info("reading is none")
         }
     }
-    
+
     private def pushPyJob(job: Map[String, String]) {
         implicit val formats: DefaultFormats.type = DefaultFormats
         val jobMsg = write(job)
         val topic = "PyJobContainerListenerTopic"
-        
+
         val pkp = new PharbersKafkaProducer[String, BPJob]
         val bpJob = new BPJob("", "", "", jobMsg)
         val fu = pkp.produce(topic, id, bpJob)
         println(fu.get(10, TimeUnit.SECONDS))
         pkp.producer.close()
     }
+    override val description: String = "schema_job"
+    override val componentProperty: Component2.BPComponentConfig = null
+    override def createConfigDef(): ConfigDef = ???
 }
