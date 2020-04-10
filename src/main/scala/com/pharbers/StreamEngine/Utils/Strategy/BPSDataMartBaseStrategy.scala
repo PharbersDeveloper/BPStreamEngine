@@ -4,6 +4,7 @@ import java.util.Collections
 
 import com.pharbers.StreamEngine.Jobs.CpaCleanJob.BPSCpaCleanJob.PARENTS_CONFIG_KEY
 import com.pharbers.StreamEngine.Jobs.SandBoxJob.BloodJob.BPSBloodJob
+import com.pharbers.StreamEngine.Utils.Strategy.JobStrategy.BPSCommonJobStrategy
 import com.pharbers.kafka.schema.{AssetDataMart, DataSet}
 import org.apache.kafka.common.config.ConfigDef
 import org.apache.spark.sql.SparkSession

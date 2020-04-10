@@ -36,7 +36,7 @@ object BPSDriverChannel {
     }
 
     def unRegisterListener(listener: BPStreamRemoteListener): Unit = channel match {
-        case Some(c) => c.lst = c.lst.filterNot(_ == listener)
+        case Some(c) => c.unRegisterListener(listener)
         case None => ???
     }
 
@@ -60,6 +60,8 @@ class BPSDriverChannel(override val componentProperty: Component2.BPComponentCon
     var lst: List[BPStreamRemoteListener] = Nil
 
     def registerListener(listener: BPStreamRemoteListener): Unit = lst = listener :: lst
+
+    def unRegisterListener(listener: BPStreamRemoteListener): Unit = lst = lst.filterNot(_ == listener)
 
     def trigger(e: BPSEvents): Unit = lst.filter(_.hit(e)).foreach(x =>
         try {

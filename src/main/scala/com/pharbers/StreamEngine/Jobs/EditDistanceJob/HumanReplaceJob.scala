@@ -2,7 +2,7 @@
 //
 //import com.pharbers.StreamEngine.Utils.Component2
 //import com.pharbers.StreamEngine.Utils.Job.{BPSJobContainer, BPStreamJob}
-//import com.pharbers.StreamEngine.Utils.Strategy.BPSCommonJobStrategy
+//import com.pharbers.StreamEngine.Utils.Strategy.JobStrategy.BPSCommonJobStrategy
 //import org.apache.kafka.common.config.ConfigDef
 //import org.apache.spark.SparkConf
 //import org.apache.spark.sql.catalyst.encoders.RowEncoder

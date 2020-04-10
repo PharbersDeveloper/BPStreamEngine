@@ -39,7 +39,7 @@ case class BPSSchemaHandlerV2BPS(schemaEvent: BPSEvents) extends BPSEventHandler
                 job.outputStream = query :: job.outputStream
                 val endListenerV2 = new BPSOssEndListenerV2(spark, job, jobId, e.timestamp, query)
                 endListenerV2.active(null)
-                job.listeners = endListenerV2 :: job.listeners
+//                job.listeners = endListenerV2 :: job.listeners
             }
 
             case None => ???
