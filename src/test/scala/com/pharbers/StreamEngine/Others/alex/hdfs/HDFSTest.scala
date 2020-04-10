@@ -10,26 +10,26 @@ import scala.io.Source
 
 class HDFSTest extends FunSuite {
 	test("HDFS Append Test") {
-//		try {
-//			1 to 100 foreach { x =>
-//				BPSHDFSFile.appendLine2HDFS(s"/jobs/test/$x", "Fuck")
-//			}
-//		} catch {
-//			case e: Exception => e.printStackTrace()
-//		}
+		//		try {
+		//			1 to 100 foreach { x =>
+		//				BPSHDFSFile.appendLine2HDFS(s"/jobs/test/$x", "Fuck")
+		//			}
+		//		} catch {
+		//			case e: Exception => e.printStackTrace()
+		//		}
 	}
-
-	test("Read Parquet Test") {
+	
+	test("Read Parquet With Path File") {
 		val spark = BPSConcertEntry.queryComponentWithId("spark").get.asInstanceOf[BPSparkSession]
 		import scala.io.Source
 		
 		val source = Source.fromFile("/Users/qianpeng/Desktop/files.txt", "UTF-8")
 		val lines = source.getLines().toArray
 		source.close()
-		lines.foreach{ x =>
+		lines.foreach { x =>
 			val hdfsUrl = s"/jobs/5e8f1871684d707c34f40b19/$x/contents"
 			val reading = spark.read.parquet(hdfsUrl)
-//			reading.show()
+			//			reading.show()
 			val count = reading.count()
 			if (count < 145) {
 				println(x)
@@ -37,9 +37,15 @@ class HDFSTest extends FunSuite {
 			}
 			
 		}
-		
-		
-		
+	}
+	
+	test("Read Parquet With Path") {
+		val spark = BPSConcertEntry.queryComponentWithId("spark").get.asInstanceOf[BPSparkSession]
+		val hdfsUrl = s"/jobs/5e904d48753bf01ec1b67549/86c336a0-53cc-4d70-8204-3cafb508b90b/contents"
+		val reading = spark.read.parquet(hdfsUrl)
+		reading.show()
+		val count = reading.count()
+		println(count)
 	}
 }
 

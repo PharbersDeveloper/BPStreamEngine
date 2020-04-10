@@ -15,7 +15,7 @@
                 "app.name": "bp-stream-engine",
                 "master": "local[2]",
                 "spark.configs.path": "src/main/resources/sparkConfig.properties",
-                "log.level": "INFO",
+                "log.level": "ERROR",
                 "run.model": "client"
             }
         },
@@ -43,7 +43,7 @@
             "name": "BPSHDFSFile",
             "args": [],
             "config": {
-                "hdfsAddr": "hdfs://StarLord:8020"
+                "hdfsAddr": "hdfs://starLord:8020"
             }
         },
         {
@@ -98,9 +98,20 @@
                 "listens": "SandBox-Start",
                 "FileMetaData.msgType": "SandBox-FileMetaData"
             }
+        },
+        {
+            "id": "SandBoxJobContainer",
+            "name": "BPSSandBoxJobContainer",
+            "args": [],
+            "config": {
+                "listens": "SandBox-FileMetaData",
+                "Python.msgType": "Python-FileMetaData",
+                "queue": 5
+            }
         }
     ],
     "starts": [
-        "OssJobContainer"
+        "OssJobContainer",
+        "SandBoxJobContainer"
     ]
 }
