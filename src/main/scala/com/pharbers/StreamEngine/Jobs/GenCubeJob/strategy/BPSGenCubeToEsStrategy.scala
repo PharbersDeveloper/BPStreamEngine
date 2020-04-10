@@ -251,7 +251,7 @@ class BPSGenCubeToEsStrategy(spark: SparkSession) extends BPSStrategy[DataFrame]
                 .format("es")
 //                .option("es.write.operation", "upsert")
                 .mode("append")
-                .save("fullcube2")
+                .save(DEFAULT_INDEX_NAME)
         }
 
         spark.emptyDataFrame
