@@ -11,6 +11,8 @@ import org.apache.kafka.common.config.ConfigDef
 import org.apache.spark.sql
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
+
+// TODO  等重构
 @deprecated
 object BPSBloodJob {
 	def apply(topic: String,

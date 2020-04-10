@@ -11,6 +11,7 @@ import org.apache.kafka.common.config.ConfigDef
 import org.apache.spark.sql
 import org.apache.spark.sql.SparkSession
 
+// TODO  等重构
 @deprecated
 object BPSUploadEndJob {
 	def apply(topic: String,
