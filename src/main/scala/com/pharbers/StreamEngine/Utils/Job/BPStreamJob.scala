@@ -29,9 +29,9 @@ trait BPStreamJob extends PhLogable with BPComponent {
     @transient
     var outputStream: List[StreamingQuery] = Nil
     @transient
-    var listeners: List[BPStreamListener] = Nil
+    protected var listeners: List[BPStreamListener] = Nil
     @transient
-    var handlers: List[BPSEventHandler] = Nil
+    protected var handlers: List[BPSEventHandler] = Nil
     def open(): Unit = {}
     def close(): Unit = {
         logger.info("alfred clean job with id ========>" + id)

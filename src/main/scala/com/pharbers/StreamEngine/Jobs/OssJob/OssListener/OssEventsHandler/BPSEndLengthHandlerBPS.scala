@@ -28,7 +28,7 @@ case class BPSEndLengthHandlerBPS() extends BPSEventHandler {
 
                 val el = new BPSOssEndListener(spark, job, qn, event2Length(e))
                 el.active(null)
-                job.listeners = el :: job.listeners
+//                job.listeners = el :: job.listeners
             }
             case None => ???
         }

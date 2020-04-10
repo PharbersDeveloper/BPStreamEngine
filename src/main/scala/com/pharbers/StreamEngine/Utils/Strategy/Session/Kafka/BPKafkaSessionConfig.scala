@@ -14,9 +14,9 @@ trait BPKafkaSessionConfig extends SessionStrategy {
     final val KAFKA_URL_DOC = "kafka url"
     final val SCHEMA_URL_KEY = "schema"
     final val SCHEMA_URL_DOC = "Schema Registry url"
-    final val DATA_TOPIC_KEY = "data topic"
+    final val DATA_TOPIC_KEY = "data.topic"
     final val DATA_TOPIC_DOC = "kafka data topic config"
-    final val MSG_TOPIC_KEY = "msg topic"
+    final val MSG_TOPIC_KEY = "msg.topic"
     final val MSG_TOPIC_DOC = "kafka msg topics config"
 
     override def createConfigDef(): ConfigDef = new ConfigDef()
