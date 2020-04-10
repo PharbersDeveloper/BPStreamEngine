@@ -4,7 +4,7 @@ package com.pharbers.StreamTest
 import java.net.{URL, URLClassLoader}
 import java.util.UUID
 
-import com.pharbers.StreamEngine.Utils.Session.Spark.BPSparkSession
+import com.pharbers.StreamEngine.Utils.Strategy.Session.Spark.BPSparkSession
 import org.scalatest.FunSuite
 import java.util.jar.JarFile
 
@@ -78,7 +78,7 @@ class BPSStreamingTest extends FunSuite {
     }
 
     test("test file stream"){
-        val spark = BPSparkSession()
+        val spark = BPSparkSession(null)
         val df = spark.read.csv("/test/dcs/testFile")
         val schema = df.schema
         df.write.mode("overwrite").parquet("/test/dcs/testFile/parquet")

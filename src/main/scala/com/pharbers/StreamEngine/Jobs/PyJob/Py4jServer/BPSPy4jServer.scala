@@ -3,11 +3,14 @@ package com.pharbers.StreamEngine.Jobs.PyJob.Py4jServer
 import java.util.UUID
 import java.net.ServerSocket
 import java.io.BufferedWriter
+
+import com.pharbers.StreamEngine.Utils.Component2.BPSConcertEntry
 import org.json4s.DefaultFormats
+
 import scala.util.parsing.json.JSON
 import org.json4s.jackson.Serialization.write
 import py4j.{GatewayServer, Py4JNetworkException}
-import com.pharbers.StreamEngine.Utils.HDFS.BPSHDFSFile
+import com.pharbers.StreamEngine.Utils.Strategy.hdfs.BPSHDFSFile
 
 /** 实现 Py4j 的 GatewayServer 的实例
  *
@@ -29,6 +32,8 @@ case class BPSPy4jServer(serverConf: Map[String, Any])
                         (manager_pop: () => String, manager_close: String => Unit) extends Serializable {
 
     final val RETRY_COUNT: Int = serverConf("retryCount").toString.toInt
+    lazy val hdfsfile: BPSHDFSFile =
+        BPSConcertEntry.queryComponentWithId("hdfs").asInstanceOf[BPSHDFSFile]
 
     val jobId: String = serverConf("jobId").toString
     val threadId: String = serverConf("threadId").toString
@@ -70,10 +75,14 @@ case class BPSPy4jServer(serverConf: Map[String, Any])
     }
 
     def openBuffer(): BPSPy4jServer = {
-        if (rowRecordBufferedWriter.isEmpty) rowRecordBufferedWriter = BPSHDFSFile.openHdfsBuffer(rowRecordPath)
-        if (metadataBufferedWriter.isEmpty) metadataBufferedWriter = BPSHDFSFile.openHdfsBuffer(metadataPath)
-        if (successBufferedWriter.isEmpty) successBufferedWriter = BPSHDFSFile.openHdfsBuffer(successPath)
-        if (errBufferedWriter.isEmpty) errBufferedWriter = BPSHDFSFile.openHdfsBuffer(errPath)
+//        if (rowRecordBufferedWriter.isEmpty) rowRecordBufferedWriter = BPSHDFSFile.openHdfsBuffer(rowRecordPath)
+//        if (metadataBufferedWriter.isEmpty) metadataBufferedWriter = BPSHDFSFile.openHdfsBuffer(metadataPath)
+//        if (successBufferedWriter.isEmpty) successBufferedWriter = BPSHDFSFile.openHdfsBuffer(successPath)
+//        if (errBufferedWriter.isEmpty) errBufferedWriter = BPSHDFSFile.openHdfsBuffer(errPath)
+        if (rowRecordBufferedWriter.isEmpty) rowRecordBufferedWriter = hdfsfile.openHdfsBuffer(rowRecordPath)
+        if (metadataBufferedWriter.isEmpty) metadataBufferedWriter = hdfsfile.openHdfsBuffer(metadataPath)
+        if (successBufferedWriter.isEmpty) successBufferedWriter = hdfsfile.openHdfsBuffer(successPath)
+        if (errBufferedWriter.isEmpty) errBufferedWriter = hdfsfile.openHdfsBuffer(errPath)
         this
     }
 

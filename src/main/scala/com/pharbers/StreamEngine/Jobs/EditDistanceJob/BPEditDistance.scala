@@ -1,13 +1,14 @@
 package com.pharbers.StreamEngine.Jobs.EditDistanceJob
 
-import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSDataMartJobStrategy
-import com.pharbers.StreamEngine.Utils.StreamJob.{BPSJobContainer, BPStreamJob}
+import com.pharbers.StreamEngine.Utils.Job.{BPSJobContainer, BPStreamJob}
 import org.apache.kafka.common.config.ConfigDef
 import org.apache.kafka.common.config.ConfigDef.{Importance, Type}
 import org.apache.spark.sql.catalyst.encoders.RowEncoder
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 import org.apache.spark.sql.functions._
-import com.pharbers.StreamEngine.Jobs.EditDistanceJob.BPEditDistance.{TABLE_NAME_CONFIG_DOC, TABLE_NAME_CONFIG_KEY, DATA_SETS_CONFIG_KEY, DATA_SETS_CONFIG_DOC}
+import com.pharbers.StreamEngine.Jobs.EditDistanceJob.BPEditDistance.{DATA_SETS_CONFIG_DOC, DATA_SETS_CONFIG_KEY, TABLE_NAME_CONFIG_DOC, TABLE_NAME_CONFIG_KEY}
+import com.pharbers.StreamEngine.Utils.Component2
+import com.pharbers.StreamEngine.Utils.Strategy.BPSDataMartBaseStrategy
 
 /** 功能描述
   *
@@ -16,15 +17,16 @@ import com.pharbers.StreamEngine.Jobs.EditDistanceJob.BPEditDistance.{TABLE_NAME
   * @since 2020/02/04 13:38
   * @note 一些值得注意的地方
   */
-case class BPEditDistance(jobContainer: BPSJobContainer, spark: SparkSession, config: Map[String, String]) extends BPStreamJob {
+case class BPEditDistance(jobContainer: BPSJobContainer, spark: SparkSession, config_map: Map[String, String]) extends BPStreamJob {
 
     import spark.implicits._
 
-    val configDef: ConfigDef = new ConfigDef()
+    override val componentProperty: Component2.BPComponentConfig = null
+    override def createConfigDef(): ConfigDef = new ConfigDef()
             .define(TABLE_NAME_CONFIG_KEY, Type.STRING, "cpa", Importance.HIGH, TABLE_NAME_CONFIG_DOC)
             .define(DATA_SETS_CONFIG_KEY, Type.LIST, Importance.HIGH, DATA_SETS_CONFIG_DOC)
-    override type T = BPSDataMartJobStrategy
-    override val strategy: BPSDataMartJobStrategy = new BPSDataMartJobStrategy(config)
+    override type T = BPSDataMartBaseStrategy
+    override val strategy: BPSDataMartBaseStrategy = new BPSDataMartBaseStrategy(config_map)
     val jobId: String = strategy.getJobId
     val runId: String = strategy.getRunId
     override val id: String = jobId
@@ -38,7 +40,7 @@ case class BPEditDistance(jobContainer: BPSJobContainer, spark: SparkSession, co
     )
 
     override def open(): Unit = {
-        //        inputStream = Some(spark.sql("select * from cpa"))
+//                inputStream = Some(spark.sql("select * from cpa"))
         inputStream = jobContainer.inputStream
     }
 
@@ -120,7 +122,7 @@ case class BPEditDistance(jobContainer: BPSJobContainer, spark: SparkSession, co
                 .selectExpr(List("ID", "COL_NAME", "ORIGIN", "check as DEST") ++ in.columns.zipWithIndex.map(x => s"cols[${x._2}] as ORIGIN_${x._1}").toList: _*)
                 .write
                 //                .bucketBy(11, "ORIGIN_MOLE_NAME")
-                .partitionBy("ORIGIN_MOLE_NAME")
+//                .partitionBy("ORIGIN_MOLE_NAME")
                 .mode("overwrite")
                 .option("path", replaceUrl)
                 .saveAsTable(s"${tableName}_replace")
@@ -132,7 +134,7 @@ case class BPEditDistance(jobContainer: BPSJobContainer, spark: SparkSession, co
                 .withColumn("CANDIDATE", array($"CANDIDATE"))
                 .write
                 //                .bucketBy(11, "ORIGIN_MOLE_NAME")
-                .partitionBy("ORIGIN_MOLE_NAME")
+//                .partitionBy("ORIGIN_MOLE_NAME")
                 .mode("overwrite")
                 .option("path", noReplaceUrl)
                 .saveAsTable(s"${tableName}_no_replace")
@@ -146,7 +148,7 @@ case class BPEditDistance(jobContainer: BPSJobContainer, spark: SparkSession, co
                 .mode("overwrite")
                 .option("path", newCpaUrl)
                 .saveAsTable(s"${tableName}_new")
-        strategy.pushDataSet(s"${tableName}_new", version, noReplaceUrl, "overwrite")
+//        strategy.pushDataSet(s"${tableName}_new", version, noReplaceUrl, "overwrite")
     }
 
 
@@ -206,6 +208,8 @@ case class BPEditDistance(jobContainer: BPSJobContainer, spark: SparkSession, co
             )
         }).drop("in_min" +: humanDf.columns: _*)
     }
+
+    override val description: String = "EditDistanceJob"
 }
 
 object BPEditDistance extends Serializable {

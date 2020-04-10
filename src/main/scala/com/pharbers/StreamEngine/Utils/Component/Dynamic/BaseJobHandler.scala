@@ -9,7 +9,7 @@ import com.pharbers.StreamEngine.Utils.Component.Node.NodeMsgHandler
 import com.pharbers.StreamEngine.Utils.Config.BPSConfig
 import com.pharbers.StreamEngine.Utils.Event.EventHandler.BPSEventHandler
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamListener
-import com.pharbers.StreamEngine.Utils.StreamJob.BPDynamicStreamJob
+import com.pharbers.StreamEngine.Utils.Job.BPDynamicStreamJob
 import com.pharbers.StreamEngine.Utils.ThreadExecutor.ThreadExecutor
 import com.pharbers.kafka.consumer.PharbersKafkaConsumer
 import com.pharbers.kafka.schema.BPJob
@@ -129,7 +129,7 @@ private[Component] class BaseJobHandler(nodeHandler: NodeMsgHandler,
     private def addListener(jobMsg: JobMsg, args: Seq[Any]): Unit = {
         val listener = jobBuilder.buildListener(jobMsg, getMethodMirror(jobMsg.classPath)(args: _*).asInstanceOf[BPStreamListener])
         jobMsg.dependencies.foreach(x => {
-            jobs(x).listeners = jobs(x).listeners :+ listener
+//            jobs(x).listeners = jobs(x).listeners :+ listener
             jobs(x).registerListeners(listener)
         })
     }
@@ -137,7 +137,7 @@ private[Component] class BaseJobHandler(nodeHandler: NodeMsgHandler,
     private def addHandler(jobMsg: JobMsg, args: Seq[Any]): Unit = {
         val handler = jobBuilder.buildHandler(jobMsg, getMethodMirror(jobMsg.classPath)(args: _*).asInstanceOf[BPSEventHandler])
         jobMsg.dependencies.foreach(x => {
-            jobs(x).handlers = jobs(x).handlers :+ handler
+//            jobs(x).handlers = jobs(x).handlers :+ handler
             jobs(x).handlerExec(handler)
         })
     }

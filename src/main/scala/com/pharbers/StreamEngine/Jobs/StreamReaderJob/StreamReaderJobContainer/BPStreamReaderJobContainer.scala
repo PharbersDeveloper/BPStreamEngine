@@ -3,8 +3,10 @@ package com.pharbers.StreamEngine.Jobs.StreamReaderJob.StreamReaderJobContainer
 import java.sql.Timestamp
 import java.util.UUID
 
-import com.pharbers.StreamEngine.Utils.StreamJob.BPSJobContainer
-import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSKfkJobStrategy
+import com.pharbers.StreamEngine.Utils.Component2
+import com.pharbers.StreamEngine.Utils.Job.BPSJobContainer
+import com.pharbers.StreamEngine.Utils.Strategy.BPSKfkBaseStrategy
+import org.apache.kafka.common.config.ConfigDef
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.types._
 
@@ -14,7 +16,8 @@ object BPStreamReaderJobContainer {
 
 class BPStreamReaderJobContainer(override val spark: SparkSession) extends BPSJobContainer {
     val id = UUID.randomUUID().toString
-    type T = BPSKfkJobStrategy
+    override val description: String = "stream_reader"
+    type T = BPSKfkBaseStrategy
     override val strategy = null
 
     import spark.implicits._
@@ -47,4 +50,8 @@ class BPStreamReaderJobContainer(override val spark: SparkSession) extends BPSJo
         }
         case None => ???
     }
+
+    override val componentProperty: Component2.BPComponentConfig = null
+
+    override def createConfigDef(): ConfigDef = ???
 }

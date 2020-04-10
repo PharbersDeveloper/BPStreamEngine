@@ -40,11 +40,11 @@ object RecallSandbox extends App {
     while (assetsIterator.hasNext) {
         val asset = assetsIterator.next()
         val iterator = asset.getArray("dfs").iterator()
-        while (iterator.hasNext) {
-            val id = iterator.next().asObjectId()
-            val url = datasets.find(Filters.eq(id)).first().getString("url").getValue
-            pushJob(url, id.getValue.toString, runId)
-        }
+//        while (iterator.hasNext) {
+//            val id = iterator.next().asObjectId()
+//            val url = datasets.find(Filters.eq(id)).first().getString("url").getValue
+//            pushJob(url, id.getValue.toString, runId)
+//        }
 
     }
 

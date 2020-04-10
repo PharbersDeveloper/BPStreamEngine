@@ -31,7 +31,7 @@
 
     <property>
         <name>dfs.replication</name>
-        <value>1</value>  <!--TODO: 注意修改副本数量-->
+        <value>3</value>  <!--TODO: 注意修改副本数量-->
         <description>文件的副本数量，默认为3，建议3个以上来提高数据可靠性。我们为了节省磁盘只使用一个副本。</description>
     </property>
     <property>

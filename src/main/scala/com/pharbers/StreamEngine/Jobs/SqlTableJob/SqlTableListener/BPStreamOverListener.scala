@@ -6,12 +6,13 @@ import com.pharbers.StreamEngine.Utils.Channel.Local.BPSLocalChannel
 import com.pharbers.StreamEngine.Utils.Config.BPSConfig
 import com.pharbers.StreamEngine.Utils.Event.BPSEvents
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamListener
-import com.pharbers.StreamEngine.Utils.HDFS.BPSHDFSFile
+import com.pharbers.StreamEngine.Utils.Strategy.hdfs.BPSHDFSFile
 import org.apache.kafka.common.config.ConfigDef
 import org.apache.kafka.common.config.ConfigDef.{Importance, Type}
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import BPStreamOverListener._
-import com.pharbers.StreamEngine.Utils.Schema.Spark.BPSParseSchema
+import com.pharbers.StreamEngine.Utils.Component2.BPSConcertEntry
+import com.pharbers.StreamEngine.Utils.Strategy.Schema.BPSParseSchema
 
 /** 功能描述
   *
@@ -29,20 +30,24 @@ case class BPStreamOverListener(job: BPSqlTableJobContainer, config: Map[String,
             .define(METADATA_PATH_CONFIG_KEY, Type.STRING, "", Importance.HIGH, METADATA_PATH_CONFIG_DOC)
 
     private val listenerConfig: BPSConfig = BPSConfig(configDef, config)
+    lazy val hdfsfile: BPSHDFSFile =
+        BPSConcertEntry.queryComponentWithId("hdfs").asInstanceOf[BPSHDFSFile]
 
     override def trigger(e: BPSEvents): Unit = {
         config("taskType") match {
             case "end" =>
                 job.runJob()
             case _ =>
-                val rows = BPSHDFSFile.readHDFS(listenerConfig.getString(ROW_RECORD_PATH_CONFIG_KEY)).map(_.toLong).sum
+//                val rows = BPSHDFSFile.readHDFS(listenerConfig.getString(ROW_RECORD_PATH_CONFIG_KEY)).map(_.toLong).sum
+                val rows = hdfsfile.readHDFS(listenerConfig.getString(ROW_RECORD_PATH_CONFIG_KEY)).map(_.toLong).sum
                 logger.debug(s"row record path: ${listenerConfig.getString(ROW_RECORD_PATH_CONFIG_KEY)}")
                 logger.debug(s"rows: $rows")
                 logger.debug(s"length: ${listenerConfig.getLong(LENGTH_CONFIG_KEY)}")
                 if (rows >= listenerConfig.getLong(LENGTH_CONFIG_KEY)) {
                     logger.info(s"启动sql job")
                     val metadataPath: String = listenerConfig.getString(METADATA_PATH_CONFIG_KEY)
-                    val metadata = BPSParseSchema.parseMetadata(metadataPath)(job.spark)
+                    val ps = BPSConcertEntry.queryComponentWithId("parse schema").asInstanceOf[BPSParseSchema]
+                    val metadata = ps.parseMetadata(metadataPath)(job.spark)
                     val providers = metadata.getOrElse("providers", List("")).asInstanceOf[List[String]].mkString(",")
 
                     job.addJobConfig(config ++ Map("providers" -> providers))

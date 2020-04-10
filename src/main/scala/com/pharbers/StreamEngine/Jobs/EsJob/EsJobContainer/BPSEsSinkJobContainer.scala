@@ -3,18 +3,20 @@ package com.pharbers.StreamEngine.Jobs.EsJob.EsJobContainer
 import java.util.UUID
 
 import com.pharbers.StreamEngine.Jobs.EsJob.Listener.EsSinkJobStartListener
+import com.pharbers.StreamEngine.Utils.Component2
 import org.apache.spark.sql.SparkSession
 import com.pharbers.StreamEngine.Utils.Event.EventHandler.BPSEventHandler
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamListener
-import com.pharbers.StreamEngine.Utils.HDFS.BPSHDFSFile
-import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSKfkJobStrategy
-import com.pharbers.StreamEngine.Utils.StreamJob.{BPDynamicStreamJob, BPSJobContainer}
+import com.pharbers.StreamEngine.Utils.Strategy.hdfs.BPSHDFSFile
+import com.pharbers.StreamEngine.Utils.Job.{BPDynamicStreamJob, BPSJobContainer}
+import com.pharbers.StreamEngine.Utils.Strategy.BPSKfkBaseStrategy
 import com.pharbers.StreamEngine.Utils.ThreadExecutor.ThreadExecutor
 import com.pharbers.kafka.consumer.PharbersKafkaConsumer
 import com.pharbers.kafka.schema.EsSinkJobSubmit
+import org.apache.kafka.common.config.ConfigDef
 
 object BPSEsSinkJobContainer {
-    def apply(strategy: BPSKfkJobStrategy,
+    def apply(strategy: BPSKfkBaseStrategy,
               spark: SparkSession,
               config: Map[String, String]): BPSEsSinkJobContainer =
         new BPSEsSinkJobContainer(spark, config)
@@ -31,8 +33,8 @@ class BPSEsSinkJobContainer(override val spark: SparkSession,
                             config: Map[String, String])
         extends BPSJobContainer with BPDynamicStreamJob {
 
-    override val strategy: BPSKfkJobStrategy = null
-    type T = BPSKfkJobStrategy
+    override val strategy: BPSKfkBaseStrategy = null
+    type T = BPSKfkBaseStrategy
 
     var metadata: Map[String, Any] = Map.empty
     final val DEFAULT_LISTENING_TOPIC = "EsSinkJobSubmit"
@@ -66,4 +68,10 @@ class BPSEsSinkJobContainer(override val spark: SparkSession,
     override def handlerExec(handler: BPSEventHandler): Unit = {}
 
     override def registerListeners(listener: BPStreamListener): Unit = {}
+
+    override val componentProperty: Component2.BPComponentConfig = null
+
+    override def createConfigDef(): ConfigDef = ???
+
+    override val description: String = "es_sink_job"
 }

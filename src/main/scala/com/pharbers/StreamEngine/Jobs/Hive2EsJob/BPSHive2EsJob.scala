@@ -1,10 +1,11 @@
 package com.pharbers.StreamEngine.Jobs.Hive2EsJob
 
 import com.pharbers.StreamEngine.Jobs.Hive2EsJob.strategy.{BPSMaxDataHive2EsStrategy, BPSStrategy}
+import com.pharbers.StreamEngine.Utils.Component2
 import com.pharbers.StreamEngine.Utils.Config.BPSConfig
 import org.apache.spark.sql.{DataFrame, SparkSession}
-import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSJobStrategy
-import com.pharbers.StreamEngine.Utils.StreamJob.{BPSJobContainer, BPStreamJob}
+import com.pharbers.StreamEngine.Utils.Job.{BPSJobContainer, BPStreamJob}
+import com.pharbers.StreamEngine.Utils.Strategy.BPStrategyComponent
 import org.apache.kafka.common.config.ConfigDef
 import org.apache.kafka.common.config.ConfigDef.{Importance, Type}
 
@@ -50,8 +51,8 @@ class BPSHive2EsJob(override val id: String,
         extends BPStreamJob {
 
     //TODO:这Strategy太死板，无法重用
-    type T = BPSJobStrategy
-    override val strategy: BPSJobStrategy = null
+    type T = BPStrategyComponent
+    override val strategy: BPStrategyComponent = null
 
     //TODO:InnerJobStrategy只需实现convert函数，来处理包装job内数据，输入输出的数据格式一致
     type InnerJobDataType = DataFrame
@@ -105,4 +106,9 @@ class BPSHive2EsJob(override val id: String,
         logger.info("hive to es job closed with id ========>" + id)
     }
 
+    override val componentProperty: Component2.BPComponentConfig = null
+
+    override def createConfigDef(): ConfigDef = ???
+
+    override val description: String = "hive2es_job"
 }

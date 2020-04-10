@@ -2,7 +2,7 @@ package com.pharbers.StreamEngine.Jobs.OssJob.OssListener.OssEventsHandler
 
 import java.util.UUID
 
-import com.pharbers.StreamEngine.Utils.StreamJob.BPStreamJob
+import com.pharbers.StreamEngine.Utils.Job.BPStreamJob
 import com.pharbers.StreamEngine.Jobs.OssJob.OssListener.BPSOssEndListener
 import com.pharbers.StreamEngine.Utils.Event.EventHandler.BPSEventHandler
 import com.pharbers.StreamEngine.Utils.Event.BPSEvents
@@ -28,7 +28,7 @@ case class BPSEndLengthHandlerBPS() extends BPSEventHandler {
 
                 val el = new BPSOssEndListener(spark, job, qn, event2Length(e))
                 el.active(null)
-                job.listeners = el :: job.listeners
+//                job.listeners = el :: job.listeners
             }
             case None => ???
         }

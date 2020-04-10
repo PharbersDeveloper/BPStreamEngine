@@ -1,12 +1,15 @@
 package com.pharbers.StreamEngine.Jobs.EsJob
 
 import com.pharbers.StreamEngine.Jobs.EsJob.Listener.EsSinkJobCloseListener
-import com.pharbers.StreamEngine.Utils.HDFS.BPSHDFSFile
-import com.pharbers.StreamEngine.Utils.Schema.Spark.BPSParseSchema
+import com.pharbers.StreamEngine.Utils.Component2
+import com.pharbers.StreamEngine.Utils.Component2.BPSConcertEntry
+import com.pharbers.StreamEngine.Utils.Strategy.hdfs.BPSHDFSFile
+import com.pharbers.StreamEngine.Utils.Strategy.Schema.BPSParseSchema
 import org.apache.spark.sql
 import org.apache.spark.sql.SparkSession
-import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.BPSJobStrategy
-import com.pharbers.StreamEngine.Utils.StreamJob.{BPSJobContainer, BPStreamJob}
+import com.pharbers.StreamEngine.Utils.Job.{BPSJobContainer, BPStreamJob}
+import com.pharbers.StreamEngine.Utils.Strategy.BPStrategyComponent
+import org.apache.kafka.common.config.ConfigDef
 
 object BPSEsSinkJob {
     def apply(id: String,
@@ -29,18 +32,21 @@ class BPSEsSinkJob(override val id: String,
                    jobConf: Map[String, Any])
         extends BPStreamJob {
 
-    type T = BPSJobStrategy
-    override val strategy: BPSJobStrategy = null
+    type T = BPStrategyComponent
+    override val strategy: BPStrategyComponent = null
 
     var metadata: Map[String, Any] = Map.empty
-    val metadataPath: String = jobConf("metadataPath").toString
+    val metadataPath2: String = jobConf("metadataPath").toString
     val filesPath: String = jobConf("filesPath").toString
     val indexName: String = jobConf("indexName").toString
     val checkpointLocation: String = jobConf("checkpointLocation").toString
+    lazy val hdfsfile: BPSHDFSFile =
+        BPSConcertEntry.queryComponentWithId("hdfs").asInstanceOf[BPSHDFSFile]
 
     // 当所需文件未准备完毕，则等待
     def notFoundShouldWait(path: String): Unit = {
-        if (!BPSHDFSFile.checkPath(path)) {
+//        if (!BPSHDFSFile.checkPath(path)) {
+        if (!hdfsfile.checkPath(path)) {
             logger.debug(path + "文件不存在，等待 1s")
             Thread.sleep(1000)
             notFoundShouldWait(path)
@@ -50,10 +56,11 @@ class BPSEsSinkJob(override val id: String,
     override def open(): Unit = {
         logger.info("es sink job start with id ========>" + id)
         container.jobs += id -> this
-        notFoundShouldWait(metadataPath)
+        notFoundShouldWait(metadataPath2)
         notFoundShouldWait(filesPath )
-        metadata = BPSParseSchema.parseMetadata(metadataPath)(spark)
-        val loadSchema = BPSParseSchema.parseSchema(metadata("schema").asInstanceOf[List[_]])
+        val ps = BPSConcertEntry.queryComponentWithId("parse schema").asInstanceOf[BPSParseSchema]
+        metadata = ps.parseMetadata(metadataPath2)(spark)
+        val loadSchema = ps.parseSchema(metadata("schema").asInstanceOf[List[_]])
 
         val reading = spark.readStream
             .schema(loadSchema)
@@ -87,4 +94,9 @@ class BPSEsSinkJob(override val id: String,
         container.finishJobWithId(id)
         logger.info("es sink job closed with id ========>" + id)
     }
+
+    override val componentProperty: Component2.BPComponentConfig = null
+    override def createConfigDef(): ConfigDef = ???
+
+    override val description: String = "es_sink_job"
 }

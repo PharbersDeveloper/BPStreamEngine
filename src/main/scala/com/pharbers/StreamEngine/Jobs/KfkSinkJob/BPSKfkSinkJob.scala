@@ -1,8 +1,10 @@
 package com.pharbers.StreamEngine.Jobs.KfkSinkJob
 import java.util.UUID
 
-import com.pharbers.StreamEngine.Utils.StreamJob.{BPSJobContainer, BPStreamJob}
-import com.pharbers.StreamEngine.Utils.StreamJob.JobStrategy.{BPSJobStrategy, BPSKfkJobStrategy}
+import com.pharbers.StreamEngine.Utils.Component2
+import com.pharbers.StreamEngine.Utils.Job.{BPSJobContainer, BPStreamJob}
+import com.pharbers.StreamEngine.Utils.Strategy.{BPStrategyComponent, BPSKfkBaseStrategy}
+import org.apache.kafka.common.config.ConfigDef
 import org.apache.spark.sql
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
@@ -16,20 +18,20 @@ object BPSKfkSinkJob {
                  spark: SparkSession,
                  inputStream: Option[sql.DataFrame],
                  container: BPSJobContainer,
-                 strategy: BPSKfkJobStrategy,
+                 strategy: BPSKfkBaseStrategy,
                  concert: Map[String, Any]
              ): BPSKfkSinkJob =
         new BPSKfkSinkJob(id, spark, inputStream, container, strategy, concert)
 }
 
 class BPSKfkSinkJob(
-                   val id: String,
-                   val spark: SparkSession,
-                   val is: Option[sql.DataFrame],
-                   val container: BPSJobContainer,
-                   override val strategy: BPSKfkJobStrategy,
-                   concert: Map[String, Any]) extends BPStreamJob {
-    type T = BPSJobStrategy
+                       val id: String,
+                       val spark: SparkSession,
+                       val is: Option[sql.DataFrame],
+                       val container: BPSJobContainer,
+                       override val strategy: BPSKfkBaseStrategy,
+                       concert: Map[String, Any]) extends BPStreamJob {
+    type T = BPStrategyComponent
 
     override def exec(): Unit = {
         inputStream = is
@@ -59,4 +61,10 @@ class BPSKfkSinkJob(
         super.close()
         container.finishJobWithId(id)
     }
+
+    override val componentProperty: Component2.BPComponentConfig = null
+
+    override def createConfigDef(): ConfigDef = ???
+
+    override val description: String = "kafka_sink_job"
 }

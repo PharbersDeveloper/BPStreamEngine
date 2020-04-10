@@ -1,6 +1,6 @@
 package com.pharbers.StreamEngine.Utils.Component
 
-import com.pharbers.StreamEngine.Utils.Log.BPSLogContext
+import com.pharbers.StreamEngine.Utils.Strategy.Log.BPSLogContext
 import org.scalatest.FunSuite
 
 /** Spark Session Test
@@ -16,6 +16,6 @@ class BPSContextTest extends FunSuite {
     }
 
     test("Init BPSLogContext") {
-        BPSLogContext.init()
+        BPSLogContext(null)
     }
 }

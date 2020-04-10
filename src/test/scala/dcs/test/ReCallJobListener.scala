@@ -18,7 +18,8 @@ import org.scalatest.FunSuite
   */
 class ReCallJobListener extends FunSuite{
     test("test ReCallJobListener"){
-        BPSLocalChannel(Map.empty)
+//        BPSLocalChannel(Map.empty)
+        BPSLocalChannel(null)
         val jobId = UUID.randomUUID().toString
         val runId = UUID.randomUUID().toString
         val topic = "HiveTracebackTask"
