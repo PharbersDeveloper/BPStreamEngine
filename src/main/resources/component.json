@@ -31,7 +31,7 @@
             }
         },
         {
-            "id": "git repo",
+            "id": "gitRepo",
             "name": "BPSGithubHelper",
             "args": [],
             "config": {
@@ -108,10 +108,24 @@
                 "Python.msgType": "Python-FileMetaData",
                 "queue": 5
             }
+        },
+        {
+            "id": "BPSPythonJobContainer",
+            "name": "BPSPythonJobContainer",
+            "args": [],
+            "config": {
+                "listenerTopic": "PyJobContainerListenerTopic",
+                "defaultNoticeTopic": "HiveTask",
+                "defaultPartition": "4",
+                "defaultRetryCount": "3",
+                "pythonUri": "https://github.com/PharbersDeveloper/bp-data-clean.git",
+                "pythonBranch": "v0.0.1"
+            }
         }
     ],
     "starts": [
         "OssJobContainer",
-        "SandBoxJobContainer"
+        "SandBoxJobContainer",
+        "BPSPythonJobContainer"
     ]
 }
