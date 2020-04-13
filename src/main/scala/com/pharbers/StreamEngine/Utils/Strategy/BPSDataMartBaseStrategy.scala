@@ -3,8 +3,8 @@ package com.pharbers.StreamEngine.Utils.Strategy
 import java.util.Collections
 
 import com.pharbers.StreamEngine.Jobs.CpaCleanJob.BPSCpaCleanJob.PARENTS_CONFIG_KEY
-import com.pharbers.StreamEngine.Jobs.SandBoxJob.BloodJob.BPSBloodJob
-import com.pharbers.StreamEngine.Utils.Strategy.JobStrategy.{BPSCommonJobStrategy, BPSOldJobStrategy}
+//import com.pharbers.StreamEngine.Jobs.SandBoxJob.BloodJob.BPSBloodJob
+import com.pharbers.StreamEngine.Utils.Strategy.JobStrategy.BPSCommonJobStrategy
 import com.pharbers.kafka.schema.{AssetDataMart, DataSet}
 import org.apache.kafka.common.config.ConfigDef
 import org.apache.spark.sql.SparkSession
@@ -36,7 +36,7 @@ class BPSDataMartBaseStrategy(config: Map[String, String], @transient inoutConfi
             spark.sql(s"select * from $tableName").count(),
             url,
             "hive table")
-        BPSBloodJob("data_set_job", dfs).exec()
+//        BPSBloodJob("data_set_job", dfs).exec()
 
         val dataMartValue = new AssetDataMart(
             tableName,
@@ -55,6 +55,6 @@ class BPSDataMartBaseStrategy(config: Map[String, String], @transient inoutConfi
             "hive",
             saveMode
         )
-        BPSBloodJob("AssetDataMart", dataMartValue).exec()
+//        BPSBloodJob("AssetDataMart", dataMartValue).exec()
     }
 }
