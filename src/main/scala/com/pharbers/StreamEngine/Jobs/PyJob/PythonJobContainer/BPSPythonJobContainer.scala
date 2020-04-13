@@ -2,21 +2,19 @@ package com.pharbers.StreamEngine.Jobs.PyJob.PythonJobContainer
 
 import java.util.UUID
 import java.util.concurrent.TimeUnit
-
 import org.mongodb.scala.bson.ObjectId
-import com.pharbers.kafka.schema.{BPJob, HiveTask}
+import com.pharbers.kafka.schema.HiveTask
 import com.pharbers.StreamEngine.Jobs.PyJob.BPSPythonJob
 import com.pharbers.StreamEngine.Utils.Annotation.Component
 import com.pharbers.StreamEngine.Utils.Component2
 import com.pharbers.StreamEngine.Utils.Component2.BPSConcertEntry
-import com.pharbers.kafka.consumer.PharbersKafkaConsumer
+import com.pharbers.StreamEngine.Utils.Event.BPSTypeEvents
+import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPJobRemoteListener
 import com.pharbers.kafka.producer.PharbersKafkaProducer
-import org.apache.kafka.clients.consumer.ConsumerRecord
 import com.pharbers.StreamEngine.Utils.Job.BPSJobContainer
 import com.pharbers.StreamEngine.Utils.Strategy.GithubHelper.BPSGithubHelper
 import com.pharbers.StreamEngine.Utils.Strategy.JobStrategy.BPSCommonJobStrategy
 import com.pharbers.StreamEngine.Utils.Strategy.Schema.BPSParseSchema
-import com.pharbers.StreamEngine.Utils.ThreadExecutor.ThreadExecutor
 import org.apache.kafka.common.config.ConfigDef
 import org.apache.kafka.common.config.ConfigDef.{Importance, Type}
 import org.apache.spark.sql.SparkSession
@@ -35,9 +33,9 @@ object BPSPythonJobContainer {
  * {{{
  *      containerId = UUID // 缺省 UUID
  *
- *      listenerTopic = “PyJobContainerListenerTopic” // JobContainer 监听的 topic
+ *      listens = “Python-FileMetaData” // JobContainer 监听的 topic
  *      startingOffset = “earliest” // kafka 信息处理位置
- *      defaultNoticeTopic = “PyJobContainerNoticeTopic” // Job 任务完成通知的`默认` topic, 如果单个 Job 有 Topic， 以 Job 的为准
+ *      FileMetaData.msgType = “none” // Job 任务完成通知的`默认` topic, 如果单个 Job 有 Topic， 以 Job 的为准
  *
  *      defaultPartition = "4" // 默认4，表示每个 Job 可使用的 spark 分区数，也是可用 Python 的线程数，默认 4 线程
  *      defaultRetryCount = "3" // 默认, 重试次数
@@ -51,15 +49,12 @@ class BPSPythonJobContainer(override val componentProperty: Component2.BPCompone
 
     override val description: String = "我是一个调用 python 脚本来实现一些清洗任务的节点"
 
-    final private val LISTENER_TOPIC_KEY = "listenerTopic"
-    final private val LISTENER_TOPIC_DOC = "listener start job"
-    final private val LISTENER_TOPIC_DEFAULT = "PyJobContainerListenerTopic"
     final private val STARTING_OFFSETS_KEY = "starting.offsets"
     final private val STARTING_OFFSETS_DOC = "kafka offsets begin"
-    final private val STARTING_OFFSETS_DEFAULT = "earliest" //可以分别指定{"topic1":{"0":23,"1":-2},"topic2":{"0":-2}} -2 = earliest， -1 = latest
-    final private val DEFAULT_NOTICE_KEY = "defaultNoticeTopic"
-    final private val DEFAULT_NOTICE_DOC = "default notice topic in job completed"
-    final private val DEFAULT_NOTICE_DEFAULT = "PyJobContainerNoticeTopic"
+    final private val STARTING_OFFSETS_DEFAULT = "earliest"
+    final private val FILE_MSG_TYPE_KEY = "FileMetaData.msgType"
+    final private val FILE_MSG_TYPE_DOC = "next job msg type in current job completed"
+    final private val FILE_MSG_TYPE_DEFAULT = "none"
     final private val DEFAULT_PARTITION_KEY = "defaultPartition"
     final private val DEFAULT_PARTITION_DOC = "spark default partition"
     final private val DEFAULT_PARTITION_DEFAULT = "4"
@@ -82,18 +77,16 @@ class BPSPythonJobContainer(override val componentProperty: Component2.BPCompone
 
     override def createConfigDef(): ConfigDef = {
         new ConfigDef()
-                .define(LISTENER_TOPIC_KEY, Type.STRING, LISTENER_TOPIC_DEFAULT, Importance.HIGH, LISTENER_TOPIC_DOC)
                 .define(STARTING_OFFSETS_KEY, Type.STRING, STARTING_OFFSETS_DEFAULT, Importance.HIGH, STARTING_OFFSETS_DOC)
-                .define(DEFAULT_NOTICE_KEY, Type.STRING, DEFAULT_NOTICE_DEFAULT, Importance.HIGH, DEFAULT_NOTICE_DOC)
+                .define(FILE_MSG_TYPE_KEY, Type.STRING, FILE_MSG_TYPE_DEFAULT, Importance.HIGH, FILE_MSG_TYPE_DOC)
                 .define(DEFAULT_PARTITION_KEY, Type.STRING, DEFAULT_PARTITION_DEFAULT, Importance.HIGH, DEFAULT_PARTITION_DOC)
                 .define(DEFAULT_RETRY_COUNT_KEY, Type.STRING, DEFAULT_RETRY_COUNT_DEFAULT, Importance.HIGH, DEFAULT_RETRY_COUNT_DOC)
                 .define(PYTHON_URI_KEY, Type.STRING, Importance.HIGH, PYTHON_URI_DOC)
                 .define(PYTHON_BRANCH_KEY, Type.STRING, PYTHON_BRANCH_DEFAULT, Importance.HIGH, PYTHON_BRANCH_DOC)
     }
 
-    val listenerTopic: String = strategy.jobConfig.getString(LISTENER_TOPIC_KEY)
     val startingOffsets: String = strategy.jobConfig.getString(STARTING_OFFSETS_KEY)
-    val defaultNoticeTopic: String = strategy.jobConfig.getString(DEFAULT_NOTICE_KEY)
+    val fileMsgType: String = strategy.jobConfig.getString(FILE_MSG_TYPE_KEY)
 
     val defaultPartition: String = strategy.jobConfig.getString(DEFAULT_PARTITION_KEY)
     val defaultRetryCount: String = strategy.jobConfig.getString(DEFAULT_RETRY_COUNT_KEY)
@@ -134,15 +127,15 @@ class BPSPythonJobContainer(override val componentProperty: Component2.BPCompone
      * }}}
      */
     implicit val formats: DefaultFormats.type = org.json4s.DefaultFormats
-    val consumerFunc: ConsumerRecord[String, BPJob] => Unit = { record: ConsumerRecord[String, BPJob] =>
-        val jobMsg = parse(record.value().getJob.toString).extract[Map[String, Any]]
+    def starJob(event: BPSTypeEvents[Map[String, String]]): Unit = {
+        val jobMsg = event.date
 
         // 获得 PyJob 参数信息
         val jobId: String = jobMsg.getOrElse("jobId", UUID.randomUUID()).toString
         val parentsId: List[CharSequence] = jobMsg.getOrElse("parentsId", "").toString.split(",").toList.map(_.asInstanceOf[CharSequence])
         val datasetId: String = jobMsg.getOrElse("datasetId", new ObjectId()).toString
 
-        val noticeTopic: String = jobMsg.getOrElse("noticeTopic", defaultNoticeTopic).toString
+        val noticeTopic: String = jobMsg.getOrElse("noticeTopic", fileMsgType).toString
         val partition: String = jobMsg.getOrElse("partition", defaultPartition).toString
         val retryCount: String = jobMsg.getOrElse("retryCount", defaultRetryCount).toString
 
@@ -161,7 +154,7 @@ class BPSPythonJobContainer(override val componentProperty: Component2.BPCompone
         // 读取输入流
         val reading = spark.readStream
                 .schema(loadSchema)
-                .option("startingOffsets", "earliest")
+                .option("startingOffsets", startingOffsets)
                 //TODO: 设置触发的文件数，以控制内存 效果待测试
                 .option("maxFilesPerTrigger", partition.toInt)
                 .parquet(filesPath)
@@ -188,38 +181,37 @@ class BPSPythonJobContainer(override val componentProperty: Component2.BPCompone
         val datasetId = noticeMap("datasetId").toString
         val successPath = noticeMap("successPath").toString
 
-        val pkp = new PharbersKafkaProducer[String, HiveTask]
-        val msg = new HiveTask(jobId, "", datasetId, "append", successPath, length.toInt, "")
-        val end = new HiveTask(jobId, "", "", "end", "", 0, "")
-        List(msg, end).foreach(x => {
-            val fu = pkp.produce(noticeTopic, "", x)
-            logger.info(fu.get(10, TimeUnit.SECONDS))
-        })
-        pkp.producer.close()
+        // TODO 向下通知函数暂时关闭
+//        val pkp = new PharbersKafkaProducer[String, HiveTask]
+//        val msg = new HiveTask(jobId, "", datasetId, "append", successPath, length.toInt, "")
+//        val end = new HiveTask(jobId, "", "", "end", "", 0, "")
+//        List(msg, end).foreach(x => {
+//            val fu = pkp.produce(noticeTopic, "", x)
+//            logger.info(fu.get(10, TimeUnit.SECONDS))
+//        })
+//        pkp.producer.close()
     }
-
-    // open kafka consumer
-    var pyConsumer: Option[PharbersKafkaConsumer[String, BPJob]] = None
 
     override def open(): Unit = {
         logger.info(s"BPSPythonJobContainer containerID is `$containerId`")
+        logger.info(s"listener file msg type `${strategy.getListens}`")
+    }
+
+    override def exec(): Unit = {
         sendPy2Spark()
-        if (pyConsumer.isEmpty) {
-            logger.info(s"open kafka consumer, listener topic is `$listenerTopic`")
-            val pkc = new PharbersKafkaConsumer(topics = List(listenerTopic), process = consumerFunc)
-            ThreadExecutor().execute(pkc)
-            pyConsumer = Some(pkc)
-        } else {
-            logger.info(s"kafka consumer is opened")
-        }
+        val listenEvent: Seq[String] = strategy.getListens
+        val listener: BPJobRemoteListener[Map[String, String]] =
+            BPJobRemoteListener[Map[String, String]](this, listenEvent.toList)(x => starJob(x))
+        listener.active(null)
+        listeners = listener +: listeners
     }
 
     override def close(): Unit = {
-        logger.info(s"close kafka consumer, listener topic is `$listenerTopic`")
-        pyConsumer.get.close()
-        val helper: BPSGithubHelper =
-            BPSConcertEntry.queryComponentWithId("").get.asInstanceOf[BPSGithubHelper]
-        helper.delDir(id)
+        logger.info(s"close listener file msg type `${strategy.getListens}`")
+        BPSConcertEntry
+                .queryComponentWithId("gitRepo")
+                .get.asInstanceOf[BPSGithubHelper]
+                .delDir(id)
         super.close()
     }
 }

@@ -114,8 +114,8 @@
             "name": "BPSPythonJobContainer",
             "args": [],
             "config": {
-                "listenerTopic": "PyJobContainerListenerTopic",
-                "defaultNoticeTopic": "HiveTask",
+                "listens": "Python-FileMetaData",
+                "FileMetaData.msgType": "HiveTask-FileMetaData",
                 "defaultPartition": "4",
                 "defaultRetryCount": "3",
                 "pythonUri": "https://github.com/PharbersDeveloper/bp-data-clean.git",
