@@ -28,6 +28,7 @@ import collection.JavaConverters._
  */
 
 //todo：因为ConfigDef的原因，很难做到无状态
+// FIX inoutConfigDef => inout? input?
 case class BPSCommonJobStrategy(inputConfig: Map[String, String], inoutConfigDef: ConfigDef = new ConfigDef()) extends BPStrategyComponent {
     final private val LISTEN_EVENTS_KEY = "listens"
     final private val LISTEN_EVENTS_DOC = "listener hit event type"

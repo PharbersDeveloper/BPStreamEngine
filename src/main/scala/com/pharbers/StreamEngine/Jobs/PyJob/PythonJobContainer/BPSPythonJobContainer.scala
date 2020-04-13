@@ -4,28 +4,26 @@ import java.util.UUID
 import java.util.concurrent.TimeUnit
 
 import org.mongodb.scala.bson.ObjectId
-import org.apache.spark.sql.SparkSession
 import com.pharbers.kafka.schema.{BPJob, HiveTask}
 import com.pharbers.StreamEngine.Jobs.PyJob.BPSPythonJob
+import com.pharbers.StreamEngine.Utils.Annotation.Component
 import com.pharbers.StreamEngine.Utils.Component2
 import com.pharbers.StreamEngine.Utils.Component2.BPSConcertEntry
 import com.pharbers.kafka.consumer.PharbersKafkaConsumer
 import com.pharbers.kafka.producer.PharbersKafkaProducer
 import org.apache.kafka.clients.consumer.ConsumerRecord
-import com.pharbers.StreamEngine.Utils.Event.EventHandler.BPSEventHandler
-import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamListener
-import com.pharbers.StreamEngine.Utils.Job.{BPDynamicStreamJob, BPSJobContainer}
-import com.pharbers.StreamEngine.Utils.Strategy.BPSKfkBaseStrategy
+import com.pharbers.StreamEngine.Utils.Job.BPSJobContainer
 import com.pharbers.StreamEngine.Utils.Strategy.GithubHelper.BPSGithubHelper
+import com.pharbers.StreamEngine.Utils.Strategy.JobStrategy.BPSCommonJobStrategy
 import com.pharbers.StreamEngine.Utils.Strategy.Schema.BPSParseSchema
 import com.pharbers.StreamEngine.Utils.ThreadExecutor.ThreadExecutor
 import org.apache.kafka.common.config.ConfigDef
+import org.apache.kafka.common.config.ConfigDef.{Importance, Type}
+import org.apache.spark.sql.SparkSession
 
 object BPSPythonJobContainer {
-    def apply(strategy: BPSKfkBaseStrategy,
-              spark: SparkSession,
-              config: Map[String, String]): BPSPythonJobContainer =
-        new BPSPythonJobContainer(spark, config)
+    def apply(componentProperty: Component2.BPComponentConfig): BPSPythonJobContainer =
+        new BPSPythonJobContainer(componentProperty)
 }
 
 /** 执行 Python 清洗的 Container
@@ -38,6 +36,7 @@ object BPSPythonJobContainer {
  *      containerId = UUID // 缺省 UUID
  *
  *      listenerTopic = “PyJobContainerListenerTopic” // JobContainer 监听的 topic
+ *      startingOffset = “earliest” // kafka 信息处理位置
  *      defaultNoticeTopic = “PyJobContainerNoticeTopic” // Job 任务完成通知的`默认` topic, 如果单个 Job 有 Topic， 以 Job 的为准
  *
  *      defaultPartition = "4" // 默认4，表示每个 Job 可使用的 spark 分区数，也是可用 Python 的线程数，默认 4 线程
@@ -47,29 +46,65 @@ object BPSPythonJobContainer {
  *      pythonBranch = "" // python 清洗代码的分支
  * }}}
  */
-class BPSPythonJobContainer(override val spark: SparkSession,
-                            config: Map[String, String])
-        extends BPSJobContainer with BPDynamicStreamJob with Serializable {
+@Component(name = "BPSPythonJobContainer", `type` = "BPSPythonJobContainer")
+class BPSPythonJobContainer(override val componentProperty: Component2.BPComponentConfig) extends BPSJobContainer {
 
-    type T = BPSKfkBaseStrategy
-    override val strategy: BPSKfkBaseStrategy = null
+    override val description: String = "我是一个调用 python 脚本来实现一些清洗任务的节点"
 
-    override val id: String = config.getOrElse("containerId", UUID.randomUUID().toString)
+    final private val LISTENER_TOPIC_KEY = "listenerTopic"
+    final private val LISTENER_TOPIC_DOC = "listener start job"
+    final private val LISTENER_TOPIC_DEFAULT = "PyJobContainerListenerTopic"
+    final private val STARTING_OFFSETS_KEY = "starting.offsets"
+    final private val STARTING_OFFSETS_DOC = "kafka offsets begin"
+    final private val STARTING_OFFSETS_DEFAULT = "earliest" //可以分别指定{"topic1":{"0":23,"1":-2},"topic2":{"0":-2}} -2 = earliest， -1 = latest
+    final private val DEFAULT_NOTICE_KEY = "defaultNoticeTopic"
+    final private val DEFAULT_NOTICE_DOC = "default notice topic in job completed"
+    final private val DEFAULT_NOTICE_DEFAULT = "PyJobContainerNoticeTopic"
+    final private val DEFAULT_PARTITION_KEY = "defaultPartition"
+    final private val DEFAULT_PARTITION_DOC = "spark default partition"
+    final private val DEFAULT_PARTITION_DEFAULT = "4"
+    final private val DEFAULT_RETRY_COUNT_KEY = "defaultRetryCount"
+    final private val DEFAULT_RETRY_COUNT_DOC = "default retry count"
+    final private val DEFAULT_RETRY_COUNT_DEFAULT = "3"
+    final private val PYTHON_URI_KEY = "pythonUri"
+    final private val PYTHON_URI_DOC = "python code repo uri"
+    final private val PYTHON_BRANCH_KEY = "pythonBranch"
+    final private val PYTHON_BRANCH_DOC = "python code repo branch"
+    final private val PYTHON_BRANCH_DEFAULT = "master"
+
+    type T = BPSCommonJobStrategy
+    val strategy: BPSCommonJobStrategy = BPSCommonJobStrategy(componentProperty.config, configDef)
+
+    override val id: String = componentProperty.id
     val containerId: String = id
 
-    val listenerTopic: String = config.getOrElse("listenerTopic", "PyJobContainerListenerTopic")
-    val defaultNoticeTopic: String = config.getOrElse("noticeTopic", "PyJobContainerNoticeTopic")
+    override val spark: SparkSession = strategy.getSpark
 
-    val defaultPartition: String = config.getOrElse("defaultPartition", "4")
-    val defaultRetryCount: String = config.getOrElse("defaultRetryCount", "3")
+    override def createConfigDef(): ConfigDef = {
+        new ConfigDef()
+                .define(LISTENER_TOPIC_KEY, Type.STRING, LISTENER_TOPIC_DEFAULT, Importance.HIGH, LISTENER_TOPIC_DOC)
+                .define(STARTING_OFFSETS_KEY, Type.STRING, STARTING_OFFSETS_DEFAULT, Importance.HIGH, STARTING_OFFSETS_DOC)
+                .define(DEFAULT_NOTICE_KEY, Type.STRING, DEFAULT_NOTICE_DEFAULT, Importance.HIGH, DEFAULT_NOTICE_DOC)
+                .define(DEFAULT_PARTITION_KEY, Type.STRING, DEFAULT_PARTITION_DEFAULT, Importance.HIGH, DEFAULT_PARTITION_DOC)
+                .define(DEFAULT_RETRY_COUNT_KEY, Type.STRING, DEFAULT_RETRY_COUNT_DEFAULT, Importance.HIGH, DEFAULT_RETRY_COUNT_DOC)
+                .define(PYTHON_URI_KEY, Type.STRING, Importance.HIGH, PYTHON_URI_DOC)
+                .define(PYTHON_BRANCH_KEY, Type.STRING, PYTHON_BRANCH_DEFAULT, Importance.HIGH, PYTHON_BRANCH_DOC)
+    }
 
-    val pythonUri: String = config("pythonUri")
-    val pythonBranch: String = config.getOrElse("pythonBranch", "master")
+    val listenerTopic: String = strategy.jobConfig.getString(LISTENER_TOPIC_KEY)
+    val startingOffsets: String = strategy.jobConfig.getString(STARTING_OFFSETS_KEY)
+    val defaultNoticeTopic: String = strategy.jobConfig.getString(DEFAULT_NOTICE_KEY)
+
+    val defaultPartition: String = strategy.jobConfig.getString(DEFAULT_PARTITION_KEY)
+    val defaultRetryCount: String = strategy.jobConfig.getString(DEFAULT_RETRY_COUNT_KEY)
+
+    val pythonUri: String = strategy.jobConfig.getString(PYTHON_URI_KEY)
+    val pythonBranch: String = strategy.jobConfig.getString(PYTHON_BRANCH_KEY)
 
     // 将 python 清洗文件发送到 spark
     def sendPy2Spark(): Unit = {
         val helper: BPSGithubHelper =
-            BPSConcertEntry.queryComponentWithId("").get.asInstanceOf[BPSGithubHelper]
+            BPSConcertEntry.queryComponentWithId("gitRepo").get.asInstanceOf[BPSGithubHelper]
         helper.cloneByBranch(containerId, pythonUri, pythonBranch)
         val pyFiles: List[String] = helper.listFile(containerId, ".py")
         pyFiles.foreach(spark.sparkContext.addFile)
@@ -187,13 +222,4 @@ class BPSPythonJobContainer(override val spark: SparkSession,
         helper.delDir(id)
         super.close()
     }
-
-    override def registerListeners(listener: BPStreamListener): Unit = {}
-
-    override def handlerExec(handler: BPSEventHandler): Unit = {}
-
-    override val componentProperty: Component2.BPComponentConfig = null
-    override def createConfigDef(): ConfigDef = ???
-
-    override val description: String = "py_clean_job"
 }
