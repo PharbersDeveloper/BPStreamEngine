@@ -104,7 +104,10 @@ class BPSSandBoxJobContainer(override val componentProperty: Component2.BPCompon
 			hisRunnerId = BPSConcertEntry.runner_id
 		}
 		val job =
-			BPSSandBoxConvertSchemaJob(this, BPSComponentConfig(UUID.randomUUID().toString, "BPSSandBoxConvertSchemaJob", Nil, event.date))
+			BPSSandBoxConvertSchemaJob(this, BPSComponentConfig(UUID.randomUUID().toString,
+				"BPSSandBoxConvertSchemaJob",
+				event.traceId :: event.jobId :: Nil,
+				event.date))
 		jobs += job.id -> job
 		job.open()
 		job.exec()

@@ -2,11 +2,12 @@ package com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxConvertSchemaJob
 
 import com.pharbers.StreamEngine.Utils.Component2
 import com.pharbers.StreamEngine.Utils.Component2.BPSConcertEntry
-import com.pharbers.StreamEngine.Utils.Event.BPSTypeEvents
+import com.pharbers.StreamEngine.Utils.Event.{BPSEvents, BPSTypeEvents}
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPJobLocalListener
 import com.pharbers.StreamEngine.Utils.Job.{BPSJobContainer, BPStreamJob}
 import com.pharbers.StreamEngine.Utils.Strategy.JobStrategy.BPSCommonJobStrategy
 import com.pharbers.StreamEngine.Utils.Strategy.Schema.{BPSMetaData2Map, SchemaConverter}
+import com.pharbers.StreamEngine.Utils.Strategy.Session.Kafka.BPKafkaSession
 import com.pharbers.StreamEngine.Utils.Strategy.Session.Spark.msgMode.SparkQueryEvent
 import com.pharbers.StreamEngine.Utils.Strategy.hdfs.BPSHDFSFile
 import com.pharbers.kafka.schema.{BPJob, DataSet, UploadEnd}
@@ -16,20 +17,27 @@ import org.apache.spark.sql.streaming.StreamingQuery
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.json4s.DefaultFormats
 import org.json4s.jackson.Serialization._
+import org.mongodb.scala.bson.ObjectId
 
 
 case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer,
                                       componentProperty: Component2.BPComponentConfig) extends BPStreamJob {
 	
 	type T = BPSCommonJobStrategy
-	override val strategy = BPSCommonJobStrategy(componentProperty.config, configDef)
+	override val strategy: BPSCommonJobStrategy = BPSCommonJobStrategy(componentProperty.config, configDef)
 	override val id: String = componentProperty.id // 本身Job的id
 	val jobId: String = strategy.getJobId // componentProperty config中的job Id
 	val runnerId: String = BPSConcertEntry.runner_id // Runner Id
+	val traceId: String = componentProperty.args.head
 	val spark: SparkSession = strategy.getSpark
 	val sc: SchemaConverter = strategy.getSchemaConverter
 	val hdfs: BPSHDFSFile = strategy.getHdfsFile
 	var totalNum: Long = 0
+	val checkpointPath = s"/jobs/$runnerId/$id/checkpoint"
+	val parquetPath = s"/jobs/$runnerId/$id/contents"
+	val metaDataPath = s"/jobs/$runnerId/$id/metadata"
+	val mongoId: String = new ObjectId().toString
+	var metaData: MetaData = _
 	implicit val formats: DefaultFormats.type = DefaultFormats
 	
 	import spark.implicits._
@@ -49,6 +57,7 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer,
 					val cumulative = query.recentProgress.map(_.numInputRows).sum
 					println(s"cumulative num $cumulative")
 					if (cumulative >= totalNum) {
+						pushMsg()
 						this.close()
 					}
 				})
@@ -69,8 +78,8 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer,
 			.writeStream
 			.outputMode("append")
 			.format("parquet")
-			.option("checkpointLocation", s"/jobs/$runnerId/$id/checkpoint")
-			.option("path", s"/jobs/$runnerId/$id/contents")
+			.option("checkpointLocation", checkpointPath)
+			.option("path", parquetPath)
 			.start()
 	}
 	
@@ -78,11 +87,11 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer,
 		try {
 			//TODO 串联执行会更好,@Alex留给自己
 			// 解析MetaData
-			val metaDataPath = componentProperty.config("metaDataPath")
-			val metaData = startProcessMetaData(s"$metaDataPath/$jobId")
+			val mdPath = componentProperty.config("metaDataPath")
+			metaData = startProcessMetaData(s"$mdPath/$jobId")
 			totalNum = metaData.length("length").toString.toLong
 			// 将规范过后的MetaData重新写入
-			writeMetaData(s"/jobs/$runnerId/$id/metadata", metaData)
+			writeMetaData(metaDataPath, metaData)
 			// 规范化的Schema设置Stream
 			df match {
 				case Some(is) => {
@@ -121,10 +130,39 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer,
 		hdfs.appendLine2HDFS(path, write(md.length))
 	}
 	
+	def pushMsg(): Unit = {
+		// 给PythonCleanJob发送消息
+		val pythonMetaData = PythonMetaData(mongoId, "HiveTaskNone", metaDataPath, parquetPath, s"/jobs/$runnerId")
+		strategy.pushMsg(BPSEvents(id, traceId, "Python-FileMetaData", pythonMetaData), isLocal = false)
+		
+//		DataSets()
+//		UploadEnd()
+//		strategy.pushMsg(BPSEvents(id, traceId, "BloodJob", pythonMetaData), isLocal = false)
+//		strategy.pushMsg(BPSEvents(id, traceId, "UploadEndJob", pythonMetaData), isLocal = false)
+//		println(metaData)
+		
+	}
+	
 	override def createConfigDef(): ConfigDef = new ConfigDef()
 	
 	override val description: String = "BPSSandBoxConvertSchemaJob"
 	
 	case class MetaData(schemaData: List[Map[String, Any]], label: Map[String, Any], length: Map[String, Any])
 	
+	case class PythonMetaData(mongoId: String,
+	                          noticeTopic: String,
+	                          metadataPath: String,
+	                          filesPath: String,
+	                          resultPath: String)
+	
+	case class DataSets(parentIds: List[String],
+	                    mongoId: String,
+	                    jobContainerId: String,
+	                    colName: String,
+	                    tabName: String,
+	                    length: Long,
+	                    url: String,
+	                    description: String)
+	
+	case class UploadEnd(dataSetId: String, assetId: String)
 }
