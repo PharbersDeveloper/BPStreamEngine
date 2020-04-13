@@ -2,9 +2,7 @@ package com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxJobContainer
 
 import java.util.UUID
 
-import com.pharbers.StreamEngine.Jobs.OssPartitionJob.BPSOssPartitionJob
-import com.pharbers.StreamEngine.Jobs.OssPartitionJob.OssListener.BPSOssListener
-import com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxConvertSchemaJob.BPSSandBoxConvertSchemaJob
+import com.pharbers.StreamEngine.Jobs.SandBoxJob.BPSSandBoxConvertSchemaJob
 import com.pharbers.StreamEngine.Utils.Annotation.Component
 import com.pharbers.StreamEngine.Utils.Component2
 import com.pharbers.StreamEngine.Utils.Component2.{BPSComponentConfig, BPSConcertEntry}
@@ -12,9 +10,7 @@ import com.pharbers.StreamEngine.Utils.Event.BPSTypeEvents
 import com.pharbers.StreamEngine.Utils.Event.EventHandler.BPSEventHandler
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.{BPJobRemoteListener, BPStreamListener}
 import com.pharbers.StreamEngine.Utils.Job.{BPDynamicStreamJob, BPSJobContainer, BPStreamJob}
-import com.pharbers.StreamEngine.Utils.Strategy.BPSKfkBaseStrategy
 import com.pharbers.StreamEngine.Utils.Strategy.JobStrategy.BPSCommonJobStrategy
-import com.pharbers.StreamEngine.Utils.Strategy.Schema.SchemaConverter
 import org.apache.kafka.common.config.ConfigDef
 import org.apache.kafka.common.config.ConfigDef.{Importance, Type}
 import org.apache.spark.sql.SparkSession
@@ -98,19 +94,17 @@ class BPSSandBoxJobContainer(override val componentProperty: Component2.BPCompon
 						StructField("timestamp", TimestampType) ::
 						StructField("jobId", StringType) :: Nil
 				)).parquet(event.date.getOrElse("sampleDataPath", ""))
-			
 			inputStream = Some(reading)
 			
 			hisRunnerId = BPSConcertEntry.runner_id
 		}
-		val job =
-			BPSSandBoxConvertSchemaJob(this, BPSComponentConfig(UUID.randomUUID().toString,
+		val pythonMsgType: String = strategy.jobConfig.getString(FILE_MSG_TYPE_KEY)
+		val job = BPSSandBoxConvertSchemaJob(this, BPSComponentConfig(UUID.randomUUID().toString,
 				"BPSSandBoxConvertSchemaJob",
-				event.traceId :: event.jobId :: Nil,
+				event.traceId :: pythonMsgType :: Nil,
 				event.date))
 		jobs += job.id -> job
 		job.open()
 		job.exec()
-		
 	}
 }

@@ -1,24 +1,21 @@
-package com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxConvertSchemaJob
+package com.pharbers.StreamEngine.Jobs.SandBoxJob
 
 import com.pharbers.StreamEngine.Utils.Component2
 import com.pharbers.StreamEngine.Utils.Component2.BPSConcertEntry
-import com.pharbers.StreamEngine.Utils.Event.{BPSEvents, BPSTypeEvents}
+import com.pharbers.StreamEngine.Utils.Event.BPSEvents
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPJobLocalListener
 import com.pharbers.StreamEngine.Utils.Job.{BPSJobContainer, BPStreamJob}
 import com.pharbers.StreamEngine.Utils.Strategy.JobStrategy.BPSCommonJobStrategy
 import com.pharbers.StreamEngine.Utils.Strategy.Schema.{BPSMetaData2Map, SchemaConverter}
-import com.pharbers.StreamEngine.Utils.Strategy.Session.Kafka.BPKafkaSession
 import com.pharbers.StreamEngine.Utils.Strategy.Session.Spark.msgMode.SparkQueryEvent
 import com.pharbers.StreamEngine.Utils.Strategy.hdfs.BPSHDFSFile
-import com.pharbers.kafka.schema.{BPJob, DataSet, UploadEnd}
 import org.apache.kafka.common.config.ConfigDef
-import org.apache.spark.sql.functions._
+import org.apache.spark.sql.functions.from_json
 import org.apache.spark.sql.streaming.StreamingQuery
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.json4s.DefaultFormats
-import org.json4s.jackson.Serialization._
+import org.json4s.jackson.Serialization.write
 import org.mongodb.scala.bson.ObjectId
-
 
 case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer,
                                       componentProperty: Component2.BPComponentConfig) extends BPStreamJob {
@@ -29,6 +26,7 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer,
 	val jobId: String = strategy.getJobId // componentProperty config中的job Id
 	val runnerId: String = BPSConcertEntry.runner_id // Runner Id
 	val traceId: String = componentProperty.args.head
+	val msgType: String = componentProperty.args.last
 	val spark: SparkSession = strategy.getSpark
 	val sc: SchemaConverter = strategy.getSchemaConverter
 	val hdfs: BPSHDFSFile = strategy.getHdfsFile
@@ -55,7 +53,7 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer,
 			val rowNumListener =
 				BPJobLocalListener[SparkQueryEvent](null, List(s"spark-${query.id.toString}-progress"))(_ => {
 					val cumulative = query.recentProgress.map(_.numInputRows).sum
-					println(s"cumulative num $cumulative")
+					logger.info(s"cumulative num $cumulative")
 					if (cumulative >= totalNum) {
 						pushMsg()
 						this.close()
@@ -131,16 +129,21 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer,
 	}
 	
 	def pushMsg(): Unit = {
-		// 给PythonCleanJob发送消息
 		val pythonMetaData = PythonMetaData(mongoId, "HiveTaskNone", metaDataPath, parquetPath, s"/jobs/$runnerId")
-		strategy.pushMsg(BPSEvents(id, traceId, "Python-FileMetaData", pythonMetaData), isLocal = false)
-		
-//		DataSets()
-//		UploadEnd()
-//		strategy.pushMsg(BPSEvents(id, traceId, "BloodJob", pythonMetaData), isLocal = false)
-//		strategy.pushMsg(BPSEvents(id, traceId, "UploadEndJob", pythonMetaData), isLocal = false)
-//		println(metaData)
-		
+		val dataSet = DataSets(Nil,
+			mongoId,
+			id,
+			metaData.schemaData.map(_ ("key").toString),
+			metaData.label("sheetName").toString,
+			totalNum,
+			parquetPath,
+			"SampleData")
+		val uploadEnd = UploadEnd(mongoId, metaData.label("assetId").toString)
+		// 给PythonCleanJob发送消息
+		strategy.pushMsg(BPSEvents(id, traceId, msgType, pythonMetaData), isLocal = false)
+		// 血缘
+		strategy.pushMsg(BPSEvents(id, traceId, "SandBoxBloodJob", dataSet), isLocal = false)
+		strategy.pushMsg(BPSEvents(id, traceId, "UploadEndJob", uploadEnd), isLocal = false)
 	}
 	
 	override def createConfigDef(): ConfigDef = new ConfigDef()
@@ -155,14 +158,14 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer,
 	                          filesPath: String,
 	                          resultPath: String)
 	
-	case class DataSets(parentIds: List[String],
-	                    mongoId: String,
-	                    jobContainerId: String,
-	                    colName: String,
-	                    tabName: String,
-	                    length: Long,
-	                    url: String,
-	                    description: String)
-	
-	case class UploadEnd(dataSetId: String, assetId: String)
+//	case class DataSets(parentIds: List[String],
+//	                    mongoId: String,
+//	                    jobId: String,
+//	                    colNames: List[String],
+//	                    tabName: String,
+//	                    length: Long,
+//	                    url: String,
+//	                    description: String)
+//
+//	case class UploadEnd(dataSetId: String, assetId: String)
 }
