@@ -4,7 +4,7 @@ import java.util.Collections
 
 import com.pharbers.StreamEngine.Jobs.CpaCleanJob.BPSCpaCleanJob.PARENTS_CONFIG_KEY
 import com.pharbers.StreamEngine.Jobs.SandBoxJob.BloodJob.BPSBloodJob
-import com.pharbers.StreamEngine.Utils.Strategy.JobStrategy.BPSCommonJobStrategy
+import com.pharbers.StreamEngine.Utils.Strategy.JobStrategy.{BPSCommonJobStrategy, BPSOldJobStrategy}
 import com.pharbers.kafka.schema.{AssetDataMart, DataSet}
 import org.apache.kafka.common.config.ConfigDef
 import org.apache.spark.sql.SparkSession
@@ -22,7 +22,7 @@ import collection.JavaConverters._
   * @note 一些值得注意的地方
   */
 class BPSDataMartBaseStrategy(config: Map[String, String], @transient inoutConfigDef: ConfigDef = new ConfigDef())
-        extends BPSCommonJobStrategy(config, inoutConfigDef) {
+        extends BPSOldJobStrategy(config, inoutConfigDef) {
 
     def pushDataSet(tableName: String, version: String, url: String, saveMode: String): Unit ={
         val spark = SparkSession.getActiveSession.getOrElse(throw new Exception("需要先初始化spark"))

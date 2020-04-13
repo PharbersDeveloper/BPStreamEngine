@@ -3,13 +3,14 @@ package com.pharbers.StreamEngine.Jobs.SqlTableJob
 import com.pharbers.StreamEngine.Utils.Config.BPSConfig
 import BPSqlTableJob._
 import com.pharbers.StreamEngine.Utils.Component2
+import com.pharbers.StreamEngine.Utils.Event.BPSEvents
+import com.pharbers.StreamEngine.Utils.Job.Status.BPSJobStatus
 import com.pharbers.StreamEngine.Utils.Job.{BPSJobContainer, BPStreamJob}
-import com.pharbers.StreamEngine.Utils.Strategy.BPSDataMartBaseStrategy
+import com.pharbers.StreamEngine.Utils.Strategy.JobStrategy.BPSCommonJobStrategy
 import org.apache.kafka.common.config.ConfigDef
 import org.apache.kafka.common.config.ConfigDef.{Importance, Type}
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions._
-
 import collection.JavaConverters._
 import scala.collection.mutable
 
@@ -20,21 +21,20 @@ import scala.collection.mutable
   * @since 2019/12/11 14:16
   * @note 一些值得注意的地方
   */
-case class BPSqlTableJob(jobContainer: BPSJobContainer, spark: SparkSession, config_map: Map[String, String]) extends BPStreamJob {
-    override val componentProperty: Component2.BPComponentConfig = null
+case class BPSqlTableJob(container: BPSJobContainer, override val componentProperty: Component2.BPComponentConfig) extends BPStreamJob {
     override def createConfigDef(): ConfigDef = new ConfigDef()
             .define(URLS_CONFIG_KEY, Type.LIST, "", Importance.HIGH, URLS_CONFIG_DOC)
             .define(TABLE_NAME_CONFIG_KEY, Type.STRING, "", Importance.HIGH, TABLE_NAME_CONFIG_DOC)
             .define(TASK_TYPE_CONFIG_KEY, Type.STRING, "append", Importance.HIGH, TASK_TYPE_CONFIG_DOC)
             .define(ERROR_PATH_CONFIG_KEY, Type.STRING, "", Importance.HIGH, ERROR_PATH_CONFIG_DOC)
-            //            .define(VERSION_CONFIG_KEY, Type.STRING, Importance.HIGH, VERSION_CONFIG_DOC)
             .define(DATA_SETS_CONFIG_KEY, Type.LIST, "", Importance.HIGH, DATA_SETS_CONFIG_DOC)
-    override type T = BPSDataMartBaseStrategy
-    override val strategy: BPSDataMartBaseStrategy = new BPSDataMartBaseStrategy(config_map, configDef)
+    override type T = BPSCommonJobStrategy
+    override val strategy: BPSCommonJobStrategy = new BPSCommonJobStrategy(componentProperty, configDef)
     private val jobConfig: BPSConfig = strategy.getJobConfig
     val jobId: String = strategy.getJobId
     val runId: String = strategy.getRunId
-    override val id: String = jobId
+    override val id: String = strategy.getId
+    val spark: SparkSession = strategy.getSpark
 
     val urls: mutable.Buffer[String] = jobConfig.getList(URLS_CONFIG_KEY).asScala
     val saveMode: String = jobConfig.getString(TASK_TYPE_CONFIG_KEY)
@@ -74,14 +74,14 @@ case class BPSqlTableJob(jobContainer: BPSJobContainer, spark: SparkSession, con
         }
         logger.info(s"save $tableName over, job: $id")
         logger.info(s"push data set")
-        strategy.pushDataSet(tableName, version, url, saveMode)
+        //todo: 等血缘模块重构
+//        strategy.pushDataSet(tableName, version, url, saveMode)
         logger.info(s"close job $id")
-        close()
+        strategy.pushMsg(BPSEvents(jobId, "", strategy.JOB_STATUS_EVENT_TYPE, BPSJobStatus.Success.toString), true)
     }
 
     override def close(): Unit = {
         super.close()
-        jobContainer.finishJobWithId(id)
     }
 
     def saveTable(tableName: String, mode: String, version: String, url: String): Unit = {
@@ -94,8 +94,9 @@ case class BPSqlTableJob(jobContainer: BPSJobContainer, spark: SparkSession, con
                         .saveAsTable(tableName)
             case _ =>
         }
-        val errorHead = spark.sparkContext.textFile(jobConfig.getString(ERROR_PATH_CONFIG_KEY)).take(1).headOption.getOrElse("")
-        if (errorHead.length > 0) logger.info(s"error path: ${jobConfig.getString(ERROR_PATH_CONFIG_KEY)} ,error: $errorHead")
+        //todo: check里面处理
+//        val errorHead = spark.sparkContext.textFile(jobConfig.getString(ERROR_PATH_CONFIG_KEY)).take(1).headOption.getOrElse("")
+//        if (errorHead.length > 0) logger.info(s"error path: ${jobConfig.getString(ERROR_PATH_CONFIG_KEY)} ,error: $errorHead")
     }
 
     override val description: String = "sql_table"
