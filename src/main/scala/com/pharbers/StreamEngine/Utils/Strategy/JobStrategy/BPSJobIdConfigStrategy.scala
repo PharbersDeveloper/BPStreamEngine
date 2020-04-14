@@ -23,15 +23,22 @@ import org.apache.kafka.common.config.ConfigDef.{Importance, Type}
 class BPSJobIdConfigStrategy(override val componentProperty: Component2.BPComponentConfig, inoutConfigDef: ConfigDef = new ConfigDef()) extends BPStrategyComponent{
     final val JOB_ID_CONFIG_KEY = "jobId"
     final val JOB_ID_CONFIG_DOC = "job id"
+    final val TRACE_ID_CONFIG_KEY = "traceId"
+    final val TRACE_ID_CONFIG_DOC = "trace id"
     final val JOB_ID_CONFIG_DEFAULT = UUID.randomUUID().toString
+    final val TRACE_ID_CONFIG_DEFAULT = ""
 
 
     override def createConfigDef(): ConfigDef = inoutConfigDef
             .define(JOB_ID_CONFIG_KEY, Type.STRING, JOB_ID_CONFIG_DEFAULT, Importance.HIGH, JOB_ID_CONFIG_DOC)
+            .define(TRACE_ID_CONFIG_KEY,Type.STRING,TRACE_ID_CONFIG_DEFAULT, Importance.HIGH, JOB_ID_CONFIG_DOC)
     val jobConfig = BPSConfig(configDef, componentProperty.config)
 
     //id是BPStreamJob实例唯一标识
     def getId: String = componentProperty.id
+
+    //用户一次操作产生一个
+    def getTraceId: String = jobConfig.getString(TRACE_ID_CONFIG_KEY)
 
     //一个BPStream进程使用同一个runId
     def getRunId: String = BPSConcertEntry.runner_id

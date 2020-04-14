@@ -6,11 +6,13 @@ import com.pharbers.StreamEngine.Utils.Component2
 import com.pharbers.StreamEngine.Utils.Event.BPSEvents
 import com.pharbers.StreamEngine.Utils.Job.Status.BPSJobStatus
 import com.pharbers.StreamEngine.Utils.Job.{BPSJobContainer, BPStreamJob}
+import com.pharbers.StreamEngine.Utils.Strategy.BPSDataMartBaseStrategy
 import com.pharbers.StreamEngine.Utils.Strategy.JobStrategy.BPSCommonJobStrategy
 import org.apache.kafka.common.config.ConfigDef
 import org.apache.kafka.common.config.ConfigDef.{Importance, Type}
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions._
+
 import collection.JavaConverters._
 import scala.collection.mutable
 
@@ -21,7 +23,8 @@ import scala.collection.mutable
   * @since 2019/12/11 14:16
   * @note 一些值得注意的地方
   */
-case class BPSqlTableJob(container: BPSJobContainer, override val componentProperty: Component2.BPComponentConfig) extends BPStreamJob {
+case class BPSqlTableJob(container: BPSJobContainer, override val componentProperty: Component2.BPComponentConfig)
+        extends BPStreamJob {
     override def createConfigDef(): ConfigDef = new ConfigDef()
             .define(URLS_CONFIG_KEY, Type.LIST, "", Importance.HIGH, URLS_CONFIG_DOC)
             .define(TABLE_NAME_CONFIG_KEY, Type.STRING, "", Importance.HIGH, TABLE_NAME_CONFIG_DOC)
@@ -29,7 +32,7 @@ case class BPSqlTableJob(container: BPSJobContainer, override val componentPrope
             .define(ERROR_PATH_CONFIG_KEY, Type.STRING, "", Importance.HIGH, ERROR_PATH_CONFIG_DOC)
             .define(DATA_SETS_CONFIG_KEY, Type.LIST, "", Importance.HIGH, DATA_SETS_CONFIG_DOC)
     override type T = BPSCommonJobStrategy
-    override val strategy: BPSCommonJobStrategy = new BPSCommonJobStrategy(componentProperty, configDef)
+    override val strategy: BPSCommonJobStrategy = BPSCommonJobStrategy(componentProperty, configDef)
     private val jobConfig: BPSConfig = strategy.getJobConfig
     val jobId: String = strategy.getJobId
     val runId: String = strategy.getRunId
@@ -38,6 +41,7 @@ case class BPSqlTableJob(container: BPSJobContainer, override val componentPrope
 
     val urls: mutable.Buffer[String] = jobConfig.getList(URLS_CONFIG_KEY).asScala
     val saveMode: String = jobConfig.getString(TASK_TYPE_CONFIG_KEY)
+    val dataMartStrategy: BPSDataMartBaseStrategy = BPSDataMartBaseStrategy(componentProperty)
 
     override def open(): Unit = {
         logger.info(s"open job $id")
@@ -75,7 +79,7 @@ case class BPSqlTableJob(container: BPSJobContainer, override val componentPrope
         logger.info(s"save $tableName over, job: $id")
         logger.info(s"push data set")
         //todo: 等血缘模块重构
-//        strategy.pushDataSet(tableName, version, url, saveMode)
+        dataMartStrategy.pushDataSet(tableName, version, url, saveMode, jobId, strategy.getTraceId, strategy.getJobConfig.getList(DATA_SETS_CONFIG_KEY).asScala.toList)
         logger.info(s"close job $id")
         strategy.pushMsg(BPSEvents(jobId, "", strategy.JOB_STATUS_EVENT_TYPE, BPSJobStatus.Success.toString), true)
     }
