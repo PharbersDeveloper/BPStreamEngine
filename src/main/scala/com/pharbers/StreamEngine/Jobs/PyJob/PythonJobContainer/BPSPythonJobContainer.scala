@@ -128,53 +128,51 @@ class BPSPythonJobContainer(override val componentProperty: Component2.BPCompone
      */
     implicit val formats: DefaultFormats.type = org.json4s.DefaultFormats
     def starJob(event: BPSTypeEvents[Map[String, String]]): Unit = {
-	    println("fuck")
-        println(event.date)
-//        val jobMsg = event.date
-//
-//        // 获得 PyJob 参数信息
-//        val jobId: String = jobMsg.getOrElse("jobId", UUID.randomUUID()).toString
-//        val parentsId: List[CharSequence] = jobMsg.getOrElse("parentsId", "").toString.split(",").toList.map(_.asInstanceOf[CharSequence])
-//        val datasetId: String = jobMsg.getOrElse("datasetId", new ObjectId()).toString
-//
-//        val noticeTopic: String = jobMsg.getOrElse("noticeTopic", fileMsgType).toString
-//        val partition: String = jobMsg.getOrElse("partition", defaultPartition).toString
-//        val retryCount: String = jobMsg.getOrElse("retryCount", defaultRetryCount).toString
-//
-//        val metadataPath: String = jobMsg("metadataPath").toString
-//        val filesPath: String = jobMsg("filesPath").toString
-//        val resultPath: String = {
-//            val path = jobMsg.getOrElse("resultPath", "./jobs/").toString
-//            if (path.endsWith("/")) path + containerId
-//            else path + "/" + containerId
-//        }
-//
-//        val ps = BPSConcertEntry.queryComponentWithId("parse schema").get.asInstanceOf[BPSParseSchema]
-//        val metadata = ps.parseMetadata(metadataPath)(spark)
-//        val loadSchema = ps.parseSchema(metadata("schema").asInstanceOf[List[_]])
-//
-//        // 读取输入流
-//        val reading = spark.readStream
-//                .schema(loadSchema)
-//                .option("startingOffsets", startingOffsets)
-//                //TODO: 设置触发的文件数，以控制内存 效果待测试
-//                .option("maxFilesPerTrigger", partition.toInt)
-//                .parquet(filesPath)
-//
-//        // 真正执行 Job
-//        val job = BPSPythonJob(jobId, spark, Some(reading), noticeFunc, finishJobWithId, Map(
-//            "noticeTopic" -> noticeTopic,
-//            "datasetId" -> datasetId,
-//            "parentsId" -> parentsId,
-//            "resultPath" -> resultPath,
-//            "lastMetadata" -> metadata,
-//            "fileSuffix" -> "csv",
-//            "partition" -> partition,
-//            "retryCount" -> retryCount
-//        ))
-//
-//        job.open()
-//        job.exec()
+        val jobMsg = event.date
+
+        // 获得 PyJob 参数信息
+        val jobId: String = jobMsg.getOrElse("jobId", UUID.randomUUID()).toString
+        val parentsId: List[CharSequence] = jobMsg.getOrElse("parentsId", "").toString.split(",").toList.map(_.asInstanceOf[CharSequence])
+        val datasetId: String = jobMsg.getOrElse("datasetId", new ObjectId()).toString
+
+        val noticeTopic: String = jobMsg.getOrElse("noticeTopic", fileMsgType).toString
+        val partition: String = jobMsg.getOrElse("partition", defaultPartition).toString
+        val retryCount: String = jobMsg.getOrElse("retryCount", defaultRetryCount).toString
+
+        val metadataPath: String = jobMsg("metadataPath").toString
+        val filesPath: String = jobMsg("filesPath").toString
+        val resultPath: String = {
+            val path = jobMsg.getOrElse("resultPath", "./jobs/").toString
+            if (path.endsWith("/")) path + containerId
+            else path + "/" + containerId
+        }
+
+        val ps = BPSConcertEntry.queryComponentWithId("parse schema").get.asInstanceOf[BPSParseSchema]
+        val metadata = ps.parseMetadata(metadataPath)(spark)
+        val loadSchema = ps.parseSchema(metadata("schema").asInstanceOf[List[_]])
+
+        // 读取输入流
+        val reading = spark.readStream
+                .schema(loadSchema)
+                .option("startingOffsets", startingOffsets)
+                //TODO: 设置触发的文件数，以控制内存 效果待测试
+                .option("maxFilesPerTrigger", partition.toInt)
+                .parquet(filesPath)
+
+        // 真正执行 Job
+        val job = BPSPythonJob(jobId, spark, Some(reading), noticeFunc, finishJobWithId, Map(
+            "noticeTopic" -> noticeTopic,
+            "datasetId" -> datasetId,
+            "parentsId" -> parentsId,
+            "resultPath" -> resultPath,
+            "lastMetadata" -> metadata,
+            "fileSuffix" -> "csv",
+            "partition" -> partition,
+            "retryCount" -> retryCount
+        ))
+
+        job.open()
+        job.exec()
     }
 
     val noticeFunc: (String, Map[String, Any]) => Unit = { (noticeTopic: String, noticeMap: Map[String, Any]) =>
