@@ -3,7 +3,7 @@ package com.pharbers.StreamEngine.Utils.Strategy
 import java.util.Collections
 
 import com.pharbers.StreamEngine.Jobs.CpaCleanJob.BPSCpaCleanJob.PARENTS_CONFIG_KEY
-//import com.pharbers.StreamEngine.Jobs.SandBoxJob.BloodJob.BPSBloodJob
+import com.pharbers.StreamEngine.Utils.Strategy.Blood.BPSSetBloodStrategy
 import com.pharbers.StreamEngine.Utils.Strategy.JobStrategy.BPSCommonJobStrategy
 import com.pharbers.kafka.schema.{AssetDataMart, DataSet}
 import org.apache.kafka.common.config.ConfigDef
@@ -23,7 +23,9 @@ import collection.JavaConverters._
   */
 class BPSDataMartBaseStrategy(config: Map[String, String], @transient inoutConfigDef: ConfigDef = new ConfigDef())
         extends BPSCommonJobStrategy(config, inoutConfigDef) {
-
+    
+    val bloodStrategy: BPSSetBloodStrategy = new BPSSetBloodStrategy(componentProperty.config)
+    
     def pushDataSet(tableName: String, version: String, url: String, saveMode: String): Unit ={
         val spark = SparkSession.getActiveSession.getOrElse(throw new Exception("需要先初始化spark"))
         val mongoOId = new ObjectId().toString
@@ -36,7 +38,7 @@ class BPSDataMartBaseStrategy(config: Map[String, String], @transient inoutConfi
             spark.sql(s"select * from $tableName").count(),
             url,
             "hive table")
-//        BPSBloodJob("data_set_job", dfs).exec()
+        bloodStrategy.pushBloodInfo(dfs, "", "")
 
         val dataMartValue = new AssetDataMart(
             tableName,
@@ -55,6 +57,6 @@ class BPSDataMartBaseStrategy(config: Map[String, String], @transient inoutConfi
             "hive",
             saveMode
         )
-//        BPSBloodJob("AssetDataMart", dataMartValue).exec()
+        bloodStrategy.pushBloodInfo(dataMartValue, "", "", msgTyp = "AssetDataMart")
     }
 }
