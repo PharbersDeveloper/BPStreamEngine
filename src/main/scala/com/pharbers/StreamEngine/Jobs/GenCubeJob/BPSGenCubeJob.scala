@@ -1,7 +1,5 @@
 package com.pharbers.StreamEngine.Jobs.GenCubeJob
 
-import java.util.UUID
-
 import com.pharbers.StreamEngine.Jobs.GenCubeJob.strategy.{BPSGenCubeToEsStrategy, BPSStrategy}
 import com.pharbers.StreamEngine.Utils.Component2
 import com.pharbers.StreamEngine.Utils.Config.BPSConfig
@@ -34,17 +32,6 @@ object BPSGenCubeJob {
     final val STRATEGY_CMD_DEFAULT = ""
     final val STRATEGY_CMD_HANDLE_HIVE_RESULT = "handle-hive-result"
     final val STRATEGY_CMD_DOC = "The value is a strategy used for this job."
-
-    final val CHECKPOINT_LOCATION_KEY = "checkpoint.location"
-    final val CHECKPOINT_LOCATION_DOC = "The value is a checkpoint location which this spark stream job used."
-
-    private val configDef: ConfigDef = new ConfigDef()
-        .define(INPUT_DATA_TYPE_KEY, Type.STRING, Importance.HIGH, INPUT_DATA_TYPE_DOC)
-        .define(INPUT_PATH_KEY, Type.STRING, Importance.HIGH, INPUT_PATH_DOC)
-        .define(OUTPUT_DATA_TYPE_KEY, Type.STRING, Importance.HIGH, OUTPUT_DATA_TYPE_DOC)
-        .define(OUTPUT_PATH_KEY, Type.STRING, Importance.HIGH, OUTPUT_PATH_DOC)
-        .define(STRATEGY_CMD_KEY, Type.STRING, STRATEGY_CMD_DEFAULT, Importance.HIGH, STRATEGY_CMD_DOC)
-        .define(CHECKPOINT_LOCATION_KEY, Type.STRING, Importance.HIGH, CHECKPOINT_LOCATION_DOC)
 
     def apply(id: String,
               spark: SparkSession,
@@ -79,7 +66,6 @@ class BPSGenCubeJob(override val id: String,
     val outputDataType: String = jobConfig.getString(OUTPUT_DATA_TYPE_KEY)
     val outputPath: String = jobConfig.getString(OUTPUT_PATH_KEY)
     val strategyCMD: String = jobConfig.getString(STRATEGY_CMD_KEY)
-    val checkpointLocation: String = jobConfig.getString(CHECKPOINT_LOCATION_KEY)
 
     override def open(): Unit = {
         logger.info("gen-cube job start with id ========>" + id)
@@ -137,5 +123,11 @@ class BPSGenCubeJob(override val id: String,
 
     override val description: String = "cube gen"
     override val componentProperty: Component2.BPComponentConfig = null
-    override def createConfigDef(): ConfigDef = ???
+    override def createConfigDef(): ConfigDef =  new ConfigDef()
+        .define(INPUT_DATA_TYPE_KEY, Type.STRING, Importance.HIGH, INPUT_DATA_TYPE_DOC)
+        .define(INPUT_PATH_KEY, Type.STRING, Importance.HIGH, INPUT_PATH_DOC)
+        .define(OUTPUT_DATA_TYPE_KEY, Type.STRING, Importance.HIGH, OUTPUT_DATA_TYPE_DOC)
+        .define(OUTPUT_PATH_KEY, Type.STRING, Importance.HIGH, OUTPUT_PATH_DOC)
+        .define(STRATEGY_CMD_KEY, Type.STRING, STRATEGY_CMD_DEFAULT, Importance.HIGH, STRATEGY_CMD_DOC)
+
 }
