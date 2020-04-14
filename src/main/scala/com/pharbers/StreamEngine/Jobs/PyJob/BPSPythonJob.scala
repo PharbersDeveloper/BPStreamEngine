@@ -6,7 +6,7 @@ import java.util.Collections
 import com.pharbers.StreamEngine.Jobs.PyJob.ForeachWriter.PyCleanSinkHDFS
 import com.pharbers.kafka.schema.DataSet
 import org.apache.spark.sql.SparkSession
-import com.pharbers.StreamEngine.Jobs.SandBoxJob.BloodJob.BPSBloodJob
+//import com.pharbers.StreamEngine.Jobs.SandBoxJob.BloodJob.BPSBloodJob
 import com.pharbers.StreamEngine.Jobs.PyJob.Py4jServer.BPSPy4jManager
 import com.pharbers.StreamEngine.Utils.Job.BPStreamJob
 import com.pharbers.StreamEngine.Jobs.PyJob.Listener.BPSProgressListenerAndClose
@@ -130,7 +130,7 @@ class BPSPythonJob(override val id: String,
             data_length,
             successPath,
             "Python 清洗 Job")
-        BPSBloodJob("data_set_job", dfs).exec()
+//        BPSBloodJob("data_set_job", dfs).exec()
     }
 
     override def close(): Unit = {
