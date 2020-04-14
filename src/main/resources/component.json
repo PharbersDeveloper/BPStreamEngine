@@ -13,7 +13,7 @@
             "args": [],
             "config": {
                 "app.name": "bp-stream-engine",
-                "master": "local[2]",
+                "master": "yarn",
                 "spark.configs.path": "src/main/resources/sparkConfig.properties",
                 "log.level": "ERROR",
                 "run.model": "client"
