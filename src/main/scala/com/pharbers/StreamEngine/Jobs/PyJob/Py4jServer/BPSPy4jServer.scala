@@ -4,7 +4,7 @@ import java.util.UUID
 import java.net.ServerSocket
 import java.io.BufferedWriter
 
-import com.pharbers.StreamEngine.Utils.Component2.BPSConcertEntry
+import com.pharbers.StreamEngine.Utils.Component2.{BPSComponentConfig, BPSConcertEntry}
 import org.json4s.DefaultFormats
 
 import scala.util.parsing.json.JSON
@@ -32,8 +32,10 @@ case class BPSPy4jServer(serverConf: Map[String, Any])
                         (manager_pop: () => String, manager_close: String => Unit) extends Serializable {
 
     final val RETRY_COUNT: Int = serverConf("retryCount").toString.toInt
+    // TODO 先这样试试
     lazy val hdfsfile: BPSHDFSFile =
-        BPSConcertEntry.queryComponentWithId("hdfs").get.asInstanceOf[BPSHDFSFile]
+        BPSHDFSFile(BPSComponentConfig("", "", Nil, Map("hdfsAddr" -> "hdfs://minikube:8020")))
+//        BPSConcertEntry.queryComponentWithId("hdfs").get.asInstanceOf[BPSHDFSFile]
 
     val jobId: String = serverConf("jobId").toString
     val threadId: String = serverConf("threadId").toString
