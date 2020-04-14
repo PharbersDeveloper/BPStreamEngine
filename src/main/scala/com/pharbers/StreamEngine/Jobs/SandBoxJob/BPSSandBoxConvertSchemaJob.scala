@@ -61,7 +61,6 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer,
 				BPJobLocalListener[SparkQueryEvent](null, List(s"spark-${query.id.toString}-progress"))(_ => {
 					val cumulative = query.recentProgress.map(_.numInputRows).sum
 					logger.info(s"cumulative num $cumulative")
-					println(s"cumulative num $cumulative")
 					if (cumulative >= totalNum) {
 						pushMsg()
 						this.close()
@@ -75,7 +74,6 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer,
 	
 	override def close(): Unit = {
 		logger.info("Job =====> Closed")
-		println("Job =====> Closed")
 		super.close()
 		container.finishJobWithId(id)
 	}
