@@ -17,6 +17,7 @@ trait BPStreamJob extends PhLogable with BPComponent {
     @transient
     val strategy: T
     @transient
+    //id是BPStreamJob实例唯一标识
     val id: String
     //todo：这儿感觉需要有个jobId
     @transient
