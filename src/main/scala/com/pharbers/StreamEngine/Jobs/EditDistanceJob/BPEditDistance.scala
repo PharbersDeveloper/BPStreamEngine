@@ -120,6 +120,7 @@ class BPEditDistance(jobContainer: BPSJobContainer, override val componentProper
         val replaceUrl = s"/common/public/${tableName}_replace/${tableName}_${cpaVersion}_${prodVersion}_replace/$version"
         replaceLogDf.filter("canReplace = true and distance != 0")
                 .selectExpr(List("ID", "COL_NAME", "ORIGIN", "check as DEST") ++ in.columns.zipWithIndex.map(x => s"cols[${x._2}] as ORIGIN_${x._1}").toList: _*)
+                .withColumn("version", lit(version))
                 .write
                 //                .bucketBy(11, "ORIGIN_MOLE_NAME")
 //                .partitionBy("ORIGIN_MOLE_NAME")
@@ -133,6 +134,7 @@ class BPEditDistance(jobContainer: BPSJobContainer, override val componentProper
         replaceLogDf.filter("canReplace = false")
                 .selectExpr(List("ID", "COL_NAME", "ORIGIN", "check as CANDIDATE", "DISTANCE") ++ in.columns.zipWithIndex.map(x => s"cols[${x._2}] as ORIGIN_${x._1}").toList: _*)
                 .withColumn("CANDIDATE", array($"CANDIDATE"))
+                .withColumn("version", lit(version))
                 .write
                 //                .bucketBy(11, "ORIGIN_MOLE_NAME")
 //                .partitionBy("ORIGIN_MOLE_NAME")
@@ -145,6 +147,7 @@ class BPEditDistance(jobContainer: BPSJobContainer, override val componentProper
         val res = mapping.keys.foldLeft(filterMinDistanceDf)((df, s) => replaceWithDistance(s, df))
         val newCpaUrl = s"/common/public/${tableName}_new/${tableName}_${cpaVersion}_${prodVersion}_new/$version"
         res.selectExpr(List("id", "check_PACK_ID as PACK_ID") ::: intColumnsExpr: _*)
+                .withColumn("version", lit(version))
                 .write
                 .mode("overwrite")
                 .option("path", newCpaUrl)
@@ -236,7 +239,10 @@ object BPEditDistance extends Serializable {
 
     def getDistance(inputWord: String, targetWord: String): Array[String] = {
         val resContainer = Array.fill(inputWord.length + 1, targetWord.length + 1)(-1)
-        Array(inputWord, targetWord, distance(inputWord, targetWord, inputWord.length, targetWord.length, resContainer).toString)
+        val s1 = inputWord.replaceAll(" ", "").toUpperCase
+        val s2 = targetWord.replaceAll(" ", "").toUpperCase
+        val distanceNum = if(!inputWord.equals(targetWord) && s1.equals(s2)) -1 else distance(s1, s2, inputWord.length, targetWord.length, resContainer)
+        Array(inputWord, targetWord, distanceNum.toString)
     }
 
     case class replaceLog(id: String, columnName: String, canReplace: Boolean, back: String, check: String, distance: Int)
