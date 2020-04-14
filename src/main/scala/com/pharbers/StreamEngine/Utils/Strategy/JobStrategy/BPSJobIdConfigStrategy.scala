@@ -20,21 +20,24 @@ import org.apache.kafka.common.config.ConfigDef.{Importance, Type}
  * @note 一些值得注意的地方
  */
 //todo：因为ConfigDef的原因，很难做到无状态
-class BPSJobIdConfigStrategy(config: Map[String, String], inoutConfigDef: ConfigDef = new ConfigDef()) extends BPStrategyComponent{
-    final private val JOB_ID_CONFIG_KEY = "jobId"
-    final private val JOB_ID_CONFIG_DOC = "job id"
-    final private val JOB_ID_CONFIG_DEFAULT = UUID.randomUUID().toString
+class BPSJobIdConfigStrategy(override val componentProperty: Component2.BPComponentConfig, inoutConfigDef: ConfigDef = new ConfigDef()) extends BPStrategyComponent{
+    final val JOB_ID_CONFIG_KEY = "jobId"
+    final val JOB_ID_CONFIG_DOC = "job id"
+    final val JOB_ID_CONFIG_DEFAULT = UUID.randomUUID().toString
 
 
     override def createConfigDef(): ConfigDef = inoutConfigDef
             .define(JOB_ID_CONFIG_KEY, Type.STRING, JOB_ID_CONFIG_DEFAULT, Importance.HIGH, JOB_ID_CONFIG_DOC)
-    val jobConfig = BPSConfig(configDef, config)
+    val jobConfig = BPSConfig(configDef, componentProperty.config)
 
+    //id是BPStreamJob实例唯一标识
+    def getId: String = componentProperty.id
 
+    //一个BPStream进程使用同一个runId
     def getRunId: String = BPSConcertEntry.runner_id
 
+    //jobId是job中的抽象概念，可以用来标识job的一个任务，所以一个job可以有多个jobId
     def getJobId: String = jobConfig.getString(JOB_ID_CONFIG_KEY)
 
     override val strategyName: String = "id strategy"
-    override val componentProperty: Component2.BPComponentConfig = null
 }

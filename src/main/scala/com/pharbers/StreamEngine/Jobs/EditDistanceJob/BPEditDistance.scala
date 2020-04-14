@@ -8,7 +8,7 @@ import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 import org.apache.spark.sql.functions._
 import com.pharbers.StreamEngine.Jobs.EditDistanceJob.BPEditDistance.{DATA_SETS_CONFIG_DOC, DATA_SETS_CONFIG_KEY, TABLE_NAME_CONFIG_DOC, TABLE_NAME_CONFIG_KEY}
 import com.pharbers.StreamEngine.Utils.Component2
-import com.pharbers.StreamEngine.Utils.Strategy.BPSDataMartBaseStrategy
+import com.pharbers.StreamEngine.Utils.Strategy.JobStrategy.BPSCommonJobStrategy
 
 /** 功能描述
   *
@@ -17,19 +17,19 @@ import com.pharbers.StreamEngine.Utils.Strategy.BPSDataMartBaseStrategy
   * @since 2020/02/04 13:38
   * @note 一些值得注意的地方
   */
-case class BPEditDistance(jobContainer: BPSJobContainer, spark: SparkSession, config_map: Map[String, String]) extends BPStreamJob {
+class BPEditDistance(jobContainer: BPSJobContainer, override val componentProperty: Component2.BPComponentConfig)
+        extends BPStreamJob {
 
-    import spark.implicits._
-
-    override val componentProperty: Component2.BPComponentConfig = null
     override def createConfigDef(): ConfigDef = new ConfigDef()
             .define(TABLE_NAME_CONFIG_KEY, Type.STRING, "cpa", Importance.HIGH, TABLE_NAME_CONFIG_DOC)
             .define(DATA_SETS_CONFIG_KEY, Type.LIST, Importance.HIGH, DATA_SETS_CONFIG_DOC)
-    override type T = BPSDataMartBaseStrategy
-    override val strategy: BPSDataMartBaseStrategy = new BPSDataMartBaseStrategy(config_map)
+    override type T = BPSCommonJobStrategy
+    override val strategy: BPSCommonJobStrategy = new BPSCommonJobStrategy(componentProperty, configDef)
     val jobId: String = strategy.getJobId
     val runId: String = strategy.getRunId
-    override val id: String = jobId
+    override val id: String = strategy.getId
+    override val spark: SparkSession = strategy.getSpark
+    import spark.implicits._
     //todo: 配置传入
     implicit val mappingConfig: Map[String, List[String]] = Map(
         "PRODUCT_NAME" -> List("PROD_NAME_CH"),
@@ -126,7 +126,8 @@ case class BPEditDistance(jobContainer: BPSJobContainer, spark: SparkSession, co
                 .mode("overwrite")
                 .option("path", replaceUrl)
                 .saveAsTable(s"${tableName}_replace")
-        strategy.pushDataSet(s"${tableName}_replace", version, replaceUrl, "overwrite")
+        //todo; 血缘
+//        strategy.pushDataSet(s"${tableName}_replace", version, replaceUrl, "overwrite")
 
         val noReplaceUrl = s"/common/public/${tableName}_no_replace/${tableName}_${cpaVersion}_${prodVersion}_no_replace/$version"
         replaceLogDf.filter("canReplace = false")
@@ -138,8 +139,8 @@ case class BPEditDistance(jobContainer: BPSJobContainer, spark: SparkSession, co
                 .mode("overwrite")
                 .option("path", noReplaceUrl)
                 .saveAsTable(s"${tableName}_no_replace")
-
-        strategy.pushDataSet(s"${tableName}_no_replace", version, noReplaceUrl, "overwrite")
+        //todo; 血缘
+//        strategy.pushDataSet(s"${tableName}_no_replace", version, noReplaceUrl, "overwrite")
 
         val res = mapping.keys.foldLeft(filterMinDistanceDf)((df, s) => replaceWithDistance(s, df))
         val newCpaUrl = s"/common/public/${tableName}_new/${tableName}_${cpaVersion}_${prodVersion}_new/$version"
@@ -148,6 +149,8 @@ case class BPEditDistance(jobContainer: BPSJobContainer, spark: SparkSession, co
                 .mode("overwrite")
                 .option("path", newCpaUrl)
                 .saveAsTable(s"${tableName}_new")
+
+        //todo; 血缘
 //        strategy.pushDataSet(s"${tableName}_new", version, noReplaceUrl, "overwrite")
     }
 
@@ -202,8 +205,9 @@ case class BPEditDistance(jobContainer: BPSJobContainer, spark: SparkSession, co
             df.withColumn(s"${key}_distance", when($"min".isNull, col(s"${key}_distance"))
                     .otherwise(array(
                         col(s"${key}_distance")(0),
-                        col(s"$key"),
-                        when(col(s"${key}_distance")(0) === col(s"$key"), lit("0")).otherwise(lit("-1")))
+                        when(col(s"$key") === "", col(s"${key}_distance")(1)).otherwise(col(s"$key")),
+                        when(col(s"${key}_distance")(0) === col(s"$key"), lit("0"))
+                                .otherwise(when(col(s"$key") === "", col(s"${key}_distance")(2)).otherwise(lit("-1"))))
                     )
             )
         }).drop("in_min" +: humanDf.columns: _*)
