@@ -64,6 +64,8 @@ class BPSCommonJobStrategy(override val componentProperty: Component2.BPComponen
     //jobId是job中的抽象概念，可以用来标识job的一个任务，所以一个job可以有多个jobId
     def getJobId: String = jobIdConfigStrategy.getJobId
 
+    def getTraceId: String = jobIdConfigStrategy.getTraceId
+
     def getListens: Seq[String] = jobConfig.getList(LISTEN_EVENTS_KEY).asScala
 
     def getKafka: BPKafkaSession = BPSConcertEntry.queryComponentWithId("kafka").get.asInstanceOf[BPKafkaSession]

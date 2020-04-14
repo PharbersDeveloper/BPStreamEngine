@@ -121,6 +121,14 @@
                 "pythonUri": "https://github.com/PharbersDeveloper/bp-data-clean.git",
                 "pythonBranch": "v0.0.1"
             }
+        },
+        {
+            "id": "SqlTableJobContainer",
+            "name": "BPSqlTableJobContainer",
+            "args": [],
+            "config": {
+                "listens": "SandBox-hive"
+            }
         }
     ],
     "starts": [
