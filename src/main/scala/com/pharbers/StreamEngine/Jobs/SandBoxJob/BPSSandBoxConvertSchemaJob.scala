@@ -38,9 +38,9 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer,
 	val sc: SchemaConverter = strategy.getSchemaConverter
 	val hdfs: BPSHDFSFile = strategy.getHdfsFile
 	var totalNum: Long = 0
-	val checkpointPath = s"/jobs/$runnerId/$id/checkpoint"
-	val parquetPath = s"/jobs/$runnerId/$id/contents"
-	val metaDataPath = s"/jobs/$runnerId/$id/metadata"
+//	val checkpointPath = s"/jobs/$runnerId/$id/checkpoint"
+//	val parquetPath = s"/jobs/$runnerId/$id/contents"
+//	val metaDataPath = s"/jobs/$runnerId/$id/metadata"
 	val mongoId: String = new ObjectId().toString
 	var metaData: MetaData = _
 	implicit val formats: DefaultFormats.type = DefaultFormats
@@ -61,6 +61,7 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer,
 				BPJobLocalListener[SparkQueryEvent](null, List(s"spark-${query.id.toString}-progress"))(_ => {
 					val cumulative = query.recentProgress.map(_.numInputRows).sum
 					logger.info(s"cumulative num $cumulative")
+					println(s"cumulative num $cumulative")
 					if (cumulative >= totalNum) {
 						pushMsg()
 						this.close()
@@ -74,6 +75,7 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer,
 	
 	override def close(): Unit = {
 		logger.info("Job =====> Closed")
+		println("Job =====> Closed")
 		super.close()
 		container.finishJobWithId(id)
 	}
@@ -83,8 +85,8 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer,
 			.writeStream
 			.outputMode("append")
 			.format("parquet")
-			.option("checkpointLocation", checkpointPath)
-			.option("path", parquetPath)
+			.option("checkpointLocation", getCheckpointPath)
+			.option("path", getOutputPath)
 			.start()
 	}
 	
@@ -96,7 +98,7 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer,
 			metaData = startProcessMetaData(s"$mdPath/$jobId")
 			totalNum = metaData.length("length").toString.toLong
 			// 将规范过后的MetaData重新写入
-			writeMetaData(metaDataPath, metaData)
+			writeMetaData(getMetadataPath, metaData)
 			// 规范化的Schema设置Stream
 			df match {
 				case Some(is) => {
@@ -134,14 +136,14 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer,
 	}
 	
 	def pushMsg(): Unit = {
-		val pythonMetaData = PythonMetaData(mongoId, "HiveTaskNone", metaDataPath, parquetPath, s"/jobs/$runnerId")
+		val pythonMetaData = PythonMetaData(mongoId, "HiveTaskNone", getMetadataPath, getOutputPath, s"/jobs/$runnerId")
 		val dataSet = new DataSet(Collections.emptyList(),
 			mongoId,
 			id,
 			metaData.schemaData.map(_ ("key").toString).asInstanceOf[List[CharSequence]].asJava,
 			metaData.label("sheetName").toString,
 			totalNum,
-			parquetPath,
+			getOutputPath,
 			"SampleData")
 		val uploadEnd = new UploadEnd(mongoId, metaData.label("assetId").toString)
 		// 给PythonCleanJob发送消息
