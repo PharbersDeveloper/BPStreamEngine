@@ -33,7 +33,7 @@ case class BPSPy4jServer(serverConf: Map[String, Any])
 
     final val RETRY_COUNT: Int = serverConf("retryCount").toString.toInt
     lazy val hdfsfile: BPSHDFSFile =
-        BPSConcertEntry.queryComponentWithId("hdfs").asInstanceOf[BPSHDFSFile]
+        BPSConcertEntry.queryComponentWithId("hdfs").get.asInstanceOf[BPSHDFSFile]
 
     val jobId: String = serverConf("jobId").toString
     val threadId: String = serverConf("threadId").toString
