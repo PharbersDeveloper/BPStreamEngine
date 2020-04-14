@@ -9,7 +9,7 @@ import com.pharbers.StreamEngine.Utils.Component2.{BPSComponentConfig, BPSConcer
 import com.pharbers.StreamEngine.Utils.Config.BPSConfig
 import com.pharbers.StreamEngine.Utils.Event.BPSEvents
 import com.pharbers.StreamEngine.Utils.Strategy.BPStrategyComponent
-import com.pharbers.StreamEngine.Utils.Strategy.Schema.BPSParseSchema
+import com.pharbers.StreamEngine.Utils.Strategy.Schema.{BPSParseSchema, SchemaConverter}
 import com.pharbers.StreamEngine.Utils.Strategy.Session.Kafka.BPKafkaSession
 import com.pharbers.StreamEngine.Utils.Strategy.Session.Spark.BPSparkSession
 import com.pharbers.StreamEngine.Utils.Strategy.hdfs.BPSHDFSFile
@@ -71,6 +71,9 @@ class BPSCommonJobStrategy(override val componentProperty: Component2.BPComponen
     def getSpark: SparkSession = BPSConcertEntry.queryComponentWithId("spark").get.asInstanceOf[BPSparkSession]
 
     def getHdfsFile: BPSHDFSFile = BPSConcertEntry.queryComponentWithId("hdfs").get.asInstanceOf[BPSHDFSFile]
+    
+    def getSchemaConverter: SchemaConverter =
+        BPSConcertEntry.queryComponentWithId("schema convert").get.asInstanceOf[SchemaConverter]
 
     def getParseSchema: BPSParseSchema = BPSConcertEntry.queryComponentWithId("parse schema").get.asInstanceOf[BPSParseSchema]
 
