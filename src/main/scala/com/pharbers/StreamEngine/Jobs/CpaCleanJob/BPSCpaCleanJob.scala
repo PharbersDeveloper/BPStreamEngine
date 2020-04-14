@@ -1,21 +1,17 @@
 package com.pharbers.StreamEngine.Jobs.CpaCleanJob
 
-import java.util.{Collections, UUID}
+import java.util.UUID
 
 import BPSCpaCleanJob._
-import com.pharbers.StreamEngine.Jobs.SandBoxJob.BloodJob.BPSBloodJob
 import com.pharbers.StreamEngine.Utils.Component2
 import com.pharbers.StreamEngine.Utils.Config.BPSConfig
 
-import collection.JavaConverters._
 import com.pharbers.StreamEngine.Utils.Job.{BPSJobContainer, BPStreamJob}
 import com.pharbers.StreamEngine.Utils.Strategy.BPSDataMartBaseStrategy
-import com.pharbers.kafka.schema.{AssetDataMart, DataSet}
 import org.apache.kafka.common.config.ConfigDef
 import org.apache.kafka.common.config.ConfigDef.{Importance, Type}
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions._
-import org.bson.types.ObjectId
 
 /** 功能描述
   *
