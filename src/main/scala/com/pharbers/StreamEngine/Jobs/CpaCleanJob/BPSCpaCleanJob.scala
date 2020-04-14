@@ -3,7 +3,6 @@ package com.pharbers.StreamEngine.Jobs.CpaCleanJob
 import java.util.{Collections, UUID}
 
 import BPSCpaCleanJob._
-import com.pharbers.StreamEngine.Jobs.SandBoxJob.BloodJob.BPSBloodJob
 import com.pharbers.StreamEngine.Utils.Component2
 import com.pharbers.StreamEngine.Utils.Config.BPSConfig
 

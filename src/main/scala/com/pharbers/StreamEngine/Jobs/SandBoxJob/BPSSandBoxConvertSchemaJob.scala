@@ -158,14 +158,14 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer,
 	                          filesPath: String,
 	                          resultPath: String)
 	
-//	case class DataSets(parentIds: List[String],
-//	                    mongoId: String,
-//	                    jobId: String,
-//	                    colNames: List[String],
-//	                    tabName: String,
-//	                    length: Long,
-//	                    url: String,
-//	                    description: String)
-//
-//	case class UploadEnd(dataSetId: String, assetId: String)
+	case class DataSets(parentIds: List[String],
+	                    mongoId: String,
+	                    jobId: String,
+	                    colNames: List[String],
+	                    tabName: String,
+	                    length: Long,
+	                    url: String,
+	                    description: String)
+
+	case class UploadEnd(dataSetId: String, assetId: String)
 }
