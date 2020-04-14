@@ -134,7 +134,7 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer,
 	}
 	
 	def pushMsg(): Unit = {
-		val pythonMetaData = PythonMetaData(mongoId, "HiveTaskNone", getMetadataPath, getOutputPath, s"/jobs/$runnerId")
+		val pythonMetaData = PythonMetaData(mongoId, getMetadataPath, getOutputPath, s"/jobs/$runnerId")
 		val dataSet = new DataSet(Collections.emptyList(),
 			mongoId,
 			id,
@@ -158,7 +158,6 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer,
 	case class MetaData(schemaData: List[Map[String, Any]], label: Map[String, Any], length: Map[String, Any])
 	
 	case class PythonMetaData(mongoId: String,
-	                          noticeTopic: String,
 	                          metadataPath: String,
 	                          filesPath: String,
 	                          resultPath: String)
