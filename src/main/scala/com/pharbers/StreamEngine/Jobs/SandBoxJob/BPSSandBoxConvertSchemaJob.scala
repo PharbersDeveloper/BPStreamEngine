@@ -1,10 +1,13 @@
 package com.pharbers.StreamEngine.Jobs.SandBoxJob
 
+import java.util.Collections
+
 import com.pharbers.StreamEngine.Utils.Component2
 import com.pharbers.StreamEngine.Utils.Component2.BPSConcertEntry
 import com.pharbers.StreamEngine.Utils.Event.BPSEvents
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPJobLocalListener
 import com.pharbers.StreamEngine.Utils.Job.{BPSJobContainer, BPStreamJob}
+import com.pharbers.StreamEngine.Utils.Strategy.Blood.BPSSetBloodStrategy
 import com.pharbers.StreamEngine.Utils.Strategy.JobStrategy.BPSCommonJobStrategy
 import com.pharbers.StreamEngine.Utils.Strategy.Schema.{BPSMetaData2Map, SchemaConverter}
 import com.pharbers.StreamEngine.Utils.Strategy.Session.Spark.msgMode.SparkQueryEvent
@@ -13,15 +16,19 @@ import org.apache.kafka.common.config.ConfigDef
 import org.apache.spark.sql.functions.from_json
 import org.apache.spark.sql.streaming.StreamingQuery
 import org.apache.spark.sql.{DataFrame, SparkSession}
+import com.pharbers.kafka.schema.{DataSet, UploadEnd}
 import org.json4s.DefaultFormats
 import org.json4s.jackson.Serialization.write
 import org.mongodb.scala.bson.ObjectId
+
+import collection.JavaConverters._
 
 case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer,
                                       componentProperty: Component2.BPComponentConfig) extends BPStreamJob {
 	
 	type T = BPSCommonJobStrategy
 	override val strategy: BPSCommonJobStrategy = BPSCommonJobStrategy(componentProperty.config, configDef)
+	val bloodStrategy: BPSSetBloodStrategy = new BPSSetBloodStrategy(componentProperty.config)
 	override val id: String = componentProperty.id // 本身Job的id
 	val jobId: String = strategy.getJobId // componentProperty config中的job Id
 	val runnerId: String = BPSConcertEntry.runner_id // Runner Id
@@ -31,9 +38,9 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer,
 	val sc: SchemaConverter = strategy.getSchemaConverter
 	val hdfs: BPSHDFSFile = strategy.getHdfsFile
 	var totalNum: Long = 0
-	val checkpointPath = s"/jobs/$runnerId/$id/checkpoint"
-	val parquetPath = s"/jobs/$runnerId/$id/contents"
-	val metaDataPath = s"/jobs/$runnerId/$id/metadata"
+//	val checkpointPath = s"/jobs/$runnerId/$id/checkpoint"
+//	val parquetPath = s"/jobs/$runnerId/$id/contents"
+//	val metaDataPath = s"/jobs/$runnerId/$id/metadata"
 	val mongoId: String = new ObjectId().toString
 	var metaData: MetaData = _
 	implicit val formats: DefaultFormats.type = DefaultFormats
@@ -54,6 +61,7 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer,
 				BPJobLocalListener[SparkQueryEvent](null, List(s"spark-${query.id.toString}-progress"))(_ => {
 					val cumulative = query.recentProgress.map(_.numInputRows).sum
 					logger.info(s"cumulative num $cumulative")
+					println(s"cumulative num $cumulative")
 					if (cumulative >= totalNum) {
 						pushMsg()
 						this.close()
@@ -67,6 +75,7 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer,
 	
 	override def close(): Unit = {
 		logger.info("Job =====> Closed")
+		println("Job =====> Closed")
 		super.close()
 		container.finishJobWithId(id)
 	}
@@ -76,8 +85,8 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer,
 			.writeStream
 			.outputMode("append")
 			.format("parquet")
-			.option("checkpointLocation", checkpointPath)
-			.option("path", parquetPath)
+			.option("checkpointLocation", getCheckpointPath)
+			.option("path", getOutputPath)
 			.start()
 	}
 	
@@ -89,7 +98,7 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer,
 			metaData = startProcessMetaData(s"$mdPath/$jobId")
 			totalNum = metaData.length("length").toString.toLong
 			// 将规范过后的MetaData重新写入
-			writeMetaData(metaDataPath, metaData)
+			writeMetaData(getMetadataPath, metaData)
 			// 规范化的Schema设置Stream
 			df match {
 				case Some(is) => {
@@ -102,13 +111,11 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer,
 				}
 				case None => logger.warn("Input Stream Is Nil")
 			}
-			
 		} catch {
 			case e: Exception =>
 				logger.error(e.getMessage)
 				this.close()
 		}
-		
 	}
 	
 	def startProcessMetaData(path: String): MetaData = {
@@ -129,21 +136,21 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer,
 	}
 	
 	def pushMsg(): Unit = {
-		val pythonMetaData = PythonMetaData(mongoId, "HiveTaskNone", metaDataPath, parquetPath, s"/jobs/$runnerId")
-		val dataSet = DataSets(Nil,
+		val pythonMetaData = PythonMetaData(mongoId, "HiveTaskNone", getMetadataPath, getOutputPath, s"/jobs/$runnerId")
+		val dataSet = new DataSet(Collections.emptyList(),
 			mongoId,
 			id,
-			metaData.schemaData.map(_ ("key").toString),
+			metaData.schemaData.map(_ ("key").toString).asInstanceOf[List[CharSequence]].asJava,
 			metaData.label("sheetName").toString,
 			totalNum,
-			parquetPath,
+			getOutputPath,
 			"SampleData")
-		val uploadEnd = UploadEnd(mongoId, metaData.label("assetId").toString)
+		val uploadEnd = new UploadEnd(mongoId, metaData.label("assetId").toString)
 		// 给PythonCleanJob发送消息
 		strategy.pushMsg(BPSEvents(id, traceId, msgType, pythonMetaData), isLocal = false)
 		// 血缘
-		strategy.pushMsg(BPSEvents(id, traceId, "SandBoxBloodJob", dataSet), isLocal = false)
-		strategy.pushMsg(BPSEvents(id, traceId, "UploadEndJob", uploadEnd), isLocal = false)
+		bloodStrategy.pushBloodInfo(dataSet, id, traceId)
+		bloodStrategy.uploadEndPoint(uploadEnd, id, traceId)
 	}
 	
 	override def createConfigDef(): ConfigDef = new ConfigDef()
@@ -157,15 +164,4 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer,
 	                          metadataPath: String,
 	                          filesPath: String,
 	                          resultPath: String)
-	
-	case class DataSets(parentIds: List[String],
-	                    mongoId: String,
-	                    jobId: String,
-	                    colNames: List[String],
-	                    tabName: String,
-	                    length: Long,
-	                    url: String,
-	                    description: String)
-
-	case class UploadEnd(dataSetId: String, assetId: String)
 }

@@ -4,6 +4,7 @@ import org.apache.spark.sql
 import java.util.Collections
 
 import com.pharbers.StreamEngine.Jobs.PyJob.ForeachWriter.PyCleanSinkHDFS
+import com.pharbers.StreamEngine.Utils.Strategy.Blood.BPSSetBloodStrategy
 import com.pharbers.kafka.schema.DataSet
 import org.apache.spark.sql.SparkSession
 //import com.pharbers.StreamEngine.Jobs.SandBoxJob.BloodJob.BPSBloodJob
@@ -54,9 +55,9 @@ class BPSPythonJob(override val id: String,
 
     type T = BPStrategyComponent
     override val strategy: BPStrategyComponent = null
-
+    val bloodStrategy: BPSSetBloodStrategy = new BPSSetBloodStrategy(Map.empty)
+    
     val noticeTopic: String = jobConf("noticeTopic").toString
-
     val datasetId: String = jobConf("datasetId").toString
     val parentsId: List[CharSequence] = jobConf("parentsId").asInstanceOf[List[CharSequence]]
 
@@ -130,6 +131,8 @@ class BPSPythonJob(override val id: String,
             data_length,
             successPath,
             "Python 清洗 Job")
+        // TODO 齐 弄出traceId
+        bloodStrategy.pushBloodInfo(dfs, id,"")
 //        BPSBloodJob("data_set_job", dfs).exec()
     }
 

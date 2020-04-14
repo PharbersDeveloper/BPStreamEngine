@@ -24,7 +24,7 @@ case class BPSProgressListenerAndClose(override val job: BPSPythonJob,
                                        rowRecordPath: String) extends BPStreamListener {
 
     lazy val hdfsfile: BPSHDFSFile =
-        BPSConcertEntry.queryComponentWithId("hdfs").asInstanceOf[BPSHDFSFile]
+        BPSConcertEntry.queryComponentWithId("hdfs").get.asInstanceOf[BPSHDFSFile]
 
     override def trigger(e: BPSEvents): Unit = {
 //        val rows = BPSHDFSFile.readHDFS(rowRecordPath).map(_.toLong).sum
