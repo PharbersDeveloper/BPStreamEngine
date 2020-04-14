@@ -58,16 +58,27 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer,
 			outputStream = outputStream :+ query
 			
 			val rowNumListener =
-				BPJobLocalListener[SparkQueryEvent](null, List(s"spark-${query.id.toString}-progress"))(_ => {
+				BPJobLocalListener[SparkQueryEvent](null, List(s"spark-${query.id.toString}-progress"))(x => {
 					val cumulative = query.recentProgress.map(_.numInputRows).sum
 					logger.info(s"cumulative num $cumulative")
+					logger.info(s"progress status  =======>>> ${x.date.status}")
+					logger.info(s"progress msg     =======>>> ${x.date.msg}")
 					if (cumulative >= totalNum) {
-						pushMsg()
-						this.close()
+						pushBloodMsg()
+//						this.close()
+						query.stop()
 					}
 				})
 			rowNumListener.active(null)
-			listeners = listeners :+ rowNumListener
+			val terminatedListener = BPJobLocalListener[SparkQueryEvent](null, List(s"spark-${query.id.toString}-terminated"))(x => {
+				if (x.date.id == query.id.toString && x.date.status == "terminated") {
+					logger.info(s"terminated status  =======>>> ${x.date.status}")
+					logger.info(s"terminated msg     =======>>> ${x.date.msg}")
+					this.close()
+				}
+			})
+			terminatedListener.active(null)
+			listeners = listeners :+ rowNumListener :+ terminatedListener
 		}
 		case None => ???
 	}
@@ -97,6 +108,10 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer,
 			totalNum = metaData.length("length").toString.toLong
 			// 将规范过后的MetaData重新写入
 			writeMetaData(getMetadataPath, metaData)
+			
+			// 告诉pyjob有数据了
+			pushPyJob()
+			
 			// 规范化的Schema设置Stream
 			df match {
 				case Some(is) => {
@@ -133,8 +148,7 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer,
 		hdfs.appendLine2HDFS(path, write(md.length))
 	}
 	
-	def pushMsg(): Unit = {
-		val pythonMetaData = PythonMetaData(mongoId, "HiveTaskNone", getMetadataPath, getOutputPath, s"/jobs/$runnerId")
+	def pushBloodMsg(): Unit = {
 		val dataSet = new DataSet(Collections.emptyList(),
 			mongoId,
 			id,
@@ -144,11 +158,15 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer,
 			getOutputPath,
 			"SampleData")
 		val uploadEnd = new UploadEnd(mongoId, metaData.label("assetId").toString)
-		// 给PythonCleanJob发送消息
-		strategy.pushMsg(BPSEvents(id, traceId, msgType, pythonMetaData), isLocal = false)
 		// 血缘
 		bloodStrategy.pushBloodInfo(dataSet, id, traceId)
 		bloodStrategy.uploadEndPoint(uploadEnd, id, traceId)
+	}
+	
+	def pushPyJob(): Unit = {
+		val pythonMetaData = PythonMetaData(mongoId, "HiveTaskNone", getMetadataPath, getOutputPath, s"/jobs/$runnerId")
+		// 给PythonCleanJob发送消息
+		strategy.pushMsg(BPSEvents(id, traceId, msgType, pythonMetaData), isLocal = false)
 	}
 	
 	override def createConfigDef(): ConfigDef = new ConfigDef()
