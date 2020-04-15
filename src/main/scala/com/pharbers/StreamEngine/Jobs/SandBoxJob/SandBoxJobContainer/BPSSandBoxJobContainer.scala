@@ -11,11 +11,11 @@ import com.pharbers.StreamEngine.Utils.Event.EventHandler.BPSEventHandler
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.{BPJobRemoteListener, BPStreamListener}
 import com.pharbers.StreamEngine.Utils.Job.{BPDynamicStreamJob, BPSJobContainer, BPStreamJob}
 import com.pharbers.StreamEngine.Utils.Strategy.JobStrategy.BPSCommonJobStrategy
+import com.pharbers.StreamEngine.Utils.Strategy.Queue.BPSSandBoxQueueStrategy
 import org.apache.kafka.common.config.ConfigDef
 import org.apache.kafka.common.config.ConfigDef.{Importance, Type}
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.types.{StringType, StructField, StructType, TimestampType}
-
 
 object BPSSandBoxJobContainer {
 	def apply(componentProperty: Component2.BPComponentConfig): BPSSandBoxJobContainer =
@@ -30,10 +30,10 @@ class BPSSandBoxJobContainer(override val componentProperty: Component2.BPCompon
 	final private val FILE_MSG_TYPE_DOC = "push Python msg type"
 	final private val FILE_MSG_TYPE_DEFAULT = "Python.msgType"
 	
-	
 	val description: String = "SandBox Start"
 	type T = BPSCommonJobStrategy
-	val strategy = BPSCommonJobStrategy(componentProperty.config, configDef)
+	val strategy: BPSCommonJobStrategy = BPSCommonJobStrategy(componentProperty.config, configDef)
+	val queueStrategy: BPSSandBoxQueueStrategy = BPSSandBoxQueueStrategy(componentProperty.config)
 	val id: String = componentProperty.id
 	val jobId: String = strategy.getJobId
 	
@@ -98,13 +98,19 @@ class BPSSandBoxJobContainer(override val componentProperty: Component2.BPCompon
 			
 			hisRunnerId = BPSConcertEntry.runner_id
 		}
+		
 		val pythonMsgType: String = strategy.jobConfig.getString(FILE_MSG_TYPE_KEY)
 		val job = BPSSandBoxConvertSchemaJob(this, BPSComponentConfig(UUID.randomUUID().toString,
 				"BPSSandBoxConvertSchemaJob",
 				event.traceId :: pythonMsgType :: Nil,
 				event.date))
 		jobs += job.id -> job
-		job.open()
-		job.exec()
+		queueStrategy.push(job)
+	}
+	
+	override def close(): Unit = {
+		super.close()
+//		queueStrategy.clean()
 	}
 }
+

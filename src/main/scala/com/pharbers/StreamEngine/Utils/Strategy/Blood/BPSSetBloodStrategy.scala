@@ -2,7 +2,6 @@ package com.pharbers.StreamEngine.Utils.Strategy.Blood
 
 import com.pharbers.StreamEngine.Utils.Component2.BPSConcertEntry
 import com.pharbers.StreamEngine.Utils.Event.BPSEvents
-import com.pharbers.StreamEngine.Utils.Strategy.JobStrategy.BPSCommonJobStrategy
 import com.pharbers.StreamEngine.Utils.Strategy.Session.Kafka.BPKafkaSession
 import com.pharbers.kafka.schema.UploadEnd
 import org.apache.kafka.common.config.ConfigDef
