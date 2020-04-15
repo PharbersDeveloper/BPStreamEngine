@@ -18,10 +18,12 @@ object BPSLocalChannel {
 //    def apply(config: Map[String, String]): BPSLocalChannel = {
     def apply(componentProperty: Component2.BPComponentConfig): BPSLocalChannel = {
         channel = channel match {
-            case None => Some(new BPSLocalChannel(componentProperty))
+            case None =>
+                val channel = new BPSLocalChannel(componentProperty)
+                ThreadExecutor().execute(channel)
+                Some(channel)
             case _ => channel
         }
-        ThreadExecutor().execute(channel.get)
         channel.get
     }
 
@@ -61,14 +63,20 @@ class BPSLocalChannel(override val componentProperty: Component2.BPComponentConf
     def trigger(): Unit = {
         //没有时会阻塞，根据业务需要之后可以修改为pull。但是资源消耗会增加
         val event = events.take()
-        lst.filter(_.hit(event)).foreach(_.trigger(event))
+        lst.filter(_.hit(event)).foreach(x => {
+            try {
+                x.trigger(event)
+            } catch {
+                case e: Exception => logger.error(e.getMessage, e)
+            }
+
+        })
     }
 
     override def run(): Unit = {
         logger.info("Local Channel Server")
         while (true) {
             trigger()
-            Thread.sleep(componentProperty.config("sleep").toInt)
         }
     }
 

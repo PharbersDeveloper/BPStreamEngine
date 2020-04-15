@@ -61,16 +61,11 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer,
 			
 			val rowNumListener =
 				BPJobLocalListener[SparkQueryEvent](null, List(s"spark-${query.id.toString}-progress"))(x => {
-					val cumulative = query.recentProgress.map(_.numInputRows).sum
-					logger.info(s"cumulative num $cumulative")
-					logger.info(s"progress status  =======>>> ${x.date.status}")
-					logger.info(s"progress msg     =======>>> ${x.date.msg}")
-					if (cumulative >= totalNum) {
-						pushBloodMsg()
-						this.close()
-					}
+					logger.info(s"listener hit query ${x.date.id}")
+					checkQuery()
 				})
 			rowNumListener.active(null)
+			checkQuery()
 			listeners = listeners :+ rowNumListener
 		}
 		case None => ???
@@ -161,6 +156,16 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer,
 		val pythonMetaData = PythonMetaData(mongoId, "HiveTaskNone", getMetadataPath, getOutputPath, s"/jobs/$runnerId")
 		// 给PythonCleanJob发送消息
 		strategy.pushMsg(BPSEvents(id, traceId, msgType, pythonMetaData), isLocal = false)
+	}
+	
+	def checkQuery(): Unit = {
+		val query = outputStream.head
+		val cumulative = query.recentProgress.map(_.numInputRows).sum
+		logger.info(s"cumulative num $cumulative, id: $id, query: ${query.id.toString}")
+		if (cumulative >= totalNum) {
+			pushBloodMsg()
+			this.close()
+		}
 	}
 	
 	override def createConfigDef(): ConfigDef = new ConfigDef()

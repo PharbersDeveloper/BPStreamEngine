@@ -22,13 +22,11 @@ class BPSSandBoxQueueStrategy(config: Map[String, String], inoutConfigDef: Confi
 	
 	def clean(): Unit = SandBoxQueue.jobQueue.clear()
 	
-	val maxQueueJob = 4
-	
 	override def run(): Unit = {
 		while (true) {
-			logger.info(s"execQueueJob Num =====> ${SandBoxQueue.execQueueJob.get()}")
-			logger.info(s"jobQueue Num =====> ${SandBoxQueue.jobQueue.length}")
-			if (SandBoxQueue.execQueueJob.get() < maxQueueJob && SandBoxQueue.jobQueue.nonEmpty) {
+//			logger.info(s"execQueueJob Num =====> ${SandBoxQueue.execQueueJob.get()}")
+//			logger.info(s"jobQueue Num =====> ${SandBoxQueue.jobQueue.length}")
+			if (SandBoxQueue.execQueueJob.get() < config("queue").toInt && SandBoxQueue.jobQueue.nonEmpty) {
 				val job = SandBoxQueue.jobQueue.dequeue()
 				try {
 					SandBoxQueue.execQueueJob.incrementAndGet()
@@ -39,7 +37,7 @@ class BPSSandBoxQueueStrategy(config: Map[String, String], inoutConfigDef: Confi
 				}
 				
 			}
-			Thread.sleep(5 * 1000)
+			Thread.sleep(1 * 1000)
 		}
 	}
 }

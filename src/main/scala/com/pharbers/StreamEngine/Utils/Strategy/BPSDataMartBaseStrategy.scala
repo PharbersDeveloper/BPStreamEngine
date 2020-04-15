@@ -2,12 +2,11 @@ package com.pharbers.StreamEngine.Utils.Strategy
 
 import java.util.Collections
 
-//import com.pharbers.StreamEngine.Jobs.CpaCleanJob.BPSCpaCleanJob.PARENTS_CONFIG_KEY
+import com.pharbers.StreamEngine.Utils.Component2.{BPComponentConfig, BPSConcertEntry}
+import com.pharbers.StreamEngine.Utils.Strategy.Session.Spark.BPSparkSession
 import com.pharbers.StreamEngine.Utils.Strategy.Blood.BPSSetBloodStrategy
-import com.pharbers.StreamEngine.Utils.Strategy.JobStrategy.BPSCommonJobStrategy
 import com.pharbers.kafka.schema.{AssetDataMart, DataSet}
 import org.apache.kafka.common.config.ConfigDef
-import org.apache.spark.sql.SparkSession
 import org.bson.types.ObjectId
 
 import collection.JavaConverters._
@@ -21,19 +20,16 @@ import collection.JavaConverters._
   * @since 2020/03/19 15:36
   * @note 一些值得注意的地方
   */
-class BPSDataMartBaseStrategy(config: Map[String, String], @transient inoutConfigDef: ConfigDef = new ConfigDef()) {
-    final val PARENTS_CONFIG_KEY = "dataSets"
-    val bloodStrategy: BPSSetBloodStrategy = new BPSSetBloodStrategy(config)
-    
-    val strategy: BPSCommonJobStrategy = BPSCommonJobStrategy(config, inoutConfigDef)
-    
-    def pushDataSet(tableName: String, version: String, url: String, saveMode: String): Unit ={
-        val spark = SparkSession.getActiveSession.getOrElse(throw new Exception("需要先初始化spark"))
+class BPSDataMartBaseStrategy(override val componentProperty: BPComponentConfig) extends BPStrategyComponent {
+
+    def pushDataSet(tableName: String, version: String, url: String, saveMode: String, jobId: String, traceId: String, dataSet: List[String]): Unit ={
+        val bloodStrategy: BPSSetBloodStrategy = new BPSSetBloodStrategy(componentProperty.config)
+        val spark = BPSConcertEntry.queryComponentWithId("spark").get.asInstanceOf[BPSparkSession]
         val mongoOId = new ObjectId().toString
         val dfs = new DataSet(
-            List[CharSequence](strategy.jobConfig.getList(PARENTS_CONFIG_KEY).asScala: _*).asJava,
+            List[CharSequence](dataSet: _*).asJava,
             mongoOId,
-            strategy.getJobId,
+            jobId,
             Collections.emptyList(),
             "",
             spark.sql(s"select * from $tableName").count(),
@@ -58,6 +54,14 @@ class BPSDataMartBaseStrategy(config: Map[String, String], @transient inoutConfi
             "hive",
             saveMode
         )
-        bloodStrategy.pushBloodInfo(dataMartValue, "", "", msgTyp = "AssetDataMart")
+        bloodStrategy.pushBloodInfo(dataMartValue, jobId, traceId, msgTyp = "AssetDataMart")
     }
+
+    override val strategyName: String = "data mark blood strategy"
+
+    override def createConfigDef(): ConfigDef = new ConfigDef()
+}
+
+object BPSDataMartBaseStrategy {
+    def apply(componentProperty: BPComponentConfig): BPSDataMartBaseStrategy = new BPSDataMartBaseStrategy(componentProperty)
 }

@@ -74,8 +74,6 @@
             "name": "BPSLocalChannel",
             "args": [],
             "config": {
-                "port": 56789,
-                "sleep": 1000
             }
         },
         {
@@ -120,6 +118,14 @@
                 "defaultRetryCount": "3",
                 "pythonUri": "https://github.com/PharbersDeveloper/bp-data-clean.git",
                 "pythonBranch": "v0.0.1"
+            }
+        },
+        {
+            "id": "SqlTableJobContainer",
+            "name": "BPSqlTableJobContainer",
+            "args": [],
+            "config": {
+                "listens": "SandBox-hive"
             }
         }
     ],

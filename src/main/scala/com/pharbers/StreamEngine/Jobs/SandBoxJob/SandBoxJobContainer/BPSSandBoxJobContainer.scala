@@ -42,6 +42,7 @@ class BPSSandBoxJobContainer(override val componentProperty: Component2.BPCompon
 	override val spark: SparkSession = strategy.getSpark
 	
 	override def open(): Unit = {
+		new Thread(queueStrategy).start()
 		logger.info("Open SandBoxJobContainer")
 	}
 	

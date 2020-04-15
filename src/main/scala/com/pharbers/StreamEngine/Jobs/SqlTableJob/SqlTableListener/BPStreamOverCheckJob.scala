@@ -34,14 +34,13 @@ class BPStreamOverCheckJob(container: BPSJobContainer, override val componentPro
             .define(LENGTH_CONFIG_KEY, Type.LONG, 0L, Importance.HIGH, LENGTH_CONFIG_DOC)
             .define(ROW_RECORD_PATH_CONFIG_KEY, Type.STRING, "", Importance.HIGH, ROW_RECORD_PATH_CONFIG_DOC)
             .define(METADATA_PATH_CONFIG_KEY, Type.STRING, "", Importance.HIGH, METADATA_PATH_CONFIG_DOC)
-            .define(TRACE_ID_KEY, Type.STRING, "", Importance.HIGH, TRACE_ID_KEY)
             .define(PUSH_KEY, Type.STRING, Importance.HIGH, PUSH_DOC)
 
     lazy val hdfsfile: BPSHDFSFile = strategy.getHdfsFile
     val jobConfig: BPSConfig = strategy.jobConfig
 
     override def exec(): Unit = {
-        checkLength()
+            checkLength()
     }
 
     def checkLength(): Unit ={
@@ -55,13 +54,13 @@ class BPStreamOverCheckJob(container: BPSJobContainer, override val componentPro
             val ps = BPSConcertEntry.queryComponentWithId("parse schema").get.asInstanceOf[BPSParseSchema]
             val metadata = ps.parseMetadata(metadataPath)(spark)
             val providers = metadata.getOrElse("providers", List("")).asInstanceOf[List[String]]
-            strategy.pushMsg(BPSEvents(strategy.getJobId, jobConfig.getString(TRACE_ID_KEY), jobConfig.getString(PUSH_KEY), providers), isLocal = true)
+            strategy.pushMsg(BPSEvents(strategy.getJobId, strategy.getTraceId, jobConfig.getString(PUSH_KEY), providers), isLocal = true)
         } else {
             //test用
             logger.error(s"row record path: ${jobConfig.getString(ROW_RECORD_PATH_CONFIG_KEY)}")
             logger.error(s"rows: $rows")
             logger.error(s"length: ${jobConfig.getLong(LENGTH_CONFIG_KEY)}")
-            strategy.pushMsg(BPSEvents(strategy.getJobId, jobConfig.getString(TRACE_ID_KEY), jobConfig.getString(PUSH_KEY), ""), isLocal = true)
+            strategy.pushMsg(BPSEvents(strategy.getJobId, strategy.getTraceId, jobConfig.getString(PUSH_KEY), ""), isLocal = true)
         }
     }
 
@@ -74,8 +73,7 @@ object BPStreamOverCheckJob {
     lazy final val ROW_RECORD_PATH_CONFIG_DOC = "already read row record path"
     lazy final val METADATA_PATH_CONFIG_KEY = "metadataPath"
     lazy final val METADATA_PATH_CONFIG_DOC = "metadataPath"
-    lazy final val TRACE_ID_KEY = "traceId"
-    lazy final val TRACE_ID_DOC = "trace id"
     lazy final val PUSH_KEY = "pushType"
     lazy final val PUSH_DOC = "push event type"
+
 }

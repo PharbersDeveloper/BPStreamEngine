@@ -1,6 +1,7 @@
 package com.pharbers.StreamEngine.Jobs.SqlTableJob.SqlTableJobContainer
 
 import java.util.UUID
+
 import com.pharbers.StreamEngine.Jobs.SqlTableJob.BPSqlTableJob
 import com.pharbers.StreamEngine.Jobs.SqlTableJob.SqlTableListener.BPStreamOverCheckJob
 import com.pharbers.StreamEngine.Utils.Annotation.Component
@@ -81,9 +82,9 @@ class BPSqlTableJobContainer(override val componentProperty: Component2.BPCompon
 
     override def handlerExec(handler: BPSEventHandler): Unit = {}
 
-    private def runJob(): Unit = {
+    private def runJob(traceId: String): Unit = {
         var checkCount = 0
-        while (tasks.nonEmpty && checkCount < 20) {
+        while (tasks.nonEmpty && checkCount < 20 && jobConfigs.isEmpty) {
             Thread.sleep(500)
             checkCount += 1
         }
@@ -104,6 +105,7 @@ class BPSqlTableJobContainer(override val componentProperty: Component2.BPCompon
                 BPSqlTableJob.TABLE_NAME_CONFIG_KEY -> tableName,
                 BPSqlTableJob.ERROR_PATH_CONFIG_KEY -> errPaths,
                 BPSqlTableJob.DATA_SETS_CONFIG_KEY -> dataSets,
+                strategy.jobIdConfigStrategy.TRACE_ID_CONFIG_KEY -> traceId,
                 strategy.jobIdConfigStrategy.JOB_ID_CONFIG_KEY -> sqlJobId
             )
 
@@ -125,20 +127,21 @@ class BPSqlTableJobContainer(override val componentProperty: Component2.BPCompon
             val tableName = tableNameMap(key)
             jobConfigs += tableName -> (jobConfigs.getOrElse(tableName, Nil) :+ task)
         })
+        tasks -= checkJobId
         finishJobWithId(checkJobId)
     }
 
     private def hiveTaskHandle(msg: BPSTypeEvents[HiveTask]): Unit = {
         val data = msg.date
         data.taskType match {
-            case "end" => runJob()
+            case "end" => runJob(msg.traceId)
             case _ =>
                 val checkJobId = UUID.randomUUID().toString
                 val jobConfig = Map(
                     BPStreamOverCheckJob.LENGTH_CONFIG_KEY -> data.length.toString,
                     BPStreamOverCheckJob.ROW_RECORD_PATH_CONFIG_KEY -> data.rowRecordPath,
                     BPStreamOverCheckJob.METADATA_PATH_CONFIG_KEY -> data.metaDataPath,
-                    BPStreamOverCheckJob.TRACE_ID_KEY -> msg.traceId,
+                    strategy.jobIdConfigStrategy.TRACE_ID_CONFIG_KEY -> msg.traceId,
                     BPStreamOverCheckJob.PUSH_KEY -> CHECK_EVENT_TYPE,
                     strategy.jobIdConfigStrategy.JOB_ID_CONFIG_KEY -> checkJobId
                 )
