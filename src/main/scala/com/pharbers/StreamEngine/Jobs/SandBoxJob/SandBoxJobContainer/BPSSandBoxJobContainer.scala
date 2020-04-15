@@ -104,7 +104,14 @@ class BPSSandBoxJobContainer(override val componentProperty: Component2.BPCompon
 				event.traceId :: pythonMsgType :: Nil,
 				event.date))
 		jobs += job.id -> job
-		job.open()
-		job.exec()
+		logger.info(s"Job ${job.id} BPSSandBoxConvertSchemaJob =====> open and exec")
+		try {
+			job.open()
+			job.exec()
+		} catch {
+			case e: Exception => logger.error(e.getMessage, e)
+				job.close()
+		}
+
 	}
 }

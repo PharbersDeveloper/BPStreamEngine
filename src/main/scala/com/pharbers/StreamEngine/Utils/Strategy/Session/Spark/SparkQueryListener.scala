@@ -16,6 +16,7 @@ import org.apache.spark.sql.streaming.StreamingQueryListener
   * @note 一些值得注意的地方
   */
 class SparkQueryListener extends StreamingQueryListener with PhLogable {
+    logger.info("初始化SparkQueryListener")
     val localChanel: BPSLocalChannel = BPSConcertEntry.queryComponentWithId("local channel").get.asInstanceOf[BPSLocalChannel]
 
 
@@ -32,15 +33,16 @@ class SparkQueryListener extends StreamingQueryListener with PhLogable {
 
     override def onQueryProgress(event: StreamingQueryListener.QueryProgressEvent): Unit = {
         val progressJson = event.progress.prettyJson
-        logger.debug("listener:" + progressJson)
-        logger.debug("inputRowsPerSecond:" + event.progress.numInputRows)
-        val bpsEvents = BPSEvents(
-            event.progress.runId.toString,
-            "",
-            s"spark-${event.progress.id}-progress",
-            SparkQueryEvent(event.progress.id.toString, event.progress.runId.toString, "progress", progressJson)
-        )
-        localChanel.offer(bpsEvents)
+        if(event.progress.numInputRows > 0) {
+            logger.info(progressJson)
+            val bpsEvents = BPSEvents(
+                event.progress.runId.toString,
+                "",
+                s"spark-${event.progress.id}-progress",
+                SparkQueryEvent(event.progress.id.toString, event.progress.runId.toString, "progress", progressJson)
+            )
+            localChanel.offer(bpsEvents)
+        }
     }
 
     override def onQueryTerminated(event: StreamingQueryListener.QueryTerminatedEvent): Unit = {

@@ -64,7 +64,7 @@ class BPSWorkerChannel(host: String, port: Int) extends Serializable with PhLoga
         }
 
         buffer.clear()
-        Thread.sleep(1000)
+//        Thread.sleep(1000)
     }
 
     def close(): Unit = client.get.close()
