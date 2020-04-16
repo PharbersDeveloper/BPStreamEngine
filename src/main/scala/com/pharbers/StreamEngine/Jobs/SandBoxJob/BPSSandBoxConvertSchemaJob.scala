@@ -2,6 +2,7 @@ package com.pharbers.StreamEngine.Jobs.SandBoxJob
 
 import java.util.Collections
 
+import com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxJobContainer.BPSSandBoxJobContainer
 import com.pharbers.StreamEngine.Utils.Component2
 import com.pharbers.StreamEngine.Utils.Component2.BPSConcertEntry
 import com.pharbers.StreamEngine.Utils.Event.BPSEvents
@@ -9,7 +10,6 @@ import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPJobLocalListener
 import com.pharbers.StreamEngine.Utils.Job.{BPSJobContainer, BPStreamJob}
 import com.pharbers.StreamEngine.Utils.Strategy.Blood.BPSSetBloodStrategy
 import com.pharbers.StreamEngine.Utils.Strategy.JobStrategy.BPSCommonJobStrategy
-import com.pharbers.StreamEngine.Utils.Strategy.Queue.BPSSandBoxQueueStrategy
 import com.pharbers.StreamEngine.Utils.Strategy.Schema.{BPSMetaData2Map, SchemaConverter}
 import com.pharbers.StreamEngine.Utils.Strategy.Session.Spark.msgMode.SparkQueryEvent
 import com.pharbers.StreamEngine.Utils.Strategy.hdfs.BPSHDFSFile
@@ -31,7 +31,6 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer,
 	type T = BPSCommonJobStrategy
 	override val strategy: BPSCommonJobStrategy = BPSCommonJobStrategy(componentProperty.config, configDef)
 	val bloodStrategy: BPSSetBloodStrategy = new BPSSetBloodStrategy(componentProperty.config)
-	val queueStrategy: BPSSandBoxQueueStrategy = BPSSandBoxQueueStrategy(componentProperty.config)
 	override val id: String = componentProperty.id // 本身Job的id
 	val jobId: String = strategy.getJobId // componentProperty config中的job Id
 	val runnerId: String = BPSConcertEntry.runner_id // Runner Id
@@ -73,8 +72,10 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer,
 	
 	override def close(): Unit = {
 		logger.info("Job =====> Closed")
+		val sandBoxJob = container.asInstanceOf[BPSSandBoxJobContainer]
+		sandBoxJob.execQueueJob.decrementAndGet()
+		logger.info("execQueueJob Size =====> " + sandBoxJob.execQueueJob.get())
 		super.close()
-		queueStrategy.popExecJobNum()
 		container.finishJobWithId(id)
 	}
 	
@@ -123,7 +124,8 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer,
 			val label = convertContent.getOrElse("tag", Map.empty).asInstanceOf[Map[String, Any]]
 			Some(MetaData(schema, label, Map("length" -> convertContent("length").toString.toLong)))
 		} catch {
-			case e: Exception => logger.error(e.getMessage, e); None
+			case e: Exception =>
+				logger.error( s"${e.getMessage} jobId ===> $id, upper job meta data path ====> $path", e); None
 		}
 	}
 	

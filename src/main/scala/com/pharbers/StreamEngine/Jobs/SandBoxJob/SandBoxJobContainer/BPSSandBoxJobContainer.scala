@@ -1,6 +1,8 @@
 package com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxJobContainer
 
 import java.util.UUID
+import java.util.concurrent.ArrayBlockingQueue
+import java.util.concurrent.atomic.AtomicInteger
 
 import com.pharbers.StreamEngine.Jobs.SandBoxJob.BPSSandBoxConvertSchemaJob
 import com.pharbers.StreamEngine.Utils.Annotation.Component
@@ -11,7 +13,6 @@ import com.pharbers.StreamEngine.Utils.Event.EventHandler.BPSEventHandler
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.{BPJobRemoteListener, BPStreamListener}
 import com.pharbers.StreamEngine.Utils.Job.{BPDynamicStreamJob, BPSJobContainer, BPStreamJob}
 import com.pharbers.StreamEngine.Utils.Strategy.JobStrategy.BPSCommonJobStrategy
-import com.pharbers.StreamEngine.Utils.Strategy.Queue.BPSSandBoxQueueStrategy
 import org.apache.kafka.common.config.ConfigDef
 import org.apache.kafka.common.config.ConfigDef.{Importance, Type}
 import org.apache.spark.sql.SparkSession
@@ -33,7 +34,9 @@ class BPSSandBoxJobContainer(override val componentProperty: Component2.BPCompon
 	val description: String = "SandBox Start"
 	type T = BPSCommonJobStrategy
 	val strategy: BPSCommonJobStrategy = BPSCommonJobStrategy(componentProperty.config, configDef)
-	val queueStrategy: BPSSandBoxQueueStrategy = BPSSandBoxQueueStrategy(componentProperty.config)
+	// TODO: 暂时解决oom，但是BlockingQueue 存和取都有锁，有性能问题，这面需要重新想一下
+	val arrayBlockingQueue = new ArrayBlockingQueue[BPSSandBoxConvertSchemaJob](componentProperty.config("queue").toInt)
+	val execQueueJob = new AtomicInteger(0)
 	val id: String = componentProperty.id
 	val jobId: String = strategy.getJobId
 	
@@ -42,7 +45,7 @@ class BPSSandBoxJobContainer(override val componentProperty: Component2.BPCompon
 	override val spark: SparkSession = strategy.getSpark
 	
 	override def open(): Unit = {
-		new Thread(queueStrategy).start()
+//		new Thread(queueStrategy).start()
 		logger.info("Open SandBoxJobContainer")
 	}
 	
@@ -98,20 +101,39 @@ class BPSSandBoxJobContainer(override val componentProperty: Component2.BPCompon
 			inputStream = Some(reading)
 			
 			hisRunnerId = BPSConcertEntry.runner_id
+			
+			new Thread(new Runnable {
+				override def run(): Unit = {
+					while (true) {
+						if (execQueueJob.get() < componentProperty.config("queue").toInt) {
+							val job = arrayBlockingQueue.take()
+							try {
+								execQueueJob.incrementAndGet()
+								job.open()
+								job.exec()
+								Thread.sleep(1 * 1000)
+							} catch {
+								case e: Exception => logger.error(e.getMessage); job.close()
+							}
+						}
+					}
+				}
+			}).start()
 		}
 		
 		val pythonMsgType: String = strategy.jobConfig.getString(FILE_MSG_TYPE_KEY)
-		val job = BPSSandBoxConvertSchemaJob(this, BPSComponentConfig(UUID.randomUUID().toString,
+		lazy val job = BPSSandBoxConvertSchemaJob(this, BPSComponentConfig(UUID.randomUUID().toString,
 				"BPSSandBoxConvertSchemaJob",
 				event.traceId :: pythonMsgType :: Nil,
 				event.date))
 		jobs += job.id -> job
-		queueStrategy.push(job)
+		arrayBlockingQueue.put(job)
+		logger.info("put arrayBlockingQueue")
+//		queueStrategy.push(job)
 	}
 	
 	override def close(): Unit = {
 		super.close()
-//		queueStrategy.clean()
 	}
 }
 

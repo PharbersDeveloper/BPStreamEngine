@@ -106,7 +106,7 @@
       "config": {
         "listens": "SandBox-FileMetaData",
         "Python.msgType": "Python-FileMetaData",
-        "queue": 5
+        "queue": 100
       }
     },
     {
