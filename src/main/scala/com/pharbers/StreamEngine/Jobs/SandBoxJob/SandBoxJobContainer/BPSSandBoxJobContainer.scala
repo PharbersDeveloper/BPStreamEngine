@@ -107,8 +107,8 @@ class BPSSandBoxJobContainer(override val componentProperty: Component2.BPCompon
 					while (true) {
 						if (execQueueJob.get() < componentProperty.config("queue").toInt) {
 							val job = arrayBlockingQueue.take()
+							execQueueJob.incrementAndGet()
 							try {
-								execQueueJob.incrementAndGet()
 								job.open()
 								job.exec()
 								Thread.sleep(1 * 1000)
