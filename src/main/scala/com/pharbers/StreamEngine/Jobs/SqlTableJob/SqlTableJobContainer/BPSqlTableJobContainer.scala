@@ -78,13 +78,18 @@ class BPSqlTableJobContainer(override val componentProperty: Component2.BPCompon
         jobs.foreach(x => x._2.close())
     }
 
+    override def finishJobWithId(id: String): Unit = {
+        super.finishJobWithId(id)
+        if(jobs.contains(id)) jobs(id).close()
+    }
+
     override def registerListeners(listener: BPStreamListener): Unit = {}
 
     override def handlerExec(handler: BPSEventHandler): Unit = {}
 
     private def runJob(traceId: String): Unit = {
         var checkCount = 0
-        while (tasks.nonEmpty && checkCount < 20 && jobConfigs.isEmpty) {
+        while (tasks.nonEmpty && checkCount < 20 && jobs.nonEmpty) {
             Thread.sleep(500)
             checkCount += 1
         }

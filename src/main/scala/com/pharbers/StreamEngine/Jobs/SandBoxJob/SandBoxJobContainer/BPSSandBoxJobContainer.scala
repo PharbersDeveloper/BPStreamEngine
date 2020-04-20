@@ -87,6 +87,7 @@ class BPSSandBoxJobContainer(override val componentProperty: Component2.BPCompon
 		if (hisRunnerId != BPSConcertEntry.runner_id) {
 			val reading = spark.readStream
 				.option("maxFilesPerTrigger", 10)
+				.option("latestFirst", "true")
 				.schema(StructType(
 					StructField("traceId", StringType) ::
 						StructField("type", StringType) ::

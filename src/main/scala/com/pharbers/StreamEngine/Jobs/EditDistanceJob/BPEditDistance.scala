@@ -36,7 +36,7 @@ class BPEditDistance(jobContainer: BPSJobContainer, override val componentProper
         "SPEC" -> List("SPEC"),
         "DOSAGE" -> List("DOSAGE"),
         "PACK_QTY" -> List("PACK"),
-        "MANUFACTURER_NAME" -> List("CORP_NAME_CH", "CORP_NAME_EN", "MNF_NAME_CH", "MNF_NAME_EN")
+        "MANUFACTURER_NAME" -> List("MNF_NAME_CH", "MNF_NAME_EN")
     )
 
     override def open(): Unit = {
