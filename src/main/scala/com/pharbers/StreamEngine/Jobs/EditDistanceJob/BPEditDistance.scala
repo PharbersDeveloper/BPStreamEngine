@@ -95,7 +95,6 @@ class BPEditDistance(jobContainer: BPSJobContainer, override val componentProper
             val filterMinDistanceDf = filterMinDistance(distanceDf)
 
             //todo: 这儿正式运行后会根据每次id不同生成不同的文件，所以需要定期删除
-            //使用人工干预表处理
             filterMinDistanceDf.write
                     .mode("append")
                     .parquet(s"/user/dcs/test/tmp/res_$id")
@@ -107,16 +106,17 @@ class BPEditDistance(jobContainer: BPSJobContainer, override val componentProper
 
         val cpaVersion = in.select("version").take(1).head.getAs[String]("version")
         val prodVersion = checkDf.select("version").take(1).head.getAs[String]("version")
-        val tables = spark.sql("show tables").select("tableName").collect().map(x => x.getString(0))
-        val version = if (tables.contains(s"${tableName}_new")) {
-            val old = spark.sql(s"select version from $tableName limit 1").take(1).head.getString(0).split("\\.")
-            s"${old.head}.${old(1)}.${old(2).toInt + 1}"
-        } else {
-            "0.0.1"
-        }
+        val mode = "overwrite"
+//        val version = if (tables.contains(s"${tableName}_new")) {
+//            val old = spark.sql(s"select version from $tableName limit 1").take(1).head.getString(0).split("\\.")
+//            s"${old.head}.${old(1)}.${old(2).toInt + 1}"
+//        } else {
+//            "0.0.1"
+//        }
+        val version = getVersion(tableName, mode)
         val intColumnsExpr = in.columns.map(x => s"in_$x as $x").toList
 
-        val replaceLogDf = createReplaceLog(filterMinDistanceDf, in.columns)
+        val replaceLogDf = createReplaceLog(filterMinDistanceDf, in.columns).cache()
         val replaceUrl = s"/common/public/${tableName}_replace/${tableName}_${cpaVersion}_${prodVersion}_replace/$version"
         replaceLogDf.filter("canReplace = true and distance != 0")
                 .selectExpr(List("ID", "COL_NAME", "ORIGIN", "check as DEST") ++ in.columns.zipWithIndex.map(x => s"cols[${x._2}] as ORIGIN_${x._1}").toList: _*)
@@ -124,7 +124,7 @@ class BPEditDistance(jobContainer: BPSJobContainer, override val componentProper
                 .write
                 //                .bucketBy(11, "ORIGIN_MOLE_NAME")
 //                .partitionBy("ORIGIN_MOLE_NAME")
-                .mode("overwrite")
+                .mode(mode)
                 .option("path", replaceUrl)
                 .saveAsTable(s"${tableName}_replace")
         //todo; 血缘
@@ -138,7 +138,7 @@ class BPEditDistance(jobContainer: BPSJobContainer, override val componentProper
                 .write
                 //                .bucketBy(11, "ORIGIN_MOLE_NAME")
 //                .partitionBy("ORIGIN_MOLE_NAME")
-                .mode("overwrite")
+                .mode(mode)
                 .option("path", noReplaceUrl)
                 .saveAsTable(s"${tableName}_no_replace")
         //todo; 血缘
@@ -149,7 +149,7 @@ class BPEditDistance(jobContainer: BPSJobContainer, override val componentProper
         res.selectExpr(List("id", "check_PACK_ID as PACK_ID") ::: intColumnsExpr: _*)
                 .withColumn("version", lit(version))
                 .write
-                .mode("overwrite")
+                .mode(mode)
                 .option("path", newCpaUrl)
                 .saveAsTable(s"${tableName}_new")
 
@@ -238,14 +238,20 @@ object BPEditDistance extends Serializable {
     }
 
     def getDistance(inputWord: String, targetWord: String): Array[String] = {
-        val resContainer = Array.fill(inputWord.length + 1, targetWord.length + 1)(-1)
         val s1 = inputWord.replaceAll(" ", "").toUpperCase
         val s2 = targetWord.replaceAll(" ", "").toUpperCase
-        val distanceNum = if(!inputWord.equals(targetWord) && s1.equals(s2)) -1 else distance(s1, s2, inputWord.length, targetWord.length, resContainer)
+        val resContainer = Array.fill(s1.length + 1, s2.length + 1)(-1)
+        val distanceNum = if(inputWord != targetWord && (s1 == s2 || checkSep(inputWord, targetWord))) -1 else distance(s1, s2, s1.length, s2.length, resContainer)
         Array(inputWord, targetWord, distanceNum.toString)
     }
 
-    case class replaceLog(id: String, columnName: String, canReplace: Boolean, back: String, check: String, distance: Int)
+//    case class replaceLog(id: String, columnName: String, canReplace: Boolean, back: String, check: String, distance: Int)
+
+    private def checkSep(s1: String, s2: String): Boolean = {
+        val list1 = s1.toUpperCase().split("[^A-Za-z0-9_\\u4e00-\\u9fa5]", -1).sorted
+        val list2 = s2.toUpperCase().split("[^A-Za-z0-9_\\u4e00-\\u9fa5]", -1).sorted
+        list1.sameElements(list2)
+    }
 
     private def distance(x: String, y: String, i: Int, j: Int, resContainer: Array[Array[Int]]): Int = {
         if (resContainer(i)(j) != -1) return resContainer(i)(j)
@@ -259,5 +265,6 @@ object BPEditDistance extends Serializable {
         resContainer(i)(j) = res
         res
     }
+
 }
 
