@@ -53,8 +53,11 @@ class BPSGenCubeToEsStrategy(spark: SparkSession) extends BPSStrategy[DataFrame]
 
         val cuboidsData = genCuboidsData(cleanData)
 
+        //加一个函数只对所需维度组合求计算度量
+        val maxComputedCube = genMaxComputedCube(cuboidsData)
+
         //尝试分批写入
-        writeEsListDF(cuboidsData)
+        writeEsListDF(maxComputedCube)
 
     }
 
@@ -167,9 +170,10 @@ class BPSGenCubeToEsStrategy(spark: SparkSession) extends BPSStrategy[DataFrame]
     def genCuboidData(df: DataFrame, cuboid: Map[String, List[String]]): List[DataFrame] = {
 
         cuboid.size match {
-            case 0 => genApexCube(df) :: Nil
-            //            case x if x == dimensions.size => genBaseCube(df) :: Nil
-            case _ => genMultiDimensionsCube(df, cuboid)
+//            case 0 => genApexCube(df) :: Nil
+            case x if x == dimensions.size => genMultiDimensionsCube(df, cuboid)
+//            case _ => genMultiDimensionsCube(df, cuboid)
+            case _ => Nil
         }
 
     }
@@ -243,21 +247,6 @@ class BPSGenCubeToEsStrategy(spark: SparkSession) extends BPSStrategy[DataFrame]
             } yield Traversable(i) ++ j
         }
 
-    //尝试分批append写入
-    def writeEsListDF(listDF: List[DataFrame]): DataFrame = {
-
-        for (df <- listDF) {
-            df.write
-                .format("es")
-//                .option("es.write.operation", "upsert")
-                .mode("append")
-                .save(DEFAULT_INDEX_NAME)
-        }
-
-        spark.emptyDataFrame
-
-    }
-
     def fillFullHierarchies(oneHierarchies: List[String], dimensions: Map[String, List[String]]): List[String] = {
 
         var result: List[String] = List.empty
@@ -287,6 +276,130 @@ class BPSGenCubeToEsStrategy(spark: SparkSession) extends BPSStrategy[DataFrame]
             }
         }
         result
+
+    }
+
+    //MaxView所需维度组合求计算度量
+    def genMaxComputedCube(listDF: List[DataFrame]): List[DataFrame] = {
+        listDF.map(df => {
+            val firstRow = df.first()
+            val name = firstRow.getAs[String]("DIMENSION_NAME")
+            val value = firstRow.getAs[String]("DIMENSION_VALUE")
+            logger.info(s"=======> name(${name}) value(${value})")
+            if (name == "3-time-geo-prod" && value == "MONTH-CITY-MOLE_NAME") {
+                logger.info("Start genMaxComputedCube !!! ")
+                val newDf = df.withColumn("DATE", concat(col("YEAR"), col("MONTH")))
+                //TODO:数据是否正确需要核对
+                PhMaxDashboardWindowFunc(newDf)
+                    .GenerateSalesAndRankRowWith("CURR", "MOLE", "CITY")
+                    .GenerateSalesAndRankRowWith("CURR", "MOLE", "PROV")
+                    .GenerateSalesAndRankRowWith("CURR", "MOLE", "NATION")
+                    .GenerateSalesAndRankRowWith("CURR", "PROD", "CITY")
+                    .GenerateSalesAndRankRowWith("CURR", "PROD", "PROV")
+                    .GenerateSalesAndRankRowWith("CURR", "PROD", "NATION")
+                    .GenerateSalesAndRankRowWith("CURR", "TOTAL", "CITY")
+                    .GenerateSalesAndRankRowWith("CURR", "TOTAL", "PROV")
+                    .GenerateSalesAndRankRowWith("CURR", "TOTAL", "NATION")
+                    .GenerateSalesAndRankRowWith("CURR", "MKT", "CITY")
+                    .GenerateSalesAndRankRowWith("CURR", "MKT", "PROV")
+                    .GenerateSalesAndRankRowWith("CURR", "MKT", "NATION")
+                    .GenerateSalesAndRankRowWith("LAST_M", "MOLE", "CITY")
+                    .GenerateSalesAndRankRowWith("LAST_M", "MOLE", "PROV")
+                    .GenerateSalesAndRankRowWith("LAST_M", "MOLE", "NATION")
+                    .GenerateSalesAndRankRowWith("LAST_M", "PROD", "CITY")
+                    .GenerateSalesAndRankRowWith("LAST_M", "PROD", "PROV")
+                    .GenerateSalesAndRankRowWith("LAST_M", "PROD", "NATION")
+                    .GenerateSalesAndRankRowWith("LAST_M", "TOTAL", "CITY")
+                    .GenerateSalesAndRankRowWith("LAST_M", "TOTAL", "PROV")
+                    .GenerateSalesAndRankRowWith("LAST_M", "TOTAL", "NATION")
+                    .GenerateSalesAndRankRowWith("LAST_M", "MKT", "CITY")
+                    .GenerateSalesAndRankRowWith("LAST_M", "MKT", "PROV")
+                    .GenerateSalesAndRankRowWith("LAST_M", "MKT", "NATION")
+                    .GenerateSalesAndRankRowWith("LAST_Y", "MOLE", "CITY")
+                    .GenerateSalesAndRankRowWith("LAST_Y", "MOLE", "PROV")
+                    .GenerateSalesAndRankRowWith("LAST_Y", "MOLE", "NATION")
+                    .GenerateSalesAndRankRowWith("LAST_Y", "PROD", "CITY")
+                    .GenerateSalesAndRankRowWith("LAST_Y", "PROD", "PROV")
+                    .GenerateSalesAndRankRowWith("LAST_Y", "PROD", "NATION")
+                    .GenerateSalesAndRankRowWith("LAST_Y", "TOTAL", "CITY")
+                    .GenerateSalesAndRankRowWith("LAST_Y", "TOTAL", "PROV")
+                    .GenerateSalesAndRankRowWith("LAST_Y", "TOTAL", "NATION")
+                    .GenerateSalesAndRankRowWith("LAST_Y", "MKT", "CITY")
+                    .GenerateSalesAndRankRowWith("LAST_Y", "MKT", "PROV")
+                    .GenerateSalesAndRankRowWith("LAST_Y", "MKT", "NATION")
+                    .GenerateShareRowWith("CURR","MOLE","CITY")
+                    .GenerateShareRowWith("CURR","MOLE","PROV")
+                    .GenerateShareRowWith("CURR","MOLE","NATION")
+                    .GenerateShareRowWith("CURR","PROD","CITY")
+                    .GenerateShareRowWith("CURR","PROD","PROV")
+                    .GenerateShareRowWith("CURR","PROD","NATION")
+                    .GenerateShareRowWith("CURR","MKT","CITY")
+                    .GenerateShareRowWith("CURR","MKT","PROV")
+                    .GenerateShareRowWith("CURR","MKT","NATION")
+                    .GenerateShareRowWith("LAST_M","MOLE","CITY")
+                    .GenerateShareRowWith("LAST_M","MOLE","PROV")
+                    .GenerateShareRowWith("LAST_M","MOLE","NATION")
+                    .GenerateShareRowWith("LAST_M","PROD","CITY")
+                    .GenerateShareRowWith("LAST_M","PROD","PROV")
+                    .GenerateShareRowWith("LAST_M","PROD","NATION")
+                    .GenerateShareRowWith("LAST_M","MKT","CITY")
+                    .GenerateShareRowWith("LAST_M","MKT","PROV")
+                    .GenerateShareRowWith("LAST_M","MKT","NATION")
+                    .GenerateShareRowWith("LAST_Y","MOLE","CITY")
+                    .GenerateShareRowWith("LAST_Y","MOLE","PROV")
+                    .GenerateShareRowWith("LAST_Y","MOLE","NATION")
+                    .GenerateShareRowWith("LAST_Y","PROD","CITY")
+                    .GenerateShareRowWith("LAST_Y","PROD","PROV")
+                    .GenerateShareRowWith("LAST_Y","PROD","NATION")
+                    .GenerateShareRowWith("LAST_Y","MKT","CITY")
+                    .GenerateShareRowWith("LAST_Y","MKT","PROV")
+                    .GenerateShareRowWith("LAST_Y","MKT","NATION")
+                    .GenerateGrowthRowWith("MOM", "MOLE", "CITY")
+                    .GenerateGrowthRowWith("MOM", "MOLE", "PROV")
+                    .GenerateGrowthRowWith("MOM", "MOLE", "NATION")
+                    .GenerateGrowthRowWith("MOM", "PROD", "CITY")
+                    .GenerateGrowthRowWith("MOM", "PROD", "PROV")
+                    .GenerateGrowthRowWith("MOM", "PROD", "NATION")
+                    .GenerateGrowthRowWith("MOM", "MKT", "CITY")
+                    .GenerateGrowthRowWith("MOM", "MKT", "PROV")
+                    .GenerateGrowthRowWith("MOM", "MKT", "NATION")
+                    .GenerateGrowthRowWith("YOY", "MOLE", "CITY")
+                    .GenerateGrowthRowWith("YOY", "MOLE", "PROV")
+                    .GenerateGrowthRowWith("YOY", "MOLE", "NATION")
+                    .GenerateGrowthRowWith("YOY", "PROD", "CITY")
+                    .GenerateGrowthRowWith("YOY", "PROD", "PROV")
+                    .GenerateGrowthRowWith("YOY", "PROD", "NATION")
+                    .GenerateGrowthRowWith("YOY", "MKT", "CITY")
+                    .GenerateGrowthRowWith("YOY", "MKT", "PROV")
+                    .GenerateGrowthRowWith("YOY", "MKT", "NATION")
+                    .GenerateEIRowWith("MOLE", "CITY")
+                    .GenerateEIRowWith("MOLE", "PROV")
+                    .GenerateEIRowWith("MOLE", "NATION")
+                    .GenerateEIRowWith("PROD", "CITY")
+                    .GenerateEIRowWith("PROD", "PROV")
+                    .GenerateEIRowWith("PROD", "NATION")
+                    .GenerateEIRowWith("MKT", "CITY")
+                    .GenerateEIRowWith("MKT", "PROV")
+                    .GenerateEIRowWith("MKT", "NATION")
+                    .df
+            } else df
+
+        })
+
+    }
+
+    //尝试分批append写入
+    def writeEsListDF(listDF: List[DataFrame]): DataFrame = {
+
+        for (df <- listDF) {
+            df.write
+                .format("es")
+                //                .option("es.write.operation", "upsert")
+                .mode("append")
+                .save(DEFAULT_INDEX_NAME)
+        }
+
+        spark.emptyDataFrame
 
     }
 
