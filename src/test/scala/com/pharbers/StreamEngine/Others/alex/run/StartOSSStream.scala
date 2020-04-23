@@ -12,7 +12,7 @@ import org.json4s.jackson.Serialization._
 
 class StartOSSStream extends FunSuite {
 	implicit val formats: DefaultFormats.type = DefaultFormats
-	val events: BPSEvents = BPSEvents("", "", "SandBox-Start", Map())
+	val events: BPSEvents = BPSEvents("", "", "SandBox-Start-Test", Map())
 	test("start dcs local job") {
 		val workerChannel = BPSWorkerChannel(InetAddress.getLocalHost.getHostAddress)
 		workerChannel.pushMessage(write(events))

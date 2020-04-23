@@ -40,9 +40,6 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer,
 	val sc: SchemaConverter = strategy.getSchemaConverter
 	val hdfs: BPSHDFSFile = strategy.getHdfsFile
 	var totalNum: Long = 0
-//	val checkpointPath = s"/jobs/$runnerId/$id/checkpoint"
-//	val parquetPath = s"/jobs/$runnerId/$id/contents"
-//	val metaDataPath = s"/jobs/$runnerId/$id/metadata"
 	val mongoId: String = new ObjectId().toString
 	var metaData: Option[MetaData] = None
 	implicit val formats: DefaultFormats.type = DefaultFormats
