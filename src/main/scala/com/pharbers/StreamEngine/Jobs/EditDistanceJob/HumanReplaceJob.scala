@@ -142,6 +142,7 @@ class HumanReplaceJob(override val componentProperty: Component2.BPComponentConf
                 .withColumn("columns", when($"columns".isNull, $"cols") otherwise $"columns")
                 .withColumn("columns", when($"cols".isNotNull, margeMap($"columns", $"cols")) otherwise $"columns")
                 .selectExpr("min" +: minColumns.map(x => s"columns['$x'] as $x"): _*)
+                .na.fill("")
         val mode = "overwrite"
         val version = getVersion(tableName, mode)
         humanReplaceTable.withColumn("version", lit(version)).write
