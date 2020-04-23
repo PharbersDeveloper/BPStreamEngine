@@ -1,7 +1,7 @@
 package com.pharbers.StreamEngine.Jobs.GenCubeJob.strategy
 
 import com.pharbers.util.log.PhLogable
-import org.apache.spark.sql.expressions.Window
+import org.apache.spark.sql.expressions.{Window, WindowSpec}
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.DataTypes
@@ -112,7 +112,7 @@ class BPSGenCubeToEsStrategy(spark: SparkSession) extends BPSStrategy[DataFrame]
 
         //缩小数据范围，需求中最小维度是分子，先计算出分子级别在单个公司年月市场、省&城市级别、产品&分子维度的聚合数据
         //补齐所需列 QUARTER COUNTRY MKT
-        //删除不需列 MONTH
+        //删除不需列 DATE
         val moleLevelDF = formatDF.groupBy("COMPANY", "DATE", "PROVINCE", "CITY", "PRODUCT_NAME", "MOLE_NAME")
             .agg(expr("SUM(SALES_VALUE) as SALES_VALUE"), expr("SUM(SALES_QTY) as SALES_QTY"))
             .withColumn("YEAR", col("DATE").substr(0, 4).cast(DataTypes.IntegerType))
@@ -134,13 +134,6 @@ class BPSGenCubeToEsStrategy(spark: SparkSession) extends BPSStrategy[DataFrame]
             .filter(col("COMPANY").isNotNull and col("PRODUCT_NAME").isNotNull and col("MOLE_NAME").isNotNull and col("MKT").isNotNull)
             .groupBy("COMPANY", "PRODUCT_NAME", "MOLE_NAME")
             .agg(first("MKT").alias("MKT"))
-
-        //        //20200114-结果数据总count-41836
-        //        val mergeDF = moleLevelDF
-        //            .join(cpa, moleLevelDF("COMPANY") === cpa("COMPANY") and moleLevelDF("PRODUCT_NAME") === cpa("PRODUCT_NAME") and moleLevelDF("MOLE_NAME") === cpa("MOLE_NAME"), "inner")
-        //            .drop(cpa("COMPANY"))
-        //            .drop(cpa("PRODUCT_NAME"))
-        //            .drop(cpa("MOLE_NAME"))
 
         //TODO:临时处理信立泰
         val mergeDF1 = moleLevelDF1.withColumn("MKT", lit("抗血小板市场"))
@@ -170,10 +163,9 @@ class BPSGenCubeToEsStrategy(spark: SparkSession) extends BPSStrategy[DataFrame]
     def genCuboidData(df: DataFrame, cuboid: Map[String, List[String]]): List[DataFrame] = {
 
         cuboid.size match {
-//            case 0 => genApexCube(df) :: Nil
-            case x if x == dimensions.size => genMultiDimensionsCube(df, cuboid)
-//            case _ => genMultiDimensionsCube(df, cuboid)
-            case _ => Nil
+            case 0 => genApexCube(df) :: Nil
+//            case x if x == dimensions.size => genMultiDimensionsCube(df, cuboid)
+            case _ => genMultiDimensionsCube(df, cuboid)
         }
 
     }
@@ -286,107 +278,75 @@ class BPSGenCubeToEsStrategy(spark: SparkSession) extends BPSStrategy[DataFrame]
             val name = firstRow.getAs[String]("DIMENSION_NAME")
             val value = firstRow.getAs[String]("DIMENSION_VALUE")
             logger.info(s"=======> name(${name}) value(${value})")
-            if (name == "3-time-geo-prod" && value == "MONTH-CITY-MOLE_NAME") {
+            if (name == "3-time-geo-prod") {
                 logger.info("Start genMaxComputedCube !!! ")
-                val newDf = df.withColumn("DATE", concat(col("YEAR"), col("MONTH")))
-                //TODO:数据是否正确需要核对
-                PhMaxDashboardWindowFunc(newDf)
-                    .GenerateSalesAndRankRowWith("CURR", "MOLE", "CITY")
-                    .GenerateSalesAndRankRowWith("CURR", "MOLE", "PROV")
-                    .GenerateSalesAndRankRowWith("CURR", "MOLE", "NATION")
-                    .GenerateSalesAndRankRowWith("CURR", "PROD", "CITY")
-                    .GenerateSalesAndRankRowWith("CURR", "PROD", "PROV")
-                    .GenerateSalesAndRankRowWith("CURR", "PROD", "NATION")
-                    .GenerateSalesAndRankRowWith("CURR", "TOTAL", "CITY")
-                    .GenerateSalesAndRankRowWith("CURR", "TOTAL", "PROV")
-                    .GenerateSalesAndRankRowWith("CURR", "TOTAL", "NATION")
-                    .GenerateSalesAndRankRowWith("CURR", "MKT", "CITY")
-                    .GenerateSalesAndRankRowWith("CURR", "MKT", "PROV")
-                    .GenerateSalesAndRankRowWith("CURR", "MKT", "NATION")
-                    .GenerateSalesAndRankRowWith("LAST_M", "MOLE", "CITY")
-                    .GenerateSalesAndRankRowWith("LAST_M", "MOLE", "PROV")
-                    .GenerateSalesAndRankRowWith("LAST_M", "MOLE", "NATION")
-                    .GenerateSalesAndRankRowWith("LAST_M", "PROD", "CITY")
-                    .GenerateSalesAndRankRowWith("LAST_M", "PROD", "PROV")
-                    .GenerateSalesAndRankRowWith("LAST_M", "PROD", "NATION")
-                    .GenerateSalesAndRankRowWith("LAST_M", "TOTAL", "CITY")
-                    .GenerateSalesAndRankRowWith("LAST_M", "TOTAL", "PROV")
-                    .GenerateSalesAndRankRowWith("LAST_M", "TOTAL", "NATION")
-                    .GenerateSalesAndRankRowWith("LAST_M", "MKT", "CITY")
-                    .GenerateSalesAndRankRowWith("LAST_M", "MKT", "PROV")
-                    .GenerateSalesAndRankRowWith("LAST_M", "MKT", "NATION")
-                    .GenerateSalesAndRankRowWith("LAST_Y", "MOLE", "CITY")
-                    .GenerateSalesAndRankRowWith("LAST_Y", "MOLE", "PROV")
-                    .GenerateSalesAndRankRowWith("LAST_Y", "MOLE", "NATION")
-                    .GenerateSalesAndRankRowWith("LAST_Y", "PROD", "CITY")
-                    .GenerateSalesAndRankRowWith("LAST_Y", "PROD", "PROV")
-                    .GenerateSalesAndRankRowWith("LAST_Y", "PROD", "NATION")
-                    .GenerateSalesAndRankRowWith("LAST_Y", "TOTAL", "CITY")
-                    .GenerateSalesAndRankRowWith("LAST_Y", "TOTAL", "PROV")
-                    .GenerateSalesAndRankRowWith("LAST_Y", "TOTAL", "NATION")
-                    .GenerateSalesAndRankRowWith("LAST_Y", "MKT", "CITY")
-                    .GenerateSalesAndRankRowWith("LAST_Y", "MKT", "PROV")
-                    .GenerateSalesAndRankRowWith("LAST_Y", "MKT", "NATION")
-                    .GenerateShareRowWith("CURR","MOLE","CITY")
-                    .GenerateShareRowWith("CURR","MOLE","PROV")
-                    .GenerateShareRowWith("CURR","MOLE","NATION")
-                    .GenerateShareRowWith("CURR","PROD","CITY")
-                    .GenerateShareRowWith("CURR","PROD","PROV")
-                    .GenerateShareRowWith("CURR","PROD","NATION")
-                    .GenerateShareRowWith("CURR","MKT","CITY")
-                    .GenerateShareRowWith("CURR","MKT","PROV")
-                    .GenerateShareRowWith("CURR","MKT","NATION")
-                    .GenerateShareRowWith("LAST_M","MOLE","CITY")
-                    .GenerateShareRowWith("LAST_M","MOLE","PROV")
-                    .GenerateShareRowWith("LAST_M","MOLE","NATION")
-                    .GenerateShareRowWith("LAST_M","PROD","CITY")
-                    .GenerateShareRowWith("LAST_M","PROD","PROV")
-                    .GenerateShareRowWith("LAST_M","PROD","NATION")
-                    .GenerateShareRowWith("LAST_M","MKT","CITY")
-                    .GenerateShareRowWith("LAST_M","MKT","PROV")
-                    .GenerateShareRowWith("LAST_M","MKT","NATION")
-                    .GenerateShareRowWith("LAST_Y","MOLE","CITY")
-                    .GenerateShareRowWith("LAST_Y","MOLE","PROV")
-                    .GenerateShareRowWith("LAST_Y","MOLE","NATION")
-                    .GenerateShareRowWith("LAST_Y","PROD","CITY")
-                    .GenerateShareRowWith("LAST_Y","PROD","PROV")
-                    .GenerateShareRowWith("LAST_Y","PROD","NATION")
-                    .GenerateShareRowWith("LAST_Y","MKT","CITY")
-                    .GenerateShareRowWith("LAST_Y","MKT","PROV")
-                    .GenerateShareRowWith("LAST_Y","MKT","NATION")
-                    .GenerateGrowthRowWith("MOM", "MOLE", "CITY")
-                    .GenerateGrowthRowWith("MOM", "MOLE", "PROV")
-                    .GenerateGrowthRowWith("MOM", "MOLE", "NATION")
-                    .GenerateGrowthRowWith("MOM", "PROD", "CITY")
-                    .GenerateGrowthRowWith("MOM", "PROD", "PROV")
-                    .GenerateGrowthRowWith("MOM", "PROD", "NATION")
-                    .GenerateGrowthRowWith("MOM", "MKT", "CITY")
-                    .GenerateGrowthRowWith("MOM", "MKT", "PROV")
-                    .GenerateGrowthRowWith("MOM", "MKT", "NATION")
-                    .GenerateGrowthRowWith("YOY", "MOLE", "CITY")
-                    .GenerateGrowthRowWith("YOY", "MOLE", "PROV")
-                    .GenerateGrowthRowWith("YOY", "MOLE", "NATION")
-                    .GenerateGrowthRowWith("YOY", "PROD", "CITY")
-                    .GenerateGrowthRowWith("YOY", "PROD", "PROV")
-                    .GenerateGrowthRowWith("YOY", "PROD", "NATION")
-                    .GenerateGrowthRowWith("YOY", "MKT", "CITY")
-                    .GenerateGrowthRowWith("YOY", "MKT", "PROV")
-                    .GenerateGrowthRowWith("YOY", "MKT", "NATION")
-                    .GenerateEIRowWith("MOLE", "CITY")
-                    .GenerateEIRowWith("MOLE", "PROV")
-                    .GenerateEIRowWith("MOLE", "NATION")
-                    .GenerateEIRowWith("PROD", "CITY")
-                    .GenerateEIRowWith("PROD", "PROV")
-                    .GenerateEIRowWith("PROD", "NATION")
-                    .GenerateEIRowWith("MKT", "CITY")
-                    .GenerateEIRowWith("MKT", "PROV")
-                    .GenerateEIRowWith("MKT", "NATION")
-                    .df
+
+                val arr = value.split("-")
+                if (arr.size != 3) logger.error("DIMENSION_VALUE get error!")
+                val time = arr(0)
+                val geo = arr(1)
+                val prod = arr(2)
+                val timeGroup = getTimeHierarchies(arr.toList, dimensions)
+                val geoFaGroup = getFatherHierarchiesByDiKey("geo", geo, dimensions)
+                val prodFaGroup = getFatherHierarchiesByDiKey("prod", prod, dimensions)
+                val selfWindow: WindowSpec = Window.partitionBy("DIMENSION_VALUE", timeGroup ::: (geoFaGroup :+ geo) ::: (prodFaGroup :+ prod): _*)
+                val geoFaWindow: WindowSpec = Window.partitionBy("DIMENSION_VALUE", timeGroup ::: geoFaGroup ::: (prodFaGroup :+ prod): _*)
+                val prodFaWindow: WindowSpec = Window.partitionBy("DIMENSION_VALUE", timeGroup ::: (geoFaGroup :+ geo) ::: prodFaGroup: _*)
+
+                df
+                    .withColumn("FATHER_GEO_SALES_VALUE", sum("SALES_VALUE").over(geoFaWindow))
+                    .withColumn("GEO_SHARE", col("SALES_VALUE")/col("FATHER_GEO_SALES_VALUE"))
+                    .withColumn("FATHER_PROD_SALES_VALUE", sum("SALES_VALUE").over(prodFaWindow))
+                    .withColumn("PROD_SHARE", col("SALES_VALUE")/col("FATHER_PROD_SALES_VALUE"))
+                    .withColumn("LAST_SALES_VALUE", sum("SALES_VALUE").over(lastTimeWindow(time, selfWindow)))
+                    .withColumn("LAST_FATHER_GEO_SALES_VALUE", sum("LAST_SALES_VALUE").over(lastTimeWindow(time, geoFaWindow)))
+                    .withColumn("LAST_GEO_SHARE", col("LAST_SALES_VALUE")/col("LAST_FATHER_GEO_SALES_VALUE"))
+                    .withColumn("LAST_FATHER_PROD_SALES_VALUE", sum("SALES_VALUE").over(lastTimeWindow(time, prodFaWindow)))
+                    .withColumn("LAST_PROD_SHARE", col("LAST_SALES_VALUE")/col("LAST_FATHER_PROD_SALES_VALUE"))
+                    .withColumn("SALES_GROWTH", when(col("LAST_SALES_VALUE") === 0.0, 0.0).otherwise(col("SALES_VALUE") - col("LAST_SALES_VALUE")))
+                    .withColumn("FATHER_GEO_SALES_GROWTH", when(col("LAST_FATHER_GEO_SALES_VALUE") === 0.0, 0.0).otherwise(col("FATHER_GEO_SALES_VALUE") - col("LAST_FATHER_GEO_SALES_VALUE")))
+                    .withColumn("FATHER_PROD_SALES_GROWTH", when(col("LAST_FATHER_PROD_SALES_VALUE") === 0.0, 0.0).otherwise(col("FATHER_PROD_SALES_VALUE") - col("LAST_FATHER_PROD_SALES_VALUE")))
+                    .withColumn("SALES_GROWTH_RATE", when(col("SALES_GROWTH") === 0.0, 0.0).otherwise(col("SALES_GROWTH") / col("LAST_SALES_VALUE")))
+                    .withColumn("FATHER_GEO_SALES_GROWTH_RATE", when(col("FATHER_GEO_SALES_GROWTH") === 0.0, 0.0).otherwise(col("FATHER_GEO_SALES_GROWTH") - col("LAST_FATHER_GEO_SALES_VALUE")))
+                    .withColumn("FATHER_PROD_SALES_GROWTH_RATE", when(col("FATHER_PROD_SALES_GROWTH") === 0.0, 0.0).otherwise(col("FATHER_PROD_SALES_GROWTH") - col("LAST_FATHER_PROD_SALES_VALUE")))
+                    .withColumn("GEO_EI", col("GEO_SHARE")./(col("LAST_GEO_SHARE")).*(100))
+                    .withColumn("PROD_EI", col("PROD_SHARE")./(col("LAST_PROD_SHARE")).*(100))
+
             } else df
 
         })
 
     }
+
+    //从维度层次组合中拆出时间维度层次
+    def getFatherHierarchiesByDiKey(diKey: String, oneHierarchy: String, dimensions: Map[String, List[String]]): List[String] = {
+        var result: List[String] = List.empty
+        val hierarchies = dimensions(diKey)
+        if (hierarchies.head == oneHierarchy) return result
+        if (hierarchies.contains(oneHierarchy)) {
+            for (i <- 0 until hierarchies.indexOf(oneHierarchy)) {
+                result = result :+ hierarchies(i)
+            }
+        }
+        result
+
+    }
+
+    //由于时间维度的三个层级YEAR/QUARTER/MONTH，在某一层级中只能求上期(lastYEAR/lastQUARTER/lastMONTH)的增长/增长率
+    def lastTimeWindow(currentTimeHierarchy: String, currentWindow: WindowSpec): WindowSpec = {
+        currentTimeHierarchy match {
+            case "YEAR" => currentWindow
+                .orderBy(col("YEAR").cast(DataTypes.IntegerType))
+                .rangeBetween(-1, -1)
+            case "QUARTER" => currentWindow
+                .orderBy(col("YEAR").cast(DataTypes.IntegerType).*(100).+(col("QUARTER").cast(DataTypes.IntegerType).*(25)))
+                .rangeBetween(-25, -25)
+            case "MONTH" => currentWindow
+                .orderBy(to_date(col("YEAR").cast(DataTypes.IntegerType).*(100).+(col("MONTH").cast(DataTypes.IntegerType)).cast(DataTypes.StringType), "yyyyMM").cast("timestamp").cast("long"))
+                .rangeBetween(-86400 * 31, -86400 * 28)
+        }
+    }
+
 
     //尝试分批append写入
     def writeEsListDF(listDF: List[DataFrame]): DataFrame = {
