@@ -15,4 +15,9 @@ package object EditDistanceJob {
             "0.0.1"
         }
     }
+
+    def getTableSavePath(tableName: String, inVersion: String, checkVersion: String, version: String): String ={
+        val rootPath = "/common/public"
+        s"$rootPath/$tableName/${tableName}_${inVersion}_$checkVersion/$version"
+    }
 }

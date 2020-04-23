@@ -169,18 +169,3 @@ class HumanReplaceJob(override val componentProperty: Component2.BPComponentConf
 }
 
 case class HumanReplaceRow(min: String, col_name: String, origin: String, cols: Map[String, String])
-
-object TestHumanReplaceJob extends App {
-
-    val localSpark = SparkSession.builder().config(new SparkConf().setMaster("local[8]")).enableHiveSupport().getOrCreate()
-    localSpark.sparkContext.setLogLevel("INFO")
-    val job = HumanReplaceJob(BPSComponentConfig("", "", Nil, Map()))
-
-    val df = localSpark.read.format("csv")
-            .option("header", "true")
-            .load("file:///D:\\文件\\excel数据表\\产品\\humanReplace\\CPA_no_replace 第8次提数0417.csv")
-    df.show()
-//    job.createHumanReplaceDfV3(df)
-    println("over")
-    spark.close()
-}
