@@ -1,17 +1,20 @@
 package com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxConvertSchemaJobContainer
 
-import java.util.{Date, UUID}
+import java.net.InetAddress
 
-//import com.pharbers.StreamEngine.Jobs.SandBoxJob.BPSSandBoxConvertSchemaJob
-//import com.pharbers.StreamEngine.Utils.Channel.Local.BPSLocalChannel
-//import com.pharbers.StreamEngine.Utils.Schema.Spark.{BPSMetaData2Map, SchemaConverter}
-//import com.pharbers.StreamEngine.Utils.Session.Spark.BPSparkSession
-//import com.pharbers.StreamEngine.Utils.ThreadExecutor.ThreadExecutor
+import com.pharbers.StreamEngine.Jobs.SandBoxJob.BPSSandBoxConvertSchemaJob
+import com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxJobContainer.BPSSandBoxJobContainer
+import com.pharbers.StreamEngine.Others.alex.sandbox.FileMetaData
+import com.pharbers.StreamEngine.Utils.Channel.Local.BPSLocalChannel
+import com.pharbers.StreamEngine.Utils.Channel.Worker.BPSWorkerChannel
+import com.pharbers.StreamEngine.Utils.Component2.BPSConcertEntry
+import com.pharbers.StreamEngine.Utils.Event.BPSEvents
+import com.pharbers.StreamEngine.Utils.Strategy.Session.Spark.BPSparkSession
+import com.pharbers.StreamEngine.Utils.ThreadExecutor.ThreadExecutor
 import com.pharbers.util.log.PhLogable
-//import org.json4s.DefaultFormats
-//import org.json4s.jackson.Serialization.write
-//import org.mongodb.scala.bson.ObjectId
 import org.scalatest.FunSuite
+import org.json4s.DefaultFormats
+import org.json4s.jackson.Serialization.write
 
 /** 功能描述
   *
@@ -24,38 +27,38 @@ import org.scalatest.FunSuite
   */
 class TestBPSSandBoxConvertSchemaJob extends FunSuite with PhLogable{
     test("test open and exec"){
-//        BPSLocalChannel(Map())
-//        val jobContainerId: String = UUID.randomUUID().toString
-//        val date = new Date().getTime
-//        val metaDataSavePath: String = s"/user/dcs/test/BPStreamEngine/$date/$jobContainerId/metadata"
-//        val checkPointSavePath: String = s"/user/dcs/test/BPStreamEngine/$date/$jobContainerId/checkpoint"
-//        val parquetSavePath: String =  s"/user/dcs/test/BPStreamEngine/$date/$jobContainerId/contents"
-//
-//        val jobParam = Map(
-//            "parentJobId" -> "60d0e29e-af5e-4a9b-802a-1b2a6f483ee80",
-//            "parentMetaData" -> "/jobs/f9b76128-8019-4d1a-bf6c-b12b683f778c/722c8bfb-00ad-49a8-9e17-404f7f952994/metadata",
-//            "parentSampleData" -> "/jobs/f9b76128-8019-4d1a-bf6c-b12b683f778c/722c8bfb-00ad-49a8-9e17-404f7f952994/contents",
-//            "jobContainerId" -> jobContainerId,
-//            "metaDataSavePath" -> metaDataSavePath,
-//            "checkPointSavePath" -> checkPointSavePath,
-//            "parquetSavePath" -> parquetSavePath,
-//            "dataSetId" -> new ObjectId().toString
-//        )
-//        val spark = BPSparkSession()
-//        val convertJob: BPSSandBoxConvertSchemaJob =
-//            BPSSandBoxConvertSchemaJob(
-//                "test_" + UUID.randomUUID().toString,
-//                jobParam,
-//                spark,
-//                None)
-//        val metaData = spark.sparkContext.textFile(s"${jobParam("parentMetaData")}/${jobParam("parentJobId")}")
-//        val primitive = BPSMetaData2Map.list2Map(metaData.collect().toList)
-//        val convertContent = primitive ++ SchemaConverter.column2legalWithMetaDataSchema(primitive)
-//        implicit val formats: DefaultFormats.type = DefaultFormats
-//        val schemaData = write(convertContent("schema").asInstanceOf[List[Map[String, Any]]])
-//        convertJob.totalRow = Some(4029864)
-//        convertJob.setInputStream(SchemaConverter.str2SqlType(schemaData), None)
-//        convertJob.exec()
-//        ThreadExecutor.waitForShutdown()
+        implicit val formats: DefaultFormats.type = DefaultFormats
+        val jobContainer = BPSConcertEntry.queryComponentWithId("SandBoxJobContainer").get.asInstanceOf[BPSSandBoxJobContainer]
+        val localChanel: BPSLocalChannel = BPSConcertEntry.queryComponentWithId("local channel").get.asInstanceOf[BPSLocalChannel]
+        val spark = BPSConcertEntry.queryComponentWithId("spark").get.asInstanceOf[BPSparkSession]
+        spark.sparkContext.setLogLevel("ERROR")
+        val jobIds = spark.read.parquet("/jobs/5e95b3801d45316c2831b98b/BPSOssPartitionJob/3f84542c-f23f-4d7b-836c-c8d656e287fa/contents")
+                        .select("jobId").distinct().collect().map(x => x.getAs[String]("jobId"))
+        jobContainer.open()
+        jobContainer.exec()
+        val workerChannel = BPSWorkerChannel(InetAddress.getLocalHost.getHostAddress)
+        jobIds.foreach(jobId => {
+            val data = FileMetaData(jobId, "/jobs/5e95b3801d45316c2831b98b/BPSOssPartitionJob/3f84542c-f23f-4d7b-836c-c8d656e287fa/metadata",
+                "/jobs/5e95b3801d45316c2831b98b/BPSOssPartitionJob/3f84542c-f23f-4d7b-836c-c8d656e287fa/contents", "")
+            workerChannel.pushMessage(write(BPSEvents(jobId, "test", "SandBox-FileMetaData", data)))
+            logger.info(s"jobId: $jobId")
+        })
+        logger.info("******************************************************")
+        while (true){
+            jobContainer.jobs.values.foreach(x => {
+                if(x.outputStream.nonEmpty){
+                    val length = try{
+                        x.outputStream.head.recentProgress.map(_.numInputRows).sum
+                    } catch {
+                        case _: Throwable => -1
+                    }
+                    logger.info(s"未关闭job ${x.id} => $length query => ${x.outputStream.head.id.toString}")
+                }
+            })
+            logger.info(s"query: ${jobContainer.jobs.size}, listeners: ${localChanel.lst.size}, events: ${localChanel.events.size()}")
+            Thread.sleep(10000)
+            logger.info("******************************************************")
+        }
+        ThreadExecutor.waitForShutdown()
     }
 }

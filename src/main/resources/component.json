@@ -74,8 +74,6 @@
             "name": "BPSLocalChannel",
             "args": [],
             "config": {
-                "port": 56789,
-                "sleep": 1000
             }
         },
         {
@@ -106,7 +104,7 @@
             "config": {
                 "listens": "SandBox-FileMetaData",
                 "Python.msgType": "Python-FileMetaData",
-                "queue": 5
+                "queue": 100
             }
         },
         {

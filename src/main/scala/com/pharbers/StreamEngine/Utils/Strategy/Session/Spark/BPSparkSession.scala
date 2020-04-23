@@ -48,6 +48,7 @@ class BPSparkSession(override val componentProperty: BPComponentConfig) extends 
     val spark: SparkSession = SparkSession.builder().config(conf).enableHiveSupport().getOrCreate()
     spark.sparkContext.setLogLevel(sparkConfigs.getString(LOG_LEVEL_KEY))
     spark.sparkContext.setLocalProperty("host", InetAddress.getLocalHost.getHostAddress)
+    logger.info("添加SparkQueryListener")
     spark.streams.addListener(new SparkQueryListener)
     // 初始环境设置
     sparkConfigs.getString(RUN_MODEL_KEY) match {
