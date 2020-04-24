@@ -64,14 +64,13 @@ class BPEditDistance(jobContainer: BPSJobContainer, override val componentProper
 
     def check(in: DataFrame, checkDf: DataFrame): Unit = {
         val mapping = Map() ++ mappingConfig
-        //        joinWithCheckDf(in, checkDf)
-        filterMinDistanceRow(mapping)
+        joinWithCheckDf(in, checkDf, s"/user/dcs/test/tmp/distanceDf_$id")
+        filterMinDistanceRow(mapping, spark.read.parquet(s"/user/dcs/test/tmp/distanceDf_$id"), s"/user/dcs/test/tmp/res_${id}_all")
         val filterMinDistanceDf = humanReplace(mapping).cache()
         saveTable(filterMinDistanceDf, in, checkDf, mapping)
     }
 
-    private def joinWithCheckDf(in: DataFrame, checkDf: DataFrame): Unit = {
-        //        val mapping = Map() ++ mappingConfig
+    private def joinWithCheckDf(in: DataFrame, checkDf: DataFrame, path: String): Unit = {
         val repartitionByIdNum = 50
         val inDfRename = in.columns.foldLeft(in)((l, r) =>
             l.withColumnRenamed(r, s"in_$r"))
@@ -90,11 +89,11 @@ class BPEditDistance(jobContainer: BPSJobContainer, override val componentProper
         distanceDfTmp.write
                 .partitionBy("partition_id")
                 .mode("overwrite")
-                .parquet(s"/user/dcs/test/tmp/distanceDf_$id")
+                .parquet(path)
     }
 
-    private def filterMinDistanceRow(mapping: Map[String, List[String]]): Unit = {
-        val distance = spark.read.parquet(s"/user/dcs/test/tmp/distanceDf_$id")
+    def filterMinDistanceRow(mapping: Map[String, List[String]], distance: DataFrame, path: String): Unit = {
+//        val distance = spark.read.parquet(s"/user/dcs/test/tmp/distanceDf_$id")
 
         val partitions = distance.select("partition_id").distinct().collect().map(row => row.getAs[Int]("partition_id"))
 
@@ -109,8 +108,8 @@ class BPEditDistance(jobContainer: BPSJobContainer, override val componentProper
                     .filter("check_MOLE_NAME_CH != ''")
                     .groupByKey(x => x.getAs[Long]("id"))
                     .mapGroups((_, row) => row.reduce((l, r) => {
-                        val editSumFunc: Row => Int = row => mapping.keySet.foldLeft(0)((x, y) => x + row.getAs[Seq[String]](s"${y}_distance")(2).toInt)
-                        val sameColSumFunc: Row => Int = row => mapping.keySet.map(x => row.getAs[Seq[String]](s"${x}_distance")(2).toInt).count(x => x == 0)
+                        val editSumFunc: Row => Int = row => mapping.keySet.toList.foldLeft(0)((x, y) => x + row.getAs[Seq[String]](s"${y}_distance")(2).toInt)
+                        val sameColSumFunc: Row => Int = row => mapping.keySet.toList.map(x => row.getAs[Seq[String]](s"${x}_distance")(2).toInt).count(x => x <= 0)
                         sameColSumFunc(l).compareTo(sameColSumFunc(r)) match {
                             case 0 => if (editSumFunc(l) > editSumFunc(r)) r else l
                             case 1 => l
@@ -119,7 +118,7 @@ class BPEditDistance(jobContainer: BPSJobContainer, override val componentProper
                     }))(RowEncoder(distance.schema))
                     .write
                     .mode("append")
-                    .parquet(s"/user/dcs/test/tmp/res_${id}_all")
+                    .parquet(path)
         }
     }
 

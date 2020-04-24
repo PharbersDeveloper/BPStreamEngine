@@ -76,7 +76,9 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer,
     }
 
     def startProcessParquet(df: DataFrame): StreamingQuery = {
+        val partitionNum = math.ceil(totalNum / 100000D).toInt
         df.filter($"jobId" === jobId and $"type" === "SandBox")
+                .repartition(partitionNum)
                 .writeStream
                 .outputMode("append")
                 .format("parquet")

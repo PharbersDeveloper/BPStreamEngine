@@ -86,8 +86,8 @@ class BPSSandBoxJobContainer(override val componentProperty: Component2.BPCompon
 		// TODO 这里有问题，我先测试一下，然后删除代码
 		if (hisRunnerId != BPSConcertEntry.runner_id) {
 			val reading = spark.readStream
-				.option("maxFilesPerTrigger", 10)
-				.option("latestFirst", "true")
+//				.option("maxFilesPerTrigger", 10)
+//				.option("latestFirst", "true")
 				.schema(StructType(
 					StructField("traceId", StringType) ::
 						StructField("type", StringType) ::

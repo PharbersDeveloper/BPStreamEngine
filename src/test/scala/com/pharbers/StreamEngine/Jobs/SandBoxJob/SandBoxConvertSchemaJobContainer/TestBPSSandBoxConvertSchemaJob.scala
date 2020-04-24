@@ -26,24 +26,24 @@ import org.json4s.jackson.Serialization.write
   * @note 一些值得注意的地方
   */
 class TestBPSSandBoxConvertSchemaJob extends FunSuite with PhLogable{
-    test("test open and exec"){
+    test("100rows file driver memory stress testing"){
         implicit val formats: DefaultFormats.type = DefaultFormats
         val jobContainer = BPSConcertEntry.queryComponentWithId("SandBoxJobContainer").get.asInstanceOf[BPSSandBoxJobContainer]
         val localChanel: BPSLocalChannel = BPSConcertEntry.queryComponentWithId("local channel").get.asInstanceOf[BPSLocalChannel]
         val spark = BPSConcertEntry.queryComponentWithId("spark").get.asInstanceOf[BPSparkSession]
         spark.sparkContext.setLogLevel("INFO")
-        val jobIds = spark.read.parquet("/jobs/5e9847c5f98e0019eb3d5dc2/BPSOssPartitionJob/b2f9eba0-fae9-4235-8964-9c14dbf3a044/contents")
+        val jobIds = spark.read.parquet("/test/testBPStream/ossJobRes/contents")
                         .select("jobId").distinct().collect().map(x => x.getAs[String]("jobId"))
         jobContainer.open()
         jobContainer.exec()
         val workerChannel = BPSWorkerChannel(InetAddress.getLocalHost.getHostAddress)
         while (true){
             jobIds.foreach(jobId => {
-                val data = FileMetaData(jobId, "/jobs/5e9847c5f98e0019eb3d5dc2/BPSOssPartitionJob/b2f9eba0-fae9-4235-8964-9c14dbf3a044/metadata",
-                    "/jobs/5e9847c5f98e0019eb3d5dc2/BPSOssPartitionJob/b2f9eba0-fae9-4235-8964-9c14dbf3a044/contents", "")
+                val data = FileMetaData(jobId, "/test/testBPStream/ossJobRes/metadata",
+                    "/test/testBPStream/ossJobRes/contents", "")
                 jobContainer.starJob(BPSTypeEvents(BPSEvents(jobId, "test", "SandBox-FileMetaData", data)))
                 logger.info(s"jobId: $jobId")
-                Thread.sleep(1000 * 15)
+                Thread.sleep(1000 * 3)
             })
             logger.info("******************************************************")
         }
@@ -64,5 +64,17 @@ class TestBPSSandBoxConvertSchemaJob extends FunSuite with PhLogable{
 //            logger.info("******************************************************")
 //        }
         ThreadExecutor.waitForShutdown()
+    }
+
+    test("7000000rows file test"){
+        val jobContainer = BPSConcertEntry.queryComponentWithId("SandBoxJobContainer").get.asInstanceOf[BPSSandBoxJobContainer]
+        val spark = BPSConcertEntry.queryComponentWithId("spark").get.asInstanceOf[BPSparkSession]
+        spark.sparkContext.setLogLevel("INFO")
+        val jobId = "test"
+        val data = FileMetaData(jobId, "/test/testBPStream/ossJobRes/metadata",
+            "/test/testBPStream/ossJobRes/400wContents", "")
+        jobContainer.starJob(BPSTypeEvents(BPSEvents(jobId, "test", "SandBox-FileMetaData", data)))
+        logger.info(s"jobId: $jobId")
+        Thread.sleep(1000 * 60)
     }
 }
