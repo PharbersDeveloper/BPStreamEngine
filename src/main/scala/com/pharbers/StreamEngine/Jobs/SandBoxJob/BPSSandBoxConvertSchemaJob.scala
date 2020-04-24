@@ -27,7 +27,7 @@ import collection.JavaConverters._
 
 case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer,
                                       componentProperty: Component2.BPComponentConfig) extends BPStreamJob {
-	
+
 	type T = BPSCommonJobStrategy
 	override val strategy: BPSCommonJobStrategy = BPSCommonJobStrategy(componentProperty.config, configDef)
 	val bloodStrategy: BPSSetBloodStrategy = new BPSSetBloodStrategy(componentProperty.config)
@@ -43,18 +43,18 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer,
 	val mongoId: String = new ObjectId().toString
 	var metaData: Option[MetaData] = None
 	implicit val formats: DefaultFormats.type = DefaultFormats
-	
+
 	import spark.implicits._
-	
+
 	override def open(): Unit = {
 		inputStream = setInputStream(container.inputStream)
 	}
-	
+
 	override def exec(): Unit = inputStream match {
 		case Some(is) => {
 			val query = startProcessParquet(is)
 			outputStream = outputStream :+ query
-			
+
 			val rowNumListener =
 				BPJobLocalListener[SparkQueryEvent](null, List(s"spark-${query.id.toString}-progress"))(x => {
 					logger.info(s"listener hit query ${x.date.id}")
@@ -66,7 +66,7 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer,
 		}
 		case None => ???
 	}
-	
+
 	override def close(): Unit = {
 		logger.info("Job =====> Closed")
 		val sandBoxJob = container.asInstanceOf[BPSSandBoxJobContainer]
@@ -75,9 +75,11 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer,
 		super.close()
 		container.finishJobWithId(id)
 	}
-	
+
 	def startProcessParquet(df: DataFrame): StreamingQuery = {
+		val partitionNum = math.ceil(totalNum / 100000D).toInt
 		df.filter($"jobId" === jobId and $"type" === "SandBox")
+			.repartition(partitionNum)
 			.writeStream
 			.outputMode("append")
 			.format("parquet")
@@ -109,7 +111,7 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer,
 			case None => throw new Exception("MetaData Is Null")
 		}
 	}
-	
+
 	def startProcessMetaData(path: String): Option[MetaData] = {
 		try {
 			val content = spark.sparkContext.textFile(path)
@@ -125,13 +127,13 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer,
 				logger.error( s"${e.getMessage} jobId ===> $id, upper job meta data path ====> $path", e); None
 		}
 	}
-	
+
 	def writeMetaData(path: String, md: MetaData): Unit = {
 		hdfs.appendLine2HDFS(path, write(md.schemaData))
 		hdfs.appendLine2HDFS(path, write(md.label))
 		hdfs.appendLine2HDFS(path, write(md.length))
 	}
-	
+
 	def pushBloodMsg(): Unit = {
 		metaData match {
 			case Some(md) =>
@@ -150,13 +152,13 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer,
 			case _ =>
 		}
 	}
-	
+
 	def pushPyJob(): Unit = {
 		val pythonMetaData = PythonMetaData(mongoId, "HiveTaskNone", getMetadataPath, getOutputPath, s"/jobs/$runnerId")
 		// 给PythonCleanJob发送消息
 		strategy.pushMsg(BPSEvents(id, traceId, msgType, pythonMetaData), isLocal = false)
 	}
-	
+
 	def checkQuery(): Unit = {
 		val query = outputStream.head
 		val cumulative = query.recentProgress.map(_.numInputRows).sum
@@ -166,13 +168,13 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer,
 			this.close()
 		}
 	}
-	
+
 	override def createConfigDef(): ConfigDef = new ConfigDef()
-	
+
 	override val description: String = "BPSSandBoxConvertSchemaJob"
-	
+
 	case class MetaData(schemaData: List[Map[String, Any]], label: Map[String, Any], length: Map[String, Any])
-	
+
 	case class PythonMetaData(mongoId: String,
 	                          noticeTopic: String,
 	                          metadataPath: String,
