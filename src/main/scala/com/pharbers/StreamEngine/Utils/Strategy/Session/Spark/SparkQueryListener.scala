@@ -34,7 +34,7 @@ class SparkQueryListener extends StreamingQueryListener with PhLogable {
     override def onQueryProgress(event: StreamingQueryListener.QueryProgressEvent): Unit = {
         val progressJson = event.progress.prettyJson
         if(event.progress.numInputRows > 0) {
-            logger.info(progressJson)
+            logger.debug(progressJson)
             val bpsEvents = BPSEvents(
                 event.progress.runId.toString,
                 "",

@@ -9,13 +9,13 @@ import org.apache.avro.specific.SpecificRecord
 
 class BPSSetBloodStrategy (config: Map[String, String], @transient inoutConfigDef: ConfigDef = new ConfigDef()) {
 	
-	val kafkaSession: BPKafkaSession =  BPSConcertEntry.queryComponentWithId("kafka").get.asInstanceOf[BPKafkaSession]
+	def getKafka: BPKafkaSession = BPSConcertEntry.queryComponentWithId("kafka").get.asInstanceOf[BPKafkaSession]
 	
 	def pushBloodInfo(data: SpecificRecord, jobId: String, traceId: String, msgTyp: String = "SandBoxDataSet"): Unit = {
-		kafkaSession.callKafka(BPSEvents(jobId, traceId, msgTyp, data))
+		getKafka.callKafka(BPSEvents(jobId, traceId, msgTyp, data))
 	}
 	
 	def uploadEndPoint(uploadEnd: UploadEnd, jobId: String, traceId: String): Unit = {
-		kafkaSession.callKafka(BPSEvents(jobId, traceId, "UploadEndPoint", uploadEnd))
+		getKafka.callKafka(BPSEvents(jobId, traceId, "UploadEndPoint", uploadEnd))
 	}
 }

@@ -1,6 +1,8 @@
 package com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxJobContainer
 
 import java.util.UUID
+import java.util.concurrent.ArrayBlockingQueue
+import java.util.concurrent.atomic.AtomicInteger
 
 import com.pharbers.StreamEngine.Jobs.SandBoxJob.BPSSandBoxConvertSchemaJob
 import com.pharbers.StreamEngine.Utils.Annotation.Component
@@ -16,7 +18,6 @@ import org.apache.kafka.common.config.ConfigDef.{Importance, Type}
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.types.{StringType, StructField, StructType, TimestampType}
 
-
 object BPSSandBoxJobContainer {
 	def apply(componentProperty: Component2.BPComponentConfig): BPSSandBoxJobContainer =
 		new BPSSandBoxJobContainer(componentProperty)
@@ -30,10 +31,12 @@ class BPSSandBoxJobContainer(override val componentProperty: Component2.BPCompon
 	final private val FILE_MSG_TYPE_DOC = "push Python msg type"
 	final private val FILE_MSG_TYPE_DEFAULT = "Python.msgType"
 	
-	
 	val description: String = "SandBox Start"
 	type T = BPSCommonJobStrategy
-	val strategy = BPSCommonJobStrategy(componentProperty.config, configDef)
+	val strategy: BPSCommonJobStrategy = BPSCommonJobStrategy(componentProperty.config, configDef)
+	// TODO: 暂时解决oom，但是BlockingQueue 存和取都有锁，有性能问题，这面需要重新想一下
+	val arrayBlockingQueue = new ArrayBlockingQueue[BPSSandBoxConvertSchemaJob](componentProperty.config("queue").toInt)
+	val execQueueJob = new AtomicInteger(0)
 	val id: String = componentProperty.id
 	val jobId: String = strategy.getJobId
 	
@@ -98,21 +101,38 @@ class BPSSandBoxJobContainer(override val componentProperty: Component2.BPCompon
 			inputStream = Some(reading)
 			
 			hisRunnerId = BPSConcertEntry.runner_id
+			
+			new Thread(new Runnable {
+				override def run(): Unit = {
+					while (true) {
+						if (execQueueJob.get() < componentProperty.config("queue").toInt) {
+							val job = arrayBlockingQueue.take()
+							execQueueJob.incrementAndGet()
+							try {
+								job.open()
+								job.exec()
+								Thread.sleep(1 * 1000)
+							} catch {
+								case e: Exception => logger.error(e.getMessage); job.close()
+							}
+						}
+					}
+				}
+			}).start()
 		}
+		
 		val pythonMsgType: String = strategy.jobConfig.getString(FILE_MSG_TYPE_KEY)
-		val job = BPSSandBoxConvertSchemaJob(this, BPSComponentConfig(UUID.randomUUID().toString,
+		lazy val job = BPSSandBoxConvertSchemaJob(this, BPSComponentConfig(UUID.randomUUID().toString,
 				"BPSSandBoxConvertSchemaJob",
 				event.traceId :: pythonMsgType :: Nil,
 				event.date))
 		jobs += job.id -> job
-		logger.info(s"Job ${job.id} BPSSandBoxConvertSchemaJob =====> open and exec")
-		try {
-			job.open()
-			job.exec()
-		} catch {
-			case e: Exception => logger.error(e.getMessage, e)
-				job.close()
-		}
-
+		arrayBlockingQueue.put(job)
+		logger.info("put arrayBlockingQueue")
+	}
+	
+	override def close(): Unit = {
+		super.close()
 	}
 }
+
