@@ -286,12 +286,11 @@ class BPSGenCubeToEsStrategy(spark: SparkSession) extends BPSStrategy[DataFrame]
                 val time = arr(0)
                 val geo = arr(1)
                 val prod = arr(2)
-                val timeGroup = getTimeHierarchies(arr.toList, dimensions)
                 val geoFaGroup = getFatherHierarchiesByDiKey("geo", geo, dimensions)
                 val prodFaGroup = getFatherHierarchiesByDiKey("prod", prod, dimensions)
-                val selfWindow: WindowSpec = Window.partitionBy("DIMENSION_VALUE", timeGroup ::: (geoFaGroup :+ geo) ::: (prodFaGroup :+ prod): _*)
-                val geoFaWindow: WindowSpec = Window.partitionBy("DIMENSION_VALUE", timeGroup ::: geoFaGroup ::: (prodFaGroup :+ prod): _*)
-                val prodFaWindow: WindowSpec = Window.partitionBy("DIMENSION_VALUE", timeGroup ::: (geoFaGroup :+ geo) ::: prodFaGroup: _*)
+                val selfWindow: WindowSpec = Window.partitionBy("DIMENSION_VALUE", (geoFaGroup :+ geo) ::: (prodFaGroup :+ prod): _*)
+                val geoFaWindow: WindowSpec = Window.partitionBy("DIMENSION_VALUE", geoFaGroup ::: (prodFaGroup :+ prod): _*)
+                val prodFaWindow: WindowSpec = Window.partitionBy("DIMENSION_VALUE", (geoFaGroup :+ geo) ::: prodFaGroup: _*)
 
                 df
                     .withColumn("FATHER_GEO_SALES_VALUE", sum("SALES_VALUE").over(geoFaWindow))
@@ -311,7 +310,6 @@ class BPSGenCubeToEsStrategy(spark: SparkSession) extends BPSStrategy[DataFrame]
                     .withColumn("FATHER_PROD_SALES_GROWTH_RATE", when(col("FATHER_PROD_SALES_GROWTH") === 0.0, 0.0).otherwise(col("FATHER_PROD_SALES_GROWTH") - col("LAST_FATHER_PROD_SALES_VALUE")))
                     .withColumn("GEO_EI", col("GEO_SHARE")./(col("LAST_GEO_SHARE")).*(100))
                     .withColumn("PROD_EI", col("PROD_SHARE")./(col("LAST_PROD_SHARE")).*(100))
-
             } else df
 
         })
@@ -352,7 +350,7 @@ class BPSGenCubeToEsStrategy(spark: SparkSession) extends BPSStrategy[DataFrame]
     def writeEsListDF(listDF: List[DataFrame]): DataFrame = {
 
         for (df <- listDF) {
-            df.write
+            df.na.fill(0.0).write
                 .format("es")
                 //                .option("es.write.operation", "upsert")
                 .mode("append")
