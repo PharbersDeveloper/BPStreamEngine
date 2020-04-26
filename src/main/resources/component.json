@@ -134,7 +134,7 @@
             "args": [],
             "config": {
                 "listens": "GenCube-Start",
-                "GenCube.timer.hours": 1
+                "GenCube.timer.hours": 3
             }
         }
     ],

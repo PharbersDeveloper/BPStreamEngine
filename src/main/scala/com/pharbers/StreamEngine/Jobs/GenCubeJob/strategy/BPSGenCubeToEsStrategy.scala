@@ -178,7 +178,8 @@ class BPSGenCubeToEsStrategy(spark: SparkSession) extends BPSStrategy[DataFrame]
             .withColumnRenamed("sum(SALES_QTY)", "SALES_QTY")
             .withColumn("DIMENSION_NAME", lit("apex"))
             .withColumn("DIMENSION_VALUE", lit("*"))
-            .withColumn("SALES_RANK", dense_rank.over(Window.partitionBy("APEX").orderBy(desc("SALES_VALUE"))))  //以SALES_VALUE降序排序
+            .withColumn("SALES_VALUE_RANK", dense_rank.over(Window.partitionBy("APEX").orderBy(desc("SALES_VALUE"))))  //以 SALES_VALUE 降序排序
+            .withColumn("SALES_QTY_RANK", dense_rank.over(Window.partitionBy("APEX").orderBy(desc("SALES_QTY"))))  //以 SALES_QTY 降序排序
 
         val apexCube = fillLostKeys(apexDF)
         unifiedColumns = apexCube.columns
@@ -206,7 +207,8 @@ class BPSGenCubeToEsStrategy(spark: SparkSession) extends BPSStrategy[DataFrame]
                 .withColumnRenamed("sum(SALES_QTY)", "SALES_QTY")
                 .withColumn("DIMENSION_NAME", lit(dimensionsName))
                 .withColumn("DIMENSION_VALUE", lit(one_hierarchies_group.mkString("-")))
-                .withColumn("SALES_RANK", dense_rank.over(Window.partitionBy("DIMENSION_VALUE", time_group: _*).orderBy(desc("SALES_VALUE")))) //以时间维度分partition才有排名的意义，受限于时间维度上年/季/月层次
+                .withColumn("SALES_VALUE_RANK", dense_rank.over(Window.partitionBy("DIMENSION_VALUE", time_group: _*).orderBy(desc("SALES_VALUE")))) //以时间维度分partition才有排名的意义，受限于时间维度上年/季/月层次
+                .withColumn("SALES_QTY_RANK", dense_rank.over(Window.partitionBy("DIMENSION_VALUE", time_group: _*).orderBy(desc("SALES_QTY")))) //以时间维度分partition才有排名的意义，受限于时间维度上年/季/月层次
             listDF = listDF :+ fillLostKeys(tmpDF)
         }
         listDF
@@ -302,14 +304,19 @@ class BPSGenCubeToEsStrategy(spark: SparkSession) extends BPSStrategy[DataFrame]
                     .withColumn("LAST_GEO_SHARE", col("LAST_SALES_VALUE")/col("LAST_FATHER_GEO_SALES_VALUE"))
                     .withColumn("LAST_FATHER_PROD_SALES_VALUE", sum("SALES_VALUE").over(lastTimeWindow(time, prodFaWindow)))
                     .withColumn("LAST_PROD_SHARE", col("LAST_SALES_VALUE")/col("LAST_FATHER_PROD_SALES_VALUE"))
-                    .withColumn("SALES_GROWTH", when(col("LAST_SALES_VALUE") === 0.0, 0.0).otherwise(col("SALES_VALUE") - col("LAST_SALES_VALUE")))
-                    .withColumn("FATHER_GEO_SALES_GROWTH", when(col("LAST_FATHER_GEO_SALES_VALUE") === 0.0, 0.0).otherwise(col("FATHER_GEO_SALES_VALUE") - col("LAST_FATHER_GEO_SALES_VALUE")))
-                    .withColumn("FATHER_PROD_SALES_GROWTH", when(col("LAST_FATHER_PROD_SALES_VALUE") === 0.0, 0.0).otherwise(col("FATHER_PROD_SALES_VALUE") - col("LAST_FATHER_PROD_SALES_VALUE")))
-                    .withColumn("SALES_GROWTH_RATE", when(col("SALES_GROWTH") === 0.0, 0.0).otherwise(col("SALES_GROWTH") / col("LAST_SALES_VALUE")))
-                    .withColumn("FATHER_GEO_SALES_GROWTH_RATE", when(col("FATHER_GEO_SALES_GROWTH") === 0.0, 0.0).otherwise(col("FATHER_GEO_SALES_GROWTH") - col("LAST_FATHER_GEO_SALES_VALUE")))
-                    .withColumn("FATHER_PROD_SALES_GROWTH_RATE", when(col("FATHER_PROD_SALES_GROWTH") === 0.0, 0.0).otherwise(col("FATHER_PROD_SALES_GROWTH") - col("LAST_FATHER_PROD_SALES_VALUE")))
+                    .withColumn("SALES_VALUE_GROWTH", when(col("LAST_SALES_VALUE") === 0.0, 0.0).otherwise(col("SALES_VALUE") - col("LAST_SALES_VALUE")))
+                    .withColumn("FATHER_GEO_SALES_VALUE_GROWTH", when(col("LAST_FATHER_GEO_SALES_VALUE") === 0.0, 0.0).otherwise(col("FATHER_GEO_SALES_VALUE") - col("LAST_FATHER_GEO_SALES_VALUE")))
+                    .withColumn("FATHER_PROD_SALES_VALUE_GROWTH", when(col("LAST_FATHER_PROD_SALES_VALUE") === 0.0, 0.0).otherwise(col("FATHER_PROD_SALES_VALUE") - col("LAST_FATHER_PROD_SALES_VALUE")))
+                    .withColumn("SALES_VALUE_GROWTH_RATE", when(col("SALES_VALUE_GROWTH") === 0.0, 0.0).otherwise(col("SALES_VALUE_GROWTH") / col("LAST_SALES_VALUE")))
+                    .withColumn("FATHER_GEO_SALES_VALUE_GROWTH_RATE", when(col("FATHER_GEO_SALES_VALUE_GROWTH") === 0.0, 0.0).otherwise(col("FATHER_GEO_SALES_VALUE_GROWTH") - col("LAST_FATHER_GEO_SALES_VALUE")))
+                    .withColumn("FATHER_PROD_SALES_VALUE_GROWTH_RATE", when(col("FATHER_PROD_SALES_VALUE_GROWTH") === 0.0, 0.0).otherwise(col("FATHER_PROD_SALES_VALUE_GROWTH") - col("LAST_FATHER_PROD_SALES_VALUE")))
                     .withColumn("GEO_EI", col("GEO_SHARE")./(col("LAST_GEO_SHARE")).*(100))
                     .withColumn("PROD_EI", col("PROD_SHARE")./(col("LAST_PROD_SHARE")).*(100))
+                    .withColumn("LAST_SALES_QTY", sum("SALES_QTY").over(lastTimeWindow(time, selfWindow)))
+                    .withColumn("SALES_QTY_GROWTH", when(col("LAST_SALES_QTY") === 0.0, 0.0).otherwise(col("SALES_QTY") - col("LAST_SALES_QTY")))
+                    .withColumn("SALES_QTY_GROWTH_RATE", when(col("SALES_QTY_GROWTH") === 0.0, 0.0).otherwise(col("SALES_QTY_GROWTH") / col("LAST_SALES_QTY")))
+                    .withColumn("FATHER_GEO_SALES_QTY", sum("SALES_QTY").over(geoFaWindow))
+                    .withColumn("FATHER_PROD_SALES_QTY", sum("SALES_QTY").over(prodFaWindow))
             } else df
 
         })
