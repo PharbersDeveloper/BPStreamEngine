@@ -13,7 +13,7 @@
             "args": [],
             "config": {
                 "app.name": "bp-stream-engine",
-                "master": "local[2]",
+                "master": "yarn",
                 "spark.configs.path": "src/main/resources/sparkConfig.properties",
                 "log.level": "ERROR",
                 "run.model": "client"
@@ -74,8 +74,6 @@
             "name": "BPSLocalChannel",
             "args": [],
             "config": {
-                "port": 56789,
-                "sleep": 1000
             }
         },
         {
@@ -106,7 +104,7 @@
             "config": {
                 "listens": "SandBox-FileMetaData",
                 "Python.msgType": "Python-FileMetaData",
-                "queue": 5
+                "queue": 100
             }
         },
         {
@@ -114,18 +112,36 @@
             "name": "BPSPythonJobContainer",
             "args": [],
             "config": {
-                "listenerTopic": "PyJobContainerListenerTopic",
-                "defaultNoticeTopic": "HiveTask",
+                "listens": "Python-FileMetaData",
+                "FileMetaData.msgType": "HiveTask-FileMetaData",
                 "defaultPartition": "4",
                 "defaultRetryCount": "3",
                 "pythonUri": "https://github.com/PharbersDeveloper/bp-data-clean.git",
                 "pythonBranch": "v0.0.1"
+            }
+        },
+        {
+            "id": "SqlTableJobContainer",
+            "name": "BPSqlTableJobContainer",
+            "args": [],
+            "config": {
+                "listens": "SandBox-hive"
+            }
+        },
+        {
+            "id": "GenCubeJobContainer",
+            "name": "BPSGenCubeJobContainer",
+            "args": [],
+            "config": {
+                "listens": "GenCube-Start",
+                "GenCube.timer.hours": 1
             }
         }
     ],
     "starts": [
         "OssJobContainer",
         "SandBoxJobContainer",
-        "BPSPythonJobContainer"
+        "BPSPythonJobContainer",
+        "GenCubeJobContainer"
     ]
 }

@@ -40,8 +40,8 @@ class BPSOssPartitionJobContainer(override val componentProperty: Component2.BPC
 
     val description: String = "InputStream"
     type T = BPSCommonJobStrategy
-    val strategy = BPSCommonJobStrategy(componentProperty.config, configDef)
-    val id: String = componentProperty.id
+    val strategy = BPSCommonJobStrategy(componentProperty, configDef)
+    val id: String = strategy.getId
     val jobId: String = strategy.getJobId
     override val spark: SparkSession = strategy.getSpark
 
