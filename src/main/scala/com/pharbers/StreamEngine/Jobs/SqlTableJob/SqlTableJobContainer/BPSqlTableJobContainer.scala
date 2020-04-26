@@ -1,74 +1,76 @@
 package com.pharbers.StreamEngine.Jobs.SqlTableJob.SqlTableJobContainer
 
 import java.util.UUID
-import java.util.concurrent.{Executors, LinkedBlockingQueue, ThreadPoolExecutor, TimeUnit}
 
 import com.pharbers.StreamEngine.Jobs.SqlTableJob.BPSqlTableJob
-import com.pharbers.StreamEngine.Jobs.SqlTableJob.SqlTableListener.{BPSqlTableKafkaListener, BPStreamOverListener}
+import com.pharbers.StreamEngine.Jobs.SqlTableJob.SqlTableListener.BPStreamOverCheckJob
+import com.pharbers.StreamEngine.Utils.Annotation.Component
 import com.pharbers.StreamEngine.Utils.Component2
-import com.pharbers.StreamEngine.Utils.Config.BPSConfig
+import com.pharbers.StreamEngine.Utils.Component2.BPSComponentConfig
+import com.pharbers.StreamEngine.Utils.Event.BPSTypeEvents
 import com.pharbers.StreamEngine.Utils.Event.EventHandler.BPSEventHandler
-import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamListener
-import com.pharbers.StreamEngine.Utils.Job.{BPDynamicStreamJob, BPSJobContainer, BPStreamJob}
-import com.pharbers.StreamEngine.Utils.Strategy.BPStrategyComponent
-import com.pharbers.StreamEngine.Utils.ThreadExecutor.ThreadExecutor.executorService
-import com.pharbers.kafka.schema.HiveTask
+import com.pharbers.StreamEngine.Utils.Event.StreamListener.{BPJobLocalListener, BPJobRemoteListener, BPStreamListener}
+import com.pharbers.StreamEngine.Utils.Job.Status.BPSJobStatus
+import com.pharbers.StreamEngine.Utils.Job.{BPDynamicStreamJob, BPSJobContainer}
+import com.pharbers.StreamEngine.Utils.Strategy.JobStrategy.BPSCommonJobStrategy
+import com.pharbers.StreamEngine.Utils.ThreadExecutor.ThreadExecutor
 import org.apache.kafka.common.config.ConfigDef
-import org.apache.kafka.common.config.ConfigDef.{Importance, Type}
 import org.apache.spark.sql.SparkSession
 
 /** 功能描述
   *
-  * @param args 构造参数
-  * @tparam T 构造泛型参数
   * @author dcs
   * @version 0.0
   * @since 2019/12/11 10:57
   * @note 一些值得注意的地方
   */
-class BPSqlTableJobContainer(val spark: SparkSession, config: Map[String, String]) extends BPSJobContainer with BPDynamicStreamJob{
+object BPSqlTableJobContainer {
+    def apply(componentProperty: Component2.BPComponentConfig): BPSqlTableJobContainer =
+        new BPSqlTableJobContainer(componentProperty)
+}
 
-    override type T = BPStrategyComponent
-    override val strategy: BPStrategyComponent = null
-    final val TOPIC_CONFIG_KEY = "topic"
-    final val TOPIC_CONFIG_DOC = "kafka topic"
-    final val RUN_ID_CONFIG_KEY = "runId"
-    final val RUN_ID_CONFIG_DOC = "run id"
-    final val VERSIONS_CONFIG_KEY = "version"
-    final val VERSIONS_CONFIG_DOC = "version"
-    override val componentProperty: Component2.BPComponentConfig = null
+@Component(name = "BPSqlTableJobContainer", `type` = "BPSqlTableJobContainer")
+class BPSqlTableJobContainer(override val componentProperty: Component2.BPComponentConfig) extends BPSJobContainer with BPDynamicStreamJob {
+
+    final val CHECK_EVENT_TYPE = "hive-check"
+
+    override type T = BPSCommonJobStrategy
+    override val strategy: BPSCommonJobStrategy = BPSCommonJobStrategy(componentProperty, configDef)
+
     override def createConfigDef(): ConfigDef = new ConfigDef()
-            .define(TOPIC_CONFIG_KEY, Type.STRING, "HiveTask", Importance.HIGH, TOPIC_CONFIG_DOC)
-            .define(RUN_ID_CONFIG_KEY, Type.STRING, UUID.randomUUID().toString, Importance.HIGH, RUN_ID_CONFIG_DOC)
-            .define(VERSIONS_CONFIG_KEY, Type.STRING, UUID.randomUUID().toString, Importance.HIGH, VERSIONS_CONFIG_DOC)
-    private val jobConfig: BPSConfig = BPSConfig(configDef, config)
+    override val spark: SparkSession = strategy.getSpark
 
-    val runId: String = jobConfig.getString(RUN_ID_CONFIG_KEY)
-    val jobId: String = UUID.randomUUID().toString
-    val id: String = runId
+    val jobId: String = strategy.getJobId
+    val id: String = strategy.getId
     val description: String = "sql_table"
 
-    val executorService = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue[Runnable])
     //todo: 配置文件
     val tableNameMap: Map[String, String] = Map(
         "CPA&GYC" -> "cpa",
         "CHC" -> "chc",
         "RESULT" -> "result",
-        "PROD" -> "prod"
+        "PROD" -> "prod",
+        "TEST" -> "test"
     )
 
-    var jobConfigs:  Map[String,  Map[String, String]] = Map()
-
+    var jobConfigs: Map[String, List[HiveTask]] = Map()
+    var tasks: Map[String, HiveTask] = Map()
 
     override def open(): Unit = {
         logger.info("open BPSqlTableJobContainer")
     }
 
-    override def exec(): Unit ={
+    override def exec(): Unit = {
         logger.info("开启BPSqlTableKafkaListener")
-        val listener = BPSqlTableKafkaListener(this, jobConfig.getString(TOPIC_CONFIG_KEY))
-        listener.active(null)
-        listeners = listeners :+ listener
+        //        val listener = BPSqlTableKafkaListener(this, jobConfig.getString(TOPIC_CONFIG_KEY))
+        val hiveTaskListener = BPJobRemoteListener[HiveTask](this, strategy.getListens.toList)(hiveTaskHandle)
+        hiveTaskListener.active(null)
+        val checkListener = BPJobLocalListener[List[String]](this, List(CHECK_EVENT_TYPE))(x => addJobConfig(x.jobId, x.date))
+        checkListener.active(null)
+        val jobFinishListener = BPJobLocalListener[String](this, List(strategy.JOB_STATUS_EVENT_TYPE))(x =>
+            if(x.date == BPSJobStatus.Success.toString) finishJobWithId(x.jobId))
+        jobFinishListener.active(null)
+        listeners = listeners :+ hiveTaskListener :+ checkListener :+ jobFinishListener
     }
 
     override def close(): Unit = {
@@ -76,65 +78,104 @@ class BPSqlTableJobContainer(val spark: SparkSession, config: Map[String, String
         jobs.foreach(x => x._2.close())
     }
 
-    def runJob(): Unit ={
-        val configs = jobConfigs
-        jobConfigs = Map()
-        configs.values.foreach(x =>{
-            val job = new BPSqlTableJob(this, spark, x)
-            executorService.execute(new Runnable{
-                override def run(): Unit = {
-                    job.open()
-                    job.exec()
-                }
-            })
-            jobs = jobs ++ Map(job.id -> job)
-        })
-    }
-
-    def addJobConfig(config: Map[String, String]): Unit ={
-        val providers = config.getOrElse("providers", "").split(",")
-        providers.toSet.intersect(tableNameMap.keySet).foreach(key => {
-            val tableName = tableNameMap(key)
-            val (urls, dataSets) = if(jobConfigs.contains(tableName)){
-                (jobConfigs(tableName)("urls") + "," + config("url"), jobConfigs(tableName)("dataSets") + "," + config("datasetId"))
-            } else {
-                (config("url"),config("datasetId") )
-            }
-            jobConfigs = jobConfigs ++ Map(tableName -> (config ++ Map("tableName" -> tableName, "urls" -> urls, "dataSets" -> dataSets, "version" -> "")))
-        })
-    }
-
-    def hiveTaskHandler(msg: HiveTask): Unit ={
-        val url = msg.getUrl.toString
-        val path =if(msg.getTaskType.toString != "end"){
-            if(url.contains("contents")) {
-                url.substring(0, url.lastIndexOf("contents"))
-            } else {
-                logger.debug(url)
-                "/"
-            }
-        } else {
-            "/"
-        }
-
-        val listenerConfig = Map(
-            "runId" -> runId,
-            "jobId" -> UUID.randomUUID().toString,
-            "url" -> msg.getUrl.toString,
-            "length" -> msg.getLength.toString,
-            "rowRecordPath" -> (path + "row_record"),
-            "metadataPath" -> (path +  "metadata"),
-            "errorPath" -> (path +  "err"),
-            "taskType" -> msg.getTaskType.toString,
-            "datasetId" -> msg.getDatasetId.toString
-        )
-        val listener = BPStreamOverListener(this, listenerConfig)
-        listener.active(null)
-        listeners = listeners :+ listener
+    override def finishJobWithId(id: String): Unit = {
+        super.finishJobWithId(id)
+        if(jobs.contains(id)) jobs(id).close()
     }
 
     override def registerListeners(listener: BPStreamListener): Unit = {}
 
     override def handlerExec(handler: BPSEventHandler): Unit = {}
+
+    private def runJob(traceId: String): Unit = {
+        var checkCount = 0
+        while (tasks.nonEmpty && checkCount < 20 && jobs.nonEmpty) {
+            Thread.sleep(500)
+            checkCount += 1
+        }
+        if (checkCount >= 20) {
+            logger.warn(s"有check job未完成就开始了聚合hive， jos：${tasks.values.map(x => x.toString).mkString(",")}")
+        }
+        val configs = jobConfigs
+        jobConfigs = Map()
+        val sqlJobId = UUID.randomUUID().toString
+        configs.foreach { case (tableName, task) =>
+            val (urls, taskType, errPaths, dataSets) = task.map(x => (x.url, x.taskType, x.errPath, x.datasetId)).reduce((l, r) => {
+                ( s"${l._1},${r._1}", l._2, s"${l._3},${r._3}", s"${l._4},${r._4}")
+            })
+
+            val jobConfig = Map(
+                BPSqlTableJob.URLS_CONFIG_KEY -> urls,
+                BPSqlTableJob.TASK_TYPE_CONFIG_KEY -> taskType,
+                BPSqlTableJob.TABLE_NAME_CONFIG_KEY -> tableName,
+                BPSqlTableJob.ERROR_PATH_CONFIG_KEY -> errPaths,
+                BPSqlTableJob.DATA_SETS_CONFIG_KEY -> dataSets,
+                strategy.jobIdConfigStrategy.TRACE_ID_CONFIG_KEY -> traceId,
+                strategy.jobIdConfigStrategy.JOB_ID_CONFIG_KEY -> sqlJobId
+            )
+
+            val sqlJob = new BPSqlTableJob(this, BPSComponentConfig(sqlJobId, s"sqlJob-$sqlJobId", Nil, jobConfig))
+            //todo: 等这儿不是chanel线程中运行时就不需要加入线程池了
+            ThreadExecutor().execute(new Runnable {
+                override def run(): Unit = {
+                    sqlJob.open()
+                    sqlJob.exec()
+                }
+            })
+            jobs += sqlJobId -> sqlJob
+        }
+    }
+
+    private def addJobConfig(checkJobId: String, providers: List[String]): Unit = {
+        val task = tasks(checkJobId)
+        providers.toSet.intersect(tableNameMap.keySet).foreach(key => {
+            val tableName = tableNameMap(key)
+            jobConfigs += tableName -> (jobConfigs.getOrElse(tableName, Nil) :+ task)
+        })
+        tasks -= checkJobId
+        finishJobWithId(checkJobId)
+    }
+
+    private def hiveTaskHandle(msg: BPSTypeEvents[HiveTask]): Unit = {
+        val data = msg.date
+        data.taskType match {
+            case "end" => runJob(msg.traceId)
+            case _ =>
+                val checkJobId = UUID.randomUUID().toString
+                val jobConfig = Map(
+                    BPStreamOverCheckJob.LENGTH_CONFIG_KEY -> data.length.toString,
+                    BPStreamOverCheckJob.ROW_RECORD_PATH_CONFIG_KEY -> data.rowRecordPath,
+                    BPStreamOverCheckJob.METADATA_PATH_CONFIG_KEY -> data.metaDataPath,
+                    strategy.jobIdConfigStrategy.TRACE_ID_CONFIG_KEY -> msg.traceId,
+                    BPStreamOverCheckJob.PUSH_KEY -> CHECK_EVENT_TYPE,
+                    strategy.jobIdConfigStrategy.JOB_ID_CONFIG_KEY -> checkJobId
+                )
+                val checkJob = new BPStreamOverCheckJob(this, BPSComponentConfig(checkJobId, s"hiveCheck-$checkJobId", Nil, jobConfig))
+                jobs += checkJobId -> checkJob
+                tasks += checkJobId -> data
+                checkJob.open()
+                checkJob.exec()
+        }
+    }
 }
 
+case class HiveTask(datasetId: String, taskType: String, url: String, length: Long, remarks: String) {
+    private val ROW_RECORD_FILE = "row_record"
+    private val METADATA_FILE = "metadata"
+    private val ERR_FILE = "err"
+    private val CONTENT_FILE = "contents"
+
+    val path: String = if (taskType != "end") {
+        if (url.contains(CONTENT_FILE)) {
+            url.substring(0, url.lastIndexOf(CONTENT_FILE))
+        } else {
+            "/"
+        }
+    } else "/"
+    val rowRecordPath: String = path + ROW_RECORD_FILE
+    val metaDataPath: String = path + METADATA_FILE
+    val errPath: String = path + ERR_FILE
+
+    override def toString: String = s"$datasetId, $taskType, $url, $length, $remarks"
+
+}

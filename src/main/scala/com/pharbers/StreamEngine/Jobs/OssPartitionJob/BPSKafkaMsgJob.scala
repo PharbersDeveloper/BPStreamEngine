@@ -24,7 +24,7 @@ import org.json4s.jackson.Serialization.write
   */
 class BPSKafkaMsgJob(container: BPSJobContainer, val componentProperty: Component2.BPComponentConfig) extends BPStreamJob {
     override type T = BPSCommonJobStrategy
-    override val strategy: BPSCommonJobStrategy = BPSCommonJobStrategy(componentProperty.config, configDef)
+    override val strategy: BPSCommonJobStrategy = BPSCommonJobStrategy(componentProperty, configDef)
     override val id: String = componentProperty.id
     override val description: String = "kafka_msg_job"
     override val spark: SparkSession = strategy.getSpark

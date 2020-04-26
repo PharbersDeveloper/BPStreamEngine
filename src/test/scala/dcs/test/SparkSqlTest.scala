@@ -1,7 +1,9 @@
 package dcs.test
 
 import com.pharbers.StreamEngine.Utils.Strategy.Session.Spark.BPSparkSession
-import org.apache.spark.sql.functions.lit
+import org.apache.spark.SparkConf
+import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.functions._
 
 /** 功能描述
   *
@@ -37,17 +39,41 @@ object SparkSqlTest extends App {
 }
 
 object SparkSql extends App{
-    val spark = BPSparkSession(null)
-    val df = spark.read.format("csv")
-            .option("header", true)
-            .option("delimiter", ",")
-            .load("/jobs/a77038b2-5721-42bd-b9b4-07f07731dca6/6eeb4c6a-fb4f-498f-a763-864e64e324cf/contents")
-    df.write.option("path", "/common/public/prod/0.0.1")
-            .saveAsTable("prod")
+    val spark = SparkSession.builder().config(new SparkConf().setMaster("local[*]")).enableHiveSupport().getOrCreate()
+    val df = spark.read
+//            .format("csv")
+//            .option("header", true)
+//            .option("delimiter", ",")
+//            .load("/jobs/a77038b2-5721-42bd-b9b4-07f07731dca6/6eeb4c6a-fb4f-498f-a763-864e64e324cf/contents")
+            .parquet("/jobs/5e95b3801d45316c2831b98b/BPSOssPartitionJob/3f84542c-f23f-4d7b-836c-c8d656e287fa/contents")
+    df.filter(col("jobId") === "").show(false)
+
 }
 
 object ReadParquet extends App{
-    val spark = BPSparkSession(null)
-    val df = spark.read.parquet("/jobs/f9b76128-8019-4d1a-bf6c-b12b683f778c/c2ed46c4-c8b8-488f-944e-29c39b695e43/contents/part-00000-604be270-2ee4-400a-91d9-9309fce61454-c000.snappy.parquet")
+//    val spark = BPSConcertEntry.queryComponentWithId("spark").get.asInstanceOf[BPSparkSession]
+    println(checkSep("10ml∶50mg", "50MG 10ML"))
+    val spark = SparkSession.builder().config(new SparkConf().setMaster("local[*]")).enableHiveSupport().getOrCreate()
+    spark.sparkContext.setLogLevel("WARN")
+    val checkFun = udf((s1: String, s2: String) => check(s1, s2))
+    val df = spark.sql("SELECT distinct COL_NAME,  ORIGIN,  CANDIDATE,  ORIGIN_MOLE_NAME, ORIGIN_PRODUCT_NAME, ORIGIN_SPEC, ORIGIN_DOSAGE, ORIGIN_PACK_QTY, ORIGIN_MANUFACTURER_NAME, ORIGIN_MOLE_NAME FROM cpa_no_replace")
+            .filter(checkFun(col("ORIGIN"), col("CANDIDATE")(0)))
     println(df.count())
+//    df.show(false)
+
+    def check(s1: String, s2: String): Boolean ={
+//        checkUpperCase(s1, s2) ||
+                checkSep(s1, s2)
+    }
+
+    def checkUpperCase(s1: String, s2: String): Boolean ={
+        s1.replaceAll(" ",  "").toUpperCase() == s2.replaceAll(" ",  "").toUpperCase()
+    }
+
+    def checkSep(s1: String, s2: String): Boolean = {
+        val list1 = s1.toUpperCase().split("[^A-Za-z0-9_\\u4e00-\\u9fa5]", -1).sorted
+        val list2 = s2.toUpperCase().split("[^A-Za-z0-9_\\u4e00-\\u9fa5]", -1).sorted
+        list1.sameElements(list2)
+    }
 }
+

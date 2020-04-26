@@ -19,8 +19,8 @@ object BPSOssPartitionJob {
 
 case class BPSOssPartitionJob(container: BPSJobContainer, componentProperty: Component2.BPComponentConfig) extends BPStreamJob {
     type T = BPSCommonJobStrategy
-    override val strategy = BPSCommonJobStrategy(componentProperty.config, configDef)
-    override val id: String = componentProperty.id
+    override val strategy = BPSCommonJobStrategy(componentProperty, configDef)
+    override val id: String = strategy.getId
     val jobId: String = strategy.getJobId
     val spark: SparkSession = strategy.getSpark
 
