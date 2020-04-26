@@ -215,7 +215,7 @@ class BPEditDistance(jobContainer: BPSJobContainer, override val componentProper
         }
 
         def saveNoReplaceTable(df: DataFrame, mode: String): Unit = {
-            val noReplaceLogTableName = s"${tableName}_replace"
+            val noReplaceLogTableName = s"${tableName}_no_replace"
             val version = getVersion(noReplaceLogTableName, mode)
             df.filter("canReplace = false")
                     .selectExpr(List("ID", "COL_NAME", "ORIGIN", "check as CANDIDATE", "DISTANCE")
