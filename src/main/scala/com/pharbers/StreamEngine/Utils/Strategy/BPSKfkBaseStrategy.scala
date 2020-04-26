@@ -8,7 +8,7 @@ import org.apache.kafka.common.config.ConfigDef
 @deprecated
 @Component(name = "BPSKfkJobStrategy", `type` = "strategy")
 case class BPSKfkBaseStrategy(kfk: BPKafkaSession) extends BPStrategyComponent {
-    def getTopic: String = kfk.topic
+    def getTopic: String = kfk.getDataTopic
     def getSchema: org.apache.spark.sql.types.DataType = kfk.sparkSchema
 
     override val componentProperty: Component2.BPComponentConfig = null

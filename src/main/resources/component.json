@@ -15,7 +15,7 @@
                 "app.name": "bp-stream-engine",
                 "master": "local[2]",
                 "spark.configs.path": "src/main/resources/sparkConfig.properties",
-                "log.level": "INFO",
+                "log.level": "ERROR",
                 "run.model": "client"
             }
         },
@@ -24,13 +24,14 @@
             "name": "BPKafkaSession",
             "args": [],
             "config": {
-                "topic": "oss_source",
+                "data.topic": "oss_source",
+                "msg.topic": "oss_msg",
                 "url": "http://123.56.179.133:9092",
                 "schema": "http://123.56.179.133:8081"
             }
         },
         {
-            "id": "git repo",
+            "id": "gitRepo",
             "name": "BPSGithubHelper",
             "args": [],
             "config": {
@@ -42,7 +43,7 @@
             "name": "BPSHDFSFile",
             "args": [],
             "config": {
-                "hdfsAddr": "hdfs://StarLord:8020"
+                "hdfsAddr": "hdfs://starLord:8020"
             }
         },
         {
@@ -93,11 +94,38 @@
             "name": "BPSOssPartitionJobContainer",
             "args": [],
             "config": {
-
+                "starting.offsets": "latest",
+                "listens": "SandBox-Start",
+                "FileMetaData.msgType": "SandBox-FileMetaData"
+            }
+        },
+        {
+            "id": "SandBoxJobContainer",
+            "name": "BPSSandBoxJobContainer",
+            "args": [],
+            "config": {
+                "listens": "SandBox-FileMetaData",
+                "Python.msgType": "Python-FileMetaData",
+                "queue": 5
+            }
+        },
+        {
+            "id": "BPSPythonJobContainer",
+            "name": "BPSPythonJobContainer",
+            "args": [],
+            "config": {
+                "listenerTopic": "PyJobContainerListenerTopic",
+                "defaultNoticeTopic": "HiveTask",
+                "defaultPartition": "4",
+                "defaultRetryCount": "3",
+                "pythonUri": "https://github.com/PharbersDeveloper/bp-data-clean.git",
+                "pythonBranch": "v0.0.1"
             }
         }
     ],
     "starts": [
-        "OssJobContainer"
+        "OssJobContainer",
+        "SandBoxJobContainer",
+        "BPSPythonJobContainer"
     ]
 }

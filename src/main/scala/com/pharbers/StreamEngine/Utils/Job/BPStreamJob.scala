@@ -18,6 +18,7 @@ trait BPStreamJob extends PhLogable with BPComponent {
     val strategy: T
     @transient
     val id: String
+    //todo：这儿感觉需要有个jobId
     @transient
     val description: String
     @deprecated
@@ -28,9 +29,9 @@ trait BPStreamJob extends PhLogable with BPComponent {
     @transient
     var outputStream: List[StreamingQuery] = Nil
     @transient
-    var listeners: List[BPStreamListener] = Nil
+    protected var listeners: List[BPStreamListener] = Nil
     @transient
-    var handlers: List[BPSEventHandler] = Nil
+    protected var handlers: List[BPSEventHandler] = Nil
     def open(): Unit = {}
     def close(): Unit = {
         logger.info("alfred clean job with id ========>" + id)
@@ -45,6 +46,7 @@ trait BPStreamJob extends PhLogable with BPComponent {
     def exec(): Unit = {}
 
     // TODO: 这里应该是一个output的strategy, 为了快速重构，偷懒
+    //不同job的这儿生成的目录会不同，所以目录还是需要消息传输
     def getCheckpointPath: String =
         "jobs/" + BPSConcertEntry.runner_id + "/" + description + "/" + id + "/checkpoint"
     def getMetadataPath: String =
