@@ -27,6 +27,7 @@ import org.json4s.jackson.Serialization.write
   */
 class TestBPSSandBoxConvertSchemaJob extends FunSuite with PhLogable{
     test("100rows file driver memory stress testing"){
+        //1235 * 100 file
         implicit val formats: DefaultFormats.type = DefaultFormats
         val jobContainer = BPSConcertEntry.queryComponentWithId("SandBoxJobContainer").get.asInstanceOf[BPSSandBoxJobContainer]
         val localChanel: BPSLocalChannel = BPSConcertEntry.queryComponentWithId("local channel").get.asInstanceOf[BPSLocalChannel]
@@ -37,7 +38,8 @@ class TestBPSSandBoxConvertSchemaJob extends FunSuite with PhLogable{
         jobContainer.open()
         jobContainer.exec()
         val workerChannel = BPSWorkerChannel(InetAddress.getLocalHost.getHostAddress)
-        while (true){
+        var step = 100
+        while (step > 0){
             jobIds.foreach(jobId => {
                 val data = FileMetaData(jobId, "/test/testBPStream/ossJobRes/metadata",
                     "/test/testBPStream/ossJobRes/contents", "")
@@ -46,6 +48,7 @@ class TestBPSSandBoxConvertSchemaJob extends FunSuite with PhLogable{
                 Thread.sleep(1000 * 3)
             })
             logger.info("******************************************************")
+            step -= 1
         }
 
 //        while (true){
@@ -63,7 +66,7 @@ class TestBPSSandBoxConvertSchemaJob extends FunSuite with PhLogable{
 //            Thread.sleep(10000)
 //            logger.info("******************************************************")
 //        }
-        ThreadExecutor.waitForShutdown()
+//        ThreadExecutor.waitForShutdown()
     }
 
     test("7000000rows file test"){
