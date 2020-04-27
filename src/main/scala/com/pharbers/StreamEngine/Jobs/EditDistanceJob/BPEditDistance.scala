@@ -34,7 +34,7 @@ class BPEditDistance(jobContainer: BPSJobContainer, override val componentProper
     import spark.implicits._
 
     //todo: 配置传入
-    implicit val mappingConfig: Map[String, List[String]] = Map(
+    val mappingConfig: Map[String, List[String]] = Map(
         "PRODUCT_NAME" -> List("PROD_NAME_CH"),
         "SPEC" -> List("SPEC"),
         "DOSAGE" -> List("DOSAGE"),
@@ -66,7 +66,7 @@ class BPEditDistance(jobContainer: BPSJobContainer, override val componentProper
         val mapping = Map() ++ mappingConfig
         joinWithCheckDf(in, checkDf, s"/user/dcs/test/tmp/distanceDf_$id")
         filterMinDistanceRow(mapping, spark.read.parquet(s"/user/dcs/test/tmp/distanceDf_$id"), s"/user/dcs/test/tmp/res_${id}_all")
-        val filterMinDistanceDf = humanReplace(mapping).cache()
+        val filterMinDistanceDf = humanReplace(spark.read.parquet(s"/user/dcs/test/tmp/res_${id}_all"), mapping).cache()
         saveTable(filterMinDistanceDf, in, checkDf, mapping)
     }
 
@@ -123,10 +123,10 @@ class BPEditDistance(jobContainer: BPSJobContainer, override val componentProper
     }
 
 
-    private def humanReplace(mapping: Map[String, List[String]]): DataFrame = {
+    private def humanReplace(filterMinDistanceDf: DataFrame, mapping: Map[String, List[String]]): DataFrame = {
         val keys = List("MOLE_NAME", "PRODUCT_NAME", "SPEC", "DOSAGE", "PACK_QTY", "MANUFACTURER_NAME")
         val humanDf = spark.sql("select * from human_replace")
-        val filterMinDistanceDf = spark.read.parquet(s"/user/dcs/test/tmp/res_${id}_all")
+
         val joinDf = filterMinDistanceDf
                 .withColumn("in_min", concat(keys.map(x => col(s"in_$x")): _*))
                 //                .withColumn("in_min", concat(col("in_MOLE_NAME") +: mapping.keys.toList.map(x => col(s"in_$x")): _*))
@@ -260,8 +260,8 @@ object BPEditDistance extends Serializable {
 //    case class replaceLog(id: String, columnName: String, canReplace: Boolean, back: String, check: String, distance: Int)
 
     private def checkSep(s1: String, s2: String): Boolean = {
-        val list1 = s1.toUpperCase().split("[^A-Za-z0-9_\\u4e00-\\u9fa5]", -1).sorted
-        val list2 = s2.toUpperCase().split("[^A-Za-z0-9_\\u4e00-\\u9fa5]", -1).sorted
+        val list1 = s1.toUpperCase().split("[^A-Za-z0-9_.\\u4e00-\\u9fa5]", -1).sorted
+        val list2 = s2.toUpperCase().split("[^A-Za-z0-9_.\\u4e00-\\u9fa5]", -1).sorted
         list1.sameElements(list2)
     }
 
