@@ -175,7 +175,7 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer,
 
 	case class MetaData(schemaData: List[Map[String, Any]], label: Map[String, Any], length: Map[String, Any])
 
-	case class PythonMetaData(mongoId: String,
+	case class PythonMetaData(parentsId: String,
 	                          noticeTopic: String,
 	                          metadataPath: String,
 	                          filesPath: String,
