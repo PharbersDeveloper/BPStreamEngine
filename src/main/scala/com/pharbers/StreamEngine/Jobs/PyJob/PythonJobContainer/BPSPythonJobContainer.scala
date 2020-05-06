@@ -132,7 +132,7 @@ class BPSPythonJobContainer(override val componentProperty: Component2.BPCompone
 
         // 获得 PyJob 参数信息
         val jobId: String = jobMsg.getOrElse("jobId", UUID.randomUUID()).toString
-        val parentsId: List[CharSequence] = jobMsg.getOrElse("parentsId", "").toString.split(",").toList.map(_.asInstanceOf[CharSequence])
+        val parentsId: List[CharSequence] = jobMsg.getOrElse("mongoId", "").toString.split(",").toList.map(_.asInstanceOf[CharSequence])
         val datasetId: String = jobMsg.getOrElse("datasetId", new ObjectId()).toString
 
         val noticeTopic: String = jobMsg.getOrElse("noticeTopic", fileMsgType).toString
@@ -170,7 +170,7 @@ class BPSPythonJobContainer(override val componentProperty: Component2.BPCompone
             "partition" -> partition,
             "retryCount" -> retryCount
         ))
-
+        logger.info(s"create py job $jobId with config ${jobMsg.mkString(",")}")
         job.open()
         job.exec()
     }
