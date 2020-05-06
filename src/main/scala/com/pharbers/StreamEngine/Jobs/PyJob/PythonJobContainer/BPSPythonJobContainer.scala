@@ -114,7 +114,7 @@ class BPSPythonJobContainer(override val componentProperty: Component2.BPCompone
      * @node config 可用的配置参数
      * {{{
      *      jobId = UUID // 缺省 UUID
-     *      parentsId = ObjectId // 缺省 ""
+     *      mongoId = ObjectId // 缺省 "", 之前步骤的数据标识符
      *      datasetId = ObjectId  // 缺省 new ObjectId().toString
      *
      *      noticeTopic = defaultNoticeTopic // Job 任务完成通知topic, 如果单个 Job 有 Topic， 以 Job 的为准，如果 Job 没用，使用默认 Topic

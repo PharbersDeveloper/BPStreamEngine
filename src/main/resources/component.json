@@ -127,11 +127,21 @@
             "config": {
                 "listens": "SandBox-hive"
             }
+        },
+        {
+            "id": "GenCubeJobContainer",
+            "name": "BPSGenCubeJobContainer",
+            "args": [],
+            "config": {
+                "listens": "GenCube-Start",
+                "GenCube.timer.hours": 1
+            }
         }
     ],
     "starts": [
         "OssJobContainer",
         "SandBoxJobContainer",
-        "BPSPythonJobContainer"
+        "BPSPythonJobContainer",
+        "GenCubeJobContainer"
     ]
 }

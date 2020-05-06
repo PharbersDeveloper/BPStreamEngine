@@ -1,25 +1,18 @@
 package com.pharbers.StreamEngine.Jobs.GenCubeJob
 
-import java.util.UUID
-
-import com.pharbers.StreamEngine.Jobs.GenCubeJob.Listener.GenCubeJobStartListener
+import com.pharbers.StreamEngine.Utils.Annotation.Component
 import com.pharbers.StreamEngine.Utils.Component2
-import com.pharbers.StreamEngine.Utils.Config.BPSConfig
-import com.pharbers.StreamEngine.Utils.Event.EventHandler.BPSEventHandler
-import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamListener
-import com.pharbers.StreamEngine.Utils.Strategy.BPSKfkBaseStrategy
-import com.pharbers.StreamEngine.Utils.Job.{BPDynamicStreamJob, BPSJobContainer}
-import com.pharbers.StreamEngine.Utils.ThreadExecutor.ThreadExecutor
-import com.pharbers.kafka.schema.GenCubeJobSubmit
+import com.pharbers.StreamEngine.Utils.Event.BPSTypeEvents
+import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPJobRemoteListener
+import com.pharbers.StreamEngine.Utils.Job.BPSJobContainer
+import com.pharbers.StreamEngine.Utils.Strategy.JobStrategy.BPSCommonJobStrategy
 import org.apache.kafka.common.config.ConfigDef
 import org.apache.kafka.common.config.ConfigDef.{Importance, Type}
 import org.apache.spark.sql.SparkSession
 
 object BPSGenCubeJobContainer {
-    def apply(strategy: BPSKfkBaseStrategy,
-              spark: SparkSession,
-              config: Map[String, String]): BPSGenCubeJobContainer =
-        new BPSGenCubeJobContainer(spark, config)
+    def apply(componentProperty: Component2.BPComponentConfig): BPSGenCubeJobContainer =
+        new BPSGenCubeJobContainer(componentProperty)
 }
 
 /** 执行 GenCube 的 Job
@@ -28,58 +21,67 @@ object BPSGenCubeJobContainer {
   * @version 0.0.1
   * @since 2020/3/19 15:43
   */
-class BPSGenCubeJobContainer(override val spark: SparkSession,
-                             config: Map[String, String])
-        extends BPSJobContainer with BPDynamicStreamJob {
+@Component(name = "BPSGenCubeJobContainer", `type` = "BPSGenCubeJobContainer")
+class BPSGenCubeJobContainer(override val componentProperty: Component2.BPComponentConfig)
+    extends BPSJobContainer {
 
-    override val strategy: BPSKfkBaseStrategy = null
-    type T = BPSKfkBaseStrategy
+    final private val HOURS_TIMER_GEN_CUBE_KEY: String = "GenCube.timer.hours"
+    final private val HOURS_TIMER_GEN_CUBE_DOC: String = "Hours for a gen cube job start."
+    final private val HOURS_TIMER_GEN_CUBE_DEFAULT: Long = 72
 
-    var metadata: Map[String, Any] = Map.empty
+    override def createConfigDef(): ConfigDef = {
+        new ConfigDef()
+            .define(HOURS_TIMER_GEN_CUBE_KEY, Type.LONG, HOURS_TIMER_GEN_CUBE_DEFAULT, Importance.HIGH, HOURS_TIMER_GEN_CUBE_DOC)
+    }
 
-    final val DEFAULT_LISTENING_TOPIC = "GenCubeJobSubmit"
+    val description: String = "cube_gen"
+    type T = BPSCommonJobStrategy
+    val strategy = BPSCommonJobStrategy(componentProperty, configDef)
+    val id: String = strategy.getId
+    override val spark: SparkSession = strategy.getSpark
 
-    final val CONTAINER_ID_KEY = "container.id"
-    final val CONTAINER_ID_DOC = "The value is container's id."
+    val timer = new java.util.Timer()
+    val hours: Long = strategy.jobConfig.getLong(HOURS_TIMER_GEN_CUBE_KEY)
 
-    final val CONTAINER_LISTENING_TOPIC_KEY = "container.listening.topic"
-    final val CONTAINER_LISTENING_TOPIC_DOC = "The value is a topic which is this container listened to and send job request."
-
-    override def createConfigDef(): ConfigDef = new ConfigDef()
-        .define(CONTAINER_ID_KEY, Type.STRING, UUID.randomUUID().toString, Importance.HIGH, CONTAINER_ID_DOC)
-        .define(CONTAINER_LISTENING_TOPIC_KEY, Type.STRING, DEFAULT_LISTENING_TOPIC, Importance.HIGH, CONTAINER_LISTENING_TOPIC_DOC)
-    private val jobConfig: BPSConfig = BPSConfig(configDef, config)
-
-    // container id 作为 runner id
-    val id: String = jobConfig.getString(CONTAINER_ID_KEY)
-    val listeningTopic: String = jobConfig.getString(CONTAINER_LISTENING_TOPIC_KEY)
-//    var pkc: PharbersKafkaConsumer[String, GenCubeJobSubmit] = null
 
     override def open(): Unit = {
         logger.info("gen-cube job container open with runner-id ========>" + id)
-        //注册container后，使用kafka-consumer监听具体job的启动
-//        pkc = new PharbersKafkaConsumer[String, GenCubeJobSubmit](
-//            listeningTopic :: Nil,
-//            1000,
-//            Int.MaxValue, GenCubeJobStartListener(id, spark, this).process
-//        )
+        logger.info(s"GenCube.timer.hours =======> ${hours}")
 
+        val task = new java.util.TimerTask {
+            def run() = {
+                logger.info(s"GenCube.timer start.")
+                if (jobs.nonEmpty) {
+                    for (job <- jobs.values) {
+                        job.open()
+                        job.exec()
+                    }
+                }
+            }
+        }
+        timer.schedule(task, 1000L, hours * 60 * 60 * 1000L)
+        logger.info(s"GenCube.timer init succeed.")
     }
 
     override def exec(): Unit = {
-//        ThreadExecutor().execute(pkc)
+        val listenEvent = strategy.getListens
+        val listener = BPJobRemoteListener[Map[String, String]](this, listenEvent.toList)(x => startJob(x))
+        listener.active(null)
+        listeners = listener +: listeners
     }
 
     override def close(): Unit = {
+        timer.cancel()
         super.close()
-//        pkc.close()
         logger.info("gen-cube job container closed with runner-id ========>" + id)
     }
 
-    override def handlerExec(handler: BPSEventHandler): Unit = {}
+    def startJob(event: BPSTypeEvents[Map[String, String]]): Unit = {
+        logger.info(s"gen-cube job container listener be triggered by traceId(${event.traceId}).")
+        val job = BPSGenCubeJob(event.jobId, spark, this, event.date)
+        jobs += job.id -> job
+        job.open()
+        job.exec()
+    }
 
-    override def registerListeners(listener: BPStreamListener): Unit = {}
-
-    override val description: String = "cube_gen"
-    override val componentProperty: Component2.BPComponentConfig = null
 }
