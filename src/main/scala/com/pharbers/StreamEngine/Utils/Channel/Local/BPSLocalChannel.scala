@@ -8,7 +8,6 @@ import com.pharbers.StreamEngine.Utils.Component2
 import com.pharbers.StreamEngine.Utils.Event.BPSEvents
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamListener
 import com.pharbers.StreamEngine.Utils.ThreadExecutor.ThreadExecutor
-import com.pharbers.util.log.PhLogable
 import org.apache.kafka.common.config.ConfigDef
 
 
@@ -48,7 +47,7 @@ object BPSLocalChannel {
 // TODO 希望可以补全注释
 @Component(name = "BPSLocalChannel", `type` = "BPSLocalChannel")
 class BPSLocalChannel(override val componentProperty: Component2.BPComponentConfig)
-    extends Runnable with PhLogable with ChannelComponent {
+    extends Runnable with ChannelComponent {
 
     var lst: List[BPStreamListener] = Nil
     //todo: 使用配置

@@ -1,7 +1,7 @@
 package com.pharbers.StreamEngine.Utils.Component.Dynamic
 
 import com.pharbers.StreamEngine.Utils.Job.BPDynamicStreamJob
-import com.pharbers.util.log.PhLogable
+import com.pharbers.StreamEngine.Utils.Log.PhLogable
 import org.apache.kafka.common.config.ConfigDef
 
 /** 功能描述

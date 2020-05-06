@@ -1,10 +1,9 @@
 package com.pharbers.StreamEngine.Others.alex.schema
 
 import com.pharbers.StreamEngine.Utils.Component2.BPSConcertEntry
-import com.pharbers.StreamEngine.Utils.Strategy.hdfs.BPSHDFSFile
 import com.pharbers.StreamEngine.Utils.Strategy.Schema.{BPSMetaData2Map, SchemaConverter}
 import com.pharbers.StreamEngine.Utils.Strategy.Session.Spark.BPSparkSession
-import com.pharbers.util.log.PhLogable
+import com.pharbers.StreamEngine.Utils.Log.PhLogable
 import org.apache.spark.rdd.RDD
 import org.json4s._
 import org.json4s.jackson.Serialization.write

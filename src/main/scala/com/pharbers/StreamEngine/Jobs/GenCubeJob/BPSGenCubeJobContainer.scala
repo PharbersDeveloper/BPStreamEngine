@@ -10,7 +10,6 @@ import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamListener
 import com.pharbers.StreamEngine.Utils.Strategy.BPSKfkBaseStrategy
 import com.pharbers.StreamEngine.Utils.Job.{BPDynamicStreamJob, BPSJobContainer}
 import com.pharbers.StreamEngine.Utils.ThreadExecutor.ThreadExecutor
-import com.pharbers.kafka.consumer.PharbersKafkaConsumer
 import com.pharbers.kafka.schema.GenCubeJobSubmit
 import org.apache.kafka.common.config.ConfigDef
 import org.apache.kafka.common.config.ConfigDef.{Importance, Type}
@@ -54,26 +53,26 @@ class BPSGenCubeJobContainer(override val spark: SparkSession,
     // container id 作为 runner id
     val id: String = jobConfig.getString(CONTAINER_ID_KEY)
     val listeningTopic: String = jobConfig.getString(CONTAINER_LISTENING_TOPIC_KEY)
-    var pkc: PharbersKafkaConsumer[String, GenCubeJobSubmit] = null
+//    var pkc: PharbersKafkaConsumer[String, GenCubeJobSubmit] = null
 
     override def open(): Unit = {
         logger.info("gen-cube job container open with runner-id ========>" + id)
         //注册container后，使用kafka-consumer监听具体job的启动
-        pkc = new PharbersKafkaConsumer[String, GenCubeJobSubmit](
-            listeningTopic :: Nil,
-            1000,
-            Int.MaxValue, GenCubeJobStartListener(id, spark, this).process
-        )
+//        pkc = new PharbersKafkaConsumer[String, GenCubeJobSubmit](
+//            listeningTopic :: Nil,
+//            1000,
+//            Int.MaxValue, GenCubeJobStartListener(id, spark, this).process
+//        )
 
     }
 
     override def exec(): Unit = {
-        ThreadExecutor().execute(pkc)
+//        ThreadExecutor().execute(pkc)
     }
 
     override def close(): Unit = {
         super.close()
-        pkc.close()
+//        pkc.close()
         logger.info("gen-cube job container closed with runner-id ========>" + id)
     }
 

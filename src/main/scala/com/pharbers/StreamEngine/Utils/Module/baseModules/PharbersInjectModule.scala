@@ -1,0 +1,3 @@
+package com.pharbers.StreamEngine.Utils.Module.baseModules
+
+trait PharbersInjectModule extends PharbersSingletonModule

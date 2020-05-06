@@ -3,7 +3,8 @@ package com.pharbers.StreamEngine.Utils.Channel.Worker
 import java.net.{InetAddress, InetSocketAddress}
 import java.nio.ByteBuffer
 import java.nio.channels.SocketChannel
-import com.pharbers.util.log.PhLogable
+
+import com.pharbers.StreamEngine.Utils.Log.PhLogable
 
 object BPSWorkerChannel {
     //    var host: Broadcast[String] = _

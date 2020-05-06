@@ -12,7 +12,6 @@ import com.pharbers.StreamEngine.Utils.Component2
 import com.pharbers.StreamEngine.Utils.Event.BPSEvents
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamRemoteListener
 import com.pharbers.StreamEngine.Utils.ThreadExecutor.ThreadExecutor
-import com.pharbers.util.log.PhLogable
 import org.apache.kafka.common.config.ConfigDef
 import org.json4s._
 import org.json4s.jackson.Serialization.read
@@ -51,7 +50,7 @@ object BPSDriverChannel {
 // TODO 希望可以补全注释
 @Component(name = "BPSDriverChannel", `type` = "BPSDriverChannel")
 class BPSDriverChannel(override val componentProperty: Component2.BPComponentConfig)
-    extends Runnable with PhLogable with ChannelComponent {
+    extends Runnable with ChannelComponent {
 
     lazy val host: String = InetAddress.getLocalHost.getHostAddress
 //    lazy val port: Int = 56789

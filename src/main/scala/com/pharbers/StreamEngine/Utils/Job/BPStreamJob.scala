@@ -3,8 +3,7 @@ package com.pharbers.StreamEngine.Utils.Job
 import com.pharbers.StreamEngine.Utils.Component2.{BPComponent, BPSConcertEntry}
 import com.pharbers.StreamEngine.Utils.Event.EventHandler.BPSEventHandler
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamListener
-import com.pharbers.StreamEngine.Utils.Strategy.BPStrategyComponent
-import com.pharbers.util.log.PhLogable
+import com.pharbers.StreamEngine.Utils.Log.PhLogable
 import org.apache.spark.sql
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.streaming.StreamingQuery
