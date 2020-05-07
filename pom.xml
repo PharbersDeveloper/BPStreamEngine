@@ -20,7 +20,7 @@
             <properties>
                 <scalaVersion>2.12.11</scalaVersion>
                 <scalaBinaryVersion>2.12</scalaBinaryVersion>
-                <spark.version>2.4.3</spark.version>
+                <spark.version>2.4.5</spark.version>
                 <hadoop.version>2.7.3</hadoop.version>
                 <scalatest.version>3.0.1</scalatest.version>
                 <log4j.version>2.11.2</log4j.version>
