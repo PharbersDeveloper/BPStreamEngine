@@ -3,10 +3,15 @@ package com.pharbers.StreamEngine.Jobs.PyJob
 import org.json4s._
 import org.scalatest.FunSuite
 import java.util.concurrent.TimeUnit
+
 import com.pharbers.kafka.schema.BPJob
 import org.json4s.jackson.Serialization.write
 import com.pharbers.kafka.producer.PharbersKafkaProducer
 import com.pharbers.StreamEngine.Utils.Component.Dynamic.JobMsg
+import com.pharbers.StreamEngine.Utils.Component2.BPSConcertEntry
+import com.pharbers.StreamEngine.Utils.Strategy.Schema.BPSParseSchema
+import com.pharbers.StreamEngine.Utils.Strategy.Session.Spark.BPSparkSession
+import org.apache.spark.sql.types.StringType
 
 class BPSPythonJobContainerTest extends FunSuite {
 
@@ -76,5 +81,25 @@ class BPSPythonJobContainerTest extends FunSuite {
         val bpJob = new BPJob("", "", "", jobMsg)
         val fu = pkp.produce(topic, runId, bpJob)
         println(fu.get(10, TimeUnit.SECONDS))
+    }
+
+    test("schema test"){
+        val spark =  BPSConcertEntry.queryComponentWithId("spark").get.asInstanceOf[BPSparkSession].spark
+        val metadataPath = "/jobs/5eb3ab2ab0611a4f14eb2493/BPSSandBoxConvertSchemaJob/1d12123f-8c08-46f9-b8e1-f535946d11d9/metadata"
+        val ps = BPSConcertEntry.queryComponentWithId("parse schema").get.asInstanceOf[BPSParseSchema]
+        val metadata = ps.parseMetadata(metadataPath)(spark)
+
+        val df = spark.read
+                .parquet("/jobs/5eb3ab2ab0611a4f14eb2493/BPSSandBoxConvertSchemaJob/1d12123f-8c08-46f9-b8e1-f535946d11d9/contents")
+        val value = df.head()
+        val data = value.schema.map { schema =>
+            schema.dataType match {
+                case StringType =>
+                    schema.name -> value.getAs[String](schema.name)
+                case _ => ???
+            }
+        }.toMap
+        val pyInput = write(Map("metadata" -> metadata, "data" -> data))(DefaultFormats)
+        println(pyInput)
     }
 }

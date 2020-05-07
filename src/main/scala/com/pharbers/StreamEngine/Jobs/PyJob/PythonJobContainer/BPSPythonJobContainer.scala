@@ -1,16 +1,13 @@
 package com.pharbers.StreamEngine.Jobs.PyJob.PythonJobContainer
 
 import java.util.UUID
-import java.util.concurrent.TimeUnit
 import org.mongodb.scala.bson.ObjectId
-import com.pharbers.kafka.schema.HiveTask
 import com.pharbers.StreamEngine.Jobs.PyJob.BPSPythonJob
 import com.pharbers.StreamEngine.Utils.Annotation.Component
 import com.pharbers.StreamEngine.Utils.Component2
 import com.pharbers.StreamEngine.Utils.Component2.BPSConcertEntry
 import com.pharbers.StreamEngine.Utils.Event.BPSTypeEvents
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPJobRemoteListener
-import com.pharbers.kafka.producer.PharbersKafkaProducer
 import com.pharbers.StreamEngine.Utils.Job.BPSJobContainer
 import com.pharbers.StreamEngine.Utils.Strategy.GithubHelper.BPSGithubHelper
 import com.pharbers.StreamEngine.Utils.Strategy.JobStrategy.BPSCommonJobStrategy
@@ -158,6 +155,7 @@ class BPSPythonJobContainer(override val componentProperty: Component2.BPCompone
                 //TODO: 设置触发的文件数，以控制内存 效果待测试
                 .option("maxFilesPerTrigger", partition.toInt)
                 .parquet(filesPath)
+                .repartition(partition.toInt)
 
         // 真正执行 Job
         val job = BPSPythonJob(jobId, spark, Some(reading), noticeFunc, finishJobWithId, Map(

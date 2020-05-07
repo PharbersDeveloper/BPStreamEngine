@@ -46,10 +46,10 @@ case class BPSqlTableJob(container: BPSJobContainer, override val componentPrope
     override def open(): Unit = {
         logger.info(s"open job $id")
         inputStream = Some(spark.read
-                .format("csv")
-                .option("header", value = true)
-                .option("delimiter", ",")
-                .load(urls: _*)
+//                .format("csv")
+//                .option("header", value = true)
+//                .option("delimiter", ",")
+                .json(urls: _*)
         )
     }
 

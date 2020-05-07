@@ -15,7 +15,7 @@
                 "app.name": "bp-stream-engine",
                 "master": "yarn",
                 "spark.configs.path": "src/main/resources/sparkConfig.properties",
-                "log.level": "ERROR",
+                "log.level": "WARN",
                 "run.model": "client"
             }
         },
@@ -94,7 +94,8 @@
             "config": {
                 "starting.offsets": "latest",
                 "listens": "SandBox-Start",
-                "FileMetaData.msgType": "SandBox-FileMetaData"
+                "FileMetaData.msgType": "SandBox-FileMetaData",
+                "trigger.max": 10000
             }
         },
         {
