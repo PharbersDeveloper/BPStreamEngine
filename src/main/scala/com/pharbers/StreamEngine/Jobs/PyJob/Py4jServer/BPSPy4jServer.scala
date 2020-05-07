@@ -199,9 +199,10 @@ case class BPSPy4jServer(serverConf: Map[String, Any])
                     if (curRow == 1L) {
                         val metadata = result("metadata").asInstanceOf[Map[String, Any]]
                         writeMetadata(write(metadata)(DefaultFormats))
-                        csvTitle = writeTitle(metadata)
+//                        csvTitle = writeTitle(metadata)
                     }
-                    writeSuccess(map2csv(csvTitle, result("data").asInstanceOf[Map[String, Any]]).mkString(","))
+//                    writeSuccess(map2csv(csvTitle, result("data").asInstanceOf[Map[String, Any]]).mkString(","))
+                    writeSuccess(write(result("data"))(DefaultFormats))
                 } else writeErr(str)
             case _ => writeErr(str)
         }

@@ -155,6 +155,7 @@ class BPSPythonJobContainer(override val componentProperty: Component2.BPCompone
                 //TODO: 设置触发的文件数，以控制内存 效果待测试
                 .option("maxFilesPerTrigger", partition.toInt)
                 .parquet(filesPath)
+                .repartition(partition.toInt)
 
         // 真正执行 Job
         val job = BPSPythonJob(jobId, spark, Some(reading), noticeFunc, finishJobWithId, Map(

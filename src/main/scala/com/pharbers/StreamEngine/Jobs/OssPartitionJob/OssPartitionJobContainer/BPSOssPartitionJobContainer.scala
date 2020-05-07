@@ -37,6 +37,9 @@ class BPSOssPartitionJobContainer(override val componentProperty: Component2.BPC
     final private val STARTING_OFFSETS_KEY = "starting.offsets"
     final private val STARTING_OFFSETS_DOC = "kafka offsets begin"
     final private val STARTING_OFFSETS_DEFAULT = "earliest" //可以分别指定{"topic1":{"0":23,"1":-2},"topic2":{"0":-2}} -2 = earliest， -1 = latest
+    final private val MAX_OFFSETS_TRIGGER_KEY = "trigger.max"
+    final private val MAX_OFFSETS_TRIGGER_DOC = "每个批次最多读取的row数量"
+    final private val MAX_OFFSETS_TRIGGER_DEFAULT = 10000L
 
     val description: String = "InputStream"
     type T = BPSCommonJobStrategy
@@ -58,7 +61,7 @@ class BPSOssPartitionJobContainer(override val componentProperty: Component2.BPC
                 .option("kafka.ssl.truststore.location", "./kafka.broker1.truststore.jks")
                 .option("kafka.ssl.truststore.password", "pharbers")
                 .option("kafka.ssl.endpoint.identification.algorithm", " ")
-                .option("maxOffsetsPerTrigger", 100000)
+                .option("maxOffsetsPerTrigger", strategy.getJobConfig.getLong(MAX_OFFSETS_TRIGGER_KEY))
                 .option("startingOffsets", strategy.jobConfig.getString(STARTING_OFFSETS_KEY))
                 .option("subscribe", s"${kafkaSession.getDataTopic}, ${kafkaSession.getMsgTopic}")
                 .load()
@@ -69,7 +72,7 @@ class BPSOssPartitionJobContainer(override val componentProperty: Component2.BPC
                     """deserialize(value) AS value""",
                     "timestamp"
                 ).toDF()
-                .withWatermark("timestamp", "24 hours")
+//                .withWatermark("timestamp", "24 hours")
                 .select(
                     from_json($"value", kafkaSession.getSchema).as("data"), col("timestamp")
                 ).select("data.*", "timestamp"))
@@ -102,6 +105,7 @@ class BPSOssPartitionJobContainer(override val componentProperty: Component2.BPC
         new ConfigDef()
                 .define(FILE_MSG_TYPE_KEY, Type.STRING, FILE_MSG_TYPE_DEFAULT, Importance.HIGH, FILE_MSG_TYPE_DOC)
                 .define(STARTING_OFFSETS_KEY, Type.STRING, STARTING_OFFSETS_DEFAULT, Importance.HIGH, STARTING_OFFSETS_DOC)
+                .define(MAX_OFFSETS_TRIGGER_KEY, Type.LONG, MAX_OFFSETS_TRIGGER_DEFAULT, Importance.HIGH, MAX_OFFSETS_TRIGGER_DOC)
     }
 
     def starJob(event: BPSTypeEvents[Map[String, String]]): Unit = {
