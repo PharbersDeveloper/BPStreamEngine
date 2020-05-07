@@ -148,11 +148,13 @@
                 </dependency>
 
                 <!--Kafka-->
-                <!--<dependency>-->
-                    <!--<groupId>com.pharbers</groupId>-->
-                    <!--<artifactId>pharbers-kafka</artifactId>-->
-                    <!--<version>1.0</version>-->
-                <!--</dependency>-->
+                <!--scala版本不同，仅在test中使用schema class-->
+                <dependency>
+                    <groupId>com.pharbers</groupId>
+                    <artifactId>pharbers-kafka</artifactId>
+                    <version>1.0</version>
+                    <scope>test</scope>
+                </dependency>
 
                 <!-- hadoop -->
                 <dependency>
