@@ -1,6 +1,7 @@
 package com.pharbers.StreamEngine.Others.alex.hdfs
 
 import com.pharbers.StreamEngine.Utils.Component2.BPSConcertEntry
+import com.pharbers.StreamEngine.Utils.Strategy.Schema.{BPSMetaData2Map, SchemaConverter}
 import com.pharbers.StreamEngine.Utils.Strategy.hdfs.BPSHDFSFile
 import com.pharbers.StreamEngine.Utils.Strategy.Session.Spark.BPSparkSession
 import org.apache.spark.sql.SparkSession
@@ -27,12 +28,19 @@ class HDFSTest extends FunSuite {
 		val lines = source.getLines().toArray
 		source.close()
 		lines.foreach { x =>
-			val hdfsUrl = s"/jobs/5e8f1871684d707c34f40b19/$x/contents"
-			val reading = spark.read.parquet(hdfsUrl)
-			//			reading.show()
-			val count = reading.count()
-			if (count < 145) {
-				println(x)
+			val parquetUrl = s"$x/contents"
+			val metaDataUrl = s"$x/metadata"
+			val parquetReading = spark.read.parquet(parquetUrl)
+			val content = spark.sparkContext.textFile(metaDataUrl)
+			val m2m = BPSConcertEntry.queryComponentWithId("meta2map").get.asInstanceOf[BPSMetaData2Map]
+			val sc = BPSConcertEntry.queryComponentWithId("schema convert").get.asInstanceOf[SchemaConverter]
+			val primitive = m2m.list2Map(content.collect().toList)
+			val convertContent = primitive ++ sc.column2legalWithMetaDataSchema(primitive)
+			val metaDataNum = convertContent("length").toString.toLong
+			
+			val count = parquetReading.count()
+			if (count < metaDataNum) {
+				println(parquetUrl)
 				println(count)
 			}
 			

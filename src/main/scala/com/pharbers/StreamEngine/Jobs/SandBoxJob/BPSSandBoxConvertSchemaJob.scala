@@ -146,9 +146,11 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer,
 					getOutputPath,
 					"SampleData")
 				val uploadEnd = new UploadEnd(mongoId, md.label("assetId").toString)
+				val tag = DataMartTag(md.label("assetId").toString, md.label("tag").toString)
 				// 血缘
 				bloodStrategy.pushBloodInfo(dataSet, id, traceId)
 				bloodStrategy.uploadEndPoint(uploadEnd, id, traceId)
+				bloodStrategy.setMartTags(tag, id, traceId)
 			case _ =>
 		}
 	}
@@ -174,7 +176,9 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer,
 	override val description: String = "BPSSandBoxConvertSchemaJob"
 
 	case class MetaData(schemaData: List[Map[String, Any]], label: Map[String, Any], length: Map[String, Any])
-
+	
+	case class DataMartTag(assetId: String, tag: String)
+	
 	case class PythonMetaData(parentsId: String,
 	                          noticeTopic: String,
 	                          metadataPath: String,
