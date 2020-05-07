@@ -50,7 +50,7 @@ class BPSGenCubeJob(override val id: String,
                     override val spark: SparkSession,
                     container: BPSJobContainer,
                     jobConf: Map[String, String])
-    extends BPStreamJob {
+        extends BPStreamJob {
 
     type T = BPStrategyComponent
     override val strategy: BPStrategyComponent = null
@@ -124,10 +124,10 @@ class BPSGenCubeJob(override val id: String,
     override val description: String = "cube gen"
     override val componentProperty: Component2.BPComponentConfig = null
     override def createConfigDef(): ConfigDef =  new ConfigDef()
-        .define(INPUT_DATA_TYPE_KEY, Type.STRING, Importance.HIGH, INPUT_DATA_TYPE_DOC)
-        .define(INPUT_PATH_KEY, Type.STRING, Importance.HIGH, INPUT_PATH_DOC)
-        .define(OUTPUT_DATA_TYPE_KEY, Type.STRING, Importance.HIGH, OUTPUT_DATA_TYPE_DOC)
-        .define(OUTPUT_PATH_KEY, Type.STRING, Importance.HIGH, OUTPUT_PATH_DOC)
-        .define(STRATEGY_CMD_KEY, Type.STRING, STRATEGY_CMD_DEFAULT, Importance.HIGH, STRATEGY_CMD_DOC)
+            .define(INPUT_DATA_TYPE_KEY, Type.STRING, Importance.HIGH, INPUT_DATA_TYPE_DOC)
+            .define(INPUT_PATH_KEY, Type.STRING, Importance.HIGH, INPUT_PATH_DOC)
+            .define(OUTPUT_DATA_TYPE_KEY, Type.STRING, Importance.HIGH, OUTPUT_DATA_TYPE_DOC)
+            .define(OUTPUT_PATH_KEY, Type.STRING, Importance.HIGH, OUTPUT_PATH_DOC)
+            .define(STRATEGY_CMD_KEY, Type.STRING, STRATEGY_CMD_DEFAULT, Importance.HIGH, STRATEGY_CMD_DOC)
 
 }

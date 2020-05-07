@@ -2,8 +2,7 @@ package com.pharbers.StreamEngine.Jobs.Hive2EsJob
 
 import java.util.UUID
 import java.util.concurrent.TimeUnit
-
-import com.pharbers.kafka.producer.PharbersKafkaProducer
+import com.pharbers.StreamEngine.Utils.Strategy.Session.Kafka.PharbersKafkaProducer
 import com.pharbers.kafka.schema.Hive2EsJobSubmit
 import org.scalatest.FunSuite
 

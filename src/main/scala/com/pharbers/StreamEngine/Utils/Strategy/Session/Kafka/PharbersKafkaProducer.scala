@@ -45,13 +45,12 @@ class PharbersKafkaProducer[K, V] extends PhLogable{
 
     def produce(topic: String, key: K, value: V): Future[RecordMetadata] = {
         val record: ProducerRecord[K, V] = new ProducerRecord[K, V](topic, key, value)
+//        val fu = producer.send(record)
         val future: Future[RecordMetadata] = producer.send(record,
-            new Callback() {
-                def onCompletion(metadata: RecordMetadata, e: Exception): Unit = {
-                    if (e != null) logger.debug("Send failed for record {}", record, e) else logger.info("SUCCEED!")
-                }
+            (_: RecordMetadata, e: Exception) => {
+                if (e != null) logger.debug("Send failed for record {}", e) else logger.info("SUCCEED!")
             })
-        return future
+        future
     }
 
 }

@@ -54,7 +54,7 @@ class BPSEsSinkJobContainer(override val spark: SparkSession,
     }
 
     override def exec(): Unit = {
-        ThreadExecutor().execute(pkc)
+//        ThreadExecutor().execute(pkc)
     }
 
     override def close(): Unit = {
