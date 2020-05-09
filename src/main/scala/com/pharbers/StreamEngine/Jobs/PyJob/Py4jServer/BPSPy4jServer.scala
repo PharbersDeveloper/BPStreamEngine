@@ -34,7 +34,7 @@ case class BPSPy4jServer(serverConf: Map[String, Any])
     final val RETRY_COUNT: Int = serverConf("retryCount").toString.toInt
     // TODO 先这样试试
     lazy val hdfsfile: BPSHDFSFile =
-        BPSHDFSFile(BPSComponentConfig("", "", Nil, Map("hdfsAddr" -> "hdfs://starLord:8020")))
+        BPSHDFSFile(BPSComponentConfig("", "", Nil, Map("hdfsAddr" -> "hdfs://spark.master:8020")))
 //        BPSConcertEntry.queryComponentWithId("hdfs").get.asInstanceOf[BPSHDFSFile]
 
     val jobId: String = serverConf("jobId").toString
