@@ -98,7 +98,7 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer,
 				// 将规范过后的MetaData重新写入
 				writeMetaData(getMetadataPath, md)
 				// 告诉pyjob有数据了
-				// pushPyJob()
+				 pushPyJob()
 				// 规范化的Schema设置Stream
 				df match {
 					case Some(is) => Some(

@@ -42,7 +42,7 @@ case class BPSHDFSFile(override val componentProperty: Component2.BPComponentCon
     
     def appendLine2HDFS(path: String, line: String): Unit = {
         try {
-            val fileSystem: FileSystem = FileSystem.get(configuration)
+            val fileSystem: FileSystem = FileSystem.newInstance(configuration)
             val hdfsWritePath: Path = new Path(path)
             val fsDataOutputStream: FSDataOutputStream =
                 if (fileSystem.exists(hdfsWritePath))

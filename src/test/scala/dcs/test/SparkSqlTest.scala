@@ -1,8 +1,11 @@
 package dcs.test
 
+import com.pharbers.StreamEngine.Jobs.EditDistanceJob.BPEditDistance
+import com.pharbers.StreamEngine.Utils.Component2.{BPSComponentConfig, BPSConcertEntry}
 import com.pharbers.StreamEngine.Utils.Strategy.Session.Spark.BPSparkSession
+import dcs.test.SpecUnitTransform.spark
 import org.apache.spark.SparkConf
-import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.{Row, SparkSession}
 import org.apache.spark.sql.functions._
 
 /** 功能描述
@@ -38,41 +41,197 @@ object SparkSqlTest extends App {
             .saveAsTable("cpa")
 }
 
-object SparkSql extends App{
-    val spark = SparkSession.builder().config(new SparkConf().setMaster("local[*]")).enableHiveSupport().getOrCreate()
-    val df = spark.read
-//            .format("csv")
-//            .option("header", true)
-//            .option("delimiter", ",")
-//            .load("/jobs/a77038b2-5721-42bd-b9b4-07f07731dca6/6eeb4c6a-fb4f-498f-a763-864e64e324cf/contents")
-            .parquet("/jobs/5e95b3801d45316c2831b98b/BPSOssPartitionJob/3f84542c-f23f-4d7b-836c-c8d656e287fa/contents")
-    df.filter(col("jobId") === "").show(false)
+object SparkSql extends App {
+    val spark = SparkSession.builder().config(new SparkConf().setMaster("local[2]")).enableHiveSupport().getOrCreate()
+    //    val spark = BPSConcertEntry.queryComponentWithId("spark").get.asInstanceOf[BPSparkSession]
+    spark.sparkContext.setLogLevel("WARN")
+    val df = spark.read.parquet("/user/dcs/test/tmp/res_0420_all")
 
+    df.show(false)
+    //    val schemaDf = spark.read.parquet("/test/testBPStream/ossJobRes/400wDfsTest")
+    //    schemaDf.write.mode("overwrite").parquet("/test/testBPStream/ossJobRes/800wDfs2")
+    //    val df = spark.readStream
+    ////            .format("csv")
+    ////            .option("header", true)
+    ////            .option("delimiter", ",")
+    ////            .load("/jobs/a77038b2-5721-42bd-b9b4-07f07731dca6/6eeb4c6a-fb4f-498f-a763-864e64e324cf/contents")
+    //            .schema(schemaDf.schema)
+    //            .parquet("/test/testBPStream/ossJobRes/400wDfsTest")
+    //
+    //    df.writeStream.format("parquet")
+    //            .partitionBy("jobId")
+    //            .option("checkpointLocation", "/test/testBPStream/ossJobRes/checkpoint")
+    //            .start("/test/testBPStream/ossJobRes/400wContents")
+    //    Thread.sleep(1000 * 60 * 30)
 }
 
-object ReadParquet extends App{
-//    val spark = BPSConcertEntry.queryComponentWithId("spark").get.asInstanceOf[BPSparkSession]
-    println(checkSep("10ml∶50mg", "50MG 10ML"))
-    val spark = SparkSession.builder().config(new SparkConf().setMaster("local[*]")).enableHiveSupport().getOrCreate()
+object SpecUnitTransform extends App {
+    //    val spark = BPSConcertEntry.queryComponentWithId("spark").get.asInstanceOf[BPSparkSession]
+
+    val spark = SparkSession.builder().config(new SparkConf().setMaster("local[8]")).enableHiveSupport().getOrCreate()
     spark.sparkContext.setLogLevel("WARN")
+
+    import spark.implicits._
+
     val checkFun = udf((s1: String, s2: String) => check(s1, s2))
-    val df = spark.sql("SELECT distinct COL_NAME,  ORIGIN,  CANDIDATE,  ORIGIN_MOLE_NAME, ORIGIN_PRODUCT_NAME, ORIGIN_SPEC, ORIGIN_DOSAGE, ORIGIN_PACK_QTY, ORIGIN_MANUFACTURER_NAME, ORIGIN_MOLE_NAME FROM cpa_no_replace")
-            .filter(checkFun(col("ORIGIN"), col("CANDIDATE")(0)))
-    println(df.count())
-//    df.show(false)
+    val df = spark.sql("SELECT distinct COL_NAME,  ORIGIN,  CANDIDATE,  ORIGIN_MOLE_NAME, ORIGIN_PRODUCT_NAME, ORIGIN_SPEC, ORIGIN_DOSAGE, ORIGIN_PACK_QTY, ORIGIN_MANUFACTURER_NAME FROM cpa_no_replace")
+            .filter("COL_NAME == 'SPEC'")
+            //            .withColumn("id", monotonically_increasing_id())
+            .withColumn("can_replace", checkFun($"ORIGIN", $"CANDIDATE" (0)))
 
-    def check(s1: String, s2: String): Boolean ={
-//        checkUpperCase(s1, s2) ||
-                checkSep(s1, s2)
+
+    df.write.mode("overwrite").option("path", "/user/dcs/test/spec_unit_transform").saveAsTable("spec_unit_transform")
+
+    def check(s1: String, s2: String): Boolean = {
+        checkSep(s1, s2)
     }
 
-    def checkUpperCase(s1: String, s2: String): Boolean ={
-        s1.replaceAll(" ",  "").toUpperCase() == s2.replaceAll(" ",  "").toUpperCase()
-    }
-
+    //切分并且转换单位
     def checkSep(s1: String, s2: String): Boolean = {
-        val list1 = s1.toUpperCase().split("[^A-Za-z0-9_\\u4e00-\\u9fa5]", -1).sorted
-        val list2 = s2.toUpperCase().split("[^A-Za-z0-9_\\u4e00-\\u9fa5]", -1).sorted
+        val list1 = s1.toUpperCase().split("[^A-Za-z0-9_.\\u4e00-\\u9fa5]", -1).map(unitTransform).sorted
+        val list2 = s2.toUpperCase().split("[^A-Za-z0-9_.\\u4e00-\\u9fa5]", -1).map(unitTransform).sorted
+        list1.sameElements(list2)
+    }
+
+    def unitTransform(s: String): String = {
+        val unit = s.replaceAll("[0-9.]", "")
+        try {
+            unit match {
+                case "G" => (s.substring(0, s.length - 1).toDouble * 1000).toInt.toString + "MG"
+                case _ => s
+            }
+        } catch {
+            case _: Exception => s
+        }
+    }
+}
+
+object saveNoReplaceDf extends App {
+    val minColumns = List("MOLE_NAME", "PRODUCT_NAME", "SPEC", "DOSAGE", "PACK_QTY", "MANUFACTURER_NAME")
+    //    val spark = BPSConcertEntry.queryComponentWithId("spark").get.asInstanceOf[BPSparkSession]
+
+    val spark = SparkSession.builder().config(new SparkConf().setMaster("local[8]")).enableHiveSupport().getOrCreate()
+    spark.sparkContext.setLogLevel("WARN")
+
+    import spark.implicits._
+
+    case class replaceLog(min: String, cols: Map[String, String])
+
+    val replaceDf = spark.sql("SELECT distinct COL_NAME,  ORIGIN,  DEST,  ORIGIN_MOLE_NAME, ORIGIN_PRODUCT_NAME, ORIGIN_SPEC, ORIGIN_DOSAGE, ORIGIN_PACK_QTY, ORIGIN_MANUFACTURER_NAME FROM cpa_replace")
+            .withColumn("min", concat(minColumns.map(x => col(s"ORIGIN_$x")): _*))
+            .withColumn("cols", map($"COL_NAME", $"DEST"))
+            .select("min", "cols")
+            .as[replaceLog]
+            .groupByKey(x => x.min)
+            .mapGroups((min, rows) => {
+                (min, rows.foldLeft(Map[String, String]())((l, r) => l ++ r.cols))
+            }).toDF("min", "cols")
+            .selectExpr("min" +: minColumns.map(x => s"cols['$x'] as $x"): _*)
+
+    val noReplaceDf = spark.sql("SELECT distinct COL_NAME, ORIGIN, CANDIDATE, ORIGIN_MOLE_NAME, ORIGIN_PRODUCT_NAME, ORIGIN_SPEC, ORIGIN_DOSAGE, ORIGIN_PACK_QTY, ORIGIN_MANUFACTURER_NAME FROM cpa_no_replace")
+            .withColumn("min", concat(minColumns.map(x => col(s"ORIGIN_$x")): _*))
+            .join(replaceDf.withColumnRenamed("min", "min1"), $"min" === $"min1", "left")
+
+    noReplaceDf.write.parquet("/user/dcs/test/no_replace_prod")
+}
+
+object createAutoHumanReplaceDf extends App {
+    val minColumns = List("MOLE_NAME", "PRODUCT_NAME", "SPEC", "DOSAGE", "PACK_QTY", "MANUFACTURER_NAME")
+
+    val mappingConfig: Map[String, String] = Map(
+        "PRODUCT_NAME" -> "PROD_NAME_CH",
+        "SPEC" -> "SPEC",
+        "DOSAGE" -> "DOSAGE",
+        "PACK_QTY" -> "PACK",
+        "MANUFACTURER_NAME" -> "MNF_NAME_CH"
+    )
+
+    val spark = SparkSession.builder().config(new SparkConf().setMaster("local[8]")).enableHiveSupport().getOrCreate()
+    spark.sparkContext.setLogLevel("WARN")
+
+    import spark.implicits._
+
+    val noReplaceDf = minColumns.foldLeft(spark.read.parquet("/user/dcs/test/no_replace_prod"))((df, name) => {
+        df.withColumn(name, when(col(name).isNotNull, col(name)).otherwise(col(s"ORIGIN_$name")))
+    })
+            .withColumn("cols", concat_ws(31.toChar.toString, minColumns.map(x => col(x)): _*))
+            .withColumn("id", monotonically_increasing_id())
+
+    val prod = spark.sql("select * from prod")
+            .withColumn("prod_cols", concat_ws(31.toChar.toString, $"MOLE_NAME_CH", $"PROD_NAME_CH", $"SPEC", $"DOSAGE", $"PACK", $"MNF_NAME_CH", $"MNF_NAME_EN"))
+            .withColumnRenamed("SPEC", "prod_SPEC")
+            .withColumnRenamed("DOSAGE", "prod_DOSAGE")
+
+
+    val joinDf = noReplaceDf.join(prod, $"MOLE_NAME" === $"MOLE_NAME_CH", "left")
+
+    val canReplaceDf = joinDf.groupByKey(x => x.getAs[Long]("id")).mapGroups((_, rows) => {
+        val rowWithNum = rows.map(x => (x, joinFunc(x))).toList
+        val max = rowWithNum.maxBy(x => x._2)
+        if (rowWithNum.count(x => x._2 == max._2) == 1) {
+            (max._1.getAs[String]("min"),
+                    max._1.getAs[String]("MOLE_NAME_CH"),
+                    max._1.getAs[String]("PROD_NAME_CH"),
+                    max._1.getAs[String]("prod_SPEC"),
+                    max._1.getAs[String]("prod_DOSAGE"),
+                    max._1.getAs[String]("PACK"),
+                    max._1.getAs[String]("MNF_NAME_CH"))
+        } else ("", "", "", "", "", "", "")
+    })
+            .toDF("min", "MOLE_NAME", "PRODUCT_NAME", "SPEC", "DOSAGE", "PACK_QTY", "MANUFACTURER_NAME")
+            .filter($"min" =!= "")
+
+    canReplaceDf.show(false)
+    canReplaceDf.write.mode("overwrite").parquet("/user/dcs/test/can_replace")
+
+    def joinFunc(row: Row): Int = {
+        val list1 = row.getAs[String]("cols").split(31.toChar.toString)
+        val list2 = row.getAs[String]("prod_cols").split(31.toChar.toString)
+        list1.intersect(list2).length
+    }
+}
+
+object read extends App {
+    val mappingConfig: Map[String, List[String]] = Map(
+        "PRODUCT_NAME" -> List("PROD_NAME_CH"),
+        "SPEC" -> List("SPEC"),
+        "DOSAGE" -> List("DOSAGE"),
+        "PACK_QTY" -> List("PACK"),
+        "MANUFACTURER_NAME" -> List("MNF_NAME_CH", "MNF_NAME_EN")
+    )
+
+    //    val spark = SparkSession.builder().config(new SparkConf().setMaster("local[8]")).enableHiveSupport().getOrCreate()
+    val spark = BPSConcertEntry.queryComponentWithId("spark").get.asInstanceOf[BPSparkSession].spark
+    spark.sparkContext.setLogLevel("WARN")
+
+    import spark.implicits._
+
+    val bPEditDistance = new BPEditDistance(null, BPSComponentConfig("", "", Nil, Map("jobId" -> "test", "dataSets" -> "")))
+    val noReplaceDf = spark.sql("select distinct ORIGIN_MOLE_NAME, ORIGIN_PRODUCT_NAME, ORIGIN_SPEC, ORIGIN_DOSAGE, ORIGIN_PACK_QTY, ORIGIN_MANUFACTURER_NAME from cpa_no_replace")
+            .withColumn("id", monotonically_increasing_id())
+            .withColumn("cols", map(mappingConfig.keySet.toList.flatMap(x => List(lit(x), col(s"ORIGIN_$x"))): _*))
+    val prod = spark.sql("select MOLE_NAME_CH, PROD_NAME_CH, SPEC, DOSAGE, PACK, MNF_NAME_CH, MNF_NAME_EN  from prod")
+            .withColumn("prod_cols", map(mappingConfig.values.toList.flatten.flatMap(x => List(lit(x), col(x))): _*))
+
+    case class joinRow(id: Long, cols: Map[String, String], prodCols: Map[String, String], moleName: String)
+
+    noReplaceDf.join(prod, "ORIGIN_MOLE_NAME = MOLE_NAME_CH")
+            .selectExpr("id", "cols", "prod_cols", "ORIGIN_MOLE_NAME as mole_name")
+            .as[joinRow]
+            .groupByKey(x => x.id)
+//            .mapGroups((id, rows) => {
+//
+//            })
+
+    def getDistance(inputWord: String, targetWord: String): Boolean = {
+        val s1 = inputWord.replaceAll(" ", "").toUpperCase
+        val s2 = targetWord.replaceAll(" ", "").toUpperCase
+        inputWord != targetWord && (s1 == s2 || checkSep(inputWord, targetWord))
+    }
+
+    private def checkSep(s1: String, s2: String): Boolean = {
+        val list1 = s1.toUpperCase().split("[^A-Za-z0-9_.\\u4e00-\\u9fa5]", -1).sorted
+        val list2 = s2.toUpperCase().split("[^A-Za-z0-9_.\\u4e00-\\u9fa5]", -1).sorted
         list1.sameElements(list2)
     }
 }
