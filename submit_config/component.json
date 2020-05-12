@@ -15,7 +15,7 @@
         "app.name": "bp-stream-engine",
         "master": "yarn",
         "spark.configs.path": "sparkConfig.properties",
-        "log.level": "ERROR",
+        "log.level": "INFO",
         "run.model": "cluster"
       }
     },
@@ -43,7 +43,7 @@
       "name": "BPSHDFSFile",
       "args": [],
       "config": {
-        "hdfsAddr": "hdfs://starLord:8020"
+        "hdfsAddr": "hdfs://192.168.1.28:8020"
       }
     },
     {
@@ -74,8 +74,6 @@
       "name": "BPSLocalChannel",
       "args": [],
       "config": {
-        "port": 56789,
-        "sleep": 1000
       }
     },
     {
@@ -96,7 +94,8 @@
       "config": {
         "starting.offsets": "latest",
         "listens": "SandBox-Start",
-        "FileMetaData.msgType": "SandBox-FileMetaData"
+        "FileMetaData.msgType": "SandBox-FileMetaData",
+        "trigger.max": 10000
       }
     },
     {
@@ -121,11 +120,29 @@
         "pythonUri": "https://github.com/PharbersDeveloper/bp-data-clean.git",
         "pythonBranch": "v0.0.1"
       }
+    },
+    {
+      "id": "SqlTableJobContainer",
+      "name": "BPSqlTableJobContainer",
+      "args": [],
+      "config": {
+        "listens": "SandBox-hive"
+      }
+    },
+    {
+      "id": "GenCubeJobContainer",
+      "name": "BPSGenCubeJobContainer",
+      "args": [],
+      "config": {
+        "listens": "GenCube-Start",
+        "GenCube.timer.hours": 1
+      }
     }
   ],
   "starts": [
     "OssJobContainer",
     "SandBoxJobContainer",
-    "BPSPythonJobContainer"
+    "BPSPythonJobContainer",
+    "GenCubeJobContainer"
   ]
 }

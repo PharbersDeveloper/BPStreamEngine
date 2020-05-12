@@ -11,8 +11,8 @@ import com.pharbers.StreamEngine.Utils.Event.EventHandler.BPSEventHandler
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamListener
 import com.pharbers.StreamEngine.Utils.Job.BPDynamicStreamJob
 import com.pharbers.StreamEngine.Utils.ThreadExecutor.ThreadExecutor
-import com.pharbers.kafka.consumer.PharbersKafkaConsumer
-import com.pharbers.kafka.schema.BPJob
+//import com.pharbers.kafka.consumer.PharbersKafkaConsumer
+//import com.pharbers.kafka.schema.BPJob
 import org.apache.kafka.common.config.ConfigDef.{Importance, Type}
 import org.json4s._
 import org.json4s.jackson.Serialization.read
@@ -90,33 +90,33 @@ private[Component] class BaseJobHandler(nodeHandler: NodeMsgHandler,
     }
 
     override def run(): Unit = {
-        val consumer = new PharbersKafkaConsumer[String, BPJob](List(handlerConfig.getString(TOPIC_CONFIG_KEY))).getConsumer
-        consumer.subscribe(List(handlerConfig.getString(TOPIC_CONFIG_KEY)).asJava)
-        while (true) {
-            consumer.poll(Duration.ofSeconds(1)).asScala.foreach(x => {
-                implicit val formats: DefaultFormats.type = DefaultFormats
-                x.value().getType.toString match {
-                    case "add" =>
-                        try {
-                            add(read[JobMsg](x.value().getJob.toString))
-                        } catch {
-                            case e: Exception =>
-                                val exception = new Exception(s"jobId: ${x.value().getJob}, traceId: ${x.value().getTraceId}", e)
-                                logger.error("add job error", exception)
-                        }
-                    case "addList" =>
-                        try {
-                            read[List[JobMsg]](x.value().getJob.toString).foreach(x => add(x))
-                        } catch {
-                            case e: Exception =>
-                                val exception = new Exception(s"jobId: ${x.value().getJob}, traceId: ${x.value().getTraceId}", e)
-                                logger.error("add job error", exception)
-                        }
-                    case "stop" => finish(x.value().getJob.toString)
-                    case _ =>
-                }
-            })
-        }
+//        val consumer = new PharbersKafkaConsumer[String, BPJob](List(handlerConfig.getString(TOPIC_CONFIG_KEY))).getConsumer
+//        consumer.subscribe(List(handlerConfig.getString(TOPIC_CONFIG_KEY)).asJava)
+//        while (true) {
+//            consumer.poll(Duration.ofSeconds(1)).asScala.foreach(x => {
+//                implicit val formats: DefaultFormats.type = DefaultFormats
+//                x.value().getType.toString match {
+//                    case "add" =>
+//                        try {
+//                            add(read[JobMsg](x.value().getJob.toString))
+//                        } catch {
+//                            case e: Exception =>
+//                                val exception = new Exception(s"jobId: ${x.value().getJob}, traceId: ${x.value().getTraceId}", e)
+//                                logger.error("add job error", exception)
+//                        }
+//                    case "addList" =>
+//                        try {
+//                            read[List[JobMsg]](x.value().getJob.toString).foreach(x => add(x))
+//                        } catch {
+//                            case e: Exception =>
+//                                val exception = new Exception(s"jobId: ${x.value().getJob}, traceId: ${x.value().getTraceId}", e)
+//                                logger.error("add job error", exception)
+//                        }
+//                    case "stop" => finish(x.value().getJob.toString)
+//                    case _ =>
+//                }
+//            })
+//        }
     }
 
     private def addJob(jobMsg: JobMsg, args: Seq[Any]): Unit = {

@@ -10,7 +10,6 @@ import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamListener
 import com.pharbers.StreamEngine.Utils.Job.{BPDynamicStreamJob, BPSJobContainer}
 import com.pharbers.StreamEngine.Utils.Strategy.BPSKfkBaseStrategy
 import com.pharbers.StreamEngine.Utils.ThreadExecutor.ThreadExecutor
-import com.pharbers.kafka.consumer.PharbersKafkaConsumer
 import com.pharbers.kafka.schema.Hive2EsJobSubmit
 import org.apache.kafka.common.config.ConfigDef
 import org.apache.kafka.common.config.ConfigDef.{Importance, Type}
@@ -24,11 +23,11 @@ object BPSHive2EsJobContainer {
 }
 
 /** 执行 Hive2Es 的 Job
- *
- * @author jeorch
- * @version 0.1
- * @since 2019/12/16 15:43
- */
+  *
+  * @author jeorch
+  * @version 0.1
+  * @since 2019/12/16 15:43
+  */
 class BPSHive2EsJobContainer(override val spark: SparkSession,
                              config: Map[String, String])
         extends BPSJobContainer with BPDynamicStreamJob {
@@ -48,33 +47,33 @@ class BPSHive2EsJobContainer(override val spark: SparkSession,
 
     override val componentProperty: Component2.BPComponentConfig = null
     override def createConfigDef(): ConfigDef = new ConfigDef()
-        .define(CONTAINER_ID_KEY, Type.STRING, UUID.randomUUID().toString, Importance.HIGH, CONTAINER_ID_DOC)
-        .define(CONTAINER_LISTENING_TOPIC_KEY, Type.STRING, DEFAULT_LISTENING_TOPIC, Importance.HIGH, CONTAINER_LISTENING_TOPIC_DOC)
+            .define(CONTAINER_ID_KEY, Type.STRING, UUID.randomUUID().toString, Importance.HIGH, CONTAINER_ID_DOC)
+            .define(CONTAINER_LISTENING_TOPIC_KEY, Type.STRING, DEFAULT_LISTENING_TOPIC, Importance.HIGH, CONTAINER_LISTENING_TOPIC_DOC)
     private val jobConfig: BPSConfig = BPSConfig(configDef, config)
 
     // container id 作为 runner id
     val id: String = jobConfig.getString(CONTAINER_ID_KEY)
     val listeningTopic: String = jobConfig.getString(CONTAINER_LISTENING_TOPIC_KEY)
-    var pkc: PharbersKafkaConsumer[String, Hive2EsJobSubmit] = null
+//    var pkc: PharbersKafkaConsumer[String, Hive2EsJobSubmit] = null
 
     override def open(): Unit = {
         logger.info("hive to es job container open with runner-id ========>" + id)
         //注册container后，使用kafka-consumer监听具体job的启动
-        pkc = new PharbersKafkaConsumer[String, Hive2EsJobSubmit](
-            listeningTopic :: Nil,
-            1000,
-            Int.MaxValue, Hive2EsJobStartListener(id, spark, this).process
-        )
+//        pkc = new PharbersKafkaConsumer[String, Hive2EsJobSubmit](
+//            listeningTopic :: Nil,
+//            1000,
+//            Int.MaxValue, Hive2EsJobStartListener(id, spark, this).process
+//        )
 
     }
 
     override def exec(): Unit = {
-        ThreadExecutor().execute(pkc)
+//        ThreadExecutor().execute(pkc)
     }
 
     override def close(): Unit = {
         super.close()
-        pkc.close()
+//        pkc.close()
         logger.info("hive to es job container closed with runner-id ========>" + id)
     }
 

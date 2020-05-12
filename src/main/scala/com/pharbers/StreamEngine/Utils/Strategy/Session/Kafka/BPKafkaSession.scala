@@ -12,7 +12,6 @@ import com.pharbers.StreamEngine.Utils.Event.BPSEvents
 import com.pharbers.StreamEngine.Utils.Strategy.Session.Spark.BPSparkSession
 import com.pharbers.StreamEngine.Utils.Strategy.Session.Spark.BPSparkSession._
 import com.pharbers.StreamEngine.Utils.Strategy.Session.Kafka.Avro.BPSAvroDeserializer
-import com.pharbers.kafka.producer.PharbersKafkaProducer
 import com.pharbers.kafka.schema.EventMsg
 
 object BPKafkaSession {

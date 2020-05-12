@@ -5,13 +5,15 @@ import com.pharbers.StreamEngine.Utils.Component.ComponentContext
 import com.pharbers.StreamEngine.Utils.Component2.BPSConcertEntry
 import com.pharbers.StreamEngine.Utils.ThreadExecutor.ThreadExecutor
 
-object main extends App {
-    BPSLogContext(null)
-    ComponentContext.init()
-    ThreadExecutor.waitForShutdown()
-}
+//object main extends App {
+//    BPSLogContext(null)
+//    ComponentContext.init()
+//    ThreadExecutor.waitForShutdown()
+//}
 
-object main_oom extends App {
-    BPSConcertEntry.start()
-    ThreadExecutor.waitForShutdown()
+object main_oom{
+    def main(args: Array[String]): Unit = {
+        BPSConcertEntry.start()
+        ThreadExecutor.waitForShutdown()
+    }
 }

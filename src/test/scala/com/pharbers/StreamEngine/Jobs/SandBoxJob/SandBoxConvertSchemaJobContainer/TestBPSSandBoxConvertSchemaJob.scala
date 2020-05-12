@@ -2,7 +2,6 @@ package com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxConvertSchemaJobContain
 
 import java.net.InetAddress
 
-import com.pharbers.StreamEngine.Jobs.SandBoxJob.BPSSandBoxConvertSchemaJob
 import com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxJobContainer.BPSSandBoxJobContainer
 import com.pharbers.StreamEngine.Others.alex.sandbox.FileMetaData
 import com.pharbers.StreamEngine.Utils.Channel.Local.BPSLocalChannel
@@ -10,11 +9,9 @@ import com.pharbers.StreamEngine.Utils.Channel.Worker.BPSWorkerChannel
 import com.pharbers.StreamEngine.Utils.Component2.BPSConcertEntry
 import com.pharbers.StreamEngine.Utils.Event.{BPSEvents, BPSTypeEvents}
 import com.pharbers.StreamEngine.Utils.Strategy.Session.Spark.BPSparkSession
-import com.pharbers.StreamEngine.Utils.ThreadExecutor.ThreadExecutor
-import com.pharbers.util.log.PhLogable
+import com.pharbers.StreamEngine.Utils.Log.PhLogable
 import org.scalatest.FunSuite
 import org.json4s.DefaultFormats
-import org.json4s.jackson.Serialization.write
 
 /** 功能描述
   *

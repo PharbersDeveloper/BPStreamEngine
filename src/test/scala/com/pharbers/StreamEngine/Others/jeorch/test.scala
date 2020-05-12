@@ -14,19 +14,26 @@ class test extends FunSuite {
 
 //        val ks = dimensions.keySet
 //        ks.subsets() foreach println
-        initCuboids(dimensions) foreach println
-
-        implicit class Crossable[X](xs: Traversable[X]) {
-            def cross[Y](ys: Traversable[Y]) = for { x <- xs; y <- ys } yield (x, y)
-        }
-        val c = dimensions("time") cross dimensions("geo") cross dimensions("prod")
-        println(c)
-        println(c.size)
+//        initCuboids(dimensions) foreach println
+//
+//        implicit class Crossable[X](xs: Traversable[X]) {
+//            def cross[Y](ys: Traversable[Y]) = for { x <- xs; y <- ys } yield (x, y)
+//        }
+//        val c = dimensions("time") cross dimensions("geo") cross dimensions("prod")
+//        println(c)
+//        println(c.size)
 
         val l = List(dimensions("time"), dimensions("geo"), dimensions("prod"))
+//        val l = List(dimensions("time"))
         val r = crossJoin(l)
         println(r)
         println(r.size)
+
+        println(r.tail.head)
+        println(fillFatherHierarchies(r.tail.head.toList, dimensions))
+
+
+
 
     }
 
@@ -53,6 +60,23 @@ class test extends FunSuite {
 
     def genCartesianHierarchies(cuboid: Map[String, List[String]]) = {
         crossJoin(cuboid.values.toList)
+    }
+
+    def fillFatherHierarchies(oneHierarchies: List[String], dimensions: Map[String, List[String]]): List[String]= {
+
+        var result: List[String] = List.empty
+
+        for (oneHierarchy <- oneHierarchies) {
+            for (oneDimension <- dimensions.values) {
+                if (oneDimension.contains(oneHierarchy)) {
+                    for (i <- 0 to oneDimension.indexOf(oneHierarchy)) {
+                        result = result :+ oneDimension(i)
+                    }
+                }
+            }
+        }
+        result
+
     }
 
 }

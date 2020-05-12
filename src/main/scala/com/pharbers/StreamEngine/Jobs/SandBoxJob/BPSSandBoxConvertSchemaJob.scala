@@ -179,9 +179,10 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer,
 	
 	case class DataMartTag(assetId: String, tag: String)
 	
-	case class PythonMetaData(parentsId: String,
-	                          noticeTopic: String,
-	                          metadataPath: String,
-	                          filesPath: String,
-	                          resultPath: String)
+	case class PythonMetaData(mongoId: String,
+							  noticeTopic: String,
+							  metadataPath: String,
+							  filesPath: String,
+							  resultPath: String)
+	
 }

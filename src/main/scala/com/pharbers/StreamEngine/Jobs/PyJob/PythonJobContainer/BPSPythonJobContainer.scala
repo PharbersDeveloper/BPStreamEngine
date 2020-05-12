@@ -1,16 +1,13 @@
 package com.pharbers.StreamEngine.Jobs.PyJob.PythonJobContainer
 
 import java.util.UUID
-import java.util.concurrent.TimeUnit
 import org.mongodb.scala.bson.ObjectId
-import com.pharbers.kafka.schema.HiveTask
 import com.pharbers.StreamEngine.Jobs.PyJob.BPSPythonJob
 import com.pharbers.StreamEngine.Utils.Annotation.Component
 import com.pharbers.StreamEngine.Utils.Component2
 import com.pharbers.StreamEngine.Utils.Component2.BPSConcertEntry
 import com.pharbers.StreamEngine.Utils.Event.BPSTypeEvents
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPJobRemoteListener
-import com.pharbers.kafka.producer.PharbersKafkaProducer
 import com.pharbers.StreamEngine.Utils.Job.BPSJobContainer
 import com.pharbers.StreamEngine.Utils.Strategy.GithubHelper.BPSGithubHelper
 import com.pharbers.StreamEngine.Utils.Strategy.JobStrategy.BPSCommonJobStrategy
@@ -100,7 +97,7 @@ class BPSPythonJobContainer(override val componentProperty: Component2.BPCompone
             BPSConcertEntry.queryComponentWithId("gitRepo").get.asInstanceOf[BPSGithubHelper]
         helper.cloneByBranch(containerId, pythonUri, pythonBranch)
         val pyFiles: List[String] = helper.listFile(containerId, ".py")
-        pyFiles.foreach(spark.sparkContext.addFile)
+        pyFiles.map(x => s"./$x").foreach(spark.sparkContext.addFile)
     }
 
     import org.json4s._
@@ -114,7 +111,7 @@ class BPSPythonJobContainer(override val componentProperty: Component2.BPCompone
      * @node config 可用的配置参数
      * {{{
      *      jobId = UUID // 缺省 UUID
-     *      parentsId = ObjectId // 缺省 ""
+     *      mongoId = ObjectId // 缺省 "", 之前步骤的数据标识符
      *      datasetId = ObjectId  // 缺省 new ObjectId().toString
      *
      *      noticeTopic = defaultNoticeTopic // Job 任务完成通知topic, 如果单个 Job 有 Topic， 以 Job 的为准，如果 Job 没用，使用默认 Topic
@@ -158,6 +155,7 @@ class BPSPythonJobContainer(override val componentProperty: Component2.BPCompone
                 //TODO: 设置触发的文件数，以控制内存 效果待测试
                 .option("maxFilesPerTrigger", partition.toInt)
                 .parquet(filesPath)
+                .repartition(partition.toInt)
 
         // 真正执行 Job
         val job = BPSPythonJob(jobId, spark, Some(reading), noticeFunc, finishJobWithId, Map(

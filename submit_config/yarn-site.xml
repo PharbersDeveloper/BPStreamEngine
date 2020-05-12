@@ -15,22 +15,22 @@
 <configuration>
     <property>
         <name>yarn.resourcemanager.scheduler.address</name>
-        <value>starLord:8030</value>  <!--TODO: 注意修改主机名 -->
+        <value>161.189.48.242:8030</value>  <!--TODO: 注意修改主机名 -->
         <description>RM中调度程序的地址，默认为0.0.0.0:8030。</description>
     </property>
     <property>
         <name>yarn.resourcemanager.resource-tracker.address</name>
-        <value>starLord:8031</value>  <!--TODO: 注意修改主机名 -->
+        <value>161.189.48.242:8031</value>  <!--TODO: 注意修改主机名 -->
         <description>RM中资源反馈的地址，Slave一定要配置正确，分布式不要用默认值，默认为0.0.0.0:8031。</description>
     </property>
     <property>
         <name>yarn.resourcemanager.address</name>
-        <value>starLord:8032</value>  <!--TODO: 注意修改主机名 -->
+        <value>161.189.48.242:8032</value>  <!--TODO: 注意修改主机名 -->
         <description>RM中应用程序管理器接口的地址，客户端向这个地址提交任务，默认为0.0.0.0:8032。</description>
     </property>
     <property>
         <name>yarn.resourcemanager.webapp.address</name>
-        <value>starLord:8088</value>  <!--TODO: 注意修改主机名 -->
+        <value>161.189.48.242:8088</value>  <!--TODO: 注意修改主机名 -->
         <description>RM中web页面的地址，默认为0.0.0.0:8088。</description>
     </property>
 
@@ -79,7 +79,7 @@
     </property>
     <property>
         <name>yarn.nodemanager.remote-app-log-dir</name>
-        <value>hdfs://starLord:8020/logs/yarnLogs</value>  <!--TODO: 注意修改主机名 -->
+        <value>hdfs://161.189.48.242:8020/logs/yarnLogs</value>  <!--TODO: 注意修改主机名 -->
         <description>日志聚合功能下，在HDFS目录下的应用程序日志位置。目录需要具有相应的权限。</description>
     </property>
     <property>
@@ -106,7 +106,7 @@
     </property>
     <property>
         <name>yarn.resourcemanager.fs.state-store.uri</name>
-        <value>hdfs://starLord:8020/logs/rmstore</value>  <!--TODO: 注意修改主机名 -->
+        <value>hdfs://161.189.48.242:8020/logs/rmstore</value>  <!--TODO: 注意修改主机名 -->
         <description>持久化RM的类后存放的位置。</description>
     </property>
 
