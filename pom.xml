@@ -21,7 +21,7 @@
                 <scalaVersion>2.11.8</scalaVersion>
                 <scalaBinaryVersion>2.11</scalaBinaryVersion>
                 <spark.version>2.4.5</spark.version>
-                <hadoop.version>2.7.3</hadoop.version>
+                <hadoop.version>2.8.5</hadoop.version>
                 <scalatest.version>3.0.1</scalatest.version>
                 <log4j.version>2.11.2</log4j.version>
                 <confluent.version>5.2.1</confluent.version>
@@ -72,6 +72,28 @@
                     <artifactId>mongo-scala-bson_${scalaBinaryVersion}</artifactId>
                     <version>2.7.0</version>
                 </dependency>
+
+                <!-- https://mvnrepository.com/artifact/org.apache.hadoop/hadoop-aws -->
+                <dependency>
+                    <groupId>org.apache.hadoop</groupId>
+                    <artifactId>hadoop-aws</artifactId>
+                    <version>${hadoop.version}</version>
+                </dependency>
+
+
+                <!-- https://mvnrepository.com/artifact/com.amazonaws/aws-java-sdk -->
+                <dependency>
+                    <groupId>com.amazonaws</groupId>
+                    <artifactId>aws-java-sdk</artifactId>
+                    <version>1.11.682</version>
+                </dependency>
+
+                <!--<dependency>-->
+                    <!--<groupId>net.java.dev.jets3t</groupId>-->
+                    <!--<artifactId>jets3t</artifactId>-->
+                    <!--<version>0.9.4</version>-->
+                <!--</dependency>-->
+
 
                 <!-- spark -->
                 <!-- https://mvnrepository.com/artifact/org.apache.spark/spark-sql-kafka-0-10 -->
@@ -254,6 +276,26 @@
                     <version>3.5.3</version>
                 </dependency>
 
+                 <!--https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-core-->
+                <dependency>
+                    <groupId>com.fasterxml.jackson.core</groupId>
+                    <artifactId>jackson-core</artifactId>
+                    <version>2.6.7</version>
+                </dependency>
+
+                <dependency>
+                    <groupId>com.fasterxml.jackson.core</groupId>
+                    <artifactId>jackson-databind</artifactId>
+                    <version>2.6.7</version>
+                </dependency>
+
+                <dependency>
+                    <groupId>com.fasterxml.jackson.core</groupId>
+                    <artifactId>jackson-annotations</artifactId>
+                    <version>2.6.7</version>
+                </dependency>
+
+
                 <!--mongo driver-->
                 <dependency>
                     <groupId>org.mongodb.scala</groupId>
@@ -385,31 +427,31 @@
                 </executions>
             </plugin>
             <!--打包太大了-->
-<!--            <plugin>-->
-<!--                <artifactId>maven-assembly-plugin</artifactId>-->
-<!--                <version>3.1.1</version>-->
-<!--                <configuration>-->
-<!--                    <finalName>BP-Stream-Engine</finalName>-->
-<!--                    <appendAssemblyId>false</appendAssemblyId>-->
-<!--                    <descriptorRefs>-->
-<!--                        <descriptorRef>jar-with-dependencies</descriptorRef>-->
-<!--                    </descriptorRefs>-->
-<!--                    <archive>-->
-<!--                        <manifest>-->
-<!--                            <mainClass>com.pharbers.StreamEngine.main</mainClass>-->
-<!--                        </manifest>-->
-<!--                    </archive>-->
-<!--                </configuration>-->
-<!--                <executions>-->
-<!--                    <execution>-->
-<!--                        <id>make-assembly</id>-->
-<!--                        <phase>package</phase>-->
-<!--                        <goals>-->
-<!--                            <goal>single</goal>-->
-<!--                        </goals>-->
-<!--                    </execution>-->
-<!--                </executions>-->
-<!--            </plugin>-->
+            <plugin>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>3.1.1</version>
+                <configuration>
+                    <finalName>BP-Stream-Engine</finalName>
+                    <appendAssemblyId>false</appendAssemblyId>
+                    <descriptorRefs>
+                        <descriptorRef>jar-with-dependencies</descriptorRef>
+                    </descriptorRefs>
+                    <archive>
+                        <manifest>
+                            <mainClass>com.pharbers.StreamEngine.main</mainClass>
+                        </manifest>
+                    </archive>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>make-assembly</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 
