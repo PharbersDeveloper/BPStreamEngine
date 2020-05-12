@@ -50,6 +50,9 @@ class BPSparkSession(override val componentProperty: BPComponentConfig) extends 
             .getOrCreate()
     spark.sparkContext.setLogLevel(sparkConfigs.getString(LOG_LEVEL_KEY))
     spark.sparkContext.setLocalProperty("host", InetAddress.getLocalHost.getHostAddress)
+    spark.sparkContext.hadoopConfiguration.set("fs.s3a.access.key", sys.props("S3_ACCESS_KEY"))
+    spark.sparkContext.hadoopConfiguration.set("fs.s3a.secret.key", sys.props("S3_SECRET_KEY"))
+    spark.sparkContext.hadoopConfiguration.set("fs.s3a.endpoint", "s3.cn-northwest-1.amazonaws.com.cn")
     logger.info("添加SparkQueryListener")
     spark.streams.addListener(new SparkQueryListener)
     // 初始环境设置
@@ -63,7 +66,7 @@ class BPSparkSession(override val componentProperty: BPComponentConfig) extends 
             spark.sparkContext.addJar("./jars/common-utils-5.2.1.jar")
             spark.sparkContext.addJar("./jars/elasticsearch-spark-20_2.11-7.2.0.jar")
             spark.sparkContext.addJar("./jars/kafka-avro-serializer-5.2.1.jar")
-            spark.sparkContext.addJar("./jars/kafka-clients-2.2.1.jar")
+            spark.sparkContext.addJar("./jars/kafka-clients-2.0.0.jar")
             spark.sparkContext.addJar("./jars/kafka-schema-registry-client-5.2.1.jar")
             spark.sparkContext.addJar("./jars/log4j-api-2.11.2.jar")
             spark.sparkContext.addJar("./jars/log4j-core-2.11.2.jar")

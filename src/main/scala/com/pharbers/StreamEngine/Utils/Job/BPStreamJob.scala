@@ -48,9 +48,9 @@ trait BPStreamJob extends PhLogable with BPComponent {
     // TODO: 这里应该是一个output的strategy, 为了快速重构，偷懒
     //不同job的这儿生成的目录会不同，所以目录还是需要消息传输
     def getCheckpointPath: String =
-        "/jobs/" + BPSConcertEntry.runner_id + "/" + description + "/" + id + "/checkpoint"
+        "s3a://ph-stream/jobs/" + s"runId_${BPSConcertEntry.runner_id}" + "/" + description + "/" + s"jobId_$id" + "/checkpoint"
     def getMetadataPath: String =
-        "/jobs/" + BPSConcertEntry.runner_id + "/" + description + "/" + id + "/metadata"
+        "s3a://ph-stream/jobs/" + s"runId_${BPSConcertEntry.runner_id}" + "/" + description + "/" + s"jobId_$id" + "/metadata"
     def getOutputPath: String =
-        "/jobs/" + BPSConcertEntry.runner_id + "/" + description + "/" + id + "/contents"
+        "s3a://ph-stream/jobs/" + s"runId_${BPSConcertEntry.runner_id}" + "/" + description + "/" + s"jobId_$id" + "/contents"
 }
