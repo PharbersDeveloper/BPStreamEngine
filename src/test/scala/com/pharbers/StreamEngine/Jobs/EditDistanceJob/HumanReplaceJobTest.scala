@@ -51,7 +51,7 @@ object HumanReplaceJobRun extends App {
     val job = HumanReplaceJob(BPSComponentConfig("", "", Nil, Map()))
     val df = localSpark.read.format("csv")
             .option("header", "true")
-            .load("file:///D:\\文件\\excel数据表\\产品\\humanReplace\\CPA_no_replace 第9次提数0424.csv")
+            .load("file:///Users/qianpeng/Desktop/CPA_no_replace第10次提数0509.csv")
     localSpark.sparkContext.setLogLevel("WARN")
     val humanReplaceTable = job.createHumanReplaceDf(df)
     job.saveTable(humanReplaceTable)

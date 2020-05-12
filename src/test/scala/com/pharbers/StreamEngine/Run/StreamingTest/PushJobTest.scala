@@ -143,7 +143,7 @@ class PushJobTest extends FunSuite {
         val producerInstance = new PharbersKafkaProducer[String, SpecificRecord]
         val fu = producerInstance.produce(topic, parentJobId, bpJob)
         println(fu.get(10, TimeUnit.SECONDS))
-        producerInstance.producer.close()
+        producerInstance.producer.get.close()
         
     }
 }

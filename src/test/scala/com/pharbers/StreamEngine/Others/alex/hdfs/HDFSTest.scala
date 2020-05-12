@@ -49,7 +49,7 @@ class HDFSTest extends FunSuite {
 	
 	test("Read Parquet With Path") {
 		val spark = BPSConcertEntry.queryComponentWithId("spark").get.asInstanceOf[BPSparkSession]
-		val hdfsUrl = s"/jobs/5e95b3801d45316c2831b98b/BPSSandBoxConvertSchemaJob/422934ad-be3b-41e9-a349-cc105e0d39d2/contents"
+		val hdfsUrl = s"/common/projects/max/Sankyo/prod_mapping"
 		val reading = spark.read.parquet(hdfsUrl)
 		reading.show()
 		val count = reading.count()

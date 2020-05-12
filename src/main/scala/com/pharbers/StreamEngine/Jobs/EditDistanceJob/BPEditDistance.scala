@@ -65,9 +65,9 @@ class BPEditDistance(jobContainer: BPSJobContainer, override val componentProper
 
     def check(in: DataFrame, checkDf: DataFrame): Unit = {
         val mapping = Map() ++ mappingConfig
-        joinWithCheckDf(in, checkDf, s"/user/dcs/test/tmp/distanceDf_$id")
-        filterMinDistanceRow(mapping, spark.read.parquet(s"/user/dcs/test/tmp/distanceDf_$id"), s"/user/dcs/test/tmp/res_${id}_test")
-        val filterMinDistanceDf = humanReplace(spark.read.parquet(s"/user/dcs/test/tmp/res_${id}_test"), mapping).cache()
+       joinWithCheckDf(in, checkDf, s"/user/dcs/test/tmp/distanceDf_$id")
+       filterMinDistanceRow(mapping, spark.read.parquet(s"/user/dcs/test/tmp/distanceDf_$id"), s"/user/dcs/test/tmp/res_${id}")
+        val filterMinDistanceDf = humanReplace(spark.read.parquet(s"/user/dcs/test/tmp/res_${id}"), mapping).cache()
         saveTable(filterMinDistanceDf, in, checkDf, mapping)
     }
 
