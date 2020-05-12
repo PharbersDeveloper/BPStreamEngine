@@ -159,7 +159,7 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer,
 	}
 
 	def pushPyJob(): Unit = {
-		val pythonMetaData = PythonMetaData(mongoId, "HiveTaskNone", getMetadataPath, getOutputPath, s"/jobs/$runnerId")
+		val pythonMetaData = PythonMetaData(mongoId, "HiveTaskNone", getMetadataPath, getOutputPath, s"hdfs://starLord:8020//jobs/$runnerId")
 		// 给PythonCleanJob发送消息
 		strategy.pushMsg(BPSEvents(id, traceId, msgType, pythonMetaData), isLocal = false)
 	}

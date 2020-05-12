@@ -148,6 +148,7 @@
         }
     ],
     "starts": [
-        "OssJobContainer"
+        "OssJobContainer",
+        "SandBoxJobContainer"
     ]
 }
