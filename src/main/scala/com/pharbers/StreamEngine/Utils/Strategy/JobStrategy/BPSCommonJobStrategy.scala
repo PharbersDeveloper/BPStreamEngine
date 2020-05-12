@@ -13,6 +13,7 @@ import com.pharbers.StreamEngine.Utils.Strategy.Schema.{BPSParseSchema, SchemaCo
 import com.pharbers.StreamEngine.Utils.Strategy.Session.Kafka.BPKafkaSession
 import com.pharbers.StreamEngine.Utils.Strategy.Session.Spark.BPSparkSession
 import com.pharbers.StreamEngine.Utils.Strategy.hdfs.BPSHDFSFile
+import com.pharbers.StreamEngine.Utils.Strategy.s3a.BPS3aFile
 import org.apache.kafka.common.config.ConfigDef
 import org.apache.kafka.common.config.ConfigDef.{Importance, Type}
 import org.apache.spark.sql.SparkSession
@@ -78,6 +79,8 @@ class BPSCommonJobStrategy(override val componentProperty: Component2.BPComponen
         BPSConcertEntry.queryComponentWithId("schema convert").get.asInstanceOf[SchemaConverter]
 
     def getParseSchema: BPSParseSchema = BPSConcertEntry.queryComponentWithId("parse schema").get.asInstanceOf[BPSParseSchema]
+
+    def getS3aFile: BPS3aFile = BPSConcertEntry.queryComponentWithId("s3a").get.asInstanceOf[BPS3aFile]
 
     def pushMsg(msg: BPSEvents, isLocal: Boolean): Unit ={
         if (isLocal){

@@ -2,17 +2,16 @@ package com.pharbers.StreamEngine.Utils.Strategy.s3a
 
 import java.io.{BufferedReader, ByteArrayInputStream, InputStreamReader}
 import java.util.UUID
-import java.util.function.Consumer
 
-import com.amazonaws.auth.BasicAWSCredentials
-import com.amazonaws.services.s3.AmazonS3Client
+import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration
+import com.amazonaws.regions.Regions
+import com.amazonaws.services.s3.{AmazonS3, AmazonS3ClientBuilder}
 import com.pharbers.StreamEngine.Utils.Annotation.Component
 import com.pharbers.StreamEngine.Utils.Component2
 import com.pharbers.StreamEngine.Utils.Strategy.BPStrategyComponent
 import org.apache.kafka.common.config.ConfigDef
-import com.amazonaws.regions.Region
 import com.amazonaws.services.s3.model.ObjectMetadata
-import com.amazonaws.services.s3.transfer.TransferManager
+import com.amazonaws.services.s3.transfer.{TransferManager, TransferManagerBuilder}
 
 import collection.JavaConverters._
 
@@ -35,13 +34,18 @@ case class BPS3aFile(override val componentProperty: Component2.BPComponentConfi
 
     override def createConfigDef(): ConfigDef = new ConfigDef
 
-    private val s3: AmazonS3Client = new AmazonS3Client(new BasicAWSCredentials(sys.props("S3_ACCESS_KEY"), sys.props("S3_SECRET_KEY")))
-    s3.setRegion(new Region("cn-northwest-1", "amazonaws.com"))
-    private val transfer = new TransferManager(s3)
-    
+    private val s3: AmazonS3 = AmazonS3ClientBuilder
+            .standard()
+            .withRegion("cn-northwest-1")
+            .build()
+
+    private val transferManager: TransferManager = TransferManagerBuilder.standard()
+            .withS3Client(s3)
+            .build()
+
     def checkPath(path: String): Boolean = {
         val (bucketName, prefix) = getBucketNameAndPrefix(path)
-        s3.listObjects(bucketName, prefix).getMaxKeys > 0
+        s3.listObjects(bucketName, prefix).getObjectSummaries.size() > 0
     }
 
     def appendLine(path: String, line: String): Unit ={
@@ -50,7 +54,7 @@ case class BPS3aFile(override val componentProperty: Component2.BPComponentConfi
         s3.putObject(bucketName, s"$prefix/${UUID.randomUUID().toString}", inputStream, new ObjectMetadata())
     }
 
-    def readS3A(path: String): List[String] = {
+    def readFiles(path: String): List[String] = {
         val (bucketName, prefix) = getBucketNameAndPrefix(path)
         if(!checkPath(path)) return Nil
         s3.listObjects(bucketName, prefix).getObjectSummaries.asScala.flatMap(x => {
@@ -59,10 +63,18 @@ case class BPS3aFile(override val componentProperty: Component2.BPComponentConfi
         }).toList
     }
 
+    def getLowAipClient: AmazonS3 = {
+        s3
+    }
+
+    def getHighAipClient: TransferManager = {
+        transferManager
+    }
+
     private def getBucketNameAndPrefix(path: String): (String, String) = {
-        val pathSplit = path.split("/").filter(x => x != "s3a:")
+        val pathSplit = path.split("/").filter(x => x != "s3a:" && x != "")
         val bucketName = pathSplit.head
-        val prefix = pathSplit.tail.mkString("")
+        val prefix = pathSplit.tail.mkString("/")
         (bucketName, prefix)
     }
 

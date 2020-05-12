@@ -8,7 +8,7 @@ import com.pharbers.StreamEngine.Utils.Job.{BPDynamicStreamJob, BPSJobContainer,
 import com.pharbers.StreamEngine.Utils.Annotation.Component
 import com.pharbers.StreamEngine.Utils.Component2
 import com.pharbers.StreamEngine.Utils.Component2.BPSComponentConfig
-import com.pharbers.StreamEngine.Utils.Event.BPSTypeEvents
+import com.pharbers.StreamEngine.Utils.Event.{BPSEvents, BPSTypeEvents}
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.{BPJobRemoteListener, BPStreamListener}
 import com.pharbers.StreamEngine.Utils.Strategy.BPSKfkBaseStrategy
 import com.pharbers.StreamEngine.Utils.Strategy.JobStrategy.BPSCommonJobStrategy
@@ -83,10 +83,11 @@ class BPSOssPartitionJobContainer(override val componentProperty: Component2.BPC
         msgJob.open()
         msgJob.exec()
         jobs += msgJob.id -> msgJob
-        val listenEvent = strategy.getListens
-        val listener = BPJobRemoteListener[Map[String, String]](this, listenEvent.toList)(x => starJob(x))
-        listener.active(null)
-        listeners = listener +: listeners
+//        val listenEvent = strategy.getListens
+//        val listener = BPJobRemoteListener[Map[String, String]](this, listenEvent.toList)(x => starJob(x))
+//        listener.active(null)
+//        listeners = listener +: listeners
+        starOssJob(BPSTypeEvents(BPSEvents("", "", "SandBox-Start", Map())))
     }
 
     override def getJobWithId(id: String, category: String = ""): BPStreamJob = {
@@ -108,7 +109,7 @@ class BPSOssPartitionJobContainer(override val componentProperty: Component2.BPC
                 .define(MAX_OFFSETS_TRIGGER_KEY, Type.LONG, MAX_OFFSETS_TRIGGER_DEFAULT, Importance.HIGH, MAX_OFFSETS_TRIGGER_DOC)
     }
 
-    def starJob(event: BPSTypeEvents[Map[String, String]]): Unit = {
+    def starOssJob(event: BPSTypeEvents[Map[String, String]]): Unit = {
         val job = BPSOssPartitionJob(this, BPSComponentConfig(UUID.randomUUID().toString, "BPSKafkaMsgJob", Nil, event.date))
         jobs += job.id -> job
         job.open()
