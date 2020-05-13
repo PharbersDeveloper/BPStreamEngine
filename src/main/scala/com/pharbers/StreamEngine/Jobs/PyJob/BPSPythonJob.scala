@@ -4,7 +4,10 @@ import org.apache.spark.sql
 import java.util.Collections
 
 import com.pharbers.StreamEngine.Jobs.PyJob.ForeachWriter.PyCleanSinkHDFS
+import com.pharbers.StreamEngine.Utils.Component2.BPSConcertEntry
 import com.pharbers.StreamEngine.Utils.Strategy.Blood.BPSSetBloodStrategy
+import com.pharbers.StreamEngine.Utils.Strategy.hdfs.BPSHDFSFile
+import com.pharbers.StreamEngine.Utils.Strategy.s3a.BPS3aFile
 import com.pharbers.kafka.schema.DataSet
 import org.apache.spark.sql.SparkSession
 //import com.pharbers.StreamEngine.Jobs.SandBoxJob.BloodJob.BPSBloodJob
@@ -56,15 +59,16 @@ class BPSPythonJob(override val id: String,
     type T = BPStrategyComponent
     override val strategy: BPStrategyComponent = null
     val bloodStrategy: BPSSetBloodStrategy = new BPSSetBloodStrategy(Map.empty)
-    
+    val hdfsfile: BPSHDFSFile = BPSConcertEntry.queryComponentWithId("hdfs").get.asInstanceOf[BPSHDFSFile]
+    val s3aFile: BPS3aFile = BPSConcertEntry.queryComponentWithId("s3a").get.asInstanceOf[BPS3aFile]
     val noticeTopic: String = jobConf("noticeTopic").toString
     val datasetId: String = jobConf("datasetId").toString
     val parentsId: List[CharSequence] = jobConf("parentsId").asInstanceOf[List[CharSequence]]
 
     val resultPath: String = {
         val path = jobConf("resultPath").toString
-        if (path.endsWith("/")) path + id
-        else path + "/" + id
+        if (path.endsWith("/")) path + s"jobId_$id"
+        else path + "/" + s"jobId_$id"
     }
     val lastMetadata: Map[String, Any] = jobConf("lastMetadata").asInstanceOf[Map[String, Any]]
     val data_length: Long = lastMetadata("length").asInstanceOf[Double].toLong
@@ -146,6 +150,21 @@ class BPSPythonJob(override val id: String,
             "successPath" -> successPath,
             "errPath" -> errPath
         ))
+        
+        // TODO: 写入HDFS文件上传到S3上
+        checkpointPath :: rowRecordPath :: metadataPath :: successPath :: errPath :: Nil foreach {path =>
+            hdfsfile.recursiveFiles(path) match {
+                case Some(r) =>
+                    r.foreach { x =>
+                        s3aFile.copyHDFSFiles(s"s3a://ph-stream${x.path}", x.name, x.input)
+                    }
+                    r.head.fs.close()
+                case _ => println("Oops")
+            }
+        }
+    
+        
+        
         super.close()
         jobCloseFunc(id)
     }

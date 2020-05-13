@@ -35,7 +35,7 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer,
 	override val id: String = componentProperty.id // 本身Job的id
 	val jobId: String = strategy.getJobId // componentProperty config中的job Id
 	val runnerId: String = BPSConcertEntry.runner_id // Runner Id
-	lazy val s3aFile: BPS3aFile =
+	val s3aFile: BPS3aFile =
 		BPSConcertEntry.queryComponentWithId("s3a").get.asInstanceOf[BPS3aFile]
 	val traceId: String = componentProperty.args.head
 	val msgType: String = componentProperty.args.last
@@ -159,7 +159,7 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer,
 	}
 
 	def pushPyJob(): Unit = {
-		val pythonMetaData = PythonMetaData(mongoId, "HiveTaskNone", getMetadataPath, getOutputPath, s"hdfs://starLord:8020//jobs/$runnerId")
+		val pythonMetaData = PythonMetaData(mongoId, "HiveTaskNone", getMetadataPath, getOutputPath, s"hdfs://spark.master:8020//jobs/runId_$runnerId")
 		// 给PythonCleanJob发送消息
 		strategy.pushMsg(BPSEvents(id, traceId, msgType, pythonMetaData), isLocal = false)
 	}

@@ -4,6 +4,7 @@ import com.pharbers.StreamEngine.Utils.Component2.BPSConcertEntry
 import com.pharbers.StreamEngine.Utils.Strategy.Schema.{BPSMetaData2Map, SchemaConverter}
 import com.pharbers.StreamEngine.Utils.Strategy.hdfs.BPSHDFSFile
 import com.pharbers.StreamEngine.Utils.Strategy.Session.Spark.BPSparkSession
+import com.pharbers.StreamEngine.Utils.Strategy.s3a.BPS3aFile
 import org.apache.spark.sql.SparkSession
 import org.scalatest.FunSuite
 
@@ -54,6 +55,20 @@ class HDFSTest extends FunSuite {
 		reading.show()
 		val count = reading.count()
 		println(count)
+	}
+	
+	test("递归读取文件") {
+		val hdfsfile: BPSHDFSFile = BPSConcertEntry.queryComponentWithId("hdfs").get.asInstanceOf[BPSHDFSFile]
+		val s3aFile: BPS3aFile = BPSConcertEntry.queryComponentWithId("s3a").get.asInstanceOf[BPS3aFile]
+		
+		hdfsfile.recursiveFiles("hdfs://starLord:8020//jobs/5ebb72cac46f040c39045027/BPSPythonJobContainer/5256f6d3-9359-4977-ba82-6a32467d7b1d/checkpoint") match {
+			case Some(r) =>
+				r.foreach { x =>
+					s3aFile.copyHDFSFiles(s"s3a://ph-stream${x.path}", x.name, x.input)
+				}
+				r.head.fs.close()
+			case _ =>
+		}
 	}
 }
 

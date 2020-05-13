@@ -1,6 +1,6 @@
 package com.pharbers.StreamEngine.Utils.Strategy.s3a
 
-import java.io.{BufferedReader, ByteArrayInputStream, InputStreamReader}
+import java.io.{BufferedReader, ByteArrayInputStream, File, InputStream, InputStreamReader}
 import java.util.UUID
 
 import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration
@@ -52,6 +52,13 @@ case class BPS3aFile(override val componentProperty: Component2.BPComponentConfi
         val (bucketName, prefix) = getBucketNameAndPrefix(path)
         val inputStream =  new ByteArrayInputStream(line.getBytes)
         s3.putObject(bucketName, s"$prefix/${UUID.randomUUID().toString}", inputStream, new ObjectMetadata())
+        inputStream.close()
+    }
+	
+    def copyHDFSFiles(path: String, fileName: String, file: InputStream): Unit = {
+        val (bucketName, prefix) = getBucketNameAndPrefix(path)
+        s3.putObject(bucketName, s"$prefix/$fileName", file, new ObjectMetadata())
+        file.close()
     }
 
     def readFiles(path: String): List[String] = {

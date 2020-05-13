@@ -147,7 +147,7 @@ case class BPSPy4jServer(serverConf: Map[String, Any])
         val callbackPort = socket.getLocalPort // 获得一个可用端口
         socket.close()
 
-//        val args = List("/usr/bin/python", "/Users/clock/workSpace/Python/bp-data-clean/main.py") :::
+//        val args = List("/usr/bin/python", "/Users/qianpeng/GitHub/BPStreamEngine/BPSPythonJobContainer/main.py") :::
         val args = List("/usr/bin/python", "./main.py") :::
                 server.getPort.toString ::
                 callbackPort.toString ::

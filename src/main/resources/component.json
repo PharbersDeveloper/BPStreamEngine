@@ -43,7 +43,7 @@
             "name": "BPSHDFSFile",
             "args": [],
             "config": {
-                "hdfsAddr": "hdfs://starLord:8020"
+                "hdfsAddr": "hdfs://spark.master:8020"
             }
         },
         {
