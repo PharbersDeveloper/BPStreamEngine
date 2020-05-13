@@ -45,7 +45,8 @@ object SparkSql extends App {
     val spark = SparkSession.builder().config(new SparkConf().setMaster("local[2]")).enableHiveSupport().getOrCreate()
     //    val spark = BPSConcertEntry.queryComponentWithId("spark").get.asInstanceOf[BPSparkSession]
     spark.sparkContext.setLogLevel("WARN")
-    val df = spark.read.parquet("/user/dcs/test/tmp/res_0420_all")
+    val df = spark.read.parquet("/user/dcs/test/human_replace")
+
 
     df.show(false)
     //    val schemaDf = spark.read.parquet("/test/testBPStream/ossJobRes/400wDfsTest")
