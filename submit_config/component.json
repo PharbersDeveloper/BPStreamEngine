@@ -47,6 +47,14 @@
       }
     },
     {
+      "id": "s3a",
+      "name": "BPS3aFile",
+      "args": [],
+      "config": {
+
+      }
+    },
+    {
       "id": "meta2map",
       "name": "BPSMetaData2Map",
       "args": [],
@@ -142,7 +150,6 @@
   "starts": [
     "OssJobContainer",
     "SandBoxJobContainer",
-    "BPSPythonJobContainer",
-    "GenCubeJobContainer"
+    "BPSPythonJobContainer"
   ]
 }

@@ -12,6 +12,7 @@ import com.pharbers.StreamEngine.Utils.Strategy.BPStrategyComponent
 import org.apache.kafka.common.config.ConfigDef
 import com.amazonaws.services.s3.model.ObjectMetadata
 import com.amazonaws.services.s3.transfer.{TransferManager, TransferManagerBuilder}
+import org.apache.hadoop.fs.s3a.BasicAWSCredentialsProvider
 
 import collection.JavaConverters._
 
@@ -36,6 +37,7 @@ case class BPS3aFile(override val componentProperty: Component2.BPComponentConfi
 
     private val s3: AmazonS3 = AmazonS3ClientBuilder
             .standard()
+            .withCredentials(new BasicAWSCredentialsProvider(sys.props("S3_ACCESS_KEY"), sys.props("S3_SECRET_KEY")))
             .withRegion("cn-northwest-1")
             .build()
 
