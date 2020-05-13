@@ -37,7 +37,7 @@ case class BPS3aFile(override val componentProperty: Component2.BPComponentConfi
 
     private val s3: AmazonS3 = AmazonS3ClientBuilder
             .standard()
-            .withCredentials(new BasicAWSCredentialsProvider(sys.props("S3_ACCESS_KEY"), sys.props("S3_SECRET_KEY")))
+            .withCredentials(new BasicAWSCredentialsProvider(sys.env("S3_ACCESS_KEY"), sys.env("S3_SECRET_KEY")))
             .withRegion("cn-northwest-1")
             .build()
 
