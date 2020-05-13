@@ -57,7 +57,7 @@ class TestBPEditDistance extends FunSuite{
 
 object RunBPEditDistance extends App{
     val spark =  BPSConcertEntry.queryComponentWithId("spark").get.asInstanceOf[BPSparkSession]
-    val id = "0420"
+    val id = "0511"
     val config = Map("jobId" -> id, "dataSets" -> "")
     val jobContainer = new BPSJobContainer() {
         override type T = BPSCommonJobStrategy

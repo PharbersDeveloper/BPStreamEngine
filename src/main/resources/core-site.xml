@@ -17,11 +17,11 @@
 <!-- Put site-specific property overrides in this file. -->
 
 <configuration>
-    <property>
-        <name>fs.defaultFS</name>
-        <value>hdfs://spark.master:8020</value>  <!--TODO: 注意修改主机名和端口-->
-        <description>描述集群中NameNode结点的URI(包括协议、主机名称、端口号)，集群里面的每一台机器都需要知道NameNode的地址。DataNode结点会先在NameNode上注册，这样它们的数据才可以被使用。独立的客户端程序通过这个URI跟DataNode交互，以取得文件的块列表。</description>
-    </property>
+<!--    <property>-->
+<!--        <name>fs.defaultFS</name>-->
+<!--        <value>hdfs://spark.master:8020</value>  &lt;!&ndash;TODO: 注意修改主机名和端口&ndash;&gt;-->
+<!--        <description>描述集群中NameNode结点的URI(包括协议、主机名称、端口号)，集群里面的每一台机器都需要知道NameNode的地址。DataNode结点会先在NameNode上注册，这样它们的数据才可以被使用。独立的客户端程序通过这个URI跟DataNode交互，以取得文件的块列表。</description>-->
+<!--    </property>-->
     <property>
         <name>hadoop.tmp.dir</name>
         <value>/tmp/hadoop</value>

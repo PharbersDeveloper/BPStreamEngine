@@ -49,6 +49,7 @@ object SparkSql extends App {
 
 
     df.show(false)
+	df.write.mode("overwrite").option("path", "/common/public/cpa_replace/cpa_replace_0.0.12_0.0.10/0.0.23").saveAsTable("cpa_replace")
     //    val schemaDf = spark.read.parquet("/test/testBPStream/ossJobRes/400wDfsTest")
     //    schemaDf.write.mode("overwrite").parquet("/test/testBPStream/ossJobRes/800wDfs2")
     //    val df = spark.readStream

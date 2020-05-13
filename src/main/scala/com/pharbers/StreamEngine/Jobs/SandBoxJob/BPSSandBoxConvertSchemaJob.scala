@@ -13,6 +13,7 @@ import com.pharbers.StreamEngine.Utils.Strategy.JobStrategy.BPSCommonJobStrategy
 import com.pharbers.StreamEngine.Utils.Strategy.Schema.{BPSMetaData2Map, SchemaConverter}
 import com.pharbers.StreamEngine.Utils.Strategy.Session.Spark.msgMode.SparkQueryEvent
 import com.pharbers.StreamEngine.Utils.Strategy.hdfs.BPSHDFSFile
+import com.pharbers.StreamEngine.Utils.Strategy.s3a.BPS3aFile
 import org.apache.kafka.common.config.ConfigDef
 import org.apache.spark.sql.functions.from_json
 import org.apache.spark.sql.streaming.StreamingQuery
@@ -34,6 +35,8 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer,
 	override val id: String = componentProperty.id // 本身Job的id
 	val jobId: String = strategy.getJobId // componentProperty config中的job Id
 	val runnerId: String = BPSConcertEntry.runner_id // Runner Id
+	val s3aFile: BPS3aFile =
+		BPSConcertEntry.queryComponentWithId("s3a").get.asInstanceOf[BPS3aFile]
 	val traceId: String = componentProperty.args.head
 	val msgType: String = componentProperty.args.last
 	val spark: SparkSession = strategy.getSpark
@@ -129,9 +132,9 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer,
 	}
 
 	def writeMetaData(path: String, md: MetaData): Unit = {
-		hdfs.appendLine2HDFS(path, write(md.schemaData))
-		hdfs.appendLine2HDFS(path, write(md.label))
-		hdfs.appendLine2HDFS(path, write(md.length))
+		s3aFile.appendLine(path, write(md.schemaData))
+		s3aFile.appendLine(path, write(md.label))
+		s3aFile.appendLine(path, write(md.length))
 	}
 
 	def pushBloodMsg(): Unit = {
@@ -146,15 +149,17 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer,
 					getOutputPath,
 					"SampleData")
 				val uploadEnd = new UploadEnd(mongoId, md.label("assetId").toString)
+				val tag = DataMartTag(md.label("assetId").toString, md.label("tag").toString)
 				// 血缘
 				bloodStrategy.pushBloodInfo(dataSet, id, traceId)
 				bloodStrategy.uploadEndPoint(uploadEnd, id, traceId)
+				bloodStrategy.setMartTags(tag, id, traceId)
 			case _ =>
 		}
 	}
 
 	def pushPyJob(): Unit = {
-		val pythonMetaData = PythonMetaData(mongoId, "HiveTaskNone", getMetadataPath, getOutputPath, s"/jobs/$runnerId")
+		val pythonMetaData = PythonMetaData(mongoId, "HiveTaskNone", getMetadataPath, getOutputPath, s"hdfs://spark.master:8020//jobs/runId_$runnerId")
 		// 给PythonCleanJob发送消息
 		strategy.pushMsg(BPSEvents(id, traceId, msgType, pythonMetaData), isLocal = false)
 	}
@@ -174,10 +179,13 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer,
 	override val description: String = "BPSSandBoxConvertSchemaJob"
 
 	case class MetaData(schemaData: List[Map[String, Any]], label: Map[String, Any], length: Map[String, Any])
-
+	
+	case class DataMartTag(assetId: String, tag: String)
+	
 	case class PythonMetaData(mongoId: String,
 							  noticeTopic: String,
 							  metadataPath: String,
 							  filesPath: String,
 							  resultPath: String)
+	
 }

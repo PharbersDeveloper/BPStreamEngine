@@ -47,6 +47,14 @@
       }
     },
     {
+      "id": "s3a",
+      "name": "BPS3aFile",
+      "args": [],
+      "config": {
+
+      }
+    },
+    {
       "id": "meta2map",
       "name": "BPSMetaData2Map",
       "args": [],
@@ -105,7 +113,7 @@
       "config": {
         "listens": "SandBox-FileMetaData",
         "Python.msgType": "Python-FileMetaData",
-        "queue": 100
+        "queue": 5
       }
     },
     {
@@ -115,7 +123,7 @@
       "config": {
         "listens": "Python-FileMetaData",
         "FileMetaData.msgType": "HiveTask-FileMetaData",
-        "defaultPartition": "4",
+        "defaultPartition": "2",
         "defaultRetryCount": "3",
         "pythonUri": "https://github.com/PharbersDeveloper/bp-data-clean.git",
         "pythonBranch": "v0.0.1"
@@ -142,7 +150,6 @@
   "starts": [
     "OssJobContainer",
     "SandBoxJobContainer",
-    "BPSPythonJobContainer",
-    "GenCubeJobContainer"
+    "BPSPythonJobContainer"
   ]
 }

@@ -6,11 +6,12 @@ import java.util.concurrent.atomic.AtomicInteger
 
 import com.pharbers.StreamEngine.Jobs.SandBoxJob.BPSSandBoxConvertSchemaJob
 import com.pharbers.StreamEngine.Utils.Annotation.Component
+import com.pharbers.StreamEngine.Utils.Channel.Local.BPSLocalChannel
 import com.pharbers.StreamEngine.Utils.Component2
 import com.pharbers.StreamEngine.Utils.Component2.{BPSComponentConfig, BPSConcertEntry}
-import com.pharbers.StreamEngine.Utils.Event.BPSTypeEvents
+import com.pharbers.StreamEngine.Utils.Event.{BPSEvents, BPSTypeEvents}
 import com.pharbers.StreamEngine.Utils.Event.EventHandler.BPSEventHandler
-import com.pharbers.StreamEngine.Utils.Event.StreamListener.{BPJobRemoteListener, BPStreamListener}
+import com.pharbers.StreamEngine.Utils.Event.StreamListener.{BPJobLocalListener, BPJobRemoteListener, BPStreamListener}
 import com.pharbers.StreamEngine.Utils.Job.{BPDynamicStreamJob, BPSJobContainer, BPStreamJob}
 import com.pharbers.StreamEngine.Utils.Strategy.JobStrategy.BPSCommonJobStrategy
 import org.apache.kafka.common.config.ConfigDef
@@ -39,6 +40,7 @@ class BPSSandBoxJobContainer(override val componentProperty: Component2.BPCompon
 	val execQueueJob = new AtomicInteger(0)
 	val id: String = componentProperty.id
 	val jobId: String = strategy.getJobId
+	val localChanel: BPSLocalChannel = BPSConcertEntry.queryComponentWithId("local channel").get.asInstanceOf[BPSLocalChannel]
 	
 	var hisRunnerId = ""
 	
@@ -89,8 +91,6 @@ class BPSSandBoxJobContainer(override val componentProperty: Component2.BPCompon
 		// TODO 这里有问题，我先测试一下，然后删除代码
 		if (hisRunnerId != BPSConcertEntry.runner_id) {
 			val reading = spark.readStream
-//				.option("maxFilesPerTrigger", 10)
-//				.option("latestFirst", "true")
 				.schema(StructType(
 					StructField("traceId", StringType) ::
 						StructField("type", StringType) ::
@@ -102,23 +102,35 @@ class BPSSandBoxJobContainer(override val componentProperty: Component2.BPCompon
 			
 			hisRunnerId = BPSConcertEntry.runner_id
 			
-			new Thread(new Runnable {
-				override def run(): Unit = {
-					while (true) {
-						if (execQueueJob.get() < componentProperty.config("queue").toInt) {
-							val job = arrayBlockingQueue.take()
-							execQueueJob.incrementAndGet()
-							try {
-								job.open()
-								job.exec()
-								Thread.sleep(1 * 1000)
-							} catch {
-								case e: Exception => logger.error(e.getMessage); job.close()
-							}
-						}
-					}
+			val listener = BPJobLocalListener[String](null, List(s"ArrayBlockingQueue"))(_ => {
+				val job = arrayBlockingQueue.take()
+				execQueueJob.incrementAndGet()
+				try {
+					job.open()
+					job.exec()
+				} catch {
+					case e: Exception => logger.error(e.getMessage); job.close()
 				}
-			}).start()
+			})
+			listener.active(null)
+			
+//			new Thread(new Runnable {
+//				override def run(): Unit = {
+//					while (true) {
+//						if (execQueueJob.get() < componentProperty.config("queue").toInt) {
+//							val job = arrayBlockingQueue.take()
+//							execQueueJob.incrementAndGet()
+//							try {
+//								job.open()
+//								job.exec()
+//								Thread.sleep(1 * 1000)
+//							} catch {
+//								case e: Exception => logger.error(e.getMessage); job.close()
+//							}
+//						}
+//					}
+//				}
+//			}).start()
 		}
 		
 		val pythonMsgType: String = strategy.jobConfig.getString(FILE_MSG_TYPE_KEY)
@@ -128,6 +140,8 @@ class BPSSandBoxJobContainer(override val componentProperty: Component2.BPCompon
 				event.date))
 		jobs += job.id -> job
 		arrayBlockingQueue.put(job)
+		val bpsEvents = BPSEvents(job.id, event.traceId, s"ArrayBlockingQueue", "")
+		localChanel.offer(bpsEvents)
 		logger.info("put arrayBlockingQueue")
 	}
 	

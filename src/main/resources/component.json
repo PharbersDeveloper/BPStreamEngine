@@ -15,7 +15,7 @@
                 "app.name": "bp-stream-engine",
                 "master": "local[2]",
                 "spark.configs.path": "src/main/resources/sparkConfig.properties",
-                "log.level": "INFO",
+                "log.level": "ERROR",
                 "run.model": "client"
             }
         },
@@ -43,7 +43,7 @@
             "name": "BPSHDFSFile",
             "args": [],
             "config": {
-                "hdfsAddr": "hdfs://starLord:8020"
+                "hdfsAddr": "hdfs://spark.master:8020"
             }
         },
         {
@@ -148,6 +148,8 @@
         }
     ],
     "starts": [
-        "OssJobContainer"
+        "OssJobContainer",
+        "SandBoxJobContainer",
+        "BPSPythonJobContainer"
     ]
 }

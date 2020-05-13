@@ -1,11 +1,10 @@
 package com.pharbers.StreamEngine.Utils.Strategy.hdfs
 
-import java.net.URI
 import java.nio.charset.StandardCharsets
 
 import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.{FSDataOutputStream, FileSystem, Path}
-import java.io.{BufferedReader, BufferedWriter, InputStreamReader, OutputStreamWriter}
+import org.apache.hadoop.fs.{FSDataInputStream, FSDataOutputStream, FileSystem, Path}
+import java.io.{BufferedReader, BufferedWriter, File, InputStreamReader, OutputStreamWriter}
 
 import com.pharbers.StreamEngine.Utils.Annotation.Component
 import com.pharbers.StreamEngine.Utils.Component2
@@ -37,7 +36,9 @@ case class BPSHDFSFile(override val componentProperty: Component2.BPComponentCon
     
     def checkPath(path: String): Boolean = {
         val fileSystem: FileSystem = FileSystem.get(configuration)
-        fileSystem.exists(new Path(path))
+        val r = fileSystem.exists(new Path(path))
+        fileSystem.close()
+        r
     }
     
     def appendLine2HDFS(path: String, line: String): Unit = {
@@ -112,6 +113,29 @@ case class BPSHDFSFile(override val componentProperty: Component2.BPComponentCon
         result
     }
     
+    // 递归读取一个目录下的所有文件
+    def recursiveFiles(hdfsPath: String): Option[List[recursiveFile]] = {
+        if(!checkPath(hdfsPath)) return None
+        val fs = FileSystem.newInstance(configuration)
+        val files = fs.listFiles(new Path(hdfsPath), true)
+        var results: List[recursiveFile] = Nil
+        while (files.hasNext) {
+            val fileStatus = files.next()
+            val path = fileStatus.getPath.toString
+          results = List(recursiveFile(
+              path.substring(0, path.lastIndexOf("/")).substring(path.indexOf("jobs") - 1),
+              path.substring(path.lastIndexOf("/") + 1),
+              fs,
+              fs.open(new Path(path)))) ++ results
+        }
+        if(results.isEmpty) {
+            None
+        } else {
+            Some(results)
+        }
+    }
+    
     override val strategyName: String = "hdfs"
     override def createConfigDef(): ConfigDef = ???
+    case class recursiveFile(path: String, name: String, fs: FileSystem, input: FSDataInputStream)
 }
