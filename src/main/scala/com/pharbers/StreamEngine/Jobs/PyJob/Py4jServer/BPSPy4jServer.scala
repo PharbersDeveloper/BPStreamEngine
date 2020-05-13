@@ -32,9 +32,6 @@ case class BPSPy4jServer(serverConf: Map[String, Any])
                         (manager_pop: () => String, manager_close: String => Unit) extends Serializable {
 
     final val RETRY_COUNT: Int = serverConf("retryCount").toString.toInt
-    // TODO 先这样试试
-    
-    
     
     lazy val hdfsfile: BPSHDFSFile =
 //        BPSHDFSFile(BPSComponentConfig("", "", Nil, Map("hdfsAddr" -> "hdfs://spark.master:8020")))
