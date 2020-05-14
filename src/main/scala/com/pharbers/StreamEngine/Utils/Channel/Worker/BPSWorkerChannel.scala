@@ -34,7 +34,8 @@ class BPSWorkerChannel(host: String, port: Int) extends Serializable with PhLoga
             client = Some(SocketChannel.open(addr))
         } catch {
             case e: Exception =>
-                logger.info(e.getMessage, e)
+                logger.error(e.getMessage, e)
+                throw e
         }
         logger.info("Connecting to Server on port 55555 ...")
     }
