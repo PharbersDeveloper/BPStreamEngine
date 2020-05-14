@@ -2,7 +2,6 @@ package com.pharbers.StreamEngine.Jobs.SandBoxJob
 
 import java.util.Collections
 
-import com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxJobContainer.BPSSandBoxJobContainer
 import com.pharbers.StreamEngine.Utils.Component2
 import com.pharbers.StreamEngine.Utils.Component2.BPSConcertEntry
 import com.pharbers.StreamEngine.Utils.Event.BPSEvents
@@ -72,9 +71,8 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer,
 
 	override def close(): Unit = {
 		logger.info("Job =====> Closed")
-		val sandBoxJob = container.asInstanceOf[BPSSandBoxJobContainer]
-		sandBoxJob.execQueueJob.decrementAndGet()
-		logger.info("execQueueJob Size =====> " + sandBoxJob.execQueueJob.get())
+		val bpsEvents = BPSEvents("", "", s"SandBoxJobEnd", "")
+		strategy.pushMsg(bpsEvents, isLocal = false)
 		super.close()
 		container.finishJobWithId(id)
 	}
@@ -101,7 +99,7 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer,
 				// 将规范过后的MetaData重新写入
 				writeMetaData(getMetadataPath, md)
 				// 告诉pyjob有数据了
-				 pushPyJob()
+				pushPyJob()
 				// 规范化的Schema设置Stream
 				df match {
 					case Some(is) => Some(

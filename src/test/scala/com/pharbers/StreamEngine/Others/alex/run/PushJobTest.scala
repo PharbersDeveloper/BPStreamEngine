@@ -12,7 +12,7 @@ import collection.JavaConverters._
 class PushJobTest extends FunSuite {
 	test("push job") {
 		var count = 0
-		while (count < 1){
+		while (count < 100){
 			val task = new OssTask("5e79e004d589564646ace709",
 				"1111111111111112",
 				"1111111111111112",

@@ -19,6 +19,8 @@ import org.apache.kafka.common.config.ConfigDef.{Importance, Type}
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.types.{StringType, StructField, StructType, TimestampType}
 
+import scala.collection.mutable
+
 object BPSSandBoxJobContainer {
 	def apply(componentProperty: Component2.BPComponentConfig): BPSSandBoxJobContainer =
 		new BPSSandBoxJobContainer(componentProperty)
@@ -35,8 +37,8 @@ class BPSSandBoxJobContainer(override val componentProperty: Component2.BPCompon
 	val description: String = "SandBox Start"
 	type T = BPSCommonJobStrategy
 	val strategy: BPSCommonJobStrategy = BPSCommonJobStrategy(componentProperty.config, configDef)
-	// TODO: 暂时解决oom，但是BlockingQueue 存和取都有锁，有性能问题，这面需要重新想一下
-	val arrayBlockingQueue = new ArrayBlockingQueue[BPSSandBoxConvertSchemaJob](componentProperty.config("queue").toInt)
+//	val arrayBlockingQueue = new ArrayBlockingQueue[BPSSandBoxConvertSchemaJob](componentProperty.config("queue").toInt)
+	val queue = new mutable.Queue[BPSSandBoxConvertSchemaJob]
 	val execQueueJob = new AtomicInteger(0)
 	val id: String = componentProperty.id
 	val jobId: String = strategy.getJobId
@@ -48,6 +50,7 @@ class BPSSandBoxJobContainer(override val componentProperty: Component2.BPCompon
 	
 	override def open(): Unit = {
 		logger.info("Open SandBoxJobContainer")
+		queueListener()
 	}
 	
 	override def exec(): Unit = {
@@ -58,6 +61,7 @@ class BPSSandBoxJobContainer(override val componentProperty: Component2.BPCompon
 			BPJobRemoteListener[Map[String, String]](this, listenEvent.toList)(x => starJob(x))
 		listener.active(null)
 		listeners = listener +: listeners
+		
 	}
 	
 	override def getJobWithId(id: String, category: String = ""): BPStreamJob = {
@@ -87,7 +91,6 @@ class BPSSandBoxJobContainer(override val componentProperty: Component2.BPCompon
 	}
 	
 	def starJob(event: BPSTypeEvents[Map[String, String]]): Unit = {
-		
 		// TODO 这里有问题，我先测试一下，然后删除代码
 		if (hisRunnerId != BPSConcertEntry.runner_id) {
 			val reading = spark.readStream
@@ -101,52 +104,54 @@ class BPSSandBoxJobContainer(override val componentProperty: Component2.BPCompon
 			inputStream = Some(reading)
 			
 			hisRunnerId = BPSConcertEntry.runner_id
-			
-			val listener = BPJobLocalListener[String](null, List(s"ArrayBlockingQueue"))(_ => {
-				val job = arrayBlockingQueue.take()
-				execQueueJob.incrementAndGet()
-				try {
-					job.open()
-					job.exec()
-				} catch {
-					case e: Exception => logger.error(e.getMessage); job.close()
-				}
-			})
-			listener.active(null)
-			
-//			new Thread(new Runnable {
-//				override def run(): Unit = {
-//					while (true) {
-//						if (execQueueJob.get() < componentProperty.config("queue").toInt) {
-//							val job = arrayBlockingQueue.take()
-//							execQueueJob.incrementAndGet()
-//							try {
-//								job.open()
-//								job.exec()
-//								Thread.sleep(1 * 1000)
-//							} catch {
-//								case e: Exception => logger.error(e.getMessage); job.close()
-//							}
-//						}
-//					}
-//				}
-//			}).start()
 		}
 		
 		val pythonMsgType: String = strategy.jobConfig.getString(FILE_MSG_TYPE_KEY)
-		lazy val job = BPSSandBoxConvertSchemaJob(this, BPSComponentConfig(UUID.randomUUID().toString,
+		val job = BPSSandBoxConvertSchemaJob(this, BPSComponentConfig(UUID.randomUUID().toString,
 				"BPSSandBoxConvertSchemaJob",
 				event.traceId :: pythonMsgType :: Nil,
 				event.date))
-		jobs += job.id -> job
-		arrayBlockingQueue.put(job)
-		val bpsEvents = BPSEvents(job.id, event.traceId, s"ArrayBlockingQueue", "")
-		localChanel.offer(bpsEvents)
-		logger.info("put arrayBlockingQueue")
+		
+		queue.enqueue(job)
+		
+
+		if (execQueueJob.get() < componentProperty.config("queue").toInt) {
+			runJob()
+		} else {
+			logger.warn("queue is full")
+		}
 	}
 	
-	override def close(): Unit = {
-		super.close()
+	def runJob(): Unit ={
+		if (queue.nonEmpty) {
+			execQueueJob.incrementAndGet()
+			val job = queue.dequeue()
+			jobs += job.id -> job
+			try {
+				job.open()
+				job.exec()
+			} catch {
+				case e: Exception => logger.error(e.getMessage); job.close()
+			}
+		}
 	}
+	
+	def queueListener(): Unit = {
+		val jobEndListener: BPJobRemoteListener[String] =
+			BPJobRemoteListener[String](null, List(s"SandBoxJobEnd"))(_ => {
+				execQueueJob.decrementAndGet()
+				logger.debug("################ execQueueJob Size =====> " + execQueueJob.get())
+				runJob()
+			})
+		jobEndListener.active(null)
+		
+//		val jobEndListener = BPJobLocalListener[String](null, List(s"SandBoxJobEnd"))(_ => {
+//			execQueueJob.decrementAndGet()
+//			println("################ execQueueJob Size =====> " + execQueueJob.get())
+//			runJob()
+//		})
+//		jobEndListener.active(null)
+	}
+	
 }
 
