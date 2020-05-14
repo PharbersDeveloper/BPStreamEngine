@@ -37,8 +37,8 @@ class BPSSandBoxJobContainer(override val componentProperty: Component2.BPCompon
 	val description: String = "SandBox Start"
 	type T = BPSCommonJobStrategy
 	val strategy: BPSCommonJobStrategy = BPSCommonJobStrategy(componentProperty.config, configDef)
-//	val arrayBlockingQueue = new ArrayBlockingQueue[BPSSandBoxConvertSchemaJob](componentProperty.config("queue").toInt)
-	val queue = new mutable.Queue[BPSSandBoxConvertSchemaJob]
+//	val queue = new mutable.Queue[BPSSandBoxConvertSchemaJob]
+	val queue = new mutable.Queue[Map[String, AnyRef]]
 	val execQueueJob = new AtomicInteger(0)
 	val id: String = componentProperty.id
 	val jobId: String = strategy.getJobId
@@ -92,24 +92,29 @@ class BPSSandBoxJobContainer(override val componentProperty: Component2.BPCompon
 		if(!strategy.getS3aFile.checkPath(event.date.getOrElse("sampleDataPath", ""))){
 			strategy.getS3aFile.appendLine(event.date.getOrElse("sampleDataPath", "") + "/_SUCCESS","")
 		}
-		val reading = spark.readStream
-				.schema(StructType(
-					StructField("traceId", StringType) ::
-							StructField("type", StringType) ::
-							StructField("data", StringType) ::
-							StructField("timestamp", TimestampType) ::
-							Nil
-				)).parquet(event.date.getOrElse("sampleDataPath", ""))
-
-		val pythonMsgType: String = strategy.jobConfig.getString(FILE_MSG_TYPE_KEY)
-		val job = BPSSandBoxConvertSchemaJob(this, Some(reading), BPSComponentConfig(UUID.randomUUID().toString,
-				"BPSSandBoxConvertSchemaJob",
-				event.traceId :: pythonMsgType :: Nil,
-				event.date))
 		
-		queue.enqueue(job)
+//		val reading = spark.readStream
+//				.schema(StructType(
+//					StructField("traceId", StringType) ::
+//							StructField("type", StringType) ::
+//							StructField("data", StringType) ::
+//							StructField("timestamp", TimestampType) :: Nil
+//				)).parquet(event.date.getOrElse("sampleDataPath", ""))
+//
+//		val pythonMsgType: String = strategy.jobConfig.getString(FILE_MSG_TYPE_KEY)
+//		val job = BPSSandBoxConvertSchemaJob(this, Some(reading), BPSComponentConfig(UUID.randomUUID().toString,
+//				"BPSSandBoxConvertSchemaJob",
+//				event.traceId :: pythonMsgType :: Nil,
+//				event.date))
+//
 		
-
+		val jobParameter = Map(
+			"sampleDataPath" -> event.date.getOrElse("sampleDataPath", ""),
+			"traceId" -> event.traceId,
+			"data" -> event.date
+		)
+		queue.enqueue(jobParameter)
+		
 		if (execQueueJob.get() < componentProperty.config("queue").toInt) {
 			runJob()
 		} else {
@@ -120,7 +125,21 @@ class BPSSandBoxJobContainer(override val componentProperty: Component2.BPCompon
 	def runJob(): Unit ={
 		if (queue.nonEmpty) {
 			execQueueJob.incrementAndGet()
-			val job = queue.dequeue()
+			val jobParameter = queue.dequeue()
+			val reading = spark.readStream
+				.schema(StructType(
+					StructField("traceId", StringType) ::
+						StructField("type", StringType) ::
+						StructField("data", StringType) ::
+						StructField("timestamp", TimestampType) :: Nil
+				)).parquet(jobParameter("sampleDataPath").toString)
+			
+			val pythonMsgType: String = strategy.jobConfig.getString(FILE_MSG_TYPE_KEY)
+			val job = BPSSandBoxConvertSchemaJob(this, Some(reading), BPSComponentConfig(UUID.randomUUID().toString,
+				"BPSSandBoxConvertSchemaJob",
+				jobParameter("traceId").toString :: pythonMsgType :: Nil,
+				jobParameter("data").asInstanceOf[Map[String, String]]))
+			
 			jobs += job.id -> job
 			try {
 				job.open()
@@ -128,6 +147,16 @@ class BPSSandBoxJobContainer(override val componentProperty: Component2.BPCompon
 			} catch {
 				case e: Exception => logger.error(e.getMessage); job.close()
 			}
+			
+//			execQueueJob.incrementAndGet()
+//			val job = queue.dequeue()
+//			jobs += job.id -> job
+//			try {
+//				job.open()
+//				job.exec()
+//			} catch {
+//				case e: Exception => logger.error(e.getMessage); job.close()
+//			}
 		}
 	}
 	
