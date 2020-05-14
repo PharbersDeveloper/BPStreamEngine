@@ -39,7 +39,7 @@ case class BPSOssListener(job: BPStreamJob, msgType: String) extends BPStreamRem
             }
             case "SandBox-Length" => {
                 s3aFile.appendLine(s"$metaDataPath/${event2JobId(e)}", e.data)
-                val fileMetaData = FileMetaData(event2JobId(e), metaDataPath, sampleDataPath, "")
+                val fileMetaData = FileMetaData(event2JobId(e), metaDataPath, s"$sampleDataPath/${event2JobId(e)}", "")
                 kafka.callKafka(BPSEvents(event2JobId(e), e.traceId , msgType, fileMetaData))
             }
         }
