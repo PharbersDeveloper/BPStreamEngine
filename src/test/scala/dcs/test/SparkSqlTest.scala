@@ -45,7 +45,8 @@ object SparkSql extends App {
     val spark = SparkSession.builder().config(new SparkConf().setMaster("local[2]")).enableHiveSupport().getOrCreate()
     //    val spark = BPSConcertEntry.queryComponentWithId("spark").get.asInstanceOf[BPSparkSession]
     spark.sparkContext.setLogLevel("WARN")
-    val df = spark.read.parquet("/common/public/cpa_replace/cpa_replace_0.0.12_0.0.10/0.0.22").withColumn("version", lit("0.0.23"))
+    val df = spark.read.parquet("/user/dcs/test/human_replace")
+
 
     df.show(false)
 	df.write.mode("overwrite").option("path", "/common/public/cpa_replace/cpa_replace_0.0.12_0.0.10/0.0.23").saveAsTable("cpa_replace")

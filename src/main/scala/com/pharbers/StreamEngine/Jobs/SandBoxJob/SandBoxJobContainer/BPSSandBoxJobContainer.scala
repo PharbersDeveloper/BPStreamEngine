@@ -43,9 +43,7 @@ class BPSSandBoxJobContainer(override val componentProperty: Component2.BPCompon
 	val id: String = componentProperty.id
 	val jobId: String = strategy.getJobId
 	val localChanel: BPSLocalChannel = BPSConcertEntry.queryComponentWithId("local channel").get.asInstanceOf[BPSLocalChannel]
-	
-	var hisRunnerId = ""
-	
+
 	override val spark: SparkSession = strategy.getSpark
 	
 	override def open(): Unit = {
@@ -91,23 +89,20 @@ class BPSSandBoxJobContainer(override val componentProperty: Component2.BPCompon
 	}
 	
 	def starJob(event: BPSTypeEvents[Map[String, String]]): Unit = {
-		// TODO 这里有问题，我先测试一下，然后删除代码
-		if (hisRunnerId != BPSConcertEntry.runner_id) {
-			val reading = spark.readStream
+		if(!strategy.getS3aFile.checkPath(event.date.getOrElse("sampleDataPath", ""))){
+			strategy.getS3aFile.appendLine(event.date.getOrElse("sampleDataPath", "") + "/_SUCCESS","")
+		}
+		val reading = spark.readStream
 				.schema(StructType(
 					StructField("traceId", StringType) ::
-						StructField("type", StringType) ::
-						StructField("data", StringType) ::
-						StructField("timestamp", TimestampType) ::
-						StructField("jobId", StringType) :: Nil
+							StructField("type", StringType) ::
+							StructField("data", StringType) ::
+							StructField("timestamp", TimestampType) ::
+							StructField("jobId", StringType) :: Nil
 				)).parquet(event.date.getOrElse("sampleDataPath", ""))
-			inputStream = Some(reading)
-			
-			hisRunnerId = BPSConcertEntry.runner_id
-		}
-		
+
 		val pythonMsgType: String = strategy.jobConfig.getString(FILE_MSG_TYPE_KEY)
-		val job = BPSSandBoxConvertSchemaJob(this, BPSComponentConfig(UUID.randomUUID().toString,
+		val job = BPSSandBoxConvertSchemaJob(this, Some(reading), BPSComponentConfig(UUID.randomUUID().toString,
 				"BPSSandBoxConvertSchemaJob",
 				event.traceId :: pythonMsgType :: Nil,
 				event.date))

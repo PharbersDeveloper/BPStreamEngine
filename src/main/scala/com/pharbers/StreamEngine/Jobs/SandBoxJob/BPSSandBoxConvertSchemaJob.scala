@@ -25,7 +25,7 @@ import org.mongodb.scala.bson.ObjectId
 
 import collection.JavaConverters._
 
-case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer,
+case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer, input: Option[DataFrame],
                                       componentProperty: Component2.BPComponentConfig) extends BPStreamJob {
 
 	type T = BPSCommonJobStrategy
@@ -49,7 +49,7 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer,
 	import spark.implicits._
 
 	override def open(): Unit = {
-		inputStream = setInputStream(container.inputStream)
+		inputStream = setInputStream(input)
 	}
 
 	override def exec(): Unit = inputStream match {
@@ -79,7 +79,8 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer,
 
 	def startProcessParquet(df: DataFrame): StreamingQuery = {
 		val partitionNum = math.ceil(totalNum / 100000D).toInt
-		df.filter($"jobId" === jobId and $"type" === "SandBox")
+//		df.filter($"jobId" === jobId and $"type" === "SandBox")
+		df.filter($"type" === "SandBox")
 			.repartition(partitionNum)
 			.writeStream
 			.outputMode("append")
