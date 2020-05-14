@@ -104,7 +104,7 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer, input: Option[
 				// 规范化的Schema设置Stream
 				df match {
 					case Some(is) => Some(
-						sc.column2legalWithDF("data", is.filter($"jobId" === jobId and $"type" === "SandBox"))
+						sc.column2legalWithDF("data", is.filter($"type" === "SandBox"))
 							.select(from_json($"data", sc.str2SqlType(write(md.schemaData))).as("data"))
 							.select("data.*")
 					)

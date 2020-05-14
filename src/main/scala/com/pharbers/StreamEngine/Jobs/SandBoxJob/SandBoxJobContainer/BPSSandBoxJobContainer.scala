@@ -98,7 +98,7 @@ class BPSSandBoxJobContainer(override val componentProperty: Component2.BPCompon
 							StructField("type", StringType) ::
 							StructField("data", StringType) ::
 							StructField("timestamp", TimestampType) ::
-							StructField("jobId", StringType) :: Nil
+							Nil
 				)).parquet(event.date.getOrElse("sampleDataPath", ""))
 
 		val pythonMsgType: String = strategy.jobConfig.getString(FILE_MSG_TYPE_KEY)
