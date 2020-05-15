@@ -1,10 +1,10 @@
-package com.pharbers.StreamEngine.Jobs.PyPipeJob
+package com.pharbers.StreamEngine.Jobs.PyPipeJob2
 
 import java.util.Collections
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
-import com.pharbers.StreamEngine.Jobs.PyPipeJob.Listener.BPSPipeProgressListenerAndClose
+import com.pharbers.StreamEngine.Jobs.PyPipeJob2.Listener.BPSPipeProgressListenerAndClose
 import com.pharbers.StreamEngine.Utils.Component2
 import com.pharbers.StreamEngine.Utils.Component2.BPSConcertEntry
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamListener

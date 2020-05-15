@@ -1,9 +1,9 @@
-package com.pharbers.StreamEngine.Jobs.PyPipeJob.PythonPipeJobContainer
+package com.pharbers.StreamEngine.Jobs.PyPipeJob2.PythonPipeJobContainer
 
 import java.util.UUID
 
 import org.mongodb.scala.bson.ObjectId
-import com.pharbers.StreamEngine.Jobs.PyPipeJob.BPSPythonPipeJob
+import com.pharbers.StreamEngine.Jobs.PyPipeJob2.BPSPythonPipeJob
 import com.pharbers.StreamEngine.Utils.Annotation.Component
 import com.pharbers.StreamEngine.Utils.Component2
 import com.pharbers.StreamEngine.Utils.Component2.BPSConcertEntry
