@@ -11,11 +11,11 @@ class BPSSetBloodStrategy (config: Map[String, String], @transient inoutConfigDe
 	
 	private val getKafka: BPKafkaSession = BPSConcertEntry.queryComponentWithId("kafka").get.asInstanceOf[BPKafkaSession]
 	
-	def pushBloodInfo(data: SpecificRecord, jobId: String, traceId: String, msgTyp: String = "SandBoxDataSet"): Unit = {
+	def pushBloodInfo(data: AnyRef, jobId: String, traceId: String, msgTyp: String = "SandBoxDataSet"): Unit = {
 		getKafka.callKafka(BPSEvents(jobId, traceId, msgTyp, data))
 	}
 	
-	def uploadEndPoint(data: UploadEnd, jobId: String, traceId: String): Unit = {
+	def uploadEndPoint(data: AnyRef, jobId: String, traceId: String): Unit = {
 		getKafka.callKafka(BPSEvents(jobId, traceId, "UploadEndPoint", data))
 	}
 	

@@ -1,21 +1,19 @@
 package com.pharbers.StreamEngine.Jobs.PyJob
 
 import org.apache.spark.sql
-import java.util.Collections
-
 import com.pharbers.StreamEngine.Jobs.PyJob.ForeachWriter.PyCleanSinkHDFS
 import com.pharbers.StreamEngine.Utils.Component2.BPSConcertEntry
 import com.pharbers.StreamEngine.Utils.Strategy.Blood.BPSSetBloodStrategy
 import com.pharbers.StreamEngine.Utils.Strategy.hdfs.BPSHDFSFile
 import com.pharbers.StreamEngine.Utils.Strategy.s3a.BPS3aFile
-import com.pharbers.kafka.schema.DataSet
 import org.apache.spark.sql.SparkSession
-//import com.pharbers.StreamEngine.Jobs.SandBoxJob.BloodJob.BPSBloodJob
 import com.pharbers.StreamEngine.Jobs.PyJob.Py4jServer.BPSPy4jManager
 import com.pharbers.StreamEngine.Utils.Job.BPStreamJob
 import com.pharbers.StreamEngine.Jobs.PyJob.Listener.BPSProgressListenerAndClose
 import com.pharbers.StreamEngine.Utils.Component2
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamListener
+import com.pharbers.StreamEngine.Utils.Job.Status.BPSJobStatus
+import com.pharbers.StreamEngine.Utils.Module.bloodModules.BloodModel
 import com.pharbers.StreamEngine.Utils.Strategy.BPStrategyComponent
 import org.apache.kafka.common.config.ConfigDef
 
@@ -63,7 +61,7 @@ class BPSPythonJob(override val id: String,
     val s3aFile: BPS3aFile = BPSConcertEntry.queryComponentWithId("s3a").get.asInstanceOf[BPS3aFile]
     val noticeTopic: String = jobConf("noticeTopic").toString
     val datasetId: String = jobConf("datasetId").toString
-    val parentsId: List[CharSequence] = jobConf("parentsId").asInstanceOf[List[CharSequence]]
+    val parentsId: List[String] = jobConf("parentsId").asInstanceOf[List[String]]
 
     val resultPath: String = {
         val path = jobConf("resultPath").toString
@@ -84,6 +82,7 @@ class BPSPythonJob(override val id: String,
     val errPath: String = resultPath + "/err"
 
     override def open(): Unit = {
+        regPedigree(BPSJobStatus.Start.toString)
         inputStream = is
     }
 
@@ -122,24 +121,32 @@ class BPSPythonJob(override val id: String,
     }
 
     // 注册血统
-    def regPedigree(): Unit = {
+    def regPedigree(status: String): Unit = {
         import collection.JavaConverters._
-        val dfs = new DataSet(
-            parentsId.asJava,
+//        val dfs = new DataSet(
+//            parentsId.asJava,
+//            datasetId,
+//            id,
+//            Collections.emptyList(),
+//            "",
+//            data_length,
+//            successPath,
+//            "Python 清洗 Job")
+       val dfs = BloodModel(parentsId,
             datasetId,
             id,
-            Collections.emptyList(),
+            Nil,
             "",
             data_length,
             successPath,
-            "Python 清洗 Job")
+            "Python 清洗 Job", status)
+        
         // TODO 齐 弄出traceId
         bloodStrategy.pushBloodInfo(dfs, id,"")
-//        BPSBloodJob("data_set_job", dfs).exec()
     }
 
     override def close(): Unit = {
-        regPedigree()
+        regPedigree(BPSJobStatus.End.toString)
         noticeFunc(noticeTopic, Map(
             "jobId" -> id,
             "datasetId" -> datasetId,

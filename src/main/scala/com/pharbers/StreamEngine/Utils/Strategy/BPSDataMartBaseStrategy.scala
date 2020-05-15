@@ -1,15 +1,13 @@
 package com.pharbers.StreamEngine.Utils.Strategy
 
-import java.util.Collections
-
 import com.pharbers.StreamEngine.Utils.Component2.{BPComponentConfig, BPSConcertEntry}
+import com.pharbers.StreamEngine.Utils.Job.Status.BPSJobStatus
+import com.pharbers.StreamEngine.Utils.Module.bloodModules.{AssetDataMartModel, BloodModel}
 import com.pharbers.StreamEngine.Utils.Strategy.Session.Spark.BPSparkSession
 import com.pharbers.StreamEngine.Utils.Strategy.Blood.BPSSetBloodStrategy
-import com.pharbers.kafka.schema.{AssetDataMart, DataSet}
 import org.apache.kafka.common.config.ConfigDef
 import org.bson.types.ObjectId
 
-import collection.JavaConverters._
 
 /** 功能描述
   *
@@ -26,29 +24,56 @@ class BPSDataMartBaseStrategy(override val componentProperty: BPComponentConfig)
         val bloodStrategy: BPSSetBloodStrategy = new BPSSetBloodStrategy(componentProperty.config)
         val spark = BPSConcertEntry.queryComponentWithId("spark").get.asInstanceOf[BPSparkSession]
         val mongoOId = new ObjectId().toString
-        val dfs = new DataSet(
-            List[CharSequence](dataSet: _*).asJava,
+//        val dfs = new DataSet(
+//            List[CharSequence](dataSet: _*).asJava,
+//            mongoOId,
+//            jobId,
+//            Collections.emptyList(),
+//            "",
+//            spark.sql(s"select * from $tableName").count(),
+//            url,
+//            "hive table")
+        // TODO @老邓  现在血缘记录开始和结束，以MongoDBID做为更新条件，所以要在你这Job开始和结束调用这个Func
+        val dfs = BloodModel(
+            List[String](dataSet: _*),
             mongoOId,
             jobId,
-            Collections.emptyList(),
+            Nil,
             "",
             spark.sql(s"select * from $tableName").count(),
             url,
-            "hive table")
+            "hive table", BPSJobStatus.End.toString)
+        
         bloodStrategy.pushBloodInfo(dfs, "", "")
 
-        val dataMartValue = new AssetDataMart(
-            tableName,
+//        val dataMartValue = new AssetDataMart(
+//            tableName,
+//            "",
+//            version,
+//            "mart",
+//            List[CharSequence]("*").asJava,
+//            List[CharSequence]("*").asJava,
+//            List[CharSequence]("*").asJava,
+//            List[CharSequence]("*").asJava,
+//            List[CharSequence]("*").asJava,
+//            List[CharSequence]("*").asJava,
+//            List[CharSequence](mongoOId).asJava,
+//            tableName,
+//            s"/common/public/$tableName/$version",
+//            "hive",
+//            saveMode
+//        )
+       val dataMartValue = AssetDataMartModel(tableName,
             "",
             version,
             "mart",
-            List[CharSequence]("*").asJava,
-            List[CharSequence]("*").asJava,
-            List[CharSequence]("*").asJava,
-            List[CharSequence]("*").asJava,
-            List[CharSequence]("*").asJava,
-            List[CharSequence]("*").asJava,
-            List[CharSequence](mongoOId).asJava,
+            "*" :: Nil,
+            "*" :: Nil,
+            "*" :: Nil,
+            "*" :: Nil,
+            "*" :: Nil,
+            "*" :: Nil,
+            mongoOId :: Nil,
             tableName,
             s"/common/public/$tableName/$version",
             "hive",
