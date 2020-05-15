@@ -15,22 +15,22 @@
 <configuration>
     <property>
         <name>yarn.resourcemanager.scheduler.address</name>
-        <value>spark.master:8030</value>  <!--TODO: 注意修改主机名 -->
+        <value>192.168.100.14:8030</value>  <!--TODO: 注意修改主机名 -->
         <description>RM中调度程序的地址，默认为0.0.0.0:8030。</description>
     </property>
     <property>
         <name>yarn.resourcemanager.resource-tracker.address</name>
-        <value>spark.master:8031</value>  <!--TODO: 注意修改主机名 -->
+        <value>192.168.100.14:8031</value>  <!--TODO: 注意修改主机名 -->
         <description>RM中资源反馈的地址，Slave一定要配置正确，分布式不要用默认值，默认为0.0.0.0:8031。</description>
     </property>
     <property>
         <name>yarn.resourcemanager.address</name>
-        <value>spark.master:8032</value>  <!--TODO: 注意修改主机名 -->
+        <value>192.168.100.14:8032</value>  <!--TODO: 注意修改主机名 -->
         <description>RM中应用程序管理器接口的地址，客户端向这个地址提交任务，默认为0.0.0.0:8032。</description>
     </property>
     <property>
         <name>yarn.resourcemanager.webapp.address</name>
-        <value>spark.master:8088</value>  <!--TODO: 注意修改主机名 -->
+        <value>192.168.100.14:8088</value>  <!--TODO: 注意修改主机名 -->
         <description>RM中web页面的地址，默认为0.0.0.0:8088。</description>
     </property>
 
