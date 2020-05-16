@@ -132,8 +132,11 @@ class BPSPythonJob(override val id: String,
 //            data_length,
 //            successPath,
 //            "Python 清洗 Job")
-       val dfs = BloodModel(parentsId,
+        // TODO 差 assetId
+       val dfs = BloodModel(
             datasetId,
+            "", // assetId
+            parentsId,
             id,
             Nil,
             "",

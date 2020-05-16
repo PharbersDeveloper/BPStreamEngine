@@ -18,7 +18,6 @@ import org.apache.kafka.common.config.ConfigDef
 import org.apache.spark.sql.functions.from_json
 import org.apache.spark.sql.streaming.StreamingQuery
 import org.apache.spark.sql.{DataFrame, SparkSession}
-import com.pharbers.kafka.schema.{DataSet, UploadEnd}
 import org.apache.spark.sql
 import org.json4s.DefaultFormats
 import org.json4s.jackson.Serialization.write
@@ -47,7 +46,6 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer, input: Option[
 	import spark.implicits._
 	
 	override def open(): Unit = {
-		pushBloodMsg(BPSJobStatus.Start.toString, None)
 		inputStream = setInputStream(input)
 	}
 	
@@ -70,10 +68,11 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer, input: Option[
 	
 	override def close(): Unit = {
 		logger.info("Job =====> Closed")
-		pushBloodMsg(BPSJobStatus.End.toString, metaData)
+		
 		metaData match {
 			case Some(md) =>
-				bloodStrategy.uploadEndPoint(UploadEndModel(mongoId, md.label("assetId").toString), id, traceId)
+				pushBloodMsg(BPSJobStatus.End.toString, md)
+//				bloodStrategy.uploadEndPoint(UploadEndModel(mongoId, md.label("assetId").toString), id, traceId)
 				bloodStrategy.setMartTags(DataMartTagModel(md.label("assetId").toString, md.label("tag").toString), id, traceId)
 			case _ =>
 		}
@@ -100,8 +99,10 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer, input: Option[
 		// 解析MetaData
 		val mdPath = componentProperty.config("metaDataPath")
 		metaData = startProcessMetaData(s"$mdPath/$jobId")
+		
 		metaData match {
 			case Some(md) =>
+				pushBloodMsg(BPSJobStatus.Start.toString, md)
 				totalNum = md.length("length").toString.toLong
 				// 将规范过后的MetaData重新写入
 				writeMetaData(getMetadataPath, md)
@@ -142,16 +143,20 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer, input: Option[
 		s3aFile.appendLine(path, write(md.length))
 	}
 	
-	def pushBloodMsg(status: String, metaData: Option[MetaData]): Unit = {
-		val bloodModel = metaData match {
-			case Some(md) =>
-				BloodModel(Nil, mongoId,
-					id, md.schemaData.map(_ ("key").toString),
-					md.label("sheetName").toString, totalNum,
-					getOutputPath, "SampleData", status)
-			case _ =>
-				BloodModel(Nil, mongoId, id, Nil, "", 0, "", "SampleData", status)
-		}
+	def pushBloodMsg(status: String, metaData: MetaData): Unit = {
+//		val bloodModel = metaData match {
+//			case Some(md) =>
+//				BloodModel(Nil, mongoId, md.label("assetId").toString,
+//					id, md.schemaData.map(_ ("key").toString),
+//					md.label("sheetName").toString, totalNum,
+//					getOutputPath, "SampleData", status)
+//			case _ =>
+//				BloodModel(Nil, mongoId, "", id, Nil, "", 0, "", "SampleData", status)
+//		}
+		val bloodModel = BloodModel(mongoId, metaData.label("assetId").toString, Nil,
+			id, metaData.schemaData.map(_ ("key").toString),
+			metaData.label("sheetName").toString, totalNum,
+			getOutputPath, "SampleData", status)
 		
 		// 血缘
 		bloodStrategy.pushBloodInfo(bloodModel, id, traceId)

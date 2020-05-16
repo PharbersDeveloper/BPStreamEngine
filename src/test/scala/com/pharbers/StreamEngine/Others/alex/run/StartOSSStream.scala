@@ -32,8 +32,11 @@ class StartOSSStream extends FunSuite {
 		val bloodStrategy: BPSSetBloodStrategy = new BPSSetBloodStrategy(Map.empty)
 		val cloNames = List[String]("a", "b", "c")
 		val totalNum: Long = 10000
-		val dataSet = BloodModel(Nil,
-		    new ObjectId().toString,
+		val mongoId = "5ebfd5789bb9aa05a2c60eec"//new ObjectId().toString
+		val dataSet = BloodModel(
+			mongoId,
+			"5eb386d93c5d7a00970f9541",
+			Nil,
 			"002132100321",
 			cloNames,
 			"Fuck",

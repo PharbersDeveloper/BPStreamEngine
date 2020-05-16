@@ -1,14 +1,15 @@
 package com.pharbers.StreamEngine.Utils.Module.bloodModules
 
-case class BloodModel(parentIds: List[String],
-                      mongoId: String,
-                      jobId: String,
-                      columnNames: List[String],
-                      tabName: String,
-                      length: Long,
-                      url: String,
-                      description: String,
-                      status: String)
+case class BloodModel(mongoId: String,
+                      assetId: String,
+                      parentIds: List[String] = Nil,
+                      jobId: String = "",
+                      columnNames: List[String] = Nil,
+                      tabName: String = "",
+                      length: Long = 0,
+                      url: String = "",
+                      description: String = "",
+                      status: String = "")
 
 case class UploadEndModel(dataSetId: String, assetId: String)
 

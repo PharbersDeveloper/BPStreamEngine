@@ -35,8 +35,9 @@ class BPSDataMartBaseStrategy(override val componentProperty: BPComponentConfig)
 //            "hive table")
         // TODO @老邓  现在血缘记录开始和结束，以MongoDBID做为更新条件，所以要在你这Job开始和结束调用这个Func
         val dfs = BloodModel(
-            List[String](dataSet: _*),
             mongoOId,
+            "",
+            List[String](dataSet: _*),
             jobId,
             Nil,
             "",
