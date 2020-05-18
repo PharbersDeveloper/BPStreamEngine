@@ -35,13 +35,13 @@ case class BPS3aFile(override val componentProperty: Component2.BPComponentConfi
 
     override def createConfigDef(): ConfigDef = new ConfigDef
 
-    private val s3: AmazonS3 = AmazonS3ClientBuilder
+    lazy private val s3: AmazonS3 = AmazonS3ClientBuilder
             .standard()
             .withCredentials(new BasicAWSCredentialsProvider(sys.env("S3_ACCESS_KEY"), sys.env("S3_SECRET_KEY")))
             .withRegion("cn-northwest-1")
             .build()
 
-    private val transferManager: TransferManager = TransferManagerBuilder.standard()
+    lazy private val transferManager: TransferManager = TransferManagerBuilder.standard()
             .withS3Client(s3)
             .build()
 
@@ -56,7 +56,7 @@ case class BPS3aFile(override val componentProperty: Component2.BPComponentConfi
         s3.putObject(bucketName, s"$prefix/${UUID.randomUUID().toString}", inputStream, new ObjectMetadata())
         inputStream.close()
     }
-	
+
     def copyHDFSFiles(path: String, fileName: String, file: InputStream): Unit = {
         val (bucketName, prefix) = getBucketNameAndPrefix(path)
         s3.putObject(bucketName, s"$prefix/$fileName", file, new ObjectMetadata())

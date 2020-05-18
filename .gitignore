@@ -26,3 +26,5 @@ venv/
 .DS_Store
 
 BPSPythonJobContainer/
+alfred-test-data
+jobs
