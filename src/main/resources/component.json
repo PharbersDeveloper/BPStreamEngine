@@ -25,7 +25,7 @@
             "args": [],
             "config": {
                 "data.topic": "oss_source",
-                "msg.topic": "oss_msg",
+                "msg.topic": "oss_msg_1",
                 "url": "http://123.56.179.133:9092",
                 "schema": "http://123.56.179.133:8081"
             }
@@ -43,7 +43,7 @@
             "name": "BPSHDFSFile",
             "args": [],
             "config": {
-                "hdfsAddr": "hdfs://spark.master:8020"
+                "hdfsAddr": "hdfs://192.168.100.14:8020"
             }
         },
         {
@@ -113,7 +113,7 @@
             "config": {
                 "listens": "SandBox-FileMetaData",
                 "Python.msgType": "Python-FileMetaData",
-                "queue": 100
+                "queue": 5
             }
         },
         {
