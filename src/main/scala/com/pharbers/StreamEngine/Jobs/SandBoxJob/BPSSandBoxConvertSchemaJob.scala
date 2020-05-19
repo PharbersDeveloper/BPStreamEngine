@@ -81,6 +81,7 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer, input: Option[
 		val partitionNum = math.ceil(totalNum / 100000D).toInt
 //		df.filter($"jobId" === jobId and $"type" === "SandBox")
 		df.filter($"type" === "SandBox")
+			//todo: 这儿直接repartition为了控制储存的每个文件的数据量，但是一个批次读入的数据可能不是全部数据。而计算分片是按照总数据量计算的，所以可能会导致文件过小
 			.repartition(partitionNum)
 			.writeStream
 			.outputMode("append")
@@ -158,7 +159,7 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer, input: Option[
 	}
 
 	def pushPyJob(): Unit = {
-		val pythonMetaData = PythonMetaData(mongoId, "HiveTaskNone", getMetadataPath, getOutputPath, s"hdfs://spark.master:8020//jobs/runId_$runnerId")
+		val pythonMetaData = PythonMetaData(mongoId, "HiveTaskNone", getMetadataPath, getOutputPath,  "s3a://ph-stream/jobs/" + s"runId_${BPSConcertEntry.runner_id}")
 		// 给PythonCleanJob发送消息
 		strategy.pushMsg(BPSEvents(id, traceId, msgType, pythonMetaData), isLocal = false)
 	}

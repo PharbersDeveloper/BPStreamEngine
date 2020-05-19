@@ -125,8 +125,7 @@ class BPSPythonPipeJobContainer(override val componentProperty: Component2.BPCom
      * }}}
      */
     def starJob(event: BPSTypeEvents[Map[String, String]]): Unit = {
-//        val jobMsg = event.date
-        val jobMsg = Map.empty[String, String]//event.date
+        val jobMsg = event.date
 
         // 获得 PyJob 参数信息
         val jobId: String = jobMsg.getOrElse("jobId", UUID.randomUUID()).toString
@@ -203,9 +202,9 @@ class BPSPythonPipeJobContainer(override val componentProperty: Component2.BPCom
         listener.active(null)
         listeners = listener +: listeners
 
-        // Test
-        val event = BPSTypeEvents[Map[String, String]](BPSEvents("alfred-jid", "alfred-tid", "alfred", "a"))
-        starJob(event)
+//        // Test
+//        val event = BPSTypeEvents[Map[String, String]](BPSEvents("alfred-jid", "alfred-tid", "alfred", "a"))
+//        starJob(event)
     }
 
     override def close(): Unit = {

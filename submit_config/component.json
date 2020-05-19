@@ -148,6 +148,8 @@
     }
   ],
   "starts": [
+    "OssJobContainer",
+    "SandBoxJobContainer",
     "BPSPythonPipeJobContainer"
   ]
 }

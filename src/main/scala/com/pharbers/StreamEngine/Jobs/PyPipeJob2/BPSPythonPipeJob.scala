@@ -7,16 +7,18 @@ import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.pharbers.StreamEngine.Jobs.PyPipeJob2.Listener.BPSPipeProgressListenerAndClose
 import com.pharbers.StreamEngine.Utils.Component2
 import com.pharbers.StreamEngine.Utils.Component2.BPSConcertEntry
-import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamListener
+import com.pharbers.StreamEngine.Utils.Event.StreamListener.{BPJobLocalListener, BPStreamListener}
 import com.pharbers.StreamEngine.Utils.Job.BPStreamJob
 import com.pharbers.StreamEngine.Utils.Strategy.BPStrategyComponent
 import com.pharbers.StreamEngine.Utils.Strategy.Blood.BPSSetBloodStrategy
+import com.pharbers.StreamEngine.Utils.Strategy.Session.Spark.msgMode.SparkQueryEvent
 import com.pharbers.StreamEngine.Utils.Strategy.hdfs.BPSHDFSFile
 import com.pharbers.kafka.schema.DataSet
 import org.apache.kafka.common.config.ConfigDef
 import org.apache.spark.sql
 import org.apache.spark.sql.SparkSession
-import org.apache.spark.sql.functions.{lit, struct, to_json}
+import org.apache.spark.sql.functions._
+import org.apache.spark.sql.types.{IntegerType, StringType, StructField, StructType}
 
 object BPSPythonPipeJob {
     def apply(id: String,
@@ -57,6 +59,7 @@ class BPSPythonPipeJob(override val id: String,
 
     type T = BPStrategyComponent
     override val strategy: BPStrategyComponent = null
+    override val description: String = "py_clean_job"
     val bloodStrategy: BPSSetBloodStrategy = new BPSSetBloodStrategy(Map.empty)
 
     val noticeTopic: String = jobConf("noticeTopic").toString
@@ -75,14 +78,13 @@ class BPSPythonPipeJob(override val id: String,
     val partition: Int = jobConf("partition").asInstanceOf[String].toInt
     val retryCount: String = jobConf("retryCount").toString
 
-    val checkpointPath: String = resultPath + "/checkpoint"
+    val checkpointPath: String = getCheckpointPath
     val rowRecordPath: String = resultPath + "/row_record"
     val metadataPath: String = resultPath + "/metadata"
-    val successPath: String = resultPath + "/contents"
-    val errPath: String = resultPath + "/err"
+    val successPath: String = getOutputPath
+    val errPath: String = "s3a://ph-stream/jobs/" + s"runId_${BPSConcertEntry.runner_id}" + "/" + description + "/" + s"jobId_$id" + "/err"
 
     import spark.implicits._
-    val hdfsfile: BPSHDFSFile = BPSConcertEntry.queryComponentWithId("hdfs").get.asInstanceOf[BPSHDFSFile]
 
     override def open(): Unit = {
         inputStream = is
@@ -93,34 +95,57 @@ class BPSPythonPipeJob(override val id: String,
             case Some(is) =>
                 val mapper = new ObjectMapper()
                 mapper.registerModule(DefaultScalaModule)
+                val schema = StructType(StructField("tag", IntegerType) ::
+                        StructField("data", StringType) ::
+                        StructField("errMsg", StringType) ::
+                        StructField("metadata", StringType) :: Nil
+                )
                 val query = is
                     .writeStream
                     .option("checkpointLocation", checkpointPath)
                     .foreachBatch((batchDF, _) => {
                         batchDF.persist()
-                        batchDF.select(to_json(struct($"*")).as("data"),
+                        val pythonDf = batchDF.select(to_json(struct($"*")).as("data"),
                                        lit(mapper.writeValueAsString(lastMetadata)).as("metadata"))
-//                               .select(to_json(struct($"data".as("\"data\""), $"metadata".as("\"metadata\""))))
                                 .select(to_json(struct($"data".as("data"), $"metadata".as("metadata"))))
-                                .rdd.pipe("python3 BPSPythonPipeJobContainer/main.py")
-                               .saveAsTextFile("alfred-test-data/result/" + id)
-                        hdfsfile.appendLine2HDFS("/user/alfredyang/test/rowcheck/" + id, batchDF.count().toString)
+                                .rdd.pipe("python3 ./main.py")
+                                .toDF("data")
+                                .select(from_json($"data", schema) as "data")
+                                .select("data.*")
+                                .cache()
+                        pythonDf.filter("tag == 1")
+                                        .select("data")
+                                        .write.text(successPath)
+                        pythonDf.filter("tag != 1")
+                                .select("errMsg")
+                                .write.text(errPath)
+                        pythonDf.unpersist()
                         batchDF.unpersist()
                     })
                     .start()
 
                 outputStream = query :: outputStream
-                listeners = listeners ::: addListener(rowRecordPath) :: Nil
+                val stopListener = BPJobLocalListener[SparkQueryEvent](null, List(s"spark-${query.id.toString}-progress"))(x => {
+                    logger.info(s"listener hit python job query ${x.date.id}")
+                    val cumulative = query.recentProgress.map(_.numInputRows).sum
+                    logger.info(s"cumulative num $cumulative, id: $id, query: ${query.id.toString}")
+                    if (cumulative >= data_length) {
+                        logger.info(s"python query: ${query.id.toString} over")
+                        this.close()
+                    }
+                })
+                listeners = listeners ::: stopListener :: Nil
+                stopListener.active(null)
 
             case None => ???
         }
     }
 
-    def addListener(rowRecordPath: String): BPStreamListener = {
-        val listener = BPSPipeProgressListenerAndClose(this, spark, data_length, rowRecordPath)
-        listener.active(null)
-        listener
-    }
+//    def addListener(rowRecordPath: String): BPStreamListener = {
+//        val listener = BPSPipeProgressListenerAndClose(this, spark, data_length, rowRecordPath)
+//        listener.active(null)
+//        listener
+//    }
 
     // 注册血统
     def regPedigree(): Unit = {
@@ -158,6 +183,4 @@ class BPSPythonPipeJob(override val id: String,
     override val componentProperty: Component2.BPComponentConfig = null
 
     override def createConfigDef(): ConfigDef = ???
-
-    override val description: String = "py_clean_job"
 }
