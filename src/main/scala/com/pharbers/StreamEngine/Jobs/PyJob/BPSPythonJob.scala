@@ -61,6 +61,7 @@ class BPSPythonJob(override val id: String,
     val s3aFile: BPS3aFile = BPSConcertEntry.queryComponentWithId("s3a").get.asInstanceOf[BPS3aFile]
     val noticeTopic: String = jobConf("noticeTopic").toString
     val datasetId: String = jobConf("datasetId").toString
+    val assetId: String = jobConf("assetId").toString
     val parentsId: List[String] = jobConf("parentsId").asInstanceOf[List[String]]
 
     val resultPath: String = {
@@ -122,20 +123,9 @@ class BPSPythonJob(override val id: String,
 
     // 注册血统
     def regPedigree(status: String): Unit = {
-        import collection.JavaConverters._
-//        val dfs = new DataSet(
-//            parentsId.asJava,
-//            datasetId,
-//            id,
-//            Collections.emptyList(),
-//            "",
-//            data_length,
-//            successPath,
-//            "Python 清洗 Job")
-        // TODO 差 assetId
        val dfs = BloodModel(
             datasetId,
-            "", // assetId
+            assetId,
             parentsId,
             id,
             Nil,
@@ -153,6 +143,7 @@ class BPSPythonJob(override val id: String,
         noticeFunc(noticeTopic, Map(
             "jobId" -> id,
             "datasetId" -> datasetId,
+            "assetId" -> assetId,
             "length" -> data_length,
             "resultPath" -> resultPath,
             "rowRecordPath" -> rowRecordPath,

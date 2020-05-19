@@ -72,7 +72,6 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer, input: Option[
 		metaData match {
 			case Some(md) =>
 				pushBloodMsg(BPSJobStatus.End.toString, md)
-//				bloodStrategy.uploadEndPoint(UploadEndModel(mongoId, md.label("assetId").toString), id, traceId)
 				bloodStrategy.setMartTags(DataMartTagModel(md.label("assetId").toString, md.label("tag").toString), id, traceId)
 			case _ =>
 		}
@@ -84,7 +83,6 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer, input: Option[
 	
 	def startProcessParquet(df: DataFrame): StreamingQuery = {
 		val partitionNum = math.ceil(totalNum / 100000D).toInt
-		//		df.filter($"jobId" === jobId and $"type" === "SandBox")
 		df.filter($"type" === "SandBox")
 			.repartition(partitionNum)
 			.writeStream
@@ -107,7 +105,7 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer, input: Option[
 				// 将规范过后的MetaData重新写入
 				writeMetaData(getMetadataPath, md)
 				// 告诉pyjob有数据了
-//				pushPyJob()
+				pushPyJob(md)
 				// 规范化的Schema设置Stream
 				df match {
 					case Some(is) => Some(
@@ -144,15 +142,6 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer, input: Option[
 	}
 	
 	def pushBloodMsg(status: String, metaData: MetaData): Unit = {
-//		val bloodModel = metaData match {
-//			case Some(md) =>
-//				BloodModel(Nil, mongoId, md.label("assetId").toString,
-//					id, md.schemaData.map(_ ("key").toString),
-//					md.label("sheetName").toString, totalNum,
-//					getOutputPath, "SampleData", status)
-//			case _ =>
-//				BloodModel(Nil, mongoId, "", id, Nil, "", 0, "", "SampleData", status)
-//		}
 		val bloodModel = BloodModel(mongoId, metaData.label("assetId").toString, Nil,
 			id, metaData.schemaData.map(_ ("key").toString),
 			metaData.label("sheetName").toString, totalNum,
@@ -162,8 +151,8 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer, input: Option[
 		bloodStrategy.pushBloodInfo(bloodModel, id, traceId)
 	}
 	
-	def pushPyJob(): Unit = {
-		val pythonMetaData = PythonMetaData(mongoId, "HiveTaskNone", getMetadataPath, getOutputPath, s"hdfs://spark.master:8020//jobs/runId_$runnerId")
+	def pushPyJob(metaData: MetaData): Unit = {
+		val pythonMetaData = PythonMetaData(mongoId, metaData.label("assetId").toString, "HiveTaskNone", getMetadataPath, getOutputPath, s"hdfs://spark.master:8020//jobs/runId_$runnerId")
 		// 给PythonCleanJob发送消息
 		strategy.pushMsg(BPSEvents(id, traceId, msgType, pythonMetaData), isLocal = false)
 	}
@@ -184,6 +173,7 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer, input: Option[
 	case class MetaData(schemaData: List[Map[String, Any]], label: Map[String, Any], length: Map[String, Any])
 	
 	case class PythonMetaData(mongoId: String,
+	                          assetId: String,
 	                          noticeTopic: String,
 	                          metadataPath: String,
 	                          filesPath: String,
