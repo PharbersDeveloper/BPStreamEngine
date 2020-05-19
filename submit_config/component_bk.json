@@ -1,0 +1,155 @@
+{
+  "strategies": [
+    {
+      "id": "log4j",
+      "name": "BPSLogContext",
+      "args": [],
+      "config": {
+      }
+    },
+    {
+      "id": "spark",
+      "name": "BPSparkSession",
+      "args": [],
+      "config": {
+        "app.name": "bp-stream-engine",
+        "master": "yarn",
+        "spark.configs.path": "sparkConfig.properties",
+        "log.level": "INFO",
+        "run.model": "cluster"
+      }
+    },
+    {
+      "id": "kafka",
+      "name": "BPKafkaSession",
+      "args": [],
+      "config": {
+        "data.topic": "oss_source",
+        "msg.topic": "oss_msg",
+        "url": "http://123.56.179.133:9092",
+        "schema": "http://123.56.179.133:8081"
+      }
+    },
+    {
+      "id": "gitRepo",
+      "name": "BPSGithubHelper",
+      "args": [],
+      "config": {
+
+      }
+    },
+    {
+      "id": "hdfs",
+      "name": "BPSHDFSFile",
+      "args": [],
+      "config": {
+        "hdfsAddr": "hdfs://192.168.1.28:8020"
+      }
+    },
+    {
+      "id": "s3a",
+      "name": "BPS3aFile",
+      "args": [],
+      "config": {
+
+      }
+    },
+    {
+      "id": "meta2map",
+      "name": "BPSMetaData2Map",
+      "args": [],
+      "config": {
+      }
+    },
+    {
+      "id": "parse schema",
+      "name": "BPSParseSchema",
+      "args": [],
+      "config": {
+      }
+    },
+    {
+      "id": "schema convert",
+      "name": "SchemaConverter",
+      "args": [],
+      "config": {
+      }
+    }
+  ],
+  "channels": [
+    {
+      "id": "local channel",
+      "name": "BPSLocalChannel",
+      "args": [],
+      "config": {
+      }
+    },
+    {
+      "id": "driver channel",
+      "name": "BPSDriverChannel",
+      "args": [],
+      "config": {
+        "port": 56789,
+        "sleep": 10
+      }
+    }
+  ],
+  "jobs": [
+    {
+      "id": "OssJobContainer",
+      "name": "BPSOssPartitionJobContainer",
+      "args": [],
+      "config": {
+        "starting.offsets": "latest",
+        "listens": "SandBox-Start",
+        "FileMetaData.msgType": "SandBox-FileMetaData",
+        "trigger.max": 10000
+      }
+    },
+    {
+      "id": "SandBoxJobContainer",
+      "name": "BPSSandBoxJobContainer",
+      "args": [],
+      "config": {
+        "listens": "SandBox-FileMetaData",
+        "Python.msgType": "Python-FileMetaData",
+        "queue": 5
+      }
+    },
+    {
+      "id": "BPSPythonJobContainer",
+      "name": "BPSPythonJobContainer",
+      "args": [],
+      "config": {
+        "listens": "Python-FileMetaData",
+        "FileMetaData.msgType": "HiveTask-FileMetaData",
+        "defaultPartition": "2",
+        "defaultRetryCount": "3",
+        "pythonUri": "https://github.com/PharbersDeveloper/bp-data-clean.git",
+        "pythonBranch": "v0.0.2"
+      }
+    },
+    {
+      "id": "SqlTableJobContainer",
+      "name": "BPSqlTableJobContainer",
+      "args": [],
+      "config": {
+        "listens": "SandBox-hive"
+      }
+    },
+    {
+      "id": "GenCubeJobContainer",
+      "name": "BPSGenCubeJobContainer",
+      "args": [],
+      "config": {
+        "listens": "GenCube-Start",
+        "GenCube.timer.hours": 1
+      }
+    }
+  ],
+  "starts": [
+    "OssJobContainer",
+    "SandBoxJobContainer",
+    "BPSPythonJobContainer"
+  ]
+}

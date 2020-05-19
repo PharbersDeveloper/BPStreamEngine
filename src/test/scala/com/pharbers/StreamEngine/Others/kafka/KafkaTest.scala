@@ -6,7 +6,7 @@ import java.util.concurrent.TimeUnit
 
 import com.pharbers.kafka.schema.{BPJob, FileMetaData}
 import org.json4s.jackson.Serialization.write
-import com.pharbers.kafka.producer.PharbersKafkaProducer
+import com.pharbers.StreamEngine.Utils.Strategy.Session.Kafka.PharbersKafkaProducer
 import com.pharbers.StreamEngine.Utils.Component.Dynamic.JobMsg
 
 class KafkaTest extends FunSuite {

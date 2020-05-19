@@ -7,7 +7,7 @@ import java.util.concurrent.TimeUnit
 import com.mongodb.client.MongoClients
 import com.mongodb.client.model.Filters
 import com.pharbers.StreamEngine.Utils.Component.Dynamic.JobMsg
-import com.pharbers.kafka.producer.PharbersKafkaProducer
+import com.pharbers.StreamEngine.Utils.Strategy.Session.Kafka.PharbersKafkaProducer
 import com.pharbers.kafka.schema.BPJob
 import org.apache.spark.sql.SparkSession
 import org.bson.{BsonArray, BsonDocument, Document}

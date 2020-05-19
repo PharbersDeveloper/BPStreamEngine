@@ -3,7 +3,8 @@ package com.pharbers.StreamEngine.Utils.Channel.Worker
 import java.net.{InetAddress, InetSocketAddress}
 import java.nio.ByteBuffer
 import java.nio.channels.SocketChannel
-import com.pharbers.util.log.PhLogable
+
+import com.pharbers.StreamEngine.Utils.Log.PhLogable
 
 object BPSWorkerChannel {
     //    var host: Broadcast[String] = _
@@ -33,7 +34,8 @@ class BPSWorkerChannel(host: String, port: Int) extends Serializable with PhLoga
             client = Some(SocketChannel.open(addr))
         } catch {
             case e: Exception =>
-                logger.info(e.getMessage, e)
+                logger.error(e.getMessage, e)
+                throw e
         }
         logger.info("Connecting to Server on port 55555 ...")
     }

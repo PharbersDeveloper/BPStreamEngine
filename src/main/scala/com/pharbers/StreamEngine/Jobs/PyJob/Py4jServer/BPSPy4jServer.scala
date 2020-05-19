@@ -32,10 +32,10 @@ case class BPSPy4jServer(serverConf: Map[String, Any])
                         (manager_pop: () => String, manager_close: String => Unit) extends Serializable {
 
     final val RETRY_COUNT: Int = serverConf("retryCount").toString.toInt
-    // TODO 先这样试试
+    
     lazy val hdfsfile: BPSHDFSFile =
-        BPSHDFSFile(BPSComponentConfig("", "", Nil, Map("hdfsAddr" -> "hdfs://starLord:8020")))
-//        BPSConcertEntry.queryComponentWithId("hdfs").get.asInstanceOf[BPSHDFSFile]
+        BPSHDFSFile(BPSComponentConfig("", "", Nil, Map("hdfsAddr" -> "hdfs://spark.master:8020")))
+//            BPSConcertEntry.queryComponentWithId("hdfs").get.asInstanceOf[BPSHDFSFile]
 
     val jobId: String = serverConf("jobId").toString
     val threadId: String = serverConf("threadId").toString
@@ -147,7 +147,7 @@ case class BPSPy4jServer(serverConf: Map[String, Any])
         val callbackPort = socket.getLocalPort // 获得一个可用端口
         socket.close()
 
-//        val args = List("/usr/bin/python", "/Users/clock/workSpace/Python/bp-data-clean/main.py") :::
+//        val args = List("/usr/bin/python", "/Users/qianpeng/GitHub/BPStreamEngine/BPSPythonJobContainer/main.py") :::
         val args = List("/usr/bin/python", "./main.py") :::
                 server.getPort.toString ::
                 callbackPort.toString ::
@@ -199,9 +199,10 @@ case class BPSPy4jServer(serverConf: Map[String, Any])
                     if (curRow == 1L) {
                         val metadata = result("metadata").asInstanceOf[Map[String, Any]]
                         writeMetadata(write(metadata)(DefaultFormats))
-                        csvTitle = writeTitle(metadata)
+//                        csvTitle = writeTitle(metadata)
                     }
-                    writeSuccess(map2csv(csvTitle, result("data").asInstanceOf[Map[String, Any]]).mkString(","))
+//                    writeSuccess(map2csv(csvTitle, result("data").asInstanceOf[Map[String, Any]]).mkString(","))
+                    writeSuccess(write(result("data"))(DefaultFormats))
                 } else writeErr(str)
             case _ => writeErr(str)
         }

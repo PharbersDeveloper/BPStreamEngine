@@ -1,9 +1,7 @@
 package com.pharbers.StreamEngine.Utils.Strategy.Session.Spark
 
-import com.pharbers.util.log.PhLogable
+import com.pharbers.StreamEngine.Utils.Log.PhLogable
 import org.apache.spark.sql.{DataFrame, SparkSession}
-import org.apache.spark.sql.catalyst.expressions.{UnboundedFollowing, UnboundedPreceding}
-import org.apache.spark.sql.catalyst.plans.JoinType
 import org.apache.spark.sql.expressions.{Window, WindowSpec}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.DataTypes

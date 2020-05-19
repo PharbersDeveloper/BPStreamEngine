@@ -2,12 +2,8 @@ package dcs.test
 
 import java.io.File
 import java.util.Scanner
-
-import com.pharbers.StreamEngine.Jobs.SqlTableJob.BPSqlTableJob
-import com.pharbers.StreamEngine.Utils.Event.BPSEvents
-import com.pharbers.StreamEngine.Utils.Strategy.hdfs.BPSHDFSFile
 import com.pharbers.StreamEngine.Utils.Strategy.Session.Spark.BPSparkSession
-import com.pharbers.util.log.PhLogable
+import com.pharbers.StreamEngine.Utils.Log.PhLogable
 import org.scalatest.FunSuite
 
 /** 功能描述

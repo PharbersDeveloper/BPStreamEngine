@@ -12,8 +12,8 @@
             "name": "BPSparkSession",
             "args": [],
             "config": {
-                "app.name": "bp-stream-engine",
-                "master": "yarn",
+                "app.name": "alfredtest-bp-stream-engine",
+                "master": "local[2]",
                 "spark.configs.path": "src/main/resources/sparkConfig.properties",
                 "log.level": "ERROR",
                 "run.model": "client"
@@ -25,7 +25,7 @@
             "args": [],
             "config": {
                 "data.topic": "oss_source",
-                "msg.topic": "oss_msg",
+                "msg.topic": "oss_msg_1",
                 "url": "http://123.56.179.133:9092",
                 "schema": "http://123.56.179.133:8081"
             }
@@ -43,7 +43,15 @@
             "name": "BPSHDFSFile",
             "args": [],
             "config": {
-                "hdfsAddr": "hdfs://starLord:8020"
+                "hdfsAddr": "hdfs://192.168.100.14:8020"
+            }
+        },
+        {
+            "id": "s3a",
+            "name": "BPS3aFile",
+            "args": [],
+            "config": {
+
             }
         },
         {
@@ -94,7 +102,8 @@
             "config": {
                 "starting.offsets": "latest",
                 "listens": "SandBox-Start",
-                "FileMetaData.msgType": "SandBox-FileMetaData"
+                "FileMetaData.msgType": "SandBox-FileMetaData",
+                "trigger.max": 10000
             }
         },
         {
@@ -104,12 +113,12 @@
             "config": {
                 "listens": "SandBox-FileMetaData",
                 "Python.msgType": "Python-FileMetaData",
-                "queue": 100
+                "queue": 5
             }
         },
         {
-            "id": "BPSPythonJobContainer",
-            "name": "BPSPythonJobContainer",
+            "id": "BPSPythonPipeJobContainer",
+            "name": "BPSPythonPipeJobContainer",
             "args": [],
             "config": {
                 "listens": "Python-FileMetaData",
@@ -117,7 +126,7 @@
                 "defaultPartition": "4",
                 "defaultRetryCount": "3",
                 "pythonUri": "https://github.com/PharbersDeveloper/bp-data-clean.git",
-                "pythonBranch": "v0.0.1"
+                "pythonBranch": "v0.0.2"
             }
         },
         {
@@ -141,7 +150,6 @@
     "starts": [
         "OssJobContainer",
         "SandBoxJobContainer",
-        "BPSPythonJobContainer",
-        "GenCubeJobContainer"
+        "BPSPythonPipeJobContainer"
     ]
 }

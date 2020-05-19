@@ -1,6 +1,6 @@
 package com.pharbers.StreamEngine.Jobs.Hive2EsJob.strategy
 
-import com.pharbers.util.log.PhLogable
+import com.pharbers.StreamEngine.Utils.Log.PhLogable
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.expressions.{Window, WindowSpec}
 import org.apache.spark.sql.functions._

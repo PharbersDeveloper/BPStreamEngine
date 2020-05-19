@@ -1,10 +1,11 @@
 package com.pharbers.StreamEngine.Utils.Strategy.Session.Kafka.Avro
 
-import com.databricks.spark.avro.SchemaConverters
+//import com.databricks.spark.avro.SchemaConverters
 import io.confluent.kafka.schemaregistry.client.{CachedSchemaRegistryClient, SchemaRegistryClient}
 import io.confluent.kafka.serializers.AbstractKafkaAvroDeserializer
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
+import org.apache.spark.sql.avro.SchemaConverters
 
 object BPSAvroDeserializer {
     lazy val kafkaUrl = "http://123.56.179.133:9092"

@@ -4,10 +4,9 @@ import com.pharbers.StreamEngine.Utils.Channel.Driver.BPSDriverChannel
 import com.pharbers.StreamEngine.Utils.Component2.BPSConcertEntry
 import com.pharbers.StreamEngine.Utils.Job.BPStreamJob
 import com.pharbers.StreamEngine.Utils.Event.BPSEvents
-import com.pharbers.StreamEngine.Utils.Event.EventHandler.BPSEventHandler
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamRemoteListener
 import com.pharbers.StreamEngine.Utils.Strategy.Session.Kafka.BPKafkaSession
-import com.pharbers.StreamEngine.Utils.Strategy.hdfs.BPSHDFSFile
+import com.pharbers.StreamEngine.Utils.Strategy.s3a.BPS3aFile
 import org.apache.spark.sql.DataFrame
 
 
@@ -22,31 +21,25 @@ import org.apache.spark.sql.DataFrame
   */
 case class BPSOssListener(job: BPStreamJob, msgType: String) extends BPStreamRemoteListener {
     def event2JobId(e: BPSEvents): String = e.jobId
-    lazy val hdfsfile: BPSHDFSFile =
-        BPSConcertEntry.queryComponentWithId("hdfs").get.asInstanceOf[BPSHDFSFile]
+    lazy val s3aFile: BPS3aFile =
+        BPSConcertEntry.queryComponentWithId("s3a").get.asInstanceOf[BPS3aFile]
 
     lazy val kafka: BPKafkaSession = BPSConcertEntry.queryComponentWithId("kafka").get.asInstanceOf[BPKafkaSession]
 
     override def trigger(e: BPSEvents): Unit = {
-        // TODO: 后面可变配置化
 	    val metaDataPath = job.getMetadataPath
         val sampleDataPath = job.getOutputPath
 
         e.`type` match {
             case "SandBox-Schema" => {
-//                BPSOssPartitionMeta.pushLineToHDFS(runId.id, event2JobId(e), e.data)
-//                BPSHDFSFile.appendLine2HDFS(s"$metaDataPath/${event2JobId(e)}", e.data)
-                hdfsfile.appendLine2HDFS(s"$metaDataPath/${event2JobId(e)}", e.data)
+                s3aFile.appendLine(s"$metaDataPath/${event2JobId(e)}", e.data)
             }
             case "SandBox-Labels" => {
-//                BPSHDFSFile.appendLine2HDFS(s"$metaDataPath/${event2JobId(e)}", e.data)
-                hdfsfile.appendLine2HDFS(s"$metaDataPath/${event2JobId(e)}", e.data)
+                s3aFile.appendLine(s"$metaDataPath/${event2JobId(e)}", e.data)
             }
             case "SandBox-Length" => {
-//                BPSHDFSFile.appendLine2HDFS(s"$metaDataPath/${event2JobId(e)}", e.data)
-                hdfsfile.appendLine2HDFS(s"$metaDataPath/${event2JobId(e)}", e.data)
-                //todo: 变得泛用一点
-                val fileMetaData = FileMetaData(event2JobId(e), metaDataPath, sampleDataPath, "")
+                s3aFile.appendLine(s"$metaDataPath/${event2JobId(e)}", e.data)
+                val fileMetaData = FileMetaData(event2JobId(e), metaDataPath, s"$sampleDataPath/jobId=${event2JobId(e)}", "")
                 kafka.callKafka(BPSEvents(event2JobId(e), e.traceId , msgType, fileMetaData))
             }
         }

@@ -17,7 +17,7 @@ import org.json4s.jackson.Serialization._
 class StartOSSStream extends FunSuite {
 	implicit val formats: DefaultFormats.type = DefaultFormats
 	import collection.JavaConverters._
-	val events: BPSEvents = BPSEvents("", "", "SandBox-Start-Test", Map())
+	val events: BPSEvents = BPSEvents("", "", "SandBox-Start", Map())
 	test("start dcs local job") {
 		val workerChannel = BPSWorkerChannel(InetAddress.getLocalHost.getHostAddress)
 		workerChannel.pushMessage(write(events))
@@ -76,6 +76,18 @@ class StartOSSStream extends FunSuite {
 		
 		bloodStrategy.pushBloodInfo(dataMartValue, "0001", "00001", "AssetDataMart-Test")
 	}
+	
+	test("模拟发送 complement asset 信息到golang") {
+		val bloodStrategy: BPSSetBloodStrategy = new BPSSetBloodStrategy(Map.empty)
+		val complementAsset = ComplementAsset(List("CHC", "BMS"),List("高血压"),List("AAA", "BBB"),List("2020-01", "2020-02"),List("北京", "上海"))
+		
+		bloodStrategy.complementAsset(complementAsset, "0001", "0001")
+	}
 }
 
+case class ComplementAsset(providers: List[String],
+                           markets: List[String],
+                           molecules: List[String],
+                           dataCover: List[String],
+                           geoCover: List[String])
 case class FileMetaData(jobId: String, metaDataPath: String, sampleDataPath: String, convertType: String)
