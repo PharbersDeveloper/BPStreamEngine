@@ -9,6 +9,8 @@ import com.pharbers.StreamEngine.Utils.Component2
 import com.pharbers.StreamEngine.Utils.Component2.BPSConcertEntry
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.{BPJobLocalListener, BPStreamListener}
 import com.pharbers.StreamEngine.Utils.Job.BPStreamJob
+import com.pharbers.StreamEngine.Utils.Job.Status.BPSJobStatus
+import com.pharbers.StreamEngine.Utils.Module.bloodModules.BloodModel
 import com.pharbers.StreamEngine.Utils.Strategy.BPStrategyComponent
 import com.pharbers.StreamEngine.Utils.Strategy.Blood.BPSSetBloodStrategy
 import com.pharbers.StreamEngine.Utils.Strategy.Session.Spark.msgMode.SparkQueryEvent
@@ -64,7 +66,8 @@ class BPSPythonPipeJob(override val id: String,
 
     val noticeTopic: String = jobConf("noticeTopic").toString
     val datasetId: String = jobConf("datasetId").toString
-    val parentsId: List[CharSequence] = jobConf("parentsId").asInstanceOf[List[CharSequence]]
+    val parentsId: List[String] = jobConf("parentsId").asInstanceOf[List[String]]
+    val assetId: String = jobConf("assetId").toString
 
     val resultPath: String = {
         val path = jobConf("resultPath").toString
@@ -87,6 +90,7 @@ class BPSPythonPipeJob(override val id: String,
     import spark.implicits._
 
     override def open(): Unit = {
+        regPedigree(BPSJobStatus.Start.toString)
         inputStream = is
     }
 
@@ -148,24 +152,24 @@ class BPSPythonPipeJob(override val id: String,
 //    }
 
     // 注册血统
-    def regPedigree(): Unit = {
-        import collection.JavaConverters._
-        val dfs = new DataSet(
-            parentsId.asJava,
+    def regPedigree(status: String): Unit = {
+        val dfs = BloodModel(
             datasetId,
+            assetId,
+            parentsId,
             id,
-            Collections.emptyList(),
+            Nil,
             "",
             data_length,
             successPath,
-            "Python 清洗 Job")
+            "Python 清洗 Job", status)
+
         // TODO 齐 弄出traceId
         bloodStrategy.pushBloodInfo(dfs, id,"")
-//        BPSBloodJob("data_set_job", dfs).exec()
     }
 
     override def close(): Unit = {
-        regPedigree()
+        regPedigree(BPSJobStatus.End.toString)
         noticeFunc(noticeTopic, Map(
             "jobId" -> id,
             "datasetId" -> datasetId,

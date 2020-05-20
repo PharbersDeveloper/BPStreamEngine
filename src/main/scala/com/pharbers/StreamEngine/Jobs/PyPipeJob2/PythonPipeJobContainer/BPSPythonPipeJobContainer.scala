@@ -131,7 +131,7 @@ class BPSPythonPipeJobContainer(override val componentProperty: Component2.BPCom
         val jobId: String = jobMsg.getOrElse("jobId", UUID.randomUUID()).toString
         val parentsId: List[CharSequence] = jobMsg.getOrElse("mongoId", "").toString.split(",").toList.map(_.asInstanceOf[CharSequence])
         val datasetId: String = jobMsg.getOrElse("datasetId", new ObjectId()).toString
-
+        val assetId: String = jobMsg.getOrElse("assetId", "").toString
         val noticeTopic: String = jobMsg.getOrElse("noticeTopic", fileMsgType).toString
         val partition: String = jobMsg.getOrElse("partition", defaultPartition).toString
         val retryCount: String = jobMsg.getOrElse("retryCount", defaultRetryCount).toString
@@ -160,6 +160,7 @@ class BPSPythonPipeJobContainer(override val componentProperty: Component2.BPCom
         val job = BPSPythonPipeJob(jobId, spark, Some(reading), noticeFunc, finishJobWithId, Map(
             "noticeTopic" -> noticeTopic,
             "datasetId" -> datasetId,
+            "assetId" -> assetId,
             "parentsId" -> parentsId,
             "resultPath" -> resultPath,
             "lastMetadata" -> metadata,
