@@ -26,7 +26,7 @@ object SparkStream extends App {
             .schema(StructType(Seq(StructField("value", IntegerType))))
             .parquet(path)
             .writeStream
-            .foreachBatch((data, size) => {
+            .foreachBatch((data, batchId) => {
                 data.select("value").rdd
                         .map(x => x.getAs[Int](0))
                         .pipe("python D:\\code\\pharbers\\BPStream\\BPStreamEngine\\src\\py\\test.py")
@@ -41,5 +41,6 @@ object write extends App{
     val spark = SparkSession.builder().config(new SparkConf().setMaster("local[2]")).enableHiveSupport().getOrCreate()
     import spark.implicits._
     List(1,2,3).toDF("value")
-            .write.mode("append").parquet("/user/dcs/test/testFileStream/source")
+            .write.mode("append")
+            .format("delta").save("s3a://ph-stream/test/test_delta")
 }

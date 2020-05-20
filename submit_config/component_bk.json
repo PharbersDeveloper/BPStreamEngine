@@ -117,8 +117,8 @@
       }
     },
     {
-      "id": "BPSPythonPipeJobContainer",
-      "name": "BPSPythonPipeJobContainer",
+      "id": "BPSPythonJobContainer",
+      "name": "BPSPythonJobContainer",
       "args": [],
       "config": {
         "listens": "Python-FileMetaData",
@@ -150,6 +150,6 @@
   "starts": [
     "OssJobContainer",
     "SandBoxJobContainer",
-    "BPSPythonPipeJobContainer"
+    "BPSPythonJobContainer"
   ]
 }

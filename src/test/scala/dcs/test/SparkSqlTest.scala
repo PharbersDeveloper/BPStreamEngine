@@ -4,7 +4,10 @@ import com.pharbers.StreamEngine.Jobs.EditDistanceJob.BPEditDistance
 import com.pharbers.StreamEngine.Utils.Component2.{BPSComponentConfig, BPSConcertEntry}
 import com.pharbers.StreamEngine.Utils.Strategy.Session.Spark.BPSparkSession
 import dcs.test.SpecUnitTransform.spark
+import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.spark.SparkConf
+import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{Row, SparkSession}
 import org.apache.spark.sql.functions._
 
@@ -42,14 +45,19 @@ object SparkSqlTest extends App {
 }
 
 object SparkSql extends App {
+    val conf = new Configuration
+    conf.set("fs.defaultFS", "hdfs://192.168.100.14:8020")
+    val hdfs = FileSystem.newInstance(conf)
+    hdfs.delete(new Path("hdfs://192.168.100.14:8020/test/testBPStream/sandBoxRes/metadata"), true)
     val spark = SparkSession.builder().config(new SparkConf().setMaster("local[2]")).enableHiveSupport().getOrCreate()
+    spark.sparkContext.hadoopConfiguration.set("fs.s3a.access.key", sys.env("S3_ACCESS_KEY"))
+    spark.sparkContext.hadoopConfiguration.set("fs.s3a.secret.key", sys.env("S3_SECRET_KEY"))
+    spark.sparkContext.hadoopConfiguration.set("fs.s3a.endpoint", "s3.cn-northwest-1.amazonaws.com.cn")
     //    val spark = BPSConcertEntry.queryComponentWithId("spark").get.asInstanceOf[BPSparkSession]
     spark.sparkContext.setLogLevel("WARN")
-    val df = spark.read.parquet("/user/dcs/test/human_replace")
+    val df: RDD[String] = spark.sparkContext.textFile("s3a://ph-stream/jobs/runId_5ebd213c4e81e22052f713dd/BPSSandBoxConvertSchemaJob/jobId_010d813b-31e7-4167-ba17-9fa557a4b8bb/metadata")
 
-
-    df.show(false)
-	df.write.mode("overwrite").option("path", "/common/public/cpa_replace/cpa_replace_0.0.12_0.0.10/0.0.23").saveAsTable("cpa_replace")
+    df.saveAsTextFile("hdfs://192.168.100.14:8020/test/testBPStream/sandBoxRes/metadata")
     //    val schemaDf = spark.read.parquet("/test/testBPStream/ossJobRes/400wDfsTest")
     //    schemaDf.write.mode("overwrite").parquet("/test/testBPStream/ossJobRes/800wDfs2")
     //    val df = spark.readStream
