@@ -7,7 +7,7 @@ import com.pharbers.StreamEngine.Utils.Event.BPSEvents
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPJobLocalListener
 import com.pharbers.StreamEngine.Utils.Job.Status.BPSJobStatus
 import com.pharbers.StreamEngine.Utils.Job.{BPSJobContainer, BPStreamJob}
-import com.pharbers.StreamEngine.Utils.Module.bloodModules.{BloodModel, DataMartTagModel, UploadEndModel}
+import com.pharbers.StreamEngine.Utils.Module.bloodModules.{BloodModel, BloodModel2, DataMartTagModel, UploadEndModel}
 import com.pharbers.StreamEngine.Utils.Strategy.Blood.BPSSetBloodStrategy
 import com.pharbers.StreamEngine.Utils.Strategy.JobStrategy.BPSCommonJobStrategy
 import com.pharbers.StreamEngine.Utils.Strategy.Schema.{BPSMetaData2Map, SchemaConverter}
@@ -101,12 +101,11 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer, input: Option[
 		
 		metaData match {
 			case Some(md) =>
-				pushBloodMsg(BPSJobStatus.Start.toString, md)
 				totalNum = md.length("length").toString.toLong
 				// 将规范过后的MetaData重新写入
 				writeMetaData(getMetadataPath, md)
 				// 告诉pyjob有数据了
-				pushPyJob(md)
+//				pushPyJob(md)
 				// 规范化的Schema设置Stream
 				df match {
 					case Some(is) => Some(
@@ -146,7 +145,16 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer, input: Option[
 		val bloodModel = BloodModel(mongoId, metaData.label("assetId").toString, Nil,
 			id, metaData.schemaData.map(_ ("key").toString),
 			metaData.label("sheetName").toString, totalNum,
-			getOutputPath, "SampleData", status)
+			getOutputPath, "schemaJob", status)
+//		val bloodModel = BloodModel2(
+//			jobId = "jobId", // TODO 还差JobId
+//			columnNames = metaData.schemaData.map(_ ("key").toString),
+//			tabName = metaData.label("sheetName").toString,
+//			length = totalNum,
+//			url = getOutputPath,
+//			description = "schemaJob",
+//			status = status)
+		
 		
 		// 血缘
 		bloodStrategy.pushBloodInfo(bloodModel, id, traceId)
@@ -175,6 +183,13 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer, input: Option[
 	
 	case class PythonMetaData(mongoId: String,
 	                          assetId: String,
+	                          noticeTopic: String,
+	                          metadataPath: String,
+	                          filesPath: String,
+	                          resultPath: String)
+	
+	
+	case class PythonMetaData2(jobId: String,
 	                          noticeTopic: String,
 	                          metadataPath: String,
 	                          filesPath: String,

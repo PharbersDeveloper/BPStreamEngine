@@ -7,7 +7,7 @@ import com.pharbers.StreamEngine.Utils.Channel.Worker.BPSWorkerChannel
 import com.pharbers.StreamEngine.Utils.Component2.BPSConcertEntry
 import com.pharbers.StreamEngine.Utils.Event.BPSEvents
 import com.pharbers.StreamEngine.Utils.Job.Status.BPSJobStatus
-import com.pharbers.StreamEngine.Utils.Module.bloodModules.{AssetDataMartModel, BloodModel, ComplementAssetModel, UploadEndModel}
+import com.pharbers.StreamEngine.Utils.Module.bloodModules.{AssetDataMartModel, BloodModel, BloodModel2, ComplementAssetModel, UploadEndModel}
 import com.pharbers.StreamEngine.Utils.Strategy.Blood.BPSSetBloodStrategy
 import com.pharbers.StreamEngine.Utils.Strategy.Session.Kafka.BPKafkaSession
 import org.bson.types.ObjectId
@@ -94,4 +94,18 @@ class StartOSSStream extends FunSuite {
 		
 		bloodStrategy.complementAsset(complementAsset, "0001", "0001")
 	}
+
+	test("模拟发送邓钱 Job结束") {
+		val bloodStrategy: BPSSetBloodStrategy = new BPSSetBloodStrategy(Map.empty)
+		val bloodModel = BloodModel2(
+			jobId = "schema_job_5ec6093b404c0531bff29ac9",
+			columnNames = "A" :: "B" :: Nil,
+			tabName = "Fuck",
+			length = 100,
+			url = "s3a://ph-stream/jobs/runId_xxxx/schemaJob/jobId_xxxx/subId_xxxx/xxxxxx",
+			description = "schemaJob",
+			status = BPSJobStatus.End.toString)
+		bloodStrategy.pushBloodInfo(bloodModel, "0001", "00001", "PushDs")
+	}
+	
 }
