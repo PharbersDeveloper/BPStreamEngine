@@ -142,18 +142,18 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer, input: Option[
 	}
 	
 	def pushBloodMsg(status: String, metaData: MetaData): Unit = {
-		val bloodModel = BloodModel(mongoId, metaData.label("assetId").toString, Nil,
-			id, metaData.schemaData.map(_ ("key").toString),
-			metaData.label("sheetName").toString, totalNum,
-			getOutputPath, "schemaJob", status)
-//		val bloodModel = BloodModel2(
-//			jobId = "jobId", // TODO 还差JobId
-//			columnNames = metaData.schemaData.map(_ ("key").toString),
-//			tabName = metaData.label("sheetName").toString,
-//			length = totalNum,
-//			url = getOutputPath,
-//			description = "schemaJob",
-//			status = status)
+//		val bloodModel = BloodModel(mongoId, metaData.label("assetId").toString, Nil,
+//			id, metaData.schemaData.map(_ ("key").toString),
+//			metaData.label("sheetName").toString, totalNum,
+//			getOutputPath, "schemaJob", status)
+		val bloodModel = BloodModel2(
+			jobId = "jobId", // TODO 还差JobId
+			columnNames = metaData.schemaData.map(_ ("key").toString),
+			tabName = metaData.label("sheetName").toString,
+			length = totalNum,
+			url = getOutputPath,
+			description = "schemaJob",
+			status = status)
 		
 		
 		// 血缘
