@@ -34,7 +34,7 @@ case class BPSqlTableJob(container: BPSJobContainer, override val componentPrope
     override type T = BPSCommonJobStrategy
     override val strategy: BPSCommonJobStrategy = BPSCommonJobStrategy(componentProperty, configDef)
     private val jobConfig: BPSConfig = strategy.getJobConfig
-    val jobId: String = strategy.getJobId
+    override val jobId: String = strategy.getJobId
     val runId: String = strategy.getRunId
     override val id: String = strategy.getId
     val spark: SparkSession = strategy.getSpark

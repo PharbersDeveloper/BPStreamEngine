@@ -57,14 +57,19 @@ class BPSKafkaMsgJob(container: BPSJobContainer, val componentProperty: Componen
                         def process(value: Row): Unit = {
 
                             implicit val formats: DefaultFormats.type = DefaultFormats
-
                             val event = BPSEvents(
                                 value.getAs[String]("jobId"),
                                 value.getAs[String]("traceId"),
                                 value.getAs[String]("type"),
-                                value.getAs[String]("data"),
-                                value.getAs[java.sql.Timestamp]("timestamp")
+                                Map("data" -> value.getAs[String]("data"), "id" -> value.getAs[String]("id"))
                             )
+//                            val event = BPSEvents(
+//                                value.getAs[String]("jobId"),
+//                                value.getAs[String]("traceId"),
+//                                value.getAs[String]("type"),
+//                                value.getAs[String]("data"),
+//                                value.getAs[java.sql.Timestamp]("timestamp")
+//                            )
                             channel.get.pushMessage(write(event))
                         }
 

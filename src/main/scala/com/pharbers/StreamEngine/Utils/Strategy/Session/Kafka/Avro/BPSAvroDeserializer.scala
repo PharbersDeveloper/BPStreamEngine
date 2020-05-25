@@ -1,6 +1,5 @@
 package com.pharbers.StreamEngine.Utils.Strategy.Session.Kafka.Avro
 
-//import com.databricks.spark.avro.SchemaConverters
 import io.confluent.kafka.schemaregistry.client.{CachedSchemaRegistryClient, SchemaRegistryClient}
 import io.confluent.kafka.serializers.AbstractKafkaAvroDeserializer
 import org.apache.avro.Schema
@@ -8,8 +7,10 @@ import org.apache.avro.generic.GenericRecord
 import org.apache.spark.sql.avro.SchemaConverters
 
 object BPSAvroDeserializer {
-    lazy val kafkaUrl = "http://123.56.179.133:9092"
-    lazy val schemaRegistryUrl = "http://123.56.179.133:8081"
+
+    //todo: 硬编码是不行的
+    lazy val kafkaUrl = "http://broker-svc.message:9092"
+    lazy val schemaRegistryUrl = "http://schema.message:8081"
 
     lazy val schemaRegistryClient = new CachedSchemaRegistryClient(schemaRegistryUrl, 128)
     lazy val kafkaAvroDeserializer = new BPSAvroDeserializer(schemaRegistryClient)

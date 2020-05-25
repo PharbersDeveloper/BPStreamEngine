@@ -3,10 +3,10 @@ package com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxConvertSchemaJobContain
 import java.net.InetAddress
 
 import com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxJobContainer.BPSSandBoxJobContainer
-import com.pharbers.StreamEngine.Others.alex.sandbox.FileMetaData
 import com.pharbers.StreamEngine.Utils.Channel.Local.BPSLocalChannel
 import com.pharbers.StreamEngine.Utils.Channel.Worker.BPSWorkerChannel
 import com.pharbers.StreamEngine.Utils.Component2.BPSConcertEntry
+//import com.pharbers.StreamEngine.Utils.Event.msgMode.FileMetaData
 import com.pharbers.StreamEngine.Utils.Event.{BPSEvents, BPSTypeEvents}
 import com.pharbers.StreamEngine.Utils.Strategy.Session.Spark.BPSparkSession
 import com.pharbers.StreamEngine.Utils.Log.PhLogable
@@ -38,7 +38,7 @@ class TestBPSSandBoxConvertSchemaJob extends FunSuite with PhLogable{
         var step = 100
         while (step > 0){
             jobIds.foreach(jobId => {
-                val data = FileMetaData(jobId, "/test/testBPStream/ossJobRes/metadata",
+                val data = FileMetaData(jobId, "", "/test/testBPStream/ossJobRes/metadata",
                     "/test/testBPStream/ossJobRes/contents", "")
                 jobContainer.starJob(BPSTypeEvents(BPSEvents(jobId, "test", "SandBox-FileMetaData", data)))
                 logger.info(s"jobId: $jobId")
@@ -71,10 +71,11 @@ class TestBPSSandBoxConvertSchemaJob extends FunSuite with PhLogable{
         val spark = BPSConcertEntry.queryComponentWithId("spark").get.asInstanceOf[BPSparkSession]
         spark.sparkContext.setLogLevel("INFO")
         val jobId = "test"
-        val data = FileMetaData(jobId, "/test/testBPStream/ossJobRes/metadata",
+        val data = FileMetaData(jobId,"", "/test/testBPStream/ossJobRes/metadata",
             "/test/testBPStream/ossJobRes/400wContents", "")
         jobContainer.starJob(BPSTypeEvents(BPSEvents(jobId, "test", "SandBox-FileMetaData", data)))
         logger.info(s"jobId: $jobId")
         Thread.sleep(1000 * 60)
     }
+    case class FileMetaData(jobId: String, id: String, metaDataPath: String, sampleDataPath: String, convertType: String)
 }

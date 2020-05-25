@@ -125,7 +125,7 @@ class BPSPythonJobContainer(override val componentProperty: Component2.BPCompone
      */
     implicit val formats: DefaultFormats.type = org.json4s.DefaultFormats
     def starJob(event: BPSTypeEvents[Map[String, String]]): Unit = {
-        val jobMsg = event.date
+        val jobMsg = event.data
 
         // 获得 PyJob 参数信息
         val jobId: String = jobMsg.getOrElse("jobId", UUID.randomUUID()).toString

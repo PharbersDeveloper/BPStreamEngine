@@ -27,7 +27,7 @@ class BPEditDistance(jobContainer: BPSJobContainer, override val componentProper
 
     override type T = BPSCommonJobStrategy
     override val strategy: BPSCommonJobStrategy = new BPSCommonJobStrategy(componentProperty, configDef)
-    val jobId: String = strategy.getJobId
+    override val jobId: String = strategy.getJobId
     val runId: String = strategy.getRunId
     override val id: String = strategy.getId
     override val spark: SparkSession = strategy.getSpark

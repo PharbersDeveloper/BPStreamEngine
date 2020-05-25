@@ -31,7 +31,7 @@ class TestBPSKafkaMsgJob extends FunSuite with BeforeAndAfterAll{
         val listen = BPJobRemoteListener[Map[String, String]](msgJob, List("test"))(x => {
             println(s"get msg ${x.toString}")
             getMsg = true
-            assert(x.date.toString() == Map("key" -> "value").toString())
+            assert(x.data.toString() == Map("key" -> "value").toString())
         })
         listen.active(null)
         val kafkaSession = BPSConcertEntry.queryComponentWithId("kafka").get.asInstanceOf[BPKafkaSession]

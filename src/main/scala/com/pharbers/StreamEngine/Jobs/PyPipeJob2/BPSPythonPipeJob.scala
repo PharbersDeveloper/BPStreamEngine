@@ -130,7 +130,7 @@ class BPSPythonPipeJob(override val id: String,
 
                 outputStream = query :: outputStream
                 val stopListener = BPJobLocalListener[SparkQueryEvent](null, List(s"spark-${query.id.toString}-progress"))(x => {
-                    logger.info(s"listener hit python job query ${x.date.id}")
+                    logger.info(s"listener hit python job query ${x.data.id}")
                     val cumulative = query.recentProgress.map(_.numInputRows).sum
                     logger.info(s"cumulative num $cumulative, id: $id, query: ${query.id.toString}")
                     if (cumulative >= data_length) {
