@@ -46,7 +46,7 @@ class TestBPSqlTableJobContainer extends FunSuite with BeforeAndAfterAll{
                 .pushMessage(write(BPSEvents("", "", "SandBox-hive", Map("datasetId" -> "", "taskType" -> "end", "url" -> "/test/testBPStream/pyJobRes/contents", "length" -> 0, "remarks" -> ""))))
         //        assert(jobContainer.tasks.isEmpty)
         val listener = BPJobLocalListener[String](null, List("job-status"))(x => {
-            assert(x.date == BPSJobStatus.Success.toString)
+            assert(x.data == BPSJobStatus.Success.toString)
             spark.sql("drop table test")
         })
         listener.active(null)

@@ -28,7 +28,7 @@ class HumanReplaceJob(override val componentProperty: Component2.BPComponentConf
 
     override type T = BPSCommonJobStrategy
     override val strategy: BPSCommonJobStrategy = BPSCommonJobStrategy(componentProperty, configDef)
-    val jobId: String = strategy.getJobId
+    override val jobId: String = strategy.getJobId
     val runId: String = strategy.getRunId
     override val id: String = jobId
     override val description: String = "human_replace_job"

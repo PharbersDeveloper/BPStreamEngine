@@ -34,12 +34,12 @@ class PharbersKafkaProducer[K, V] extends PhLogable{
     config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, kafka_config_obj.keyDefaultSerializer)
     config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, kafka_config_obj.valueDefaultSerializer)
     config.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, kafka_config_obj.schemaRegistryUrl)
-    config.put("security.protocol", kafka_config_obj.securityProtocol)
-    config.put("ssl.endpoint.identification.algorithm", kafka_config_obj.sslAlgorithm)
-    config.put("ssl.truststore.location", kafka_config_obj.sslTruststoreLocation)
-    config.put("ssl.truststore.password", kafka_config_obj.sslTruststorePassword)
-    config.put("ssl.keystore.location", kafka_config_obj.sslKeystoreLocation)
-    config.put("ssl.keystore.password", kafka_config_obj.sslKeystorePassword)
+//    config.put("security.protocol", kafka_config_obj.securityProtocol)
+//    config.put("ssl.endpoint.identification.algorithm", kafka_config_obj.sslAlgorithm)
+//    config.put("ssl.truststore.location", kafka_config_obj.sslTruststoreLocation)
+//    config.put("ssl.truststore.password", kafka_config_obj.sslTruststorePassword)
+//    config.put("ssl.keystore.location", kafka_config_obj.sslKeystoreLocation)
+//    config.put("ssl.keystore.password", kafka_config_obj.sslKeystorePassword)
     val producer = new KafkaProducer[K, V](config)
 
 
@@ -63,9 +63,9 @@ object kafka_config_obj extends PharbersInjectModule {
             "keyDefaultSerializer" :: "valueDefaultSerializer" ::
             "keyDefaultDeserializer" :: "valueDefaultDeserializer" ::
             "schemaRegistryUrl" :: "specificAvroReader" ::
-            "securityProtocol" :: "sslAlgorithm" ::
-            "sslTruststoreLocation" :: "sslTruststorePassword" ::
-            "sslKeystoreLocation" :: "sslKeystorePassword" ::
+//            "securityProtocol" :: "sslAlgorithm" ::
+//            "sslTruststoreLocation" :: "sslTruststorePassword" ::
+//            "sslKeystoreLocation" :: "sslKeystorePassword" ::
             Nil
 
     lazy val broker: String = config.mc.find(p => p._1 == "broker").get._2.toString
@@ -78,12 +78,12 @@ object kafka_config_obj extends PharbersInjectModule {
     lazy val valueDefaultDeserializer: String = config.mc.find(p => p._1 == "valueDefaultDeserializer").get._2.toString
     lazy val schemaRegistryUrl: String = config.mc.find(p => p._1 == "schemaRegistryUrl").get._2.toString
     lazy val specificAvroReader: String = config.mc.find(p => p._1 == "specificAvroReader").get._2.toString
-    lazy val securityProtocol: String = config.mc.find(p => p._1 == "securityProtocol").get._2.toString
-    lazy val sslAlgorithm: String = config.mc.find(p => p._1 == "sslAlgorithm").get._2.toString
-    lazy val sslTruststoreLocation: String = config.mc.find(p => p._1 == "sslTruststoreLocation").get._2.toString
-    lazy val sslTruststorePassword: String = config.mc.find(p => p._1 == "sslTruststorePassword").get._2.toString
-    lazy val sslKeystoreLocation: String = config.mc.find(p => p._1 == "sslKeystoreLocation").get._2.toString
-    lazy val sslKeystorePassword: String = config.mc.find(p => p._1 == "sslKeystorePassword").get._2.toString
+//    lazy val securityProtocol: String = config.mc.find(p => p._1 == "securityProtocol").get._2.toString
+//    lazy val sslAlgorithm: String = config.mc.find(p => p._1 == "sslAlgorithm").get._2.toString
+//    lazy val sslTruststoreLocation: String = config.mc.find(p => p._1 == "sslTruststoreLocation").get._2.toString
+//    lazy val sslTruststorePassword: String = config.mc.find(p => p._1 == "sslTruststorePassword").get._2.toString
+//    lazy val sslKeystoreLocation: String = config.mc.find(p => p._1 == "sslKeystoreLocation").get._2.toString
+//    lazy val sslKeystorePassword: String = config.mc.find(p => p._1 == "sslKeystorePassword").get._2.toString
 }
 
 

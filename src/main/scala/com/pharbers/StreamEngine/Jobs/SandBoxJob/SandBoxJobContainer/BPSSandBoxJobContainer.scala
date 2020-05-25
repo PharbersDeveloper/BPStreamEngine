@@ -1,9 +1,6 @@
 package com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxJobContainer
 
-import java.util.UUID
-import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.atomic.AtomicInteger
-
 import com.pharbers.StreamEngine.Jobs.SandBoxJob.BPSSandBoxConvertSchemaJob
 import com.pharbers.StreamEngine.Utils.Annotation.Component
 import com.pharbers.StreamEngine.Utils.Channel.Local.BPSLocalChannel
@@ -12,6 +9,7 @@ import com.pharbers.StreamEngine.Utils.Component2.{BPSComponentConfig, BPSConcer
 import com.pharbers.StreamEngine.Utils.Event.{BPSEvents, BPSTypeEvents}
 import com.pharbers.StreamEngine.Utils.Event.EventHandler.BPSEventHandler
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.{BPJobLocalListener, BPJobRemoteListener, BPStreamListener}
+import com.pharbers.StreamEngine.Utils.Event.msgMode.FileMetaData
 import com.pharbers.StreamEngine.Utils.Job.{BPDynamicStreamJob, BPSJobContainer, BPStreamJob}
 import com.pharbers.StreamEngine.Utils.Strategy.JobStrategy.BPSCommonJobStrategy
 import org.apache.kafka.common.config.ConfigDef
@@ -37,10 +35,10 @@ class BPSSandBoxJobContainer(override val componentProperty: Component2.BPCompon
 	val description: String = "SandBox Start"
 	type T = BPSCommonJobStrategy
 	val strategy: BPSCommonJobStrategy = BPSCommonJobStrategy(componentProperty.config, configDef)
-	val queue = new mutable.Queue[Map[String, AnyRef]]
+	val queue = new mutable.Queue[BPSTypeEvents[FileMetaData]]
 	val execQueueJob = new AtomicInteger(0)
 	val id: String = componentProperty.id
-	val jobId: String = strategy.getJobId
+	override val jobId: String = strategy.getJobId
 	val localChanel: BPSLocalChannel = BPSConcertEntry.queryComponentWithId("local channel").get.asInstanceOf[BPSLocalChannel]
 
 	override val spark: SparkSession = strategy.getSpark
@@ -54,8 +52,8 @@ class BPSSandBoxJobContainer(override val componentProperty: Component2.BPCompon
 		logger.info("Exec Listener")
 		
 		val listenEvent: Seq[String] = strategy.getListens
-		val listener: BPJobRemoteListener[Map[String, String]] =
-			BPJobRemoteListener[Map[String, String]](this, listenEvent.toList)(x => starJob(x))
+		val listener: BPJobRemoteListener[FileMetaData] =
+			BPJobRemoteListener[FileMetaData](this, listenEvent.toList)(x => starJob(x))
 		listener.active(null)
 		listeners = listener +: listeners
 		
@@ -87,17 +85,12 @@ class BPSSandBoxJobContainer(override val componentProperty: Component2.BPCompon
 		)
 	}
 	
-	def starJob(event: BPSTypeEvents[Map[String, String]]): Unit = {
-		if(!strategy.getS3aFile.checkPath(event.date.getOrElse("sampleDataPath", ""))){
-			strategy.getS3aFile.appendLine(event.date.getOrElse("sampleDataPath", "") + "/_SUCCESS","")
+	def starJob(event: BPSTypeEvents[FileMetaData]): Unit = {
+		if(!strategy.getS3aFile.checkPath(event.data.sampleDataPath)){
+			strategy.getS3aFile.appendLine(event.data.sampleDataPath + "/_SUCCESS","")
 		}
-		
-		val jobParameter = Map(
-			"sampleDataPath" -> event.date.getOrElse("sampleDataPath", ""),
-			"traceId" -> event.traceId,
-			"data" -> event.date
-		)
-		queue.enqueue(jobParameter)
+
+		queue.enqueue(event)
 		
 		if (execQueueJob.get() < componentProperty.config("queue").toInt) {
 			runJob()
@@ -116,13 +109,13 @@ class BPSSandBoxJobContainer(override val componentProperty: Component2.BPCompon
 						StructField("type", StringType) ::
 						StructField("data", StringType) ::
 						StructField("timestamp", TimestampType) :: Nil
-				)).parquet(jobParameter("sampleDataPath").toString)
+				)).parquet(jobParameter.data.sampleDataPath)
 			
 			val pythonMsgType: String = strategy.jobConfig.getString(FILE_MSG_TYPE_KEY)
-			val job = BPSSandBoxConvertSchemaJob(this, Some(reading), BPSComponentConfig(UUID.randomUUID().toString,
+			val job = BPSSandBoxConvertSchemaJob(this, Some(reading), BPSComponentConfig(jobParameter.data.id,
 				"BPSSandBoxConvertSchemaJob",
-				jobParameter("traceId").toString :: pythonMsgType :: Nil,
-				jobParameter("data").asInstanceOf[Map[String, String]]))
+				jobParameter.traceId :: pythonMsgType :: Nil,
+				Map("jobId" -> jobParameter.data.jobId)))
 			
 			jobs += job.id -> job
 			try {

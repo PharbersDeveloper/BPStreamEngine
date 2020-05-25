@@ -30,9 +30,9 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer, input: Option[
 	override val strategy: BPSCommonJobStrategy = BPSCommonJobStrategy(componentProperty.config, configDef)
 	val bloodStrategy: BPSSetBloodStrategy = new BPSSetBloodStrategy(componentProperty.config)
 	override val id: String = componentProperty.id // 本身Job的id
-	val jobId: String = strategy.getJobId // componentProperty config中的job Id
+	override val jobId: String = strategy.getJobId // componentProperty config中的job Id
 	val runnerId: String = BPSConcertEntry.runner_id // Runner Id
-	val s3aFile: BPS3aFile = BPSConcertEntry.queryComponentWithId("s3a").get.asInstanceOf[BPS3aFile]
+	val s3aFile: BPS3aFile = strategy.getS3aFile
 	val traceId: String = componentProperty.args.head
 	val msgType: String = componentProperty.args.last
 	val spark: SparkSession = strategy.getSpark
@@ -56,7 +56,7 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer, input: Option[
 			
 			val rowNumListener =
 				BPJobLocalListener[SparkQueryEvent](null, List(s"spark-${query.id.toString}-progress"))(x => {
-					logger.info(s"listener hit query ${x.date.id}")
+					logger.info(s"listener hit query ${x.data.id}")
 					checkQuery()
 				})
 			rowNumListener.active(null)

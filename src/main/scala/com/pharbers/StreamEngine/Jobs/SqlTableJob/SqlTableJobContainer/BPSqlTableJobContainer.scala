@@ -40,7 +40,7 @@ class BPSqlTableJobContainer(override val componentProperty: Component2.BPCompon
     override def createConfigDef(): ConfigDef = new ConfigDef()
     override val spark: SparkSession = strategy.getSpark
 
-    val jobId: String = strategy.getJobId
+    override val jobId: String = strategy.getJobId
     val id: String = strategy.getId
     val description: String = "sql_table"
 
@@ -65,10 +65,10 @@ class BPSqlTableJobContainer(override val componentProperty: Component2.BPCompon
         //        val listener = BPSqlTableKafkaListener(this, jobConfig.getString(TOPIC_CONFIG_KEY))
         val hiveTaskListener = BPJobRemoteListener[HiveTask](this, strategy.getListens.toList)(hiveTaskHandle)
         hiveTaskListener.active(null)
-        val checkListener = BPJobLocalListener[List[String]](this, List(CHECK_EVENT_TYPE))(x => addJobConfig(x.jobId, x.date))
+        val checkListener = BPJobLocalListener[List[String]](this, List(CHECK_EVENT_TYPE))(x => addJobConfig(x.jobId, x.data))
         checkListener.active(null)
         val jobFinishListener = BPJobLocalListener[String](this, List(strategy.JOB_STATUS_EVENT_TYPE))(x =>
-            if(x.date == BPSJobStatus.Success.toString) finishJobWithId(x.jobId))
+            if(x.data == BPSJobStatus.Success.toString) finishJobWithId(x.jobId))
         jobFinishListener.active(null)
         listeners = listeners :+ hiveTaskListener :+ checkListener :+ jobFinishListener
     }
@@ -137,7 +137,7 @@ class BPSqlTableJobContainer(override val componentProperty: Component2.BPCompon
     }
 
     private def hiveTaskHandle(msg: BPSTypeEvents[HiveTask]): Unit = {
-        val data = msg.date
+        val data = msg.data
         data.taskType match {
             case "end" => runJob(msg.traceId)
             case _ =>

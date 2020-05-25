@@ -45,7 +45,7 @@ class BPSOssPartitionJobContainer(override val componentProperty: Component2.BPC
     type T = BPSCommonJobStrategy
     val strategy = BPSCommonJobStrategy(componentProperty, configDef)
     val id: String = strategy.getId
-    val jobId: String = strategy.getJobId
+    override val jobId: String = strategy.getJobId
     override val spark: SparkSession = strategy.getSpark
 
     import spark.implicits._
@@ -54,11 +54,11 @@ class BPSOssPartitionJobContainer(override val componentProperty: Component2.BPC
         val kafkaSession: BPKafkaSession = strategy.getKafka
         val reading = spark.readStream
                 .format("kafka")
-                .option("kafka.bootstrap.servers", "123.56.179.133:9092")
-                .option("kafka.security.protocol", "SSL")
-                .option("kafka.ssl.keystore.location", "./kafka.broker1.keystore.jks")
+                .option("kafka.bootstrap.servers", "broker-svc.message:9092")
+//                .option("kafka.security.protocol", "SSL")
+//                .option("kafka.ssl.keystore.location", "./kafka.broker1.keystore.jks")
                 .option("kafka.ssl.keystore.password", "pharbers")
-                .option("kafka.ssl.truststore.location", "./kafka.broker1.truststore.jks")
+//                .option("kafka.ssl.truststore.location", "./kafka.broker1.truststore.jks")
                 .option("kafka.ssl.truststore.password", "pharbers")
                 .option("kafka.ssl.endpoint.identification.algorithm", " ")
                 .option("maxOffsetsPerTrigger", strategy.getJobConfig.getLong(MAX_OFFSETS_TRIGGER_KEY))
@@ -110,7 +110,7 @@ class BPSOssPartitionJobContainer(override val componentProperty: Component2.BPC
     }
 
     def starOssJob(event: BPSTypeEvents[Map[String, String]]): Unit = {
-        val job = BPSOssPartitionJob(this, BPSComponentConfig(UUID.randomUUID().toString, "BPSKafkaMsgJob", Nil, event.date))
+        val job = BPSOssPartitionJob(this, BPSComponentConfig(UUID.randomUUID().toString, "BPSKafkaMsgJob", Nil, event.data))
         jobs += job.id -> job
         job.open()
         job.exec()

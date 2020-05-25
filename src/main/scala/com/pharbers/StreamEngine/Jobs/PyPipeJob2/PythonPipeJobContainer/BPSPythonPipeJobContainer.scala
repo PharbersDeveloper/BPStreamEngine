@@ -125,7 +125,7 @@ class BPSPythonPipeJobContainer(override val componentProperty: Component2.BPCom
      * }}}
      */
     def starJob(event: BPSTypeEvents[Map[String, String]]): Unit = {
-        val jobMsg = event.date
+        val jobMsg = event.data
 
         // 获得 PyJob 参数信息
         val jobId: String = jobMsg.getOrElse("jobId", UUID.randomUUID()).toString
