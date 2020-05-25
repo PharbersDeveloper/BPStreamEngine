@@ -57,11 +57,15 @@ class BPSKafkaMsgJob(container: BPSJobContainer, val componentProperty: Componen
                         def process(value: Row): Unit = {
 
                             implicit val formats: DefaultFormats.type = DefaultFormats
+                            val `type` =  value.getAs[String]("type")
+                            val data = if(`type` == "SandBox-Schema" || `type` == "SandBox-Labels" || `type` == "SandBox-Length") {
+                                Map("data" -> value.getAs[String]("data"), "id" -> value.getAs[String]("id"))
+                            } else value.getAs[String]("data")
                             val event = BPSEvents(
                                 value.getAs[String]("jobId"),
                                 value.getAs[String]("traceId"),
-                                value.getAs[String]("type"),
-                                Map("data" -> value.getAs[String]("data"), "id" -> value.getAs[String]("id"))
+                                `type`,
+                                data
                             )
 //                            val event = BPSEvents(
 //                                value.getAs[String]("jobId"),
