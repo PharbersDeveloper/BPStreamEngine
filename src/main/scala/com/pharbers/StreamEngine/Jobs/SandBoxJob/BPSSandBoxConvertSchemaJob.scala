@@ -1,13 +1,12 @@
 package com.pharbers.StreamEngine.Jobs.SandBoxJob
 
-import com.pharbers.StreamEngine.Jobs.SandBoxJob.SandBoxJobContainer.BPSSandBoxJobContainer
 import com.pharbers.StreamEngine.Utils.Component2
 import com.pharbers.StreamEngine.Utils.Component2.BPSConcertEntry
 import com.pharbers.StreamEngine.Utils.Event.BPSEvents
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPJobLocalListener
 import com.pharbers.StreamEngine.Utils.Job.Status.BPSJobStatus
 import com.pharbers.StreamEngine.Utils.Job.{BPSJobContainer, BPStreamJob}
-import com.pharbers.StreamEngine.Utils.Module.bloodModules.{BloodModel, BloodModel2, DataMartTagModel, UploadEndModel}
+import com.pharbers.StreamEngine.Utils.Module.bloodModules.{BloodModel, BloodModel2, DataMartTagModel }
 import com.pharbers.StreamEngine.Utils.Strategy.Blood.BPSSetBloodStrategy
 import com.pharbers.StreamEngine.Utils.Strategy.JobStrategy.BPSCommonJobStrategy
 import com.pharbers.StreamEngine.Utils.Strategy.Schema.{BPSMetaData2Map, SchemaConverter}
@@ -97,7 +96,7 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer, input: Option[
 	def setInputStream(df: Option[DataFrame]): Option[sql.DataFrame] = {
 		// 解析MetaData
 		val mdPath = componentProperty.config("metaDataPath")
-		metaData = startProcessMetaData(s"$mdPath/$jobId")
+		metaData = startProcessMetaData(s"$mdPath/$id")
 		
 		metaData match {
 			case Some(md) =>
@@ -142,12 +141,8 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer, input: Option[
 	}
 	
 	def pushBloodMsg(status: String, metaData: MetaData): Unit = {
-//		val bloodModel = BloodModel(mongoId, metaData.label("assetId").toString, Nil,
-//			id, metaData.schemaData.map(_ ("key").toString),
-//			metaData.label("sheetName").toString, totalNum,
-//			getOutputPath, "schemaJob", status)
 		val bloodModel = BloodModel2(
-			jobId = "jobId", // TODO 还差JobId
+			jobId = jobId,
 			columnNames = metaData.schemaData.map(_ ("key").toString),
 			tabName = metaData.label("sheetName").toString,
 			length = totalNum,
@@ -155,16 +150,15 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer, input: Option[
 			description = "schemaJob",
 			status = status)
 		
-		
 		// 血缘
-		bloodStrategy.pushBloodInfo(bloodModel, id, traceId)
+		bloodStrategy.pushBloodInfo(bloodModel, id, traceId, "PushDs")
 	}
 	
-	def pushPyJob(metaData: MetaData): Unit = {
-		val pythonMetaData = PythonMetaData(mongoId, metaData.label("assetId").toString, "HiveTaskNone", getMetadataPath, getOutputPath, s"hdfs://spark.master:8020//jobs/runId_$runnerId")
-		// 给PythonCleanJob发送消息
-		strategy.pushMsg(BPSEvents(id, traceId, msgType, pythonMetaData), isLocal = false)
-	}
+//	def pushPyJob(metaData: MetaData): Unit = {
+//		val pythonMetaData = PythonMetaData(mongoId, "HiveTaskNone", getMetadataPath, getOutputPath)
+//		// 给PythonCleanJob发送消息
+//		strategy.pushMsg(BPSEvents(id, traceId, msgType, pythonMetaData), isLocal = false)
+//	}
 	
 	def checkQuery(): Unit = {
 		val query = outputStream.head
@@ -181,18 +175,17 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer, input: Option[
 	
 	case class MetaData(schemaData: List[Map[String, Any]], label: Map[String, Any], length: Map[String, Any])
 	
-	case class PythonMetaData(mongoId: String,
-	                          assetId: String,
-	                          noticeTopic: String,
-	                          metadataPath: String,
-	                          filesPath: String,
-	                          resultPath: String)
-	
-	
-	case class PythonMetaData2(jobId: String,
-	                          noticeTopic: String,
-	                          metadataPath: String,
-	                          filesPath: String,
-	                          resultPath: String)
+//	case class PythonMetaData(mongoId: String,
+//	                          assetId: String,
+//	                          noticeTopic: String,
+//	                          metadataPath: String,
+//	                          filesPath: String,
+//	                          resultPath: String)
+//
+//
+//	case class PythonMetaData2(jobId: String,
+//	                          noticeTopic: String,
+//	                          metadataPath: String,
+//	                          filesPath: String)
 	
 }
