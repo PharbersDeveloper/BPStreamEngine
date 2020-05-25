@@ -28,6 +28,17 @@ class StartOSSStream extends FunSuite {
 		getKafka.callKafka(events)
 	}
 	
+	test("模拟Connector发送 确认开始") {
+		val bloodStrategy: BPSSetBloodStrategy = new BPSSetBloodStrategy(Map.empty)
+		val mongoId = "5ebfd5789bb9aa05a2c60eec"//new ObjectId().toString
+		val dataSet = BloodModel(
+			mongoId,
+			"5eb386d93c5d7a00970f9541",
+			jobId = "5ec3a659ab9230110aa6254f",
+			status = BPSJobStatus.Start.toString)
+		bloodStrategy.pushBloodInfo(dataSet, "0001", "00001", "SandBoxDataSet_2")
+	}
+	
 	test("模拟发送blood 信息到golang") {
 		val bloodStrategy: BPSSetBloodStrategy = new BPSSetBloodStrategy(Map.empty)
 		val cloNames = List[String]("a", "b", "c")
@@ -42,7 +53,7 @@ class StartOSSStream extends FunSuite {
 			"Fuck",
 			totalNum,
 			"/jobs/name/qp",
-			"SampleData", BPSJobStatus.Start.toString)
+			"SampleData", BPSJobStatus.End.toString)
 		
 		bloodStrategy.pushBloodInfo(dataSet, "0001", "00001", "SandBoxDataSet-Test")
 	}

@@ -61,7 +61,7 @@ class BPSPythonPipeJob(override val id: String,
 
     type T = BPStrategyComponent
     override val strategy: BPStrategyComponent = null
-    override val description: String = "py_clean_job"
+    override val description: String = "BPSPyCleanJob"
     val bloodStrategy: BPSSetBloodStrategy = new BPSSetBloodStrategy(Map.empty)
 
     val noticeTopic: String = jobConf("noticeTopic").toString
