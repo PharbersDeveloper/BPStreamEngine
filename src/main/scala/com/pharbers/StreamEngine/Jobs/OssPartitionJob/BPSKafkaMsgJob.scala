@@ -58,22 +58,23 @@ class BPSKafkaMsgJob(container: BPSJobContainer, val componentProperty: Componen
 
                             implicit val formats: DefaultFormats.type = DefaultFormats
                             val `type` =  value.getAs[String]("type")
-                            val data = if(`type` == "SandBox-Schema" || `type` == "SandBox-Labels" || `type` == "SandBox-Length") {
-                                Map("data" -> value.getAs[String]("data"), "id" -> value.getAs[String]("id"))
-                            } else value.getAs[String]("data")
-                            val event = BPSEvents(
-                                value.getAs[String]("jobId"),
-                                value.getAs[String]("traceId"),
-                                `type`,
-                                data
-                            )
-//                            val event = BPSEvents(
-//                                value.getAs[String]("jobId"),
-//                                value.getAs[String]("traceId"),
-//                                value.getAs[String]("type"),
-//                                value.getAs[String]("data"),
-//                                value.getAs[java.sql.Timestamp]("timestamp")
-//                            )
+                            val event = if(`type` == "SandBox-Schema" || `type` == "SandBox-Labels" || `type` == "SandBox-Length") {
+                                BPSEvents(
+                                    value.getAs[String]("jobId"),
+                                    value.getAs[String]("traceId"),
+                                    `type`,
+                                    Map("data" -> value.getAs[String]("data"), "id" -> value.getAs[String]("id"))
+                                )
+                            } else {
+                                BPSEvents(
+                                    value.getAs[String]("jobId"),
+                                    value.getAs[String]("traceId"),
+                                    value.getAs[String]("type"),
+                                    value.getAs[String]("data"),
+                                    value.getAs[java.sql.Timestamp]("timestamp")
+                                )
+                            }
+
                             channel.get.pushMessage(write(event))
                         }
 
