@@ -150,6 +150,7 @@
     "starts": [
         "OssJobContainer",
         "SandBoxJobContainer",
-        "BPSPythonPipeJobContainer"
+        "BPSPythonPipeJobContainer",
+        "SqlTableJobContainer"
     ]
 }
