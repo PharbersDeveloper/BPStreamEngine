@@ -17,7 +17,7 @@
 --><configuration>
   <property>
     <name>hive.metastore.uris</name>
-    <value>thrift://161.189.48.242:30083</value>
+    <value>thrift://hive-metastore-svc.storage:9083</value>
     <description>Thrift URI for the remote metastore. Used by metastore client to connect to remote metastore.</description>
   </property>
 </configuration>
