@@ -6,6 +6,7 @@ import com.pharbers.StreamEngine.Utils.Strategy.hdfs.BPSHDFSFile
 import com.pharbers.StreamEngine.Utils.Strategy.Session.Spark.BPSparkSession
 import com.pharbers.StreamEngine.Utils.Strategy.s3a.BPS3aFile
 import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.types.{StringType, StructField, StructType, TimestampType}
 import org.scalatest.FunSuite
 
 import scala.io.Source
@@ -69,6 +70,20 @@ class HDFSTest extends FunSuite {
 				r.head.fs.close()
 			case _ =>
 		}
+	}
+	
+	test("spark streaming 读取S3 parquet") {
+		val spark: SparkSession = BPSConcertEntry.queryComponentWithId("spark").get.asInstanceOf[BPSparkSession]
+		val path = "s3a://ph-stream/jobs/runId_5ec4c985118a4a6530a42fd6/BPSOssPartitionJob/jobId_8852934e-39fd-482a-a206-1f6832fc3dfa/contents/jobId=002bf498-ded1-4122-9206-35d77253cd290/"
+		val reading = spark.readStream
+			.schema(StructType(
+				StructField("traceId", StringType) ::
+					StructField("type", StringType) ::
+					StructField("data", StringType) ::
+					StructField("timestamp", TimestampType) :: Nil
+			)).parquet(path)
+		val query = reading.writeStream.outputMode("append").format("console").start()
+		query.awaitTermination()
 	}
 }
 

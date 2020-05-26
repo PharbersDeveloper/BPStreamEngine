@@ -29,3 +29,5 @@ BPSPythonJobContainer/
 BPSPythonJobPipeContainer/
 alfred-test-data
 jobs
+
+BPSPythonPipeJobContainer

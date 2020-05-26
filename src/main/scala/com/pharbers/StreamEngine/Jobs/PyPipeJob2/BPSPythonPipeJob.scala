@@ -1,6 +1,6 @@
 package com.pharbers.StreamEngine.Jobs.PyPipeJob2
 
-import java.util.Collections
+import java.util.{Collections, UUID}
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
@@ -10,7 +10,7 @@ import com.pharbers.StreamEngine.Utils.Component2.BPSConcertEntry
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.{BPJobLocalListener, BPStreamListener}
 import com.pharbers.StreamEngine.Utils.Job.BPStreamJob
 import com.pharbers.StreamEngine.Utils.Job.Status.BPSJobStatus
-import com.pharbers.StreamEngine.Utils.Module.bloodModules.BloodModel
+import com.pharbers.StreamEngine.Utils.Module.bloodModules.{BloodModel, BloodModel2}
 import com.pharbers.StreamEngine.Utils.Strategy.BPStrategyComponent
 import com.pharbers.StreamEngine.Utils.Strategy.Blood.BPSSetBloodStrategy
 import com.pharbers.StreamEngine.Utils.Strategy.Session.Spark.msgMode.SparkQueryEvent
@@ -23,13 +23,13 @@ import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.{IntegerType, StringType, StructField, StructType}
 
 object BPSPythonPipeJob {
-    def apply(id: String,
+    def apply(jobId: String,
               spark: SparkSession,
               inputStream: Option[sql.DataFrame],
               noticeFunc: (String, Map[String, Any]) => Unit,
               jobCloseFunc: String => Unit,
               jobConf: Map[String, Any]): BPSPythonPipeJob =
-        new BPSPythonPipeJob(id, spark, inputStream, noticeFunc, jobCloseFunc, jobConf)
+        new BPSPythonPipeJob(jobId, spark, inputStream, noticeFunc, jobCloseFunc, jobConf)
 }
 
 /** 执行 Python 的 Job
@@ -52,16 +52,17 @@ object BPSPythonPipeJob {
  *     retryCount = "3" // Job 失败的重试次数
  * }}}
  */
-class BPSPythonPipeJob(override val id: String,
+class BPSPythonPipeJob(override val jobId: String,
                        override val spark: SparkSession,
                        is: Option[sql.DataFrame],
                        noticeFunc: (String, Map[String, Any]) => Unit,
                        jobCloseFunc: String => Unit,
                        jobConf: Map[String, Any]) extends BPStreamJob with Serializable {
-
+    
     type T = BPStrategyComponent
     override val strategy: BPStrategyComponent = null
-    override val description: String = "py_clean_job"
+    override val id: String = UUID.randomUUID().toString
+    override val description: String = "BPSPyCleanJob"
     val bloodStrategy: BPSSetBloodStrategy = new BPSSetBloodStrategy(Map.empty)
 
     val noticeTopic: String = jobConf("noticeTopic").toString
@@ -69,11 +70,11 @@ class BPSPythonPipeJob(override val id: String,
     val parentsId: List[String] = jobConf("parentsId").asInstanceOf[List[String]]
     val assetId: String = jobConf("assetId").toString
 
-    val resultPath: String = {
-        val path = jobConf("resultPath").toString
-        if (path.endsWith("/")) path + id
-        else path + "/" + id
-    }
+//    val resultPath: String = {
+//        val path = jobConf("resultPath").toString
+//        if (path.endsWith("/")) path + id
+//        else path + "/" + id
+//    }
     val lastMetadata: Map[String, Any] = jobConf("lastMetadata").asInstanceOf[Map[String, Any]]
     val data_length: Long = lastMetadata("length").asInstanceOf[Double].toLong
 
@@ -82,10 +83,10 @@ class BPSPythonPipeJob(override val id: String,
     val retryCount: String = jobConf("retryCount").toString
 
     val checkpointPath: String = getCheckpointPath
-    val rowRecordPath: String = resultPath + "/row_record"
-    val metadataPath: String = resultPath + "/metadata"
+//    val rowRecordPath: String = resultPath + "/row_record"
+//    val metadataPath: String = resultPath + "/metadata"
     val successPath: String = getOutputPath
-    val errPath: String = "s3a://ph-stream/jobs/" + s"runId_${BPSConcertEntry.runner_id}" + "/" + description + "/" + s"jobId_$id" + "/err"
+    val errPath: String = "s3a://ph-stream/jobs/" + s"runId_${BPSConcertEntry.runner_id}" + "/" + description + "/" + s"jobId_$jobId" + "/" + s"id_$id" + "/err"
 
     import spark.implicits._
 
@@ -112,6 +113,7 @@ class BPSPythonPipeJob(override val id: String,
                         val pythonDf = batchDF.select(to_json(struct($"*")).as("data"),
                                        lit(mapper.writeValueAsString(lastMetadata)).as("metadata"))
                                 .select(to_json(struct($"data".as("data"), $"metadata".as("metadata"))))
+//                                .rdd.pipe("python3 /Users/qianpeng/GitHub/BPStreamEngine/BPSPythonPipeJobContainer/main.py")
                                 .rdd.pipe("python3 ./main.py")
                                 .toDF("data")
                                 .select(from_json($"data", schema) as "data")
@@ -145,27 +147,29 @@ class BPSPythonPipeJob(override val id: String,
         }
     }
 
-//    def addListener(rowRecordPath: String): BPStreamListener = {
-//        val listener = BPSPipeProgressListenerAndClose(this, spark, data_length, rowRecordPath)
-//        listener.active(null)
-//        listener
-//    }
-
     // 注册血统
     def regPedigree(status: String): Unit = {
-        val dfs = BloodModel(
-            datasetId,
-            assetId,
-            parentsId,
-            id,
-            Nil,
-            "",
-            data_length,
-            successPath,
-            "Python 清洗 Job", status)
-
+//        val dfs = BloodModel(
+//            datasetId,
+//            assetId,
+//            parentsId,
+//            id,
+//            Nil,
+//            "",
+//            data_length,
+//            successPath,
+//            "Python 清洗 Job", status)
+        val dfs = BloodModel2(
+            jobId = jobId,
+            columnNames = Nil,
+            tabName = "",
+            length = data_length,
+            url = successPath,
+            description = "pyJob",
+            status = status
+        )
         // TODO 齐 弄出traceId
-        bloodStrategy.pushBloodInfo(dfs, id,"")
+        bloodStrategy.pushBloodInfo(dfs, jobId,"")
     }
 
     override def close(): Unit = {
@@ -174,9 +178,9 @@ class BPSPythonPipeJob(override val id: String,
             "jobId" -> id,
             "datasetId" -> datasetId,
             "length" -> data_length,
-            "resultPath" -> resultPath,
-            "rowRecordPath" -> rowRecordPath,
-            "metadataPath" -> metadataPath,
+//            "resultPath" -> resultPath,
+//            "rowRecordPath" -> rowRecordPath,
+//            "metadataPath" -> metadataPath,
             "successPath" -> successPath,
             "errPath" -> errPath
         ))

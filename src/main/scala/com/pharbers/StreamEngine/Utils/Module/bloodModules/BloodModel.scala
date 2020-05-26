@@ -11,6 +11,10 @@ case class BloodModel(mongoId: String,
                       description: String = "",
                       status: String = "")
 
+case class BloodModel2(jobId: String, columnNames: List[String] = Nil,
+                       tabName: String = "", length: Long = 0, url: String = "",
+                       description: String = "", status: String = "")
+
 case class UploadEndModel(dataSetId: String, assetId: String)
 
 case class DataMartTagModel(assetId: String, tag: String)

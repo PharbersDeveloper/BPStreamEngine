@@ -115,8 +115,9 @@ class BPSSandBoxJobContainer(override val componentProperty: Component2.BPCompon
 			val job = BPSSandBoxConvertSchemaJob(this, Some(reading), BPSComponentConfig(jobParameter.data.id,
 				"BPSSandBoxConvertSchemaJob",
 				jobParameter.traceId :: pythonMsgType :: Nil,
-				Map("jobId" -> jobParameter.data.jobId)))
-			
+				Map("jobId" -> jobParameter.data.jobId,
+					"metaDataPath" -> jobParameter.data.metaDataPath)
+			))
 			jobs += job.id -> job
 			try {
 				job.open()
