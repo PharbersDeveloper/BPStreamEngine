@@ -1,21 +1,19 @@
 package com.pharbers.StreamEngine.Jobs.PyPipeJob2
 
-import java.util.{Collections, UUID}
+import java.util.UUID
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
-import com.pharbers.StreamEngine.Jobs.PyPipeJob2.Listener.BPSPipeProgressListenerAndClose
 import com.pharbers.StreamEngine.Utils.Component2
 import com.pharbers.StreamEngine.Utils.Component2.BPSConcertEntry
-import com.pharbers.StreamEngine.Utils.Event.StreamListener.{BPJobLocalListener, BPStreamListener}
+import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPJobLocalListener
 import com.pharbers.StreamEngine.Utils.Job.BPStreamJob
 import com.pharbers.StreamEngine.Utils.Job.Status.BPSJobStatus
-import com.pharbers.StreamEngine.Utils.Module.bloodModules.{BloodModel, BloodModel2}
+import com.pharbers.StreamEngine.Utils.Module.bloodModules.BloodModel2
 import com.pharbers.StreamEngine.Utils.Strategy.BPStrategyComponent
 import com.pharbers.StreamEngine.Utils.Strategy.Blood.BPSSetBloodStrategy
 import com.pharbers.StreamEngine.Utils.Strategy.Session.Spark.msgMode.SparkQueryEvent
-import com.pharbers.StreamEngine.Utils.Strategy.hdfs.BPSHDFSFile
-import com.pharbers.kafka.schema.DataSet
+import com.pharbers.StreamEngine.Utils.Strategy.s3a.BPS3aFile
 import org.apache.kafka.common.config.ConfigDef
 import org.apache.spark.sql
 import org.apache.spark.sql.SparkSession
@@ -84,7 +82,7 @@ class BPSPythonPipeJob(override val jobId: String,
 
     val checkpointPath: String = getCheckpointPath
 //    val rowRecordPath: String = resultPath + "/row_record"
-//    val metadataPath: String = resultPath + "/metadata"
+    val metadataPath: String = getMetadataPath
     val successPath: String = getOutputPath
     val errPath: String = "s3a://ph-stream/jobs/" + s"runId_${BPSConcertEntry.runner_id}" + "/" + description + "/" + s"jobId_$jobId" + "/" + s"id_$id" + "/err"
 
@@ -105,6 +103,7 @@ class BPSPythonPipeJob(override val jobId: String,
                         StructField("errMsg", StringType) ::
                         StructField("metadata", StringType) :: Nil
                 )
+                BPSConcertEntry.queryComponentWithId("s3a").get.asInstanceOf[BPS3aFile].appendLine(metadataPath, mapper.writeValueAsString(lastMetadata))
                 val query = is
                     .writeStream
                     .option("checkpointLocation", checkpointPath)
@@ -180,7 +179,7 @@ class BPSPythonPipeJob(override val jobId: String,
             "length" -> data_length,
 //            "resultPath" -> resultPath,
 //            "rowRecordPath" -> rowRecordPath,
-//            "metadataPath" -> metadataPath,
+            "metadataPath" -> metadataPath,
             "successPath" -> successPath,
             "errPath" -> errPath
         ))

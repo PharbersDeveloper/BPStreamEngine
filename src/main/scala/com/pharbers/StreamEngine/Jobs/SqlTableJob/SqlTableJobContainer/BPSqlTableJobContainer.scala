@@ -165,9 +165,7 @@ class BPSqlTableJobContainer(override val componentProperty: Component2.BPCompon
     case class TaskKey(jobId: String, tableName: String)
 }
 
-case class HiveTask(datasetId: String, taskType: String, url: String, length: Long, remarks: String) {
-    private val ROW_RECORD_FILE = "row_record"
-    private val METADATA_FILE = "metadata"
+case class HiveTask(datasetId: String, taskType: String, url: String, metaDataPath: String, length: Long, remarks: String) {
     private val ERR_FILE = "err"
     private val CONTENT_FILE = "contents"
 
@@ -178,8 +176,6 @@ case class HiveTask(datasetId: String, taskType: String, url: String, length: Lo
             "/"
         }
     } else "/"
-    val rowRecordPath: String = path + ROW_RECORD_FILE
-    val metaDataPath: String = path + METADATA_FILE
     val errPath: String = path + ERR_FILE
 
     override def toString: String = s"$datasetId, $taskType, $url, $length, $remarks"
