@@ -113,7 +113,6 @@ class BPSPythonPipeJob(override val jobId: String,
                         val pythonDf = batchDF.select(to_json(struct($"*")).as("data"),
                                        lit(mapper.writeValueAsString(lastMetadata)).as("metadata"))
                                 .select(to_json(struct($"data".as("data"), $"metadata".as("metadata"))))
-//                                .rdd.pipe("python3 /Users/qianpeng/GitHub/BPStreamEngine/BPSPythonPipeJobContainer/main.py")
                                 .rdd.pipe("python3 ./main.py")
                                 .toDF("data")
                                 .select(from_json($"data", schema) as "data")
@@ -169,7 +168,7 @@ class BPSPythonPipeJob(override val jobId: String,
             status = status
         )
         // TODO 齐 弄出traceId
-        bloodStrategy.pushBloodInfo(dfs, jobId,"")
+        bloodStrategy.pushBloodInfo(dfs, jobId,"", "PushDs")
     }
 
     override def close(): Unit = {
