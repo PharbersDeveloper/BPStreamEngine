@@ -58,8 +58,6 @@ class BPSparkSession(override val componentProperty: BPComponentConfig) extends 
     // 初始环境设置
     sparkConfigs.getString(RUN_MODEL_KEY) match {
         case "client" =>
-            spark.sparkContext.addFile("./kafka.broker1.keystore.jks")
-            spark.sparkContext.addFile("./kafka.broker1.truststore.jks")
             spark.sparkContext.addJar("./target/BP-Stream-Engine-1.0-SNAPSHOT.jar")
 
             spark.sparkContext.addJar("./jars/common-config-5.2.1.jar")

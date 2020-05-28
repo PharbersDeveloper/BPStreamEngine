@@ -81,7 +81,7 @@ case class BPSqlTableJob(container: BPSJobContainer, override val componentPrope
         //todo: 等血缘模块重构
         dataMartStrategy.pushDataSet(tableName, version, url, saveMode, jobId, strategy.getTraceId, strategy.getJobConfig.getList(DATA_SETS_CONFIG_KEY).asScala.toList)
         logger.info(s"close job $id")
-        strategy.pushMsg(BPSEvents(jobId, "", strategy.JOB_STATUS_EVENT_TYPE, BPSJobStatus.Success.toString), true)
+        strategy.pushMsg(BPSEvents(jobId, "", strategy.JOB_STATUS_EVENT_TYPE, Map(jobId -> BPSJobStatus.Success.toString)), true)
     }
 
     override def close(): Unit = {
