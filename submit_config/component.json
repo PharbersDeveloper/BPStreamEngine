@@ -145,12 +145,21 @@
         "listens": "GenCube-Start",
         "GenCube.timer.hours": 1
       }
+    },
+    {
+      "id": "BPDataCleanJobContainer",
+      "name": "BPDataCleanJobContainer",
+      "args": [],
+      "config": {
+        "listens": "hive-clean"
+      }
     }
   ],
   "starts": [
     "OssJobContainer",
     "SandBoxJobContainer",
     "BPSPythonPipeJobContainer",
-    "SqlTableJobContainer"
+    "SqlTableJobContainer",
+    "BPDataCleanJobContainer"
   ]
 }

@@ -48,6 +48,7 @@ class BPSqlTableJobContainer(override val componentProperty: Component2.BPCompon
     //todo: 配置文件
     val tableNameMap: Map[String, String] = Map(
         "CPA&GYC" -> "cpa",
+        "CPA" -> "cpa",
         "CHC" -> "chc",
         "RESULT" -> "result",
         "PROD" -> "prod",
