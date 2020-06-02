@@ -151,7 +151,7 @@
             "name": "BPDataCleanJobContainer",
             "args": [],
             "config": {
-                "listens": "hive-clean"
+                "listens": "Hive-Clean"
             }
         }
     ],

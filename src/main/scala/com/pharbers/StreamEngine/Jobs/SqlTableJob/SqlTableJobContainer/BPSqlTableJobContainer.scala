@@ -160,7 +160,12 @@ class BPSqlTableJobContainer(override val componentProperty: Component2.BPCompon
                 val ps = BPSConcertEntry.queryComponentWithId("parse schema").get.asInstanceOf[BPSParseSchema]
                 val metadata = ps.parseMetadata(data.metaDataPath)(spark)
                 val providers = metadata.getOrElse("providers", List("")).asInstanceOf[List[String]]
-                addJobConfig(msg, providers)
+                if(strategy.getS3aFile.checkPath(msg.data.url)) {
+                    addJobConfig(msg, providers)
+                } else {
+                    logger.warn(s"url ${msg.data.url} 不存在")
+                    System.err.println(s"url ${msg.data.url} 不存在")
+                }
         }
     }
     case class TaskKey(jobId: String, tableName: String)

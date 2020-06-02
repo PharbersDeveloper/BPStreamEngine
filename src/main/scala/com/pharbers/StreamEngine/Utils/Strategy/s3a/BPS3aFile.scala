@@ -45,6 +45,7 @@ case class BPS3aFile(override val componentProperty: Component2.BPComponentConfi
             .withS3Client(s3)
             .build()
 
+    //todo: 不能完全验证，比如真实路径是s3a://a/b/cc/xxx;s3a://a/b/c也会验证为true
     def checkPath(path: String): Boolean = {
         val (bucketName, prefix) = getBucketNameAndPrefix(path)
         s3.listObjects(bucketName, prefix).getObjectSummaries.size() > 0
