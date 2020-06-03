@@ -66,7 +66,7 @@ case class BPSqlTableJob(container: BPSJobContainer, override val componentPrope
         } else {
             "0.0.1"
         }
-        val url = s"/common/public/$tableName/$version"
+        val url = s"s3a://ph-stream/common/public/$tableName/$version"
         logger.info(s"start save table $tableName, mode: $saveMode")
         saveMode match {
             case "append" => saveTable(tableName, saveMode, version, url)
