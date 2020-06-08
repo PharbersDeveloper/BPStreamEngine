@@ -1,4 +1,4 @@
-package com.pharbers.StreamEngine.Jobs.EditDistanceJob
+package com.pharbers.StreamEngine.Jobs.DataCleanJob.EditDistanceJob
 
 import com.pharbers.StreamEngine.Utils.Component2
 import com.pharbers.StreamEngine.Utils.Component2.{BPSComponentConfig, BPSConcertEntry}
@@ -28,7 +28,7 @@ class HumanReplaceJob(override val componentProperty: Component2.BPComponentConf
 
     override type T = BPSCommonJobStrategy
     override val strategy: BPSCommonJobStrategy = BPSCommonJobStrategy(componentProperty, configDef)
-    val jobId: String = strategy.getJobId
+    override val jobId: String = strategy.getJobId
     val runId: String = strategy.getRunId
     override val id: String = jobId
     override val description: String = "human_replace_job"
@@ -37,32 +37,24 @@ class HumanReplaceJob(override val componentProperty: Component2.BPComponentConf
     import spark.implicits._
 
     val tableName = "human_replace"
+    val minColumns = List("MOLE_NAME", "PRODUCT_NAME", "SPEC", "DOSAGE", "PACK_QTY", "MANUFACTURER_NAME")
 
     override def open(): Unit = super.open()
 
     override def exec(): Unit = {
     }
 
-    //针对No_Replace_HBV 0228-Final
-    def createHumanReplaceDf(df: DataFrame): Unit = {
-        //todo:配置传入
-        val tableVersion = getVersion(tableName)
-        val table = spark.read.parquet(s"/common/public/human_replace/$tableVersion")
-        val version = getVersion(tableName, "overwrite")
-        val res = df.filter("PackID != '#N/A'")
+    //针对No_Replace_HBV 0228-Final 和 CPA_no_replace 第9次提数0424
+    def createHumanReplaceDf(df: DataFrame): DataFrame = {
+        val humanReplaceDf = df.filter("PackID != '#N/A'")
                 .na.fill("")
                 .withColumn("ORIGIN_PRODUCT_NAME", when(col("ORIGIN_PRODUCT_NAME").isNotNull, col("ORIGIN_PRODUCT_NAME")).otherwise(lit("")))
                 .withColumn("min", concat(col("ORIGIN_MOLE_NAME"), col("ORIGIN_PRODUCT_NAME"), col("ORIGIN_SPEC"), col("ORIGIN_DOSAGE"), col("ORIGIN_PACK_QTY"), col("ORIGIN_MANUFACTURER_NAME")))
                 .selectExpr("min", "ORIGIN_MOLE_NAME as MOLE_NAME", "ORIGIN_PRODUCT_NAME1 as PRODUCT_NAME", "ORIGIN_SPEC1 as SPEC", "ORIGIN_DOSAGE1 as DOSAGE", "ORIGIN_PACK_QTY1 as PACK_QTY", "ORIGIN_MANUFACTURER_NAME1 as MANUFACTURER_NAME")
-                .withColumn("version", lit(version))
                 .distinct()
-                .unionByName(table)
-                .distinct()
-        res.write
-                .mode("overwrite")
-                .option("path", s"/common/public/$tableName/$version")
-                .saveAsTable(tableName)
 
+        val oldTable = margeMinColumns(getOldTable)
+        margeTable(margeMinColumns(humanReplaceDf), oldTable)
     }
 
     //针对CPA_no_replace 第8次提数0417之前的
@@ -73,6 +65,7 @@ class HumanReplaceJob(override val componentProperty: Component2.BPComponentConf
         val mapping = mappingConfig.map(x => x -> "").toMap
         val version = getVersion(tableName, mode)
         val resetOrigin = df.na.fill("na", Seq("REMARK")).filter("REMARK != 'na'")
+                .na.fill("")
                 .withColumn("ORIGIN", regexp_replace(col("CANDIDATE"), "[\\[\\]\"]", ""))
                 .withColumn("cols", map(lit("MOLE_NAME"), col("ORIGIN_MOLE_NAME"),
                     lit("PRODUCT_NAME"), col("ORIGIN_PRODUCT_NAME"),
@@ -107,7 +100,7 @@ class HumanReplaceJob(override val componentProperty: Component2.BPComponentConf
                 .selectExpr(List("ORIGIN as ORI", "CANDIDATE as CAN", "COL_NAME as NAME") ::: minColumns.map(x => s"ORIGIN_$x as $x"): _*)
                 .withColumn("CAN", regexp_replace(col("CAN"), "[\\[\\]\"]", ""))
                 .withColumn("min", concat(minColumns.map(x => col(x)): _*))
-                .withColumn("columns", map())
+                .withColumn("cols", map())
 
         val humanDf = df.na.fill("na", Seq("REMARK")).filter("REMARK != 'na'")
                 .withColumn("CANDIDATE", regexp_replace(col("CANDIDATE"), "[\\[\\]\"]", ""))
@@ -124,25 +117,15 @@ class HumanReplaceJob(override val componentProperty: Component2.BPComponentConf
                 "ORIGIN+ORIGIN_MOLE_NAME+ORIGIN_DOSAGE=CANDIDATE",
                 "ORIGIN_MOLE_NAME+ORIGIN_PRODUCT_NAME=CANDIDATE",
                 "ORIGIN_PRODUCT_NAME=CANDIDATE")
-        val res = rules.foldLeft(minDf)((df, rule) => joinWithHumanRule(df, humanDf.filter($"REMARK" === rule), rule))
-        res.write.parquet("/user/dcs/test/human_replace")
+        val humanReplaceDf = rules.foldLeft(minDf)((df, rule) => joinWithHumanRule(df, humanDf.filter($"REMARK" === rule), rule))
 
-        val humanReplaceDf = spark.read.parquet("/user/dcs/test/human_replace")
-        val tableVersion = getVersion(tableName)
-        val oldTable = spark.read.parquet(s"/common/public/human_replace/$tableVersion")
-                .withColumn("cols", map(minColumns.flatMap(x => List(lit(x), col(x))): _*))
-                .selectExpr("min as oldMin", "cols")
+        val oldTable = margeMinColumns(getOldTable)
 
-        val margeMap = udf((map1: Map[String, String], map2: Map[String, String]) => map1 ++ map2.filter(x => x._2 != ""))
-        val humanReplaceTable = humanReplaceDf.filter(size($"columns") > 0)
-                .select("min", "columns")
-                .groupBy("min").agg(first("columns") as "columns")
-                .join(oldTable, $"min" === $"oldMin", "full")
-                .withColumn("min", when($"min".isNull, $"oldMin") otherwise $"min")
-                .withColumn("columns", when($"columns".isNull, $"cols") otherwise $"columns")
-                .withColumn("columns", when($"cols".isNotNull, margeMap($"columns", $"cols")) otherwise $"columns")
-                .selectExpr("min" +: minColumns.map(x => s"columns['$x'] as $x"): _*)
-                .na.fill("")
+        val humanReplaceTable = margeTable(humanReplaceDf, oldTable)
+        saveTable(humanReplaceTable)
+    }
+
+    def saveTable(humanReplaceTable: DataFrame): Unit ={
         val mode = "overwrite"
         val version = getVersion(tableName, mode)
         humanReplaceTable.withColumn("version", lit(version)).write
@@ -151,7 +134,31 @@ class HumanReplaceJob(override val componentProperty: Component2.BPComponentConf
                 .saveAsTable(tableName)
     }
 
-    def joinWithHumanRule(minDf: DataFrame, humanDf: DataFrame, rule: String): DataFrame ={
+    def getOldTable: DataFrame = {
+        val tableVersion = getVersion(tableName)
+        spark.read.parquet(s"/common/public/human_replace/$tableVersion")
+    }
+
+    def margeMinColumns(df: DataFrame): DataFrame = {
+        df.withColumn("cols", map(minColumns.flatMap(x => List(lit(x), col(x))): _*))
+    }
+
+    def margeTable(humanReplaceDf: DataFrame, oldTable: DataFrame): DataFrame ={
+        val margeMap = udf((map1: Map[String, String], map2: Map[String, String]) => map2.filter(x => x._2 != "") ++ map1)
+        humanReplaceDf.selectExpr("min", "cols as columns")
+                .filter(size($"columns") > 0)
+                .select("min", "columns")
+                .groupBy("min").agg(first("columns") as "columns")
+                .join(oldTable.selectExpr("min as oldMin", "cols"), $"min" === $"oldMin", "full")
+                .withColumn("min", when($"min".isNull, $"oldMin") otherwise $"min")
+                .withColumn("columns", when($"columns".isNull, $"cols") otherwise $"columns")
+                .withColumn("columns", when($"cols".isNotNull, margeMap($"columns", $"cols")) otherwise $"columns")
+                .selectExpr("min" +: minColumns.map(x => s"columns['$x'] as $x"): _*)
+                .na.fill("")
+
+    }
+
+    private def joinWithHumanRule(minDf: DataFrame, humanDf: DataFrame, rule: String): DataFrame ={
         val join: String => Column = s => s.split("=").head.split("\\+")
                 .map(x => if(x == "ORIGIN") $"ORIGIN" === $"ORI" and $"CANDIDATE" === $"CAN" else col(x) === col(x.replace("ORIGIN_", "")))
                 .foldLeft($"NAME" === $"COL_NAME")((l, r) => l and r)
@@ -161,11 +168,10 @@ class HumanReplaceJob(override val componentProperty: Component2.BPComponentConf
         val humanDfFilter = humanDf.select("COL_NAME", selectCols: _*).distinct()
         val addMap= udf((map1: Map[String, String], key: String, value: String) => map1 ++ Map(key -> value))
         val res = minDf.join(humanDfFilter, join(rule), "left")
-                .withColumn("columns", when($"COL_NAME".isNotNull, addMap($"columns", $"COL_NAME", $"CAN")) otherwise $"columns")
+                .withColumn("cols", when($"COL_NAME".isNotNull, addMap($"cols", $"COL_NAME", $"CAN")) otherwise $"cols")
                 .select(minDf.columns.map(x => col(x)): _*)
         res
     }
-
 }
 
 case class HumanReplaceRow(min: String, col_name: String, origin: String, cols: Map[String, String])

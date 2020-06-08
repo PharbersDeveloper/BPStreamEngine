@@ -1,6 +1,6 @@
 package com.pharbers.StreamEngine.Jobs.GenCubeJob.strategy
 
-import com.pharbers.util.log.PhLogable
+import com.pharbers.StreamEngine.Utils.Log.PhLogable
 import org.apache.spark.sql.expressions.{Window, WindowSpec}
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.functions._
@@ -106,23 +106,23 @@ class BPSGenCubeToEsStrategy(spark: SparkSession) extends BPSStrategy[DataFrame]
 
         //去除脏数据，例如DATE=月份或年份的，DATE应为年月的6位数
         val formatDF = df.selectExpr(keys: _*)
-            .filter(col("DATE") > 99999 and col("DATE") < 1000000 and col("COMPANY").isNotNull and col("SOURCE") === "RESULT" and col("PROVINCE").isNotNull and col("CITY").isNotNull and col("PROVINCE").isNotNull and col("PHAID").isNull and col("PRODUCT_NAME").isNotNull and col("MOLE_NAME").isNotNull)
-            .withColumn("SALES_VALUE", col("SALES_VALUE").cast(DataTypes.DoubleType))
-            .withColumn("SALES_QTY", col("SALES_QTY").cast(DataTypes.DoubleType))
+                .filter(col("DATE") > 99999 and col("DATE") < 1000000 and col("COMPANY").isNotNull and col("SOURCE") === "RESULT" and col("PROVINCE").isNotNull and col("CITY").isNotNull and col("PROVINCE").isNotNull and col("PHAID").isNull and col("PRODUCT_NAME").isNotNull and col("MOLE_NAME").isNotNull)
+                .withColumn("SALES_VALUE", col("SALES_VALUE").cast(DataTypes.DoubleType))
+                .withColumn("SALES_QTY", col("SALES_QTY").cast(DataTypes.DoubleType))
 
         //缩小数据范围，需求中最小维度是分子，先计算出分子级别在单个公司年月市场、省&城市级别、产品&分子维度的聚合数据
         //补齐所需列 QUARTER COUNTRY MKT
         //删除不需列 DATE
         val moleLevelDF = formatDF.groupBy("COMPANY", "DATE", "PROVINCE", "CITY", "PRODUCT_NAME", "MOLE_NAME")
-            .agg(expr("SUM(SALES_VALUE) as SALES_VALUE"), expr("SUM(SALES_QTY) as SALES_QTY"))
-            .withColumn("YEAR", col("DATE").substr(0, 4).cast(DataTypes.IntegerType))
-            .withColumn("DATE", col("DATE").cast(DataTypes.IntegerType))
-            .withColumn("MONTH", col("DATE") - col("YEAR") * 100)
-            .withColumn("QUARTER", ((col("MONTH") - 1) / 3) + 1)
-            .withColumn("QUARTER", col("QUARTER").cast(DataTypes.IntegerType))
-            .withColumn("COUNTRY", lit("CHINA"))
-            .withColumn("APEX", lit("PHARBERS"))
-            .drop("DATE")
+                .agg(expr("SUM(SALES_VALUE) as SALES_VALUE"), expr("SUM(SALES_QTY) as SALES_QTY"))
+                .withColumn("YEAR", col("DATE").substr(0, 4).cast(DataTypes.IntegerType))
+                .withColumn("DATE", col("DATE").cast(DataTypes.IntegerType))
+                .withColumn("MONTH", col("DATE") - col("YEAR") * 100)
+                .withColumn("QUARTER", ((col("MONTH") - 1) / 3) + 1)
+                .withColumn("QUARTER", col("QUARTER").cast(DataTypes.IntegerType))
+                .withColumn("COUNTRY", lit("CHINA"))
+                .withColumn("APEX", lit("PHARBERS"))
+                .drop("DATE")
 
         //TODO:临时处理信立泰
         val moleLevelDF1 = moleLevelDF.filter(col("COMPANY") === "信立泰")
@@ -130,18 +130,18 @@ class BPSGenCubeToEsStrategy(spark: SparkSession) extends BPSStrategy[DataFrame]
 
         //TODO:用result数据与cpa数据进行匹配，得出MKT，目前cpa数据 暂时 写在算法里，之后匹配逻辑可能会变
         val cpa = spark.sql("SELECT * FROM cpa")
-            .select("COMPANY", "PRODUCT_NAME", "MOLE_NAME", "MKT")
-            .filter(col("COMPANY").isNotNull and col("PRODUCT_NAME").isNotNull and col("MOLE_NAME").isNotNull and col("MKT").isNotNull)
-            .groupBy("COMPANY", "PRODUCT_NAME", "MOLE_NAME")
-            .agg(first("MKT").alias("MKT"))
+                .select("COMPANY", "PRODUCT_NAME", "MOLE_NAME", "MKT")
+                .filter(col("COMPANY").isNotNull and col("PRODUCT_NAME").isNotNull and col("MOLE_NAME").isNotNull and col("MKT").isNotNull)
+                .groupBy("COMPANY", "PRODUCT_NAME", "MOLE_NAME")
+                .agg(first("MKT").alias("MKT"))
 
         //TODO:临时处理信立泰
         val mergeDF1 = moleLevelDF1.withColumn("MKT", lit("抗血小板市场"))
         val mergeDF2 = moleLevelDF2
-            .join(cpa, moleLevelDF2("COMPANY") === cpa("COMPANY") and moleLevelDF2("PRODUCT_NAME") === cpa("PRODUCT_NAME") and moleLevelDF2("MOLE_NAME") === cpa("MOLE_NAME"), "inner")
-            .drop(cpa("COMPANY"))
-            .drop(cpa("PRODUCT_NAME"))
-            .drop(cpa("MOLE_NAME"))
+                .join(cpa, moleLevelDF2("COMPANY") === cpa("COMPANY") and moleLevelDF2("PRODUCT_NAME") === cpa("PRODUCT_NAME") and moleLevelDF2("MOLE_NAME") === cpa("MOLE_NAME"), "inner")
+                .drop(cpa("COMPANY"))
+                .drop(cpa("PRODUCT_NAME"))
+                .drop(cpa("MOLE_NAME"))
 
         mergeDF1 union mergeDF2
 
@@ -164,7 +164,7 @@ class BPSGenCubeToEsStrategy(spark: SparkSession) extends BPSStrategy[DataFrame]
 
         cuboid.size match {
             case 0 => genApexCube(df) :: Nil
-//            case x if x == dimensions.size => genMultiDimensionsCube(df, cuboid)
+            //            case x if x == dimensions.size => genMultiDimensionsCube(df, cuboid)
             case _ => genMultiDimensionsCube(df, cuboid)
         }
 
@@ -190,8 +190,8 @@ class BPSGenCubeToEsStrategy(spark: SparkSession) extends BPSStrategy[DataFrame]
     //TODO:不用baseCube了，直接求multiDimensionsCube
     def genBaseCube(df: DataFrame): DataFrame = fillLostKeys(
         df
-            .withColumn("DIMENSION_NAME", lit("base"))
-            .withColumn("DIMENSION_VALUE", lit("*"))
+                .withColumn("DIMENSION_NAME", lit("base"))
+                .withColumn("DIMENSION_VALUE", lit("*"))
     )
 
     def genMultiDimensionsCube(df: DataFrame, cuboid: Map[String, List[String]]): List[DataFrame] = {
@@ -341,14 +341,14 @@ class BPSGenCubeToEsStrategy(spark: SparkSession) extends BPSStrategy[DataFrame]
     def lastTimeWindow(currentTimeHierarchy: String, currentWindow: WindowSpec): WindowSpec = {
         currentTimeHierarchy match {
             case "YEAR" => currentWindow
-                .orderBy(col("YEAR").cast(DataTypes.IntegerType))
-                .rangeBetween(-1, -1)
+                    .orderBy(col("YEAR").cast(DataTypes.IntegerType))
+                    .rangeBetween(-1, -1)
             case "QUARTER" => currentWindow
-                .orderBy(col("YEAR").cast(DataTypes.IntegerType).*(100).+(col("QUARTER").cast(DataTypes.IntegerType).*(25)))
-                .rangeBetween(-25, -25)
+                    .orderBy(col("YEAR").cast(DataTypes.IntegerType).*(100).+(col("QUARTER").cast(DataTypes.IntegerType).*(25)))
+                    .rangeBetween(-25, -25)
             case "MONTH" => currentWindow
-                .orderBy(to_date(col("YEAR").cast(DataTypes.IntegerType).*(100).+(col("MONTH").cast(DataTypes.IntegerType)).cast(DataTypes.StringType), "yyyyMM").cast("timestamp").cast("long"))
-                .rangeBetween(-86400 * 31, -86400 * 28)
+                    .orderBy(to_date(col("YEAR").cast(DataTypes.IntegerType).*(100).+(col("MONTH").cast(DataTypes.IntegerType)).cast(DataTypes.StringType), "yyyyMM").cast("timestamp").cast("long"))
+                    .rangeBetween(-86400 * 31, -86400 * 28)
         }
     }
 
@@ -358,10 +358,10 @@ class BPSGenCubeToEsStrategy(spark: SparkSession) extends BPSStrategy[DataFrame]
 
         for (df <- listDF) {
             df.na.fill(0.0).write
-                .format("es")
-                //                .option("es.write.operation", "upsert")
-                .mode("append")
-                .save(DEFAULT_INDEX_NAME)
+                    .format("es")
+                    //                .option("es.write.operation", "upsert")
+                    .mode("append")
+                    .save(DEFAULT_INDEX_NAME)
         }
 
         spark.emptyDataFrame

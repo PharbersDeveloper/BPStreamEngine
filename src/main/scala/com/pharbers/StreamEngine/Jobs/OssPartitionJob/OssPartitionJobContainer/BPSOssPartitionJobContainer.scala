@@ -8,7 +8,7 @@ import com.pharbers.StreamEngine.Utils.Job.{BPDynamicStreamJob, BPSJobContainer,
 import com.pharbers.StreamEngine.Utils.Annotation.Component
 import com.pharbers.StreamEngine.Utils.Component2
 import com.pharbers.StreamEngine.Utils.Component2.BPSComponentConfig
-import com.pharbers.StreamEngine.Utils.Event.BPSTypeEvents
+import com.pharbers.StreamEngine.Utils.Event.{BPSEvents, BPSTypeEvents}
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.{BPJobRemoteListener, BPStreamListener}
 import com.pharbers.StreamEngine.Utils.Strategy.BPSKfkBaseStrategy
 import com.pharbers.StreamEngine.Utils.Strategy.JobStrategy.BPSCommonJobStrategy
@@ -37,12 +37,15 @@ class BPSOssPartitionJobContainer(override val componentProperty: Component2.BPC
     final private val STARTING_OFFSETS_KEY = "starting.offsets"
     final private val STARTING_OFFSETS_DOC = "kafka offsets begin"
     final private val STARTING_OFFSETS_DEFAULT = "earliest" //可以分别指定{"topic1":{"0":23,"1":-2},"topic2":{"0":-2}} -2 = earliest， -1 = latest
+    final private val MAX_OFFSETS_TRIGGER_KEY = "trigger.max"
+    final private val MAX_OFFSETS_TRIGGER_DOC = "每个批次最多读取的row数量"
+    final private val MAX_OFFSETS_TRIGGER_DEFAULT = 10000L
 
     val description: String = "InputStream"
     type T = BPSCommonJobStrategy
     val strategy = BPSCommonJobStrategy(componentProperty, configDef)
     val id: String = strategy.getId
-    val jobId: String = strategy.getJobId
+    override val jobId: String = strategy.getJobId
     override val spark: SparkSession = strategy.getSpark
 
     import spark.implicits._
@@ -51,14 +54,14 @@ class BPSOssPartitionJobContainer(override val componentProperty: Component2.BPC
         val kafkaSession: BPKafkaSession = strategy.getKafka
         val reading = spark.readStream
                 .format("kafka")
-                .option("kafka.bootstrap.servers", "123.56.179.133:9092")
-                .option("kafka.security.protocol", "SSL")
-                .option("kafka.ssl.keystore.location", "./kafka.broker1.keystore.jks")
+                .option("kafka.bootstrap.servers", "broker-svc.message:9092")
+//                .option("kafka.security.protocol", "SSL")
+//                .option("kafka.ssl.keystore.location", "./kafka.broker1.keystore.jks")
                 .option("kafka.ssl.keystore.password", "pharbers")
-                .option("kafka.ssl.truststore.location", "./kafka.broker1.truststore.jks")
+//                .option("kafka.ssl.truststore.location", "./kafka.broker1.truststore.jks")
                 .option("kafka.ssl.truststore.password", "pharbers")
                 .option("kafka.ssl.endpoint.identification.algorithm", " ")
-                .option("maxOffsetsPerTrigger", 100000)
+                .option("maxOffsetsPerTrigger", strategy.getJobConfig.getLong(MAX_OFFSETS_TRIGGER_KEY))
                 .option("startingOffsets", strategy.jobConfig.getString(STARTING_OFFSETS_KEY))
                 .option("subscribe", s"${kafkaSession.getDataTopic}, ${kafkaSession.getMsgTopic}")
                 .load()
@@ -69,7 +72,7 @@ class BPSOssPartitionJobContainer(override val componentProperty: Component2.BPC
                     """deserialize(value) AS value""",
                     "timestamp"
                 ).toDF()
-                .withWatermark("timestamp", "24 hours")
+//                .withWatermark("timestamp", "24 hours")
                 .select(
                     from_json($"value", kafkaSession.getSchema).as("data"), col("timestamp")
                 ).select("data.*", "timestamp"))
@@ -80,10 +83,11 @@ class BPSOssPartitionJobContainer(override val componentProperty: Component2.BPC
         msgJob.open()
         msgJob.exec()
         jobs += msgJob.id -> msgJob
-        val listenEvent = strategy.getListens
-        val listener = BPJobRemoteListener[Map[String, String]](this, listenEvent.toList)(x => starJob(x))
-        listener.active(null)
-        listeners = listener +: listeners
+//        val listenEvent = strategy.getListens
+//        val listener = BPJobRemoteListener[Map[String, String]](this, listenEvent.toList)(x => starJob(x))
+//        listener.active(null)
+//        listeners = listener +: listeners
+        starOssJob(BPSTypeEvents(BPSEvents("", "", "SandBox-Start", Map())))
     }
 
     override def getJobWithId(id: String, category: String = ""): BPStreamJob = {
@@ -102,10 +106,11 @@ class BPSOssPartitionJobContainer(override val componentProperty: Component2.BPC
         new ConfigDef()
                 .define(FILE_MSG_TYPE_KEY, Type.STRING, FILE_MSG_TYPE_DEFAULT, Importance.HIGH, FILE_MSG_TYPE_DOC)
                 .define(STARTING_OFFSETS_KEY, Type.STRING, STARTING_OFFSETS_DEFAULT, Importance.HIGH, STARTING_OFFSETS_DOC)
+                .define(MAX_OFFSETS_TRIGGER_KEY, Type.LONG, MAX_OFFSETS_TRIGGER_DEFAULT, Importance.HIGH, MAX_OFFSETS_TRIGGER_DOC)
     }
 
-    def starJob(event: BPSTypeEvents[Map[String, String]]): Unit = {
-        val job = BPSOssPartitionJob(this, BPSComponentConfig(UUID.randomUUID().toString, "BPSKafkaMsgJob", Nil, event.date))
+    def starOssJob(event: BPSTypeEvents[Map[String, String]]): Unit = {
+        val job = BPSOssPartitionJob(this, BPSComponentConfig(UUID.randomUUID().toString, "BPSKafkaMsgJob", Nil, event.data))
         jobs += job.id -> job
         job.open()
         job.exec()

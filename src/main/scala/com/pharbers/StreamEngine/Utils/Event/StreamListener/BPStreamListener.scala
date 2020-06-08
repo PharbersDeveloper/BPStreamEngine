@@ -1,7 +1,7 @@
 package com.pharbers.StreamEngine.Utils.Event.StreamListener
 
 import org.apache.spark.sql
-import com.pharbers.util.log.PhLogable
+import com.pharbers.StreamEngine.Utils.Log.PhLogable
 import com.pharbers.StreamEngine.Utils.Event.BPSEvents
 import com.pharbers.StreamEngine.Utils.Job.BPStreamJob
 

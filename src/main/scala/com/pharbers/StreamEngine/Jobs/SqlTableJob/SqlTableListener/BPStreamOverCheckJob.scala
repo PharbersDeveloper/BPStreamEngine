@@ -12,6 +12,7 @@ import com.pharbers.StreamEngine.Utils.Strategy.Schema.BPSParseSchema
 import com.pharbers.StreamEngine.Jobs.SqlTableJob.SqlTableListener.BPStreamOverCheckJob._
 import com.pharbers.StreamEngine.Utils.Event.BPSEvents
 import com.pharbers.StreamEngine.Utils.Strategy.JobStrategy.BPSCommonJobStrategy
+import com.pharbers.StreamEngine.Utils.Strategy.s3a.BPS3aFile
 
 /** 功能描述
   *
@@ -36,7 +37,7 @@ class BPStreamOverCheckJob(container: BPSJobContainer, override val componentPro
             .define(METADATA_PATH_CONFIG_KEY, Type.STRING, "", Importance.HIGH, METADATA_PATH_CONFIG_DOC)
             .define(PUSH_KEY, Type.STRING, Importance.HIGH, PUSH_DOC)
 
-    lazy val hdfsfile: BPSHDFSFile = strategy.getHdfsFile
+    lazy val hdfsfile: BPS3aFile = strategy.getS3aFile
     val jobConfig: BPSConfig = strategy.jobConfig
 
     override def exec(): Unit = {
@@ -44,7 +45,7 @@ class BPStreamOverCheckJob(container: BPSJobContainer, override val componentPro
     }
 
     def checkLength(): Unit ={
-        val rows = hdfsfile.readHDFS(jobConfig.getString(ROW_RECORD_PATH_CONFIG_KEY)).map(_.toLong).sum
+        val rows = hdfsfile.readFiles(jobConfig.getString(ROW_RECORD_PATH_CONFIG_KEY)).map(_.toLong).sum
         logger.debug(s"row record path: ${jobConfig.getString(ROW_RECORD_PATH_CONFIG_KEY)}")
         logger.debug(s"rows: $rows")
         logger.debug(s"length: ${jobConfig.getLong(LENGTH_CONFIG_KEY)}")

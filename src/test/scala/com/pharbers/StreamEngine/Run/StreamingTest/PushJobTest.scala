@@ -5,7 +5,7 @@ import java.util.UUID
 import java.util.concurrent.TimeUnit
 
 import com.pharbers.StreamEngine.Utils.Component.Dynamic.JobMsg
-import com.pharbers.kafka.producer.PharbersKafkaProducer
+import com.pharbers.StreamEngine.Utils.Strategy.Session.Kafka.PharbersKafkaProducer
 import com.pharbers.kafka.schema.{BPJob, HiveTask, OssTask}
 import io.confluent.ksql.avro_schemas.KsqlDataSourceSchema
 import org.apache.avro.Schema
@@ -44,13 +44,13 @@ class PushJobTest extends FunSuite {
         val jobMsg = write(JobMsg("ossStreamJob", "job", "com.pharbers.StreamEngine.Jobs.OssPartitionJob.OssJobContainer.BPSOssPartitionJobContainer",
             List("$BPSKfkJobStrategy", "$BPSparkSession"), Nil, Nil, Map.empty, "", "test job"))
         val topic = "stream_job_submit"
-    
+
         val pkp = new PharbersKafkaProducer[String, BPJob]
         val bpJob = new BPJob(jobId, traceId, `type`, jobMsg)
         val fu = pkp.produce(topic, jobId, bpJob)
         println(fu.get(10, TimeUnit.SECONDS))
     }
-    
+
     test("push jobs") {
         import org.json4s._
         import org.json4s.jackson.Serialization.write
@@ -69,16 +69,16 @@ class PushJobTest extends FunSuite {
                         "pythonUri" -> "https://github.com/PharbersDeveloper/bp-data-clean.git",
                         "pythonBranch" -> "v0.0.1"
                     ), "", "python clean job") :: Nil
-        
+
         val jobMsg = write(jobs)
         val topic = "stream_job_submit"
-        
+
         val pkp = new PharbersKafkaProducer[String, BPJob]
         val bpJob = new BPJob(jobId, traceId, `type`, jobMsg)
         val fu = pkp.produce(topic, jobId, bpJob)
         println(fu.get(10, TimeUnit.SECONDS))
     }
-    
+
     test("stop job") {
         import org.json4s._
         implicit val formats: DefaultFormats.type = DefaultFormats
@@ -86,15 +86,15 @@ class PushJobTest extends FunSuite {
         val traceId = "201910231514"
         val `type` = "stop"
         val jobMsg = "SandBoxJobContainer_6260762d-5c7a-495f-be09-70128d8a440b"
-        
+
         val topic = "stream_job_submit"
-        
+
         val pkp = new PharbersKafkaProducer[String, BPJob]
         val bpJob = new BPJob(jobId, traceId, `type`, jobMsg)
         val fu = pkp.produce(topic, jobId, bpJob)
         println(fu.get(10, TimeUnit.SECONDS))
     }
-    
+
     test("test py job") {
         pushPyjob(
             "004",
@@ -105,7 +105,7 @@ class PushJobTest extends FunSuite {
         )
     }
 
-    
+
     // TODO：因还未曾与老齐对接口，暂时放到这里
     private def pushPyjob(runId: String,
                           metadataPath: String,
@@ -114,7 +114,7 @@ class PushJobTest extends FunSuite {
                           dsIds: String): Unit = {
         //		val resultPath = s"hdfs://jobs/$runId/"
         val resultPath = s"hdfs:///user/alex/jobs/$runId"
-        
+
         import org.json4s._
         import org.json4s.jackson.Serialization.write
         implicit val formats: DefaultFormats.type = DefaultFormats
@@ -144,6 +144,6 @@ class PushJobTest extends FunSuite {
         val fu = producerInstance.produce(topic, parentJobId, bpJob)
         println(fu.get(10, TimeUnit.SECONDS))
         producerInstance.producer.close()
-        
+
     }
 }

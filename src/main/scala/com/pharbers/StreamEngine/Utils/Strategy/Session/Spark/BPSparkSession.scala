@@ -45,23 +45,26 @@ class BPSparkSession(override val componentProperty: BPComponentConfig) extends 
             .setAppName(sparkConfigs.getString(APP_NAME_KEY))
             .setMaster(sparkConfigs.getString(MASTER_KEY))
 
-    val spark: SparkSession = SparkSession.builder().config(conf).enableHiveSupport().getOrCreate()
+    val spark: SparkSession = SparkSession.builder().config(conf)
+            .enableHiveSupport()
+            .getOrCreate()
     spark.sparkContext.setLogLevel(sparkConfigs.getString(LOG_LEVEL_KEY))
     spark.sparkContext.setLocalProperty("host", InetAddress.getLocalHost.getHostAddress)
+    spark.sparkContext.hadoopConfiguration.set("fs.s3a.access.key", sys.env("S3_ACCESS_KEY"))
+    spark.sparkContext.hadoopConfiguration.set("fs.s3a.secret.key", sys.env("S3_SECRET_KEY"))
+    spark.sparkContext.hadoopConfiguration.set("fs.s3a.endpoint", "s3.cn-northwest-1.amazonaws.com.cn")
     logger.info("添加SparkQueryListener")
     spark.streams.addListener(new SparkQueryListener)
     // 初始环境设置
     sparkConfigs.getString(RUN_MODEL_KEY) match {
         case "client" =>
-            spark.sparkContext.addFile("./kafka.broker1.keystore.jks")
-            spark.sparkContext.addFile("./kafka.broker1.truststore.jks")
             spark.sparkContext.addJar("./target/BP-Stream-Engine-1.0-SNAPSHOT.jar")
 
             spark.sparkContext.addJar("./jars/common-config-5.2.1.jar")
             spark.sparkContext.addJar("./jars/common-utils-5.2.1.jar")
             spark.sparkContext.addJar("./jars/elasticsearch-spark-20_2.11-7.2.0.jar")
             spark.sparkContext.addJar("./jars/kafka-avro-serializer-5.2.1.jar")
-            spark.sparkContext.addJar("./jars/kafka-clients-2.2.1.jar")
+            spark.sparkContext.addJar("./jars/kafka-clients-2.0.0.jar")
             spark.sparkContext.addJar("./jars/kafka-schema-registry-client-5.2.1.jar")
             spark.sparkContext.addJar("./jars/log4j-api-2.11.2.jar")
             spark.sparkContext.addJar("./jars/log4j-core-2.11.2.jar")

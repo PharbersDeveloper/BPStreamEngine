@@ -1,18 +1,19 @@
 package com.pharbers.StreamEngine.Jobs.PyJob
 
 import org.apache.spark.sql
-import java.util.Collections
-
 import com.pharbers.StreamEngine.Jobs.PyJob.ForeachWriter.PyCleanSinkHDFS
+import com.pharbers.StreamEngine.Utils.Component2.BPSConcertEntry
 import com.pharbers.StreamEngine.Utils.Strategy.Blood.BPSSetBloodStrategy
-import com.pharbers.kafka.schema.DataSet
+import com.pharbers.StreamEngine.Utils.Strategy.hdfs.BPSHDFSFile
+import com.pharbers.StreamEngine.Utils.Strategy.s3a.BPS3aFile
 import org.apache.spark.sql.SparkSession
-//import com.pharbers.StreamEngine.Jobs.SandBoxJob.BloodJob.BPSBloodJob
 import com.pharbers.StreamEngine.Jobs.PyJob.Py4jServer.BPSPy4jManager
 import com.pharbers.StreamEngine.Utils.Job.BPStreamJob
 import com.pharbers.StreamEngine.Jobs.PyJob.Listener.BPSProgressListenerAndClose
 import com.pharbers.StreamEngine.Utils.Component2
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamListener
+import com.pharbers.StreamEngine.Utils.Job.Status.BPSJobStatus
+import com.pharbers.StreamEngine.Utils.Module.bloodModules.BloodModel
 import com.pharbers.StreamEngine.Utils.Strategy.BPStrategyComponent
 import org.apache.kafka.common.config.ConfigDef
 
@@ -56,15 +57,17 @@ class BPSPythonJob(override val id: String,
     type T = BPStrategyComponent
     override val strategy: BPStrategyComponent = null
     val bloodStrategy: BPSSetBloodStrategy = new BPSSetBloodStrategy(Map.empty)
-    
+    val hdfsfile: BPSHDFSFile = BPSConcertEntry.queryComponentWithId("hdfs").get.asInstanceOf[BPSHDFSFile]
+    val s3aFile: BPS3aFile = BPSConcertEntry.queryComponentWithId("s3a").get.asInstanceOf[BPS3aFile]
     val noticeTopic: String = jobConf("noticeTopic").toString
     val datasetId: String = jobConf("datasetId").toString
-    val parentsId: List[CharSequence] = jobConf("parentsId").asInstanceOf[List[CharSequence]]
+    val assetId: String = jobConf("assetId").toString
+    val parentsId: List[String] = jobConf("parentsId").asInstanceOf[List[String]]
 
     val resultPath: String = {
         val path = jobConf("resultPath").toString
-        if (path.endsWith("/")) path + id
-        else path + "/" + id
+        if (path.endsWith("/")) path + s"jobId_$id"
+        else path + "/" + s"jobId_$id"
     }
     val lastMetadata: Map[String, Any] = jobConf("lastMetadata").asInstanceOf[Map[String, Any]]
     val data_length: Long = lastMetadata("length").asInstanceOf[Double].toLong
@@ -80,6 +83,7 @@ class BPSPythonJob(override val id: String,
     val errPath: String = resultPath + "/err"
 
     override def open(): Unit = {
+        regPedigree(BPSJobStatus.Start.toString)
         inputStream = is
     }
 
@@ -89,8 +93,6 @@ class BPSPythonJob(override val id: String,
         inputStream match {
             case Some(is) =>
                 val query = is
-                        //todo: 本来是为了通过重新分区来提高并行度，但是会产生shuffle。测试通过使用读取文件数量来分区
-//                        .repartition(partition)
                         .writeStream
                         .option("checkpointLocation", checkpointPath)
                         .foreach(PyCleanSinkHDFS(
@@ -120,27 +122,28 @@ class BPSPythonJob(override val id: String,
     }
 
     // 注册血统
-    def regPedigree(): Unit = {
-        import collection.JavaConverters._
-        val dfs = new DataSet(
-            parentsId.asJava,
+    def regPedigree(status: String): Unit = {
+       val dfs = BloodModel(
             datasetId,
+            assetId,
+            parentsId,
             id,
-            Collections.emptyList(),
+            Nil,
             "",
             data_length,
             successPath,
-            "Python 清洗 Job")
+            "Python 清洗 Job", status)
+        
         // TODO 齐 弄出traceId
         bloodStrategy.pushBloodInfo(dfs, id,"")
-//        BPSBloodJob("data_set_job", dfs).exec()
     }
 
     override def close(): Unit = {
-        regPedigree()
+        regPedigree(BPSJobStatus.End.toString)
         noticeFunc(noticeTopic, Map(
             "jobId" -> id,
             "datasetId" -> datasetId,
+            "assetId" -> assetId,
             "length" -> data_length,
             "resultPath" -> resultPath,
             "rowRecordPath" -> rowRecordPath,
@@ -148,6 +151,21 @@ class BPSPythonJob(override val id: String,
             "successPath" -> successPath,
             "errPath" -> errPath
         ))
+        
+        // TODO: 写入HDFS文件上传到S3上
+        checkpointPath :: rowRecordPath :: metadataPath :: successPath :: errPath :: Nil foreach {path =>
+            hdfsfile.recursiveFiles(path) match {
+                case Some(r) =>
+                    r.foreach { x =>
+                        s3aFile.copyHDFSFiles(s"s3a://ph-stream${x.path}", x.name, x.input)
+                    }
+                    r.head.fs.close()
+                case _ => println("Oops")
+            }
+        }
+    
+        
+        
         super.close()
         jobCloseFunc(id)
     }

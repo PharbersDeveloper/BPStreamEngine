@@ -4,7 +4,7 @@ import com.pharbers.StreamEngine.Utils.Channel.Local.BPSLocalChannel
 import com.pharbers.StreamEngine.Utils.Component2.BPSConcertEntry
 import com.pharbers.StreamEngine.Utils.Event.BPSEvents
 import com.pharbers.StreamEngine.Utils.Strategy.Session.Spark.msgMode.SparkQueryEvent
-import com.pharbers.util.log.PhLogable
+import com.pharbers.StreamEngine.Utils.Log.PhLogable
 import org.apache.spark.scheduler._
 import org.apache.spark.sql.streaming.StreamingQueryListener
 

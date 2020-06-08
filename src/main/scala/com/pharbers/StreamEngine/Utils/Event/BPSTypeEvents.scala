@@ -21,8 +21,7 @@ class BPSTypeEvents[T](events: BPSEvents) {
     val `type`: String = events.`type`
     val timestamp: Timestamp = events.timestamp
 
-    // TODO date? data?
-    def date(implicit fmt: Formats = DefaultFormats, mf: Manifest[T]): T =
+    def data(implicit fmt: Formats = DefaultFormats, mf: Manifest[T]): T =
         Extraction.extract(parse(events.data))
 }
 

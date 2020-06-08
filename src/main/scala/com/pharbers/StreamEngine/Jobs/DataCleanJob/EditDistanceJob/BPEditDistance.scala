@@ -1,4 +1,4 @@
-package com.pharbers.StreamEngine.Jobs.EditDistanceJob
+package com.pharbers.StreamEngine.Jobs.DataCleanJob.EditDistanceJob
 
 import com.pharbers.StreamEngine.Utils.Job.{BPSJobContainer, BPStreamJob}
 import org.apache.kafka.common.config.ConfigDef
@@ -6,9 +6,11 @@ import org.apache.kafka.common.config.ConfigDef.{Importance, Type}
 import org.apache.spark.sql.catalyst.encoders.RowEncoder
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 import org.apache.spark.sql.functions._
-import com.pharbers.StreamEngine.Jobs.EditDistanceJob.BPEditDistance.{DATA_SETS_CONFIG_DOC, DATA_SETS_CONFIG_KEY, TABLE_NAME_CONFIG_DOC, TABLE_NAME_CONFIG_KEY}
+import com.pharbers.StreamEngine.Jobs.DataCleanJob.EditDistanceJob.BPEditDistance.{TABLE_NAME_CONFIG_DOC, TABLE_NAME_CONFIG_KEY}
 import com.pharbers.StreamEngine.Utils.Component2
+import com.pharbers.StreamEngine.Utils.Strategy.BPSDataMartBaseStrategy
 import com.pharbers.StreamEngine.Utils.Strategy.JobStrategy.BPSCommonJobStrategy
+import org.apache.spark.sql.catalyst.expressions.GenericRowWithSchema
 
 /** 功能描述
   *
@@ -22,11 +24,11 @@ class BPEditDistance(jobContainer: BPSJobContainer, override val componentProper
 
     override def createConfigDef(): ConfigDef = new ConfigDef()
             .define(TABLE_NAME_CONFIG_KEY, Type.STRING, "cpa", Importance.HIGH, TABLE_NAME_CONFIG_DOC)
-            .define(DATA_SETS_CONFIG_KEY, Type.LIST, Importance.HIGH, DATA_SETS_CONFIG_DOC)
+//            .define(DATA_SETS_CONFIG_KEY, Type.LIST, Importance.HIGH, DATA_SETS_CONFIG_DOC)
 
     override type T = BPSCommonJobStrategy
     override val strategy: BPSCommonJobStrategy = new BPSCommonJobStrategy(componentProperty, configDef)
-    val jobId: String = strategy.getJobId
+    override val jobId: String = strategy.getJobId
     val runId: String = strategy.getRunId
     override val id: String = strategy.getId
     override val spark: SparkSession = strategy.getSpark
@@ -34,7 +36,7 @@ class BPEditDistance(jobContainer: BPSJobContainer, override val componentProper
     import spark.implicits._
 
     //todo: 配置传入
-    implicit val mappingConfig: Map[String, List[String]] = Map(
+    val mappingConfig: Map[String, List[String]] = Map(
         "PRODUCT_NAME" -> List("PROD_NAME_CH"),
         "SPEC" -> List("SPEC"),
         "DOSAGE" -> List("DOSAGE"),
@@ -64,14 +66,16 @@ class BPEditDistance(jobContainer: BPSJobContainer, override val componentProper
 
     def check(in: DataFrame, checkDf: DataFrame): Unit = {
         val mapping = Map() ++ mappingConfig
-        //        joinWithCheckDf(in, checkDf)
-        filterMinDistanceRow(mapping)
-        val filterMinDistanceDf = humanReplace(mapping).cache()
+        val joinCachePath = s"s3a://ph-stream/tmp/distanceDf_$id"
+        joinWithCheckDf(in, checkDf, joinCachePath)
+        val filterCachePath = s"s3a://ph-stream/tmp/res_$id"
+        filterMinDistanceRow(mapping, spark.read.parquet(joinCachePath), filterCachePath)
+        val filterMinDistanceDf = humanReplace(spark.read.parquet(filterCachePath), mapping).cache()
         saveTable(filterMinDistanceDf, in, checkDf, mapping)
+        jobContainer.finishJobWithId(id)
     }
 
-    private def joinWithCheckDf(in: DataFrame, checkDf: DataFrame): Unit = {
-        //        val mapping = Map() ++ mappingConfig
+    def joinWithCheckDf(in: DataFrame, checkDf: DataFrame, path: String): Unit = {
         val repartitionByIdNum = 50
         val inDfRename = in.columns.foldLeft(in)((l, r) =>
             l.withColumnRenamed(r, s"in_$r"))
@@ -90,44 +94,67 @@ class BPEditDistance(jobContainer: BPSJobContainer, override val componentProper
         distanceDfTmp.write
                 .partitionBy("partition_id")
                 .mode("overwrite")
-                .parquet(s"/user/dcs/test/tmp/distanceDf_$id")
+                .parquet(path)
     }
 
-    private def filterMinDistanceRow(mapping: Map[String, List[String]]): Unit = {
-        val distance = spark.read.parquet(s"/user/dcs/test/tmp/distanceDf_$id")
+    def filterMinDistanceRow(mapping: Map[String, List[String]], distance: DataFrame, path: String): Unit = {
+        //        val distance = spark.read.parquet(s"/user/dcs/test/tmp/distanceDf_$id")
 
         val partitions = distance.select("partition_id").distinct().collect().map(row => row.getAs[Int]("partition_id"))
+        val distanceWithArray = mapping.keySet.foldLeft(distance)((df, column) =>
+            df.withColumn(s"${column}_replaces",
+                when(col(s"${column}_distance")(2) > 0, array(col(s"${column}_distance")(1))).otherwise(array())
+            ))
 
         //todo: 因为yarn.nodemanager.local-dirs在/tem下shuffle write时会导致/挂载盘空间不够
         val iterator = partitions.iterator
-        while (iterator.hasNext){
+        while (iterator.hasNext) {
             val partition = iterator.next()
             logger.info(s"begin $partition")
             //todo: 这儿filter掉了没有和prod匹配上的，如果逻辑需要保留全部这儿需要去除并且将这儿filter放在后面createReplaceLog的逻辑
             //            filterMin(distanceDf, mappingConfig)
-            distance.filter($"partition_id" === partition)
+            distanceWithArray.filter($"partition_id" === partition)
                     .filter("check_MOLE_NAME_CH != ''")
                     .groupByKey(x => x.getAs[Long]("id"))
                     .mapGroups((_, row) => row.reduce((l, r) => {
-                        val editSumFunc: Row => Int = row => mapping.keySet.foldLeft(0)((x, y) => x + row.getAs[Seq[String]](s"${y}_distance")(2).toInt)
-                        val sameColSumFunc: Row => Int = row => mapping.keySet.map(x => row.getAs[Seq[String]](s"${x}_distance")(2).toInt).count(x => x == 0)
+                        // val editSumFunc: Row => Int = row => mapping.keySet.toList.foldLeft(0)((x, y) => x + row.getAs[Seq[String]](s"${y}_distance")(2).toInt)
+                        val margeRow: (Row, Row, List[String]) => Row = (l, r, checkColumns) => {
+                            val editSumFunc: Row => Int = row => mapping.keySet.toList.foldLeft(0)((x, y) => x + row.getAs[Seq[String]](s"${y}_distance")(2).toInt)
+                            val map = Map[String, (Row, String) => Any](
+                                "string" -> ((row, name) => row.getAs[String](name)),
+                                "array" -> ((row, name) => row.getAs[Seq[String]](name)),
+                                "integer" -> ((row, name) => row.getAs[Int](name)),
+                                "long" -> ((row, name) => row.getAs[Long](name))
+                            )
+                            val rowLeft = l.schema.map(x => (x.name, map(x.dataType.typeName)(l, x.name)))
+                            val rowRight = r.schema.map(x => (x.name, map(x.dataType.typeName)(r, x.name)))
+                            val isMore = editSumFunc(l) > editSumFunc(r)
+                            val row = rowLeft.zip(rowRight).map { case (colL, colR) =>
+                                if (checkColumns.contains(colL._1)) {
+                                    (colL._2.asInstanceOf[Seq[String]] ++ colR._2.asInstanceOf[Seq[String]]).distinct
+                                } else {
+                                    if(isMore) colR._2 else colL._2
+                                }
+                            }
+                            new GenericRowWithSchema(row.toArray, l.schema)
+                        }
+                        val sameColSumFunc: Row => Int = row => mapping.keySet.toList.map(x => row.getAs[Seq[String]](s"${x}_distance")(2).toInt).count(x => x <= 0)
                         sameColSumFunc(l).compareTo(sameColSumFunc(r)) match {
-                            case 0 => if (editSumFunc(l) > editSumFunc(r)) r else l
+                            case 0 => margeRow(l, r, mapping.keySet.toList.map(x => s"${x}_replaces"))
                             case 1 => l
                             case -1 => r
                         }
-                    }))(RowEncoder(distance.schema))
+                    }))(RowEncoder(distanceWithArray.schema))
                     .write
                     .mode("append")
-                    .parquet(s"/user/dcs/test/tmp/res_${id}_all")
+                    .parquet(path)
         }
     }
 
-
-    private def humanReplace(mapping: Map[String, List[String]]): DataFrame = {
+    def humanReplace(filterMinDistanceDf: DataFrame, mapping: Map[String, List[String]]): DataFrame = {
         val keys = List("MOLE_NAME", "PRODUCT_NAME", "SPEC", "DOSAGE", "PACK_QTY", "MANUFACTURER_NAME")
         val humanDf = spark.sql("select * from human_replace")
-        val filterMinDistanceDf = spark.read.parquet(s"/user/dcs/test/tmp/res_${id}_all")
+
         val joinDf = filterMinDistanceDf
                 .withColumn("in_min", concat(keys.map(x => col(s"in_$x")): _*))
                 //                .withColumn("in_min", concat(col("in_MOLE_NAME") +: mapping.keys.toList.map(x => col(s"in_$x")): _*))
@@ -158,15 +185,21 @@ class BPEditDistance(jobContainer: BPSJobContainer, override val componentProper
     }
 
     private def createReplaceLog(replaceDf: DataFrame, inDfColumns: Array[String], mapping: Map[String, List[String]]): DataFrame = {
-        replaceDf.selectExpr(Seq("id") ++ mapping.keys.map(x => s"${x}_distance").toSeq ++ inDfColumns.map(x => s"in_$x").toSeq: _*)
+        replaceDf
+                .selectExpr(Seq("id")
+                        ++ mapping.keys.map(x => s"${x}_distance").toSeq
+                        ++ mapping.keys.map(x => s"${x}_replaces").toSeq
+                        ++ inDfColumns.map(x => s"in_$x").toSeq: _*
+                )
                 .withColumn("distances", map(mapping.keys.toSeq.flatMap(key => List(lit(key), col(s"${key}_distance"))): _*))
+                .withColumn("replaces", map(mapping.keys.toSeq.flatMap(key => List(lit(key), col(s"${key}_replaces"))): _*))
                 .withColumn("cols", array(inDfColumns.map(x => col(s"in_$x")).toSeq: _*))
-                .select("id", "distances", "cols")
+                .select("id", "distances", "cols", "replaces")
                 .flatMap {
-                    case Row(id: Long, distances: Map[String, Seq[String]], cols: Seq[String]) =>
-                        distances.map(x => (id, x._1, math.ceil(x._2.head.length / 5.0).toInt >= x._2(2).toInt, x._2.head, x._2(1), x._2(2).toInt, cols))
+                    case Row(id: Long, distances: Map[String, Seq[String]], cols: Seq[String], replaces: Map[String, Seq[String]]) =>
+                        distances.map(x => (id, x._1, math.ceil(x._2.head.length / 5.0).toInt >= x._2(2).toInt, x._2.head, x._2(1), x._2(2).toInt, cols, replaces(x._1)))
                 }
-                .toDF("ID", "COL_NAME", "canReplace", "ORIGIN", "check", "distance", "cols")
+                .toDF("ID", "COL_NAME", "canReplace", "ORIGIN", "check", "distance", "cols", "CANDIDATE")
         //                .persist(StorageLevel.DISK_ONLY_2)
     }
 
@@ -176,14 +209,8 @@ class BPEditDistance(jobContainer: BPSJobContainer, override val componentProper
         val mode = "overwrite"
         val saveHandler = new TableSaveHandler(inDf, checkDf, tableName)
         saveHandler.saveReplaceTable(replaceLogDf, mode)
-        //todo; 血缘
-        //strategy.pushDataSet(s"${tableName}_replace", version, replaceUrl, "overwrite")
         saveHandler.saveNoReplaceTable(replaceLogDf, mode)
-        //todo; 血缘
-        //strategy.pushDataSet(s"${tableName}_no_replace", version, noReplaceUrl, "overwrite")
         saveHandler.saveNewTable(mapping.keys.foldLeft(filterMinDistanceDf)((df, s) => replaceWithDistance(s, df)), mode)
-        //todo; 血缘
-        //strategy.pushDataSet(s"${tableName}_new", version, noReplaceUrl, "overwrite")
     }
 
     override val description: String = "EditDistanceJob"
@@ -191,42 +218,48 @@ class BPEditDistance(jobContainer: BPSJobContainer, override val componentProper
     class TableSaveHandler(inDf: DataFrame, checkDf: DataFrame, tableName: String) {
         lazy val inVersion: String = inDf.select("version").take(1).head.getAs[String]("version")
         lazy val checkVersion: String = checkDf.select("version").take(1).head.getAs[String]("version")
+        lazy val dataMartStrategy: BPSDataMartBaseStrategy = BPSDataMartBaseStrategy(componentProperty)
 
         def saveNewTable(df: DataFrame, mode: String): Unit = {
             val newTableName = s"${tableName}_new"
             val version = getVersion(newTableName, mode)
+            val url = getTableSavePath(newTableName, inVersion, checkVersion, version)
             df.selectExpr(Array("id", "check_PACK_ID as PACK_ID") ++ inDf.columns.map(x => s"in_$x as $x"): _*)
                     .withColumn("version", lit(version))
                     .write
                     .mode(mode)
-                    .option("path", getTableSavePath(newTableName, inVersion, checkVersion, version))
+                    .option("path", url)
                     .saveAsTable(newTableName)
+            dataMartStrategy.pushDataSet(tableName, version, url, mode, jobId, strategy.getTraceId, Nil)
         }
 
         def saveReplaceTable(df: DataFrame, mode: String): Unit = {
             val replaceTableName = s"${tableName}_replace"
             val version = getVersion(replaceTableName, mode)
+            val url = getTableSavePath(replaceTableName, inVersion, checkVersion, version)
             df.filter("canReplace = true and distance != 0")
                     .selectExpr(List("ID", "COL_NAME", "ORIGIN", "check as DEST") ++ inDf.columns.zipWithIndex.map(x => s"cols[${x._2}] as ORIGIN_${x._1}").toList: _*)
                     .withColumn("version", lit(version))
                     .write
                     .mode(mode)
-                    .option("path", getTableSavePath(replaceTableName, inVersion, checkVersion, version))
+                    .option("path", url)
                     .saveAsTable(replaceTableName)
+            dataMartStrategy.pushDataSet(tableName, version, url, mode, jobId, strategy.getTraceId, Nil)
         }
 
         def saveNoReplaceTable(df: DataFrame, mode: String): Unit = {
-            val noReplaceLogTableName = s"${tableName}_replace"
+            val noReplaceLogTableName = s"${tableName}_no_replace"
             val version = getVersion(noReplaceLogTableName, mode)
+            val url = getTableSavePath(noReplaceLogTableName, inVersion, checkVersion, version)
             df.filter("canReplace = false")
-                    .selectExpr(List("ID", "COL_NAME", "ORIGIN", "check as CANDIDATE", "DISTANCE")
+                    .selectExpr(List("ID", "COL_NAME", "ORIGIN", "CANDIDATE", "DISTANCE")
                             ++ inDf.columns.zipWithIndex.map(x => s"cols[${x._2}] as ORIGIN_${x._1}").toList: _*)
-                    .withColumn("CANDIDATE", array(col("CANDIDATE")))
                     .withColumn("version", lit(version))
                     .write
                     .mode(mode)
-                    .option("path", getTableSavePath(noReplaceLogTableName, inVersion, checkVersion, version))
+                    .option("path", url)
                     .saveAsTable(noReplaceLogTableName)
+            dataMartStrategy.pushDataSet(tableName, version, url, mode, jobId, strategy.getTraceId, Nil)
         }
     }
 
@@ -235,8 +268,8 @@ class BPEditDistance(jobContainer: BPSJobContainer, override val componentProper
 object BPEditDistance extends Serializable {
     final val TABLE_NAME_CONFIG_KEY = "tableName"
     final val TABLE_NAME_CONFIG_DOC = "need check table name"
-    final val DATA_SETS_CONFIG_KEY = "dataSets"
-    final val DATA_SETS_CONFIG_DOC = "dataSet ids"
+//    final val DATA_SETS_CONFIG_KEY = "dataSets"
+//    final val DATA_SETS_CONFIG_DOC = "dataSet ids"
 
     def checkColumnsFunc(map: Map[String, Int]): Boolean = {
         map.forall(r => (r._1.length / 5 + 1) >= r._2)
@@ -254,15 +287,15 @@ object BPEditDistance extends Serializable {
         val s1 = inputWord.replaceAll(" ", "").toUpperCase
         val s2 = targetWord.replaceAll(" ", "").toUpperCase
         val resContainer = Array.fill(s1.length + 1, s2.length + 1)(-1)
-        val distanceNum = if(inputWord != targetWord && (s1 == s2 || checkSep(inputWord, targetWord))) -1 else distance(s1, s2, s1.length, s2.length, resContainer)
+        val distanceNum = if (inputWord != targetWord && (s1 == s2 || checkSep(inputWord, targetWord))) -1 else distance(s1, s2, s1.length, s2.length, resContainer)
         Array(inputWord, targetWord, distanceNum.toString)
     }
 
-//    case class replaceLog(id: String, columnName: String, canReplace: Boolean, back: String, check: String, distance: Int)
+    //    case class replaceLog(id: String, columnName: String, canReplace: Boolean, back: String, check: String, distance: Int)
 
     private def checkSep(s1: String, s2: String): Boolean = {
-        val list1 = s1.toUpperCase().split("[^A-Za-z0-9_\\u4e00-\\u9fa5]", -1).sorted
-        val list2 = s2.toUpperCase().split("[^A-Za-z0-9_\\u4e00-\\u9fa5]", -1).sorted
+        val list1 = s1.toUpperCase().split("[^A-Za-z0-9_.\\u4e00-\\u9fa5]", -1).sorted
+        val list2 = s2.toUpperCase().split("[^A-Za-z0-9_.\\u4e00-\\u9fa5]", -1).sorted
         list1.sameElements(list2)
     }
 

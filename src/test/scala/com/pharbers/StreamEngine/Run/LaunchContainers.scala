@@ -7,7 +7,7 @@ import java.util.concurrent.TimeUnit
 import com.pharbers.kafka.schema.BPJob
 import org.json4s.jackson.Serialization.write
 import org.apache.avro.specific.SpecificRecord
-import com.pharbers.kafka.producer.PharbersKafkaProducer
+import com.pharbers.StreamEngine.Utils.Strategy.Session.Kafka.PharbersKafkaProducer
 import com.pharbers.StreamEngine.Utils.Component.Dynamic.JobMsg
 
 class LaunchContainers extends FunSuite {

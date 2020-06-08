@@ -4,7 +4,7 @@ import java.util.UUID
 import java.util.concurrent.TimeUnit
 
 import com.pharbers.StreamEngine.Jobs.GenCubeJob.BPSGenCubeJob
-import com.pharbers.kafka.producer.PharbersKafkaProducer
+import com.pharbers.StreamEngine.Utils.Strategy.Session.Kafka.PharbersKafkaProducer
 import com.pharbers.kafka.schema.GenCubeJobSubmit
 import org.scalatest.FunSuite
 

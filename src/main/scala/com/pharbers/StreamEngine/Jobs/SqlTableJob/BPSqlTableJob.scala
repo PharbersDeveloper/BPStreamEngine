@@ -34,7 +34,7 @@ case class BPSqlTableJob(container: BPSJobContainer, override val componentPrope
     override type T = BPSCommonJobStrategy
     override val strategy: BPSCommonJobStrategy = BPSCommonJobStrategy(componentProperty, configDef)
     private val jobConfig: BPSConfig = strategy.getJobConfig
-    val jobId: String = strategy.getJobId
+    override val jobId: String = strategy.getJobId
     val runId: String = strategy.getRunId
     override val id: String = strategy.getId
     val spark: SparkSession = strategy.getSpark
@@ -46,10 +46,10 @@ case class BPSqlTableJob(container: BPSJobContainer, override val componentPrope
     override def open(): Unit = {
         logger.info(s"open job $id")
         inputStream = Some(spark.read
-                .format("csv")
-                .option("header", value = true)
-                .option("delimiter", ",")
-                .load(urls: _*)
+//                .format("csv")
+//                .option("header", value = true)
+//                .option("delimiter", ",")
+                .json(urls: _*)
         )
     }
 
@@ -66,7 +66,7 @@ case class BPSqlTableJob(container: BPSJobContainer, override val componentPrope
         } else {
             "0.0.1"
         }
-        val url = s"/common/public/$tableName/$version"
+        val url = s"s3a://ph-stream/common/public/$tableName/$version"
         logger.info(s"start save table $tableName, mode: $saveMode")
         saveMode match {
             case "append" => saveTable(tableName, saveMode, version, url)
@@ -81,7 +81,7 @@ case class BPSqlTableJob(container: BPSJobContainer, override val componentPrope
         //todo: 等血缘模块重构
         dataMartStrategy.pushDataSet(tableName, version, url, saveMode, jobId, strategy.getTraceId, strategy.getJobConfig.getList(DATA_SETS_CONFIG_KEY).asScala.toList)
         logger.info(s"close job $id")
-        strategy.pushMsg(BPSEvents(jobId, "", strategy.JOB_STATUS_EVENT_TYPE, BPSJobStatus.Success.toString), true)
+        strategy.pushMsg(BPSEvents(jobId, "", strategy.JOB_STATUS_EVENT_TYPE, Map(jobId -> BPSJobStatus.Success.toString)), true)
     }
 
     override def close(): Unit = {

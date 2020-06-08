@@ -11,4 +11,9 @@ object BPSEvents {
         implicit val formats: DefaultFormats.type = DefaultFormats
         new BPSEvents(jobId, traceId, `type`, write(data))
     }
+
+    def apply(jobId: String, traceId: String, `type`: String, data: String): BPSEvents = {
+        implicit val formats: DefaultFormats.type = DefaultFormats
+        new BPSEvents(jobId, traceId, `type`, data)
+    }
 }

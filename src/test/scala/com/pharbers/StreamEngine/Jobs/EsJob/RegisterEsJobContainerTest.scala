@@ -3,7 +3,7 @@ package com.pharbers.StreamEngine.Jobs.EsJob
 import java.util.concurrent.TimeUnit
 
 import com.pharbers.StreamEngine.Utils.Component.Dynamic.JobMsg
-import com.pharbers.kafka.producer.PharbersKafkaProducer
+import com.pharbers.StreamEngine.Utils.Strategy.Session.Kafka.PharbersKafkaProducer
 import com.pharbers.kafka.schema.BPJob
 import org.scalatest.FunSuite
 

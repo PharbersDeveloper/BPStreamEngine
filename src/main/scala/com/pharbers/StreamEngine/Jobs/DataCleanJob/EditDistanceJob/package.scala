@@ -1,4 +1,4 @@
-package com.pharbers.StreamEngine.Jobs
+package com.pharbers.StreamEngine.Jobs.DataCleanJob
 
 import com.pharbers.StreamEngine.Utils.Component2.BPSConcertEntry
 import com.pharbers.StreamEngine.Utils.Strategy.Session.Spark.BPSparkSession
@@ -17,7 +17,7 @@ package object EditDistanceJob {
     }
 
     def getTableSavePath(tableName: String, inVersion: String, checkVersion: String, version: String): String ={
-        val rootPath = "/common/public"
+        val rootPath = "s3a://ph-stream/common/public"
         s"$rootPath/$tableName/${tableName}_${inVersion}_$checkVersion/$version"
     }
 }

@@ -15,7 +15,7 @@
         "app.name": "bp-stream-engine",
         "master": "yarn",
         "spark.configs.path": "sparkConfig.properties",
-        "log.level": "ERROR",
+        "log.level": "INFO",
         "run.model": "cluster"
       }
     },
@@ -26,8 +26,8 @@
       "config": {
         "data.topic": "oss_source",
         "msg.topic": "oss_msg",
-        "url": "http://123.56.179.133:9092",
-        "schema": "http://123.56.179.133:8081"
+        "url": "http://broker-svc.message:9092",
+        "schema": "http://schema.message:8081"
       }
     },
     {
@@ -43,7 +43,15 @@
       "name": "BPSHDFSFile",
       "args": [],
       "config": {
-        "hdfsAddr": "hdfs://starLord:8020"
+        "hdfsAddr": "hdfs://192.168.1.28:8020"
+      }
+    },
+    {
+      "id": "s3a",
+      "name": "BPS3aFile",
+      "args": [],
+      "config": {
+
       }
     },
     {
@@ -74,8 +82,6 @@
       "name": "BPSLocalChannel",
       "args": [],
       "config": {
-        "port": 56789,
-        "sleep": 1000
       }
     },
     {
@@ -96,7 +102,8 @@
       "config": {
         "starting.offsets": "latest",
         "listens": "SandBox-Start",
-        "FileMetaData.msgType": "SandBox-FileMetaData"
+        "FileMetaData.msgType": "SandBox-FileMetaData",
+        "trigger.max": 10000
       }
     },
     {
@@ -106,26 +113,53 @@
       "config": {
         "listens": "SandBox-FileMetaData",
         "Python.msgType": "Python-FileMetaData",
-        "queue": 100
+        "queue": 5
       }
     },
     {
-      "id": "BPSPythonJobContainer",
-      "name": "BPSPythonJobContainer",
+      "id": "BPSPythonPipeJobContainer",
+      "name": "BPSPythonPipeJobContainer",
       "args": [],
       "config": {
         "listens": "Python-FileMetaData",
         "FileMetaData.msgType": "HiveTask-FileMetaData",
-        "defaultPartition": "4",
+        "defaultPartition": "2",
         "defaultRetryCount": "3",
         "pythonUri": "https://github.com/PharbersDeveloper/bp-data-clean.git",
-        "pythonBranch": "v0.0.1"
+        "pythonBranch": "v0.0.2"
+      }
+    },
+    {
+      "id": "SqlTableJobContainer",
+      "name": "BPSqlTableJobContainer",
+      "args": [],
+      "config": {
+        "listens": "SandBox-hive"
+      }
+    },
+    {
+      "id": "GenCubeJobContainer",
+      "name": "BPSGenCubeJobContainer",
+      "args": [],
+      "config": {
+        "listens": "GenCube-Start",
+        "GenCube.timer.hours": 1
+      }
+    },
+    {
+      "id": "BPDataCleanJobContainer",
+      "name": "BPDataCleanJobContainer",
+      "args": [],
+      "config": {
+        "listens": "Hive-Clean"
       }
     }
   ],
   "starts": [
     "OssJobContainer",
     "SandBoxJobContainer",
-    "BPSPythonJobContainer"
+    "BPSPythonPipeJobContainer",
+    "SqlTableJobContainer",
+    "BPDataCleanJobContainer"
   ]
 }
