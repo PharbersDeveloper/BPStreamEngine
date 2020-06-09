@@ -196,6 +196,7 @@ class BPEditDistanceV2(jobContainer: BPSJobContainer, override val componentProp
         val inDfWithDistance = inDf
                 .withColumn("min", concat(prodKeys.map(x => col(s"$x")): _*))
                 .join(withHumanReplaceDf, $"min" === $"in_min")
+                .withColumn("id", monotonically_increasing_id()) //之前创建的id是一个产品一个，现在是一条记录一个
                 .persist(StorageLevel.MEMORY_AND_DISK_SER)
         withHumanReplaceDf.unpersist(true)
         val replaceLogDf = createReplaceLog(inDfWithDistance, inDf.columns, mapping)

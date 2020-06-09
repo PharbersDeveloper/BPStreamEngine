@@ -81,13 +81,14 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer, input: Option[
 	}
 	
 	def startProcessParquet(df: DataFrame): StreamingQuery = {
-		val partitionNum = math.ceil(totalNum / 100000D).toInt
+//		val partitionNum = math.ceil(totalNum / 100000D).toInt
 		df.filter($"type" === "SandBox")
 			//todo: 这儿直接repartition为了控制储存的每个文件的数据量，但是一个批次读入的数据可能不是全部数据。而计算分片是按照总数据量计算的，所以可能会导致文件过小
-			.repartition(partitionNum)
+//			.repartition(partitionNum)
 			.writeStream
 			.outputMode("append")
 			.format("parquet")
+        	.option("maxRecordsPerFile", 100000)
 			.option("checkpointLocation", getCheckpointPath)
 			.option("path", getOutputPath)
 			.start()
