@@ -14,7 +14,7 @@ object main_oom {
 object main_gen_cube {
     def main(args: Array[String]): Unit = {
 
-        GenCubeJob().start
+        GenCubeJob(sql = args(0), esIndex = args(1)).start()
 
     }
 }

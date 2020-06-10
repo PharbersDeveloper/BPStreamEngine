@@ -11,51 +11,42 @@ import org.apache.spark.sql.SparkSession
 
 object GenCubeJob {
 
-    def apply(): GenCubeJob = {
+    def apply(sql: String, esIndex: String): GenCubeJob = {
         val jobId: String = UUID.randomUUID().toString
         val sparkSession: SparkSession = BPSConcertEntry.queryComponentWithId("spark").get.asInstanceOf[BPSparkSession].spark
-        new GenCubeJob(jobId, sparkSession)
+        new GenCubeJob(jobId, sparkSession, sql, esIndex)
     }
 
 }
 
-class GenCubeJob(jobId: String, sparkSession: SparkSession) extends BPBatchJob with PhLogable {
+class GenCubeJob(jobId: String, sparkSession: SparkSession, sql: String, esIndex: String) extends BPBatchJob with PhLogable {
 
     def start = {
 
+        if (sql.isEmpty) {
+            logger.error("No sql set!")
+            sys.exit()
+        }
+        if (esIndex.isEmpty) {
+            logger.error("No es index set!")
+            sys.exit()
+        }
+
         logger.info("GenCubeJob start.")
-        val config = JobConfig()
-        val sql = config("sql")
         logger.info(s"GenCubeJob sql=($sql).")
-        val esIndex = config("esIndex")
         logger.info(s"GenCubeJob esIndex=($esIndex).")
 
         val reading = sparkSession.sql(sql)
-        WriteToEsStrategy().writeDF(reading, esIndex)
-//        logger.info("GenCubeJob origin length =  ========>" + reading.count())
-//
-//        val cleanDF = new DataCleanStrategy(sparkSession).clean(reading)
-//        logger.info("GenCubeJob cleanDF length =  ========>" + cleanDF.count())
-//
-//        val cubeDF = new GenCubeJobStrategy(sparkSession).convert(cleanDF)
-//        WriteToEsStrategy().writeListDF(cubeDF, esIndex)
+        logger.info("GenCubeJob origin length =  ========>" + reading.count())
+
+        val cleanDF = new DataCleanStrategy(sparkSession).clean(reading)
+        logger.info("GenCubeJob cleanDF length =  ========>" + cleanDF.count())
+
+        val cubeDF = new GenCubeJobStrategy(sparkSession).convert(cleanDF)
+        WriteToEsStrategy().writeListDF(cubeDF, esIndex)
 
         logger.info("GenCubeJob done.")
-        sys.exit()
 
-    }
-
-    private def JobConfig(): Map[String, String] = {
-        val config: Map[String, String] = Map.empty
-        val sql = sys.env.getOrElse("GEN_CUBE__SQL", {
-            logger.error("No env GEN_CUBE__SQL found!")
-            sys.exit()
-        })
-        val esIndex = sys.env.getOrElse("GEN_CUBE__ES_INDEX", {
-            logger.error("No env GEN_CUBE__ES_INDEX found!")
-            sys.exit()
-        })
-        config + ("sql" -> sql) + ("esIndex" -> esIndex)
     }
 
 }
