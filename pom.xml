@@ -328,6 +328,13 @@
                     <version>3.11.0</version>
                 </dependency>
 
+                <!--mongo connector-->
+                <dependency>
+                    <groupId>org.mongodb.spark</groupId>
+                    <artifactId>mongo-spark-connector_${scalaBinaryVersion}</artifactId>
+                    <version>2.4.2</version>
+                </dependency>
+
                 <!-- https://mvnrepository.com/artifact/org.eclipse.jgit/org.eclipse.jgit -->
                 <dependency>
                     <groupId>org.eclipse.jgit</groupId>

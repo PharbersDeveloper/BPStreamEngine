@@ -1,4 +1,4 @@
-package com.pharbers.StreamEngine.BatchJobs.GenCubeJob
+package com.pharbers.StreamEngine.BatchJobs.WriteToEsJob
 
 import java.util.UUID
 
@@ -10,47 +10,39 @@ import com.pharbers.StreamEngine.Utils.Log.PhLogable
 import com.pharbers.StreamEngine.Utils.Strategy.Session.Spark.BPSparkSession
 import org.apache.spark.sql.SparkSession
 
-object GenCubeJob {
+object WriteToEsJob {
 
-    def apply(sql: String): GenCubeJob = {
+    def apply(target: String): WriteToEsJob = {
         val jobId: String = UUID.randomUUID().toString
         val sparkSession: SparkSession = BPSConcertEntry.queryComponentWithId("spark").get.asInstanceOf[BPSparkSession].spark
-        new GenCubeJob(jobId, sql, sparkSession)
+        new WriteToEsJob(jobId, target, sparkSession)
     }
 
-    def apply(jobId: String, sql: String): GenCubeJob = {
+    def apply(jobId: String, target: String): WriteToEsJob = {
         val sparkSession: SparkSession = BPSConcertEntry.queryComponentWithId("spark").get.asInstanceOf[BPSparkSession].spark
-        new GenCubeJob(jobId, sql, sparkSession)
+        new WriteToEsJob(jobId, target, sparkSession)
     }
 
 }
 
-class GenCubeJob(jobId: String, sql: String, sparkSession: SparkSession) extends BPBatchJob with PhLogable {
+class WriteToEsJob(jobId: String, target: String, sparkSession: SparkSession) extends BPBatchJob with PhLogable {
 
 
     override val id: String = jobId
 
     def start = {
 
-        if (sql.isEmpty) {
-            logger.error("No sql set!")
+        if (target.isEmpty) {
+            logger.error("No target set!")
             sys.exit()
         }
 
         logger.info("GenCubeJob start.")
-        logger.info(s"GenCubeJob sql=($sql).")
+        logger.info(s"GenCubeJob target=($target).")
 
-        val reading = sparkSession.sql(sql)
-        logger.info("GenCubeJob origin length =  ========>" + reading.count())
+        val reading = sparkSession.read.load(getJobStoragePath)
 
-
-
-//        val cleanDF = new DataCleanStrategy(sparkSession).clean(reading)
-//        logger.info("GenCubeJob cleanDF length =  ========>" + cleanDF.count())
-//
-//        val cubeDF = new GenCubeJobStrategy(sparkSession).convert(cleanDF)
-
-        WriteStrategy(PARQUET_SOURCE_TYPE).writeDF(reading, getJobStoragePath)
+        WriteStrategy(ES_SOURCE_TYPE).writeDF(reading, target)
 
         logger.info("GenCubeJob done.")
 
