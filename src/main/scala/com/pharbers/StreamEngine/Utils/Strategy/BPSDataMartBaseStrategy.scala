@@ -76,7 +76,7 @@ class BPSDataMartBaseStrategy(override val componentProperty: BPComponentConfig)
             "*" :: Nil,
             mongoOId :: Nil,
             tableName,
-            s"/common/public/$tableName/$version",
+            url,
             "hive",
             saveMode
         )

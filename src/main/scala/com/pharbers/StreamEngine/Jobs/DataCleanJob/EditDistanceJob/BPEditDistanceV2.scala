@@ -46,6 +46,8 @@ class BPEditDistanceV2(jobContainer: BPSJobContainer, override val componentProp
 
     val joinKey: (String, String) = "MOLE_NAME" -> "MOLE_NAME_CH"
 
+    val minKeys = List("MOLE_NAME", "PRODUCT_NAME", "SPEC", "DOSAGE", "PACK_QTY", "MANUFACTURER_NAME")
+
     override def open(): Unit = {
         inputStream = jobContainer.inputStream
     }
@@ -78,7 +80,7 @@ class BPEditDistanceV2(jobContainer: BPSJobContainer, override val componentProp
     }
 
     def joinWithCheckDf(in: DataFrame, checkDf: DataFrame): DataFrame = {
-        val inProdDf = in.selectExpr(joinKey._1 +: mappingConfig.keySet.toList: _*).distinct()
+        val inProdDf = in.selectExpr(minKeys: _*).distinct()
         val inDfRename = inProdDf.columns.foldLeft(inProdDf)((l, r) =>
             l.withColumnRenamed(r, s"in_$r"))
         val checkDfRename = checkDf.columns.foldLeft(checkDf)((l, r) =>
@@ -138,8 +140,8 @@ class BPEditDistanceV2(jobContainer: BPSJobContainer, override val componentProp
     }
 
     def humanReplace(filterMinDistanceDf: DataFrame, mapping: Map[String, List[String]]): DataFrame = {
-        val keys = joinKey._1 +: mappingConfig.keySet.toList
-        val humanDf = spark.sql("select * from human_replace")
+        val keys = minKeys
+        val humanDf = spark.sql("select * from human_replace_new")
 
         val joinDf = filterMinDistanceDf
                 .withColumn("in_min", concat(keys.map(x => col(s"in_$x")): _*))
@@ -192,15 +194,18 @@ class BPEditDistanceV2(jobContainer: BPSJobContainer, override val componentProp
     }
 
     private def saveTable(withHumanReplaceDf: DataFrame, inDf: DataFrame, checkDf: DataFrame, mapping: Map[String, List[String]]): Unit = {
-        val prodKeys = joinKey._1 +: mappingConfig.keySet.toList
+        val prodKeys = minKeys
         val inDfWithDistance = inDf
+                .na.fill("")
                 .withColumn("min", concat(prodKeys.map(x => col(s"$x")): _*))
                 .join(withHumanReplaceDf, $"min" === $"in_min")
                 .withColumn("id", monotonically_increasing_id()) //之前创建的id是一个产品一个，现在是一条记录一个
                 .persist(StorageLevel.MEMORY_AND_DISK_SER)
+//        withHumanReplaceDf.write.option("path", "s3a://ph-stream/test/withHumanReplaceDf").saveAsTable("withHumanReplace")
         withHumanReplaceDf.unpersist(true)
+//        inDfWithDistance.write.option("path", "s3a://ph-stream/test/inDfWithDistance").saveAsTable("inDfWithDistance")
         val replaceLogDf = createReplaceLog(inDfWithDistance, inDf.columns, mapping)
-        val tableName = strategy.getJobConfig.getString(BPEditDistance.TABLE_NAME_CONFIG_KEY)
+        val tableName = strategy.getJobConfig.getString(BPEditDistanceV2.TABLE_NAME_CONFIG_KEY)
         val mode = "overwrite"
         val saveHandler = new TableSaveHandler(inDf, checkDf, tableName)
         saveHandler.saveReplaceTable(replaceLogDf, mode)
@@ -226,7 +231,7 @@ class BPEditDistanceV2(jobContainer: BPSJobContainer, override val componentProp
                     .mode(mode)
                     .option("path", url)
                     .saveAsTable(newTableName)
-            dataMartStrategy.pushDataSet(tableName, version, url, mode, jobId, strategy.getTraceId, Nil)
+            dataMartStrategy.pushDataSet(newTableName, version, url, mode, jobId, strategy.getTraceId, Nil)
         }
 
         def saveReplaceTable(df: DataFrame, mode: String): Unit = {
@@ -240,7 +245,7 @@ class BPEditDistanceV2(jobContainer: BPSJobContainer, override val componentProp
                     .mode(mode)
                     .option("path", url)
                     .saveAsTable(replaceTableName)
-            dataMartStrategy.pushDataSet(tableName, version, url, mode, jobId, strategy.getTraceId, Nil)
+            dataMartStrategy.pushDataSet(replaceTableName, version, url, mode, jobId, strategy.getTraceId, Nil)
         }
 
         def saveNoReplaceTable(df: DataFrame, mode: String): Unit = {
@@ -255,7 +260,7 @@ class BPEditDistanceV2(jobContainer: BPSJobContainer, override val componentProp
                     .mode(mode)
                     .option("path", url)
                     .saveAsTable(noReplaceLogTableName)
-            dataMartStrategy.pushDataSet(tableName, version, url, mode, jobId, strategy.getTraceId, Nil)
+            dataMartStrategy.pushDataSet(noReplaceLogTableName, version, url, mode, jobId, strategy.getTraceId, Nil)
         }
     }
 
