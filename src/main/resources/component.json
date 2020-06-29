@@ -13,7 +13,7 @@
             "args": [],
             "config": {
                 "app.name": "alfredtest-bp-stream-engine",
-                "master": "local[2]",
+                "master": "yarn",
                 "spark.configs.path": "src/main/resources/sparkConfig.properties",
                 "log.level": "ERROR",
                 "run.model": "client"
@@ -126,7 +126,7 @@
                 "defaultPartition": "4",
                 "defaultRetryCount": "3",
                 "pythonUri": "https://github.com/PharbersDeveloper/bp-data-clean.git",
-                "pythonBranch": "v0.0.2"
+                "pythonBranch": "v0.0.3"
             }
         },
         {
