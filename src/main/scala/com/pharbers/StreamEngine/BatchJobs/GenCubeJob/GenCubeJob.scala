@@ -5,6 +5,7 @@ import java.util.UUID
 import com.pharbers.StreamEngine.BatchJobs.BPBatchJob
 import com.pharbers.StreamEngine.BatchJobs.CommonStrategy.WriteStrategy
 import com.pharbers.StreamEngine.BatchJobs.CommonStrategy.WriteStrategy._
+import com.pharbers.StreamEngine.BatchJobs.GenCubeJob.Strategies.{DataCleanStrategy, GenCubeJobStrategy}
 import com.pharbers.StreamEngine.Utils.Component2.BPSConcertEntry
 import com.pharbers.StreamEngine.Utils.Log.PhLogable
 import com.pharbers.StreamEngine.Utils.Strategy.Session.Spark.BPSparkSession
@@ -43,14 +44,12 @@ class GenCubeJob(jobId: String, sql: String, sparkSession: SparkSession) extends
         val reading = sparkSession.sql(sql)
         logger.info("GenCubeJob origin length =  ========>" + reading.count())
 
+        val cleanDF = new DataCleanStrategy(sparkSession).clean(reading)
+        logger.info("GenCubeJob cleanDF length =  ========>" + cleanDF.count())
 
-
-//        val cleanDF = new DataCleanStrategy(sparkSession).clean(reading)
-//        logger.info("GenCubeJob cleanDF length =  ========>" + cleanDF.count())
-//
 //        val cubeDF = new GenCubeJobStrategy(sparkSession).convert(cleanDF)
 
-        WriteStrategy(PARQUET_SOURCE_TYPE).writeDF(reading, getJobStoragePath)
+        WriteStrategy(PARQUET_SOURCE_TYPE).writeDF(cleanDF, getJobStoragePath)
 
         logger.info("GenCubeJob done.")
 

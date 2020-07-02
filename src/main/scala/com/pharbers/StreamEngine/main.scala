@@ -3,6 +3,7 @@ package com.pharbers.StreamEngine
 import com.pharbers.StreamEngine.BatchJobs.GenCubeJob.GenCubeJob
 import com.pharbers.StreamEngine.BatchJobs.WriteToEsJob.WriteToEsJob
 import com.pharbers.StreamEngine.BatchJobs.WriteToMongoJob.WriteToMongoJob
+import com.pharbers.StreamEngine.BatchJobs.WriteToMysqlJob.WriteToMysqlJob
 import com.pharbers.StreamEngine.Utils.Component2.BPSConcertEntry
 import com.pharbers.StreamEngine.Utils.ThreadExecutor.ThreadExecutor
 
@@ -28,5 +29,12 @@ object main_write_es {
 object main_write_mongo {
     def main(args: Array[String]): Unit = {
         WriteToMongoJob(jobId = args(0), uri = args(1), dbName = args(2), collName = args(3)).start()
+    }
+}
+
+object main_write_mysql {
+    def main(args: Array[String]): Unit = {
+        WriteToMysqlJob(jobId = args(0), uri = args(1), dbName = args(2), collName = args(3), username = args(4), password = args(5)).start()
+//        WriteToMysqlJob("test", "127.0.0.1:3306", "max", "max_result", "root", "pharbers").start()
     }
 }

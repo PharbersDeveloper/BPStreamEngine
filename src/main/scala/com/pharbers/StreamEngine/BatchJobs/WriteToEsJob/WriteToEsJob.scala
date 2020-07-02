@@ -37,14 +37,14 @@ class WriteToEsJob(jobId: String, target: String, sparkSession: SparkSession) ex
             sys.exit()
         }
 
-        logger.info("GenCubeJob start.")
-        logger.info(s"GenCubeJob target=($target).")
+        logger.info("WriteToEsJob start.")
+        logger.info(s"WriteToEsJob target=($target).")
 
         val reading = sparkSession.read.load(getJobStoragePath)
 
         WriteStrategy(ES_SOURCE_TYPE).writeDF(reading, target)
 
-        logger.info("GenCubeJob done.")
+        logger.info("WriteToEsJob done.")
 
     }
 
