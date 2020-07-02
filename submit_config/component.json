@@ -126,7 +126,7 @@
         "defaultPartition": "2",
         "defaultRetryCount": "3",
         "pythonUri": "https://github.com/PharbersDeveloper/bp-data-clean.git",
-        "pythonBranch": "v0.0.2"
+        "pythonBranch": "v0.0.3"
       }
     },
     {

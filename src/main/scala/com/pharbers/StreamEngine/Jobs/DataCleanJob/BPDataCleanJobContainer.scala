@@ -8,7 +8,8 @@ import com.pharbers.StreamEngine.Utils.Component2
 import com.pharbers.StreamEngine.Utils.Component2.BPSComponentConfig
 import com.pharbers.StreamEngine.Utils.Event.BPSTypeEvents
 import com.pharbers.StreamEngine.Utils.Event.EventHandler.BPSEventHandler
-import com.pharbers.StreamEngine.Utils.Event.StreamListener.{BPJobLocalListener, BPStreamListener}
+import com.pharbers.StreamEngine.Utils.Event.StreamListener.{BPJobLocalListener, BPJobRemoteListener, BPStreamListener}
+import com.pharbers.StreamEngine.Utils.Event.msgMode.DataCleanTask
 import com.pharbers.StreamEngine.Utils.Job.{BPDynamicStreamJob, BPSJobContainer}
 import com.pharbers.StreamEngine.Utils.Strategy.JobStrategy.BPSCommonJobStrategy
 import org.apache.kafka.common.config.ConfigDef
@@ -41,22 +42,20 @@ class BPDataCleanJobContainer(override val componentProperty: Component2.BPCompo
     override def open(): Unit = logger.info("BPDataCleanJobContainer open")
 
     override def exec(): Unit = {
-        val jobStartListener = BPJobLocalListener[CleanTask](this, strategy.getListens.toList)(startJob)
+        val jobStartListener = BPJobRemoteListener[DataCleanTask](this, strategy.getListens.toList)(startJob)
         jobStartListener.active(null)
         listeners = listeners :+ jobStartListener
     }
 
-    protected def startJob(msg: BPSTypeEvents[CleanTask]): Unit ={
+    protected def startJob(msg: BPSTypeEvents[DataCleanTask]): Unit ={
         inputStream = Some(spark.sql(s"select * from ${msg.data.tableName}"))
-        val config = Map("jobId" -> msg.jobId)
+        val config = Map("jobId" -> msg.jobId, BPEditDistanceV2.TABLE_NAME_CONFIG_KEY -> msg.data.tableName)
         val editDistanceId = UUID.randomUUID().toString
         val editDistanceJob = new BPEditDistanceV2(this, BPSComponentConfig(editDistanceId, s"BPEditDistance_$editDistanceId", Nil, config))
         editDistanceJob.open()
         editDistanceJob.exec()
         jobs += editDistanceId -> editDistanceJob
     }
-
-    case class CleanTask(tableName: String)
 }
 
 object BPDataCleanJobContainer {

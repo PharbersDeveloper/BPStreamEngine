@@ -38,7 +38,7 @@ case class SchemaConverter(override val componentProperty: Component2.BPComponen
 		def replaceJsonStr(json: String) = {
 			implicit val formats: DefaultFormats.type = DefaultFormats
 			val jsonMap = read[Map[String, String]](json)
-			write(jsonMap.flatMap(x => Map(x._1.replaceAll("""[,;{}()\s\t\n]""", "") -> x._2)))
+			write(jsonMap.flatMap(x => Map(x._1.replaceAll("""[",;{}()\s\t\n]""", "") -> x._2)))
 		}
 		val udf_rep = udf(replaceJsonStr _)
 		df.withColumn(colu, udf_rep(col(colu)))
@@ -46,7 +46,7 @@ case class SchemaConverter(override val componentProperty: Component2.BPComponen
 
 	def column2legalWithMetaDataSchema(data: Map[String, AnyRef]): Map[String, AnyRef] = {
 		val schema = data("schema").asInstanceOf[List[Map[String, AnyRef]]].map { m =>
-			val key = m("key").toString.replaceAll("""[,;{}()\s\t\n]""", "")
+			val key = m("key").toString.replaceAll("""[",;{}()\s\t\n]""", "")
 			val `type` = m("type")
 			Map("key" -> key, "type" -> `type`)
 		}
