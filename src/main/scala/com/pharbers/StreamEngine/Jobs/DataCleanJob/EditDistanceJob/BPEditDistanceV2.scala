@@ -224,9 +224,8 @@ class BPEditDistanceV2(jobContainer: BPSJobContainer, override val componentProp
                 .join(withHumanReplaceDf, $"min" === $"in_min")
                 .withColumn("id", monotonically_increasing_id()) //之前创建的id是一个产品一个，现在是一条记录一个
                 .persist(StorageLevel.MEMORY_AND_DISK_SER)
-//        withHumanReplaceDf.write.option("path", "s3a://ph-stream/test/withHumanReplaceDf").saveAsTable("withHumanReplace")
         withHumanReplaceDf.unpersist(true)
-//        inDfWithDistance.write.option("path", "s3a://ph-stream/test/inDfWithDistance").saveAsTable("inDfWithDistance")
+        inDfWithDistance.write.mode("overwrite").option("path", "s3a://ph-stream/test/inDfWithDistance").saveAsTable("inDfWithDistance")
         val replaceLogDf = createReplaceLog(inDfWithDistance, inDf.columns, mapping)
         val tableName = strategy.getJobConfig.getString(BPEditDistanceV2.TABLE_NAME_CONFIG_KEY)
         val mode = "overwrite"
@@ -262,9 +261,8 @@ class BPEditDistanceV2(jobContainer: BPSJobContainer, override val componentProp
             val replaceTableName = s"${tableName}_replace"
             val version = getVersion(replaceTableName, mode)
             val url = getTableSavePath(replaceTableName, inVersion, checkVersion, version)
-            df.filter("canReplace = true and distance != 0")
+            df.filter("canReplace = true and ORIGIN != check")
                     .selectExpr(List("ID", "COL_NAME", "ORIGIN", "check as DEST") ++ inDf.columns.zipWithIndex.map(x => s"cols[${x._2}] as ORIGIN_${x._1}").toList: _*)
-                    .filter("ORIGIN != DEST")
                     .withColumn("version", lit(version))
                     .write
                     .mode(mode)

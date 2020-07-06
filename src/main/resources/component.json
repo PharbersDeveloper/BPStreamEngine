@@ -13,7 +13,7 @@
             "args": [],
             "config": {
                 "app.name": "alfredtest-bp-stream-engine",
-                "master": "yarn",
+                "master": "local[2]",
                 "spark.configs.path": "src/main/resources/sparkConfig.properties",
                 "log.level": "ERROR",
                 "run.model": "client"
