@@ -15,7 +15,7 @@
                 "app.name": "alfredtest-bp-stream-engine",
                 "master": "local[2]",
                 "spark.configs.path": "src/main/resources/sparkConfig.properties",
-                "log.level": "ERROR",
+                "log.level": "INFO",
                 "run.model": "client"
             }
         },
@@ -125,8 +125,8 @@
                 "FileMetaData.msgType": "HiveTask-FileMetaData",
                 "defaultPartition": "4",
                 "defaultRetryCount": "3",
-                "pythonUri": "https://github.com/PharbersDeveloper/bp-data-clean.git",
-                "pythonBranch": "v0.0.3"
+                "pythonUri": "s3a://ph-stream/files/BPSPythonJobContainer.zip",
+                "pythonBranch": "0.1.0"
             }
         },
         {

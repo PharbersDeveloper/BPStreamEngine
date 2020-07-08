@@ -13,6 +13,7 @@ import com.pharbers.StreamEngine.Utils.Job.BPSJobContainer
 import com.pharbers.StreamEngine.Utils.Strategy.GithubHelper.BPSGithubHelper
 import com.pharbers.StreamEngine.Utils.Strategy.JobStrategy.BPSCommonJobStrategy
 import com.pharbers.StreamEngine.Utils.Strategy.Schema.BPSParseSchema
+import com.pharbers.StreamEngine.Utils.Strategy.s3a.BPS3aFile
 import org.apache.kafka.common.config.ConfigDef
 import org.apache.kafka.common.config.ConfigDef.{Importance, Type}
 import org.apache.spark.sql.SparkSession
@@ -91,18 +92,18 @@ class BPSPythonPipeJobContainer(override val componentProperty: Component2.BPCom
 
     val pythonUri: String = strategy.jobConfig.getString(PYTHON_URI_KEY)
     val pythonBranch: String = strategy.jobConfig.getString(PYTHON_BRANCH_KEY)
+    val pyZipPath = s"$pythonUri/phcli-$pythonBranch.zip"
 
     // 将 python 清洗文件发送到 spark
     def sendPy2Spark(): Unit = {
-        val helper: BPSGithubHelper =
-            BPSConcertEntry.queryComponentWithId("gitRepo").get.asInstanceOf[BPSGithubHelper]
-        helper.cloneByBranch(containerId, pythonUri, pythonBranch)
-        val pyFiles: List[String] = helper.listFile(containerId, ".py")
-        pyFiles.map(x => s"./$x").foreach(spark.sparkContext.addFile)
+//        val helper: BPSGithubHelper =
+//            BPSConcertEntry.queryComponentWithId("gitRepo").get.asInstanceOf[BPSGithubHelper]
+//        helper.cloneByBranch(containerId, pythonUri, pythonBranch)
+//        val pyFiles: List[String] = helper.listFile(containerId, ".py")
+//        pyFiles.map(x => s"./$x").foreach(spark.sparkContext.addFile)
+        spark.sparkContext.addFile(pyZipPath)
+        spark.sparkContext.addFile(s"$pythonUri/main.py")
     }
-
-    import org.json4s._
-    import org.json4s.jackson.JsonMethods._
 
     /** kafka consumer 收到消息的 function
      *
@@ -164,7 +165,7 @@ class BPSPythonPipeJobContainer(override val componentProperty: Component2.BPCom
             "parentsId" -> parentsId,
             "resultPath" -> resultPath,
             "lastMetadata" -> metadata,
-            "fileSuffix" -> "csv",
+            "pyName" -> s"phcli-$pythonBranch",
             "partition" -> partition,
             "retryCount" -> retryCount
         ))
