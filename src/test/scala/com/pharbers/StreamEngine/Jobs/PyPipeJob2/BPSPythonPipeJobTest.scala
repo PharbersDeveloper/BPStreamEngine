@@ -34,8 +34,8 @@ class BPSPythonPipeJobTest extends FunSuite{
             "mongoId" -> "test",
             "datasetId" -> "test",
             "assetId" -> "test",
-            "metadataPath" -> "s3a://ph-stream/jobs/runId_5ef0237cf362980c3a933d71/BPSSandBoxConvertSchemaJob/jobId_schema_job_5ef099d8691cf5000114b6e6/id_4e067e75-f8bf-46a6-879a-b03d9aa51c0c/metadata",
-            "filesPath" -> "s3a://ph-stream/jobs/runId_5ef0237cf362980c3a933d71/BPSSandBoxConvertSchemaJob/jobId_schema_job_5ef099d8691cf5000114b6e6/id_4e067e75-f8bf-46a6-879a-b03d9aa51c0c/contents",
+            "metadataPath" -> "s3a://ph-stream/jobs/runId_5f06a9e0118a4a45a4b287b5/BPSSandBoxConvertSchemaJob/jobId_schema_job_5f06aa0fbd2286000153b2f0/id_0870bc0f-fc31-49d5-b928-18f873846465/metadata",
+            "filesPath" -> "s3a://ph-stream/jobs/runId_5f06a9e0118a4a45a4b287b5/BPSSandBoxConvertSchemaJob/jobId_schema_job_5f06aa0fbd2286000153b2f0/id_0870bc0f-fc31-49d5-b928-18f873846465/contents",
             "resultPath" -> "s3a://ph-stream/tmp/testPy"
         )
         container.starJob(BPSTypeEvents(BPSEvents("test", "test", "test", data)))

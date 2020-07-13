@@ -125,7 +125,7 @@
                 "FileMetaData.msgType": "HiveTask-FileMetaData",
                 "defaultPartition": "4",
                 "defaultRetryCount": "3",
-                "pythonUri": "s3a://ph-stream/files/BPSPythonJobContainer.zip",
+                "pythonUri": "s3a://ph-stream/files/pyclean",
                 "pythonBranch": "0.1.0"
             }
         },
