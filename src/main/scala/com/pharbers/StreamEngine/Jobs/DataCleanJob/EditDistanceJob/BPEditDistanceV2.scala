@@ -162,7 +162,7 @@ class BPEditDistanceV2(jobContainer: BPSJobContainer, override val componentProp
                     and $"DOSAGE" === $"DOSAGE_PROD"
                     and $"PACK_QTY" === $"PACK"
                     and $"MANUFACTURER_NAME" === $"MNF_NAME_CH", "left")
-                .drop("MOLE_NAME_CH", "SPEC_PROD", "DOSAGE_PROD", "PACK", "MNF_NAME_CH")
+                .drop("MOLE_NAME_CH", "PROD_NAME_CH", "SPEC_PROD", "DOSAGE_PROD", "PACK", "MNF_NAME_CH")
 
         val joinDf = filterMinDistanceDf
                 .withColumn("in_min", concat(keys.map(x => col(s"in_$x")): _*))
@@ -321,8 +321,17 @@ object BPEditDistanceV2 extends Serializable {
     def getCheckRes(inputWord: String, targetWord: String, colName: String): Array[String] ={
         def replaceAndContains(s1: String, s2: String): Boolean ={
             val list = List(
-                "股份", "有限", "公司", "集团", "制药", "厂", "药业", "责任", "健康", "科技", "生物", "工业"
+                "股份", "有限", "公司", "集团", "制药", "厂", "药业", "责任", "健康", "科技", "生物", "工业", "保健", "医药", "总厂", "(", ")", "（", "）"
             )
+            //中文分词匹配，待测试
+//            import com.huaban.analysis.jieba.JiebaSegmenter
+//            import collection.JavaConverters._
+//            val segment = new JiebaSegmenter
+//            val manufacturer1 = segment.sentenceProcess(list.foldLeft(s1)((s, r) => s.replaceAll(r, ""))).asScala
+//            val manufacturer2 = segment.sentenceProcess(list.foldLeft(s2)((s, r) => s.replaceAll(r, ""))).asScala
+//            val checkCount = manufacturer1.intersect(manufacturer2).length
+//            checkCount >= manufacturer1.length || checkCount >= manufacturer2.length
+
             val manufacturer1 = list.foldLeft(s1)((s, r) => s.replaceAll(r, ""))
             val manufacturer2 = list.foldLeft(s2)((s, r) => s.replaceAll(r, ""))
             manufacturer1.contains(manufacturer2) || manufacturer2.contains(manufacturer1)
@@ -342,7 +351,15 @@ object BPEditDistanceV2 extends Serializable {
                                         case "MG" => s.toDouble * 1000
                                         case "UG" => s.toDouble
                                         case "ΜG" => s.toDouble
-                                        case "_" => s.toDouble
+                                        case _ => s.toDouble
+                                    }
+                                    transform(value, unit) == transform(specNumObj.value, specNumObj.unit)
+                                case "u" =>
+                                    val transform: (String, String) => Double = (s, unit) => unit match {
+                                        case "万U" => s.toDouble * 10000
+                                        case "MU" => s.toDouble * 1000 * 1000
+                                        case "MIU" => s.toDouble * 1000 * 1000
+                                        case _ => s.toDouble
                                     }
                                     transform(value, unit) == transform(specNumObj.value, specNumObj.unit)
                                 case "l" => value.toDouble == specNumObj.value.toDouble
@@ -367,13 +384,13 @@ object BPEditDistanceV2 extends Serializable {
                                 case "ΜG" => value.toDouble
                                 case "_" => value.toDouble
                             }
-                        case _ => value == value
+                        case _ => value
                     }
                     val transformUnit = `type` match {
                         case "g" => "UG"
                         case _ => unit
                     }
-                    SpecNum(transformUnit, transformValue.toString, unit)
+                    SpecNum(transformUnit, transformValue.toString, `type`)
                 }
             }
             def unitTransform(s: String): SpecNum = {
@@ -389,6 +406,13 @@ object BPEditDistanceV2 extends Serializable {
                         case "ΜG" => "g"
                         case "ML" => "l"
                         case "%" => "%"
+                        case "U" => "u"
+                        case "AXAU" => "u"
+                        case "AXAIU" => "u"
+                        case "IU" => "u"
+                        case "万U" => "u"
+                        case "MU" => "u"
+                        case "MIU" => "u"
                         case _ => "other"
                     }
                     SpecNum(unit, num.toDouble.toString, `type`)
@@ -400,7 +424,13 @@ object BPEditDistanceV2 extends Serializable {
                 val input = array.filter(x => x.`type` != "other")
                 if(input.length < 2) return array
                 val sort = if(input.groupBy(x => x.`type`).size == 1){
-                    input.map(x => x.transform()).sortBy(x => x.value.toDouble)
+                    input.filterNot(x => x.`type` == "other").map(x => x.transform()).sortBy(x =>
+                            try {
+                                x.value.toDouble
+                            } catch {
+                                case e: java.lang.NumberFormatException => throw new Exception(s"${x.value}, ${x.`type`}, ${x.unit}", e)
+                            }
+                        )
                 } else {
                     input.map(x => {
                         if(x.`type` == "g"){
@@ -414,11 +444,22 @@ object BPEditDistanceV2 extends Serializable {
                 val percent = (sort.head.value.toDouble / sort.last.value.toDouble * 100).toString
                 array :+ SpecNum("%", percent, "%")
             }
-            val regex = """[0-9][0-9.]*[A-Za-z%\u4e00-\u9fa5]*""".r
+            val regex = """[0-9]*\.?[0-9]+[A-Za-zΜ%\u4e00-\u9fa5]*""".r
             val list1 = regex.findAllIn(s1.toUpperCase()).toArray.filter(x => x != "").map(unitTransform)
-            val list2 = s2.toUpperCase().split("[^A-Za-z0-9_.%\\u4e00-\\u9fa5]", -1).filter(x => x != "").map(unitTransform)
+            val percentRegex = """([0-9]*\.?[0-9]+:[0-9]*.?[0-9]+)""".r
+            val list2 = percentRegex.replaceAllIn(s2.toUpperCase(), "").split("[^A-Za-z0-9_\\.%\\u4e00-\\u9fa5]", -1).filter(x => x != "")
+                    .flatMap(x => regex.findAllIn(x).map(unitTransform)) ++
+                    percentRegex.findAllIn(s2.toUpperCase()).map(x => {
+                        val nums = x.replaceAll("[()]", "").split(":").sortBy(x => x.toInt)
+                        SpecNum("%", (nums.head.toDouble /(nums.head.toDouble + nums.tail.head.toDouble) * 100).toString, "%")
+                    })
             val length = if(list2.exists(x => x.`type` == "%") && !list1.exists(x => x.`type` == "%")){
-                transForm2Percent(list1).count(x => list2.contains(x))
+                try{
+                    transForm2Percent(list1).count(x => list2.contains(x))
+                } catch {
+                    case e: Exception => throw new Exception(s"$s1, $s2", e)
+                }
+
             } else {
                 list1.count(x => list2.contains(x))
             }
@@ -455,8 +496,8 @@ object BPEditDistanceV2 extends Serializable {
     }
 
     private def checkSep(s1: String, s2: String): Boolean = {
-        val list1 = s1.toUpperCase().split("[^A-Za-z0-9_.\\u4e00-\\u9fa5]", -1).sorted
-        val list2 = s2.toUpperCase().split("[^A-Za-z0-9_.\\u4e00-\\u9fa5]", -1).sorted
+        val list1 = s1.toUpperCase().replaceAll("\"", "").split("[^A-Za-z0-9_.\\u4e00-\\u9fa5]", -1).sorted
+        val list2 = s2.toUpperCase().replaceAll("\"", "").split("[^A-Za-z0-9_.\\u4e00-\\u9fa5]", -1).sorted
         list1.sameElements(list2)
     }
 

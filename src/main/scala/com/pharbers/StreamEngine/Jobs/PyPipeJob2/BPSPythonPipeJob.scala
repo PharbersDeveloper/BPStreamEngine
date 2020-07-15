@@ -125,10 +125,10 @@ class BPSPythonPipeJob(override val jobId: String,
                                     .mode("append")
                                     .text(successPath)
                             pythonDf.filter("tag != 1")
-                                    .select("errMsg")
+                                    .select("errMsg", "data")
                                     .write
                                     .mode("append")
-                                    .text(errPath)
+                                    .json(errPath)
                             pythonDf.unpersist()
                             batchDF.unpersist()
                         })

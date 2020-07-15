@@ -341,6 +341,19 @@
                     <version>5.1.44</version>
                 </dependency>
 
+                <!-- https://mvnrepository.com/artifact/com.huaban/jieba-analysis -->
+                <!--分词-->
+                <dependency>
+                    <groupId>com.huaban</groupId>
+                    <artifactId>jieba-analysis</artifactId>
+                    <version>1.0.2</version>
+                </dependency>
+                <dependency>
+                    <groupId>org.ansj</groupId>
+                    <artifactId>ansj_seg</artifactId>
+                    <version>5.1.1</version>
+                </dependency>
+
 
                 <!--与线上冲突-->
                 <dependency>
