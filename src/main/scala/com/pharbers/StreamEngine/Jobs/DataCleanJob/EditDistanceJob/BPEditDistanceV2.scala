@@ -187,15 +187,15 @@ class BPEditDistanceV2(jobContainer: BPSJobContainer, override val componentProp
     }
 
     private def getColumnDistance(df: DataFrame, column: String, checkColumns: List[String]): DataFrame = {
-        val checkUdf = udf((x: String, y: String, col: String) => BPEditDistanceV2.getCheckRes(x, y, col))
-        val min = udf((array: Seq[Seq[String]]) => BPEditDistanceV2.minDistanceArray(array))
+        val checkUdf = udf((x: String, y: String, col: String) => BPEditDistanceV2Func.getCheckRes(x, y, col))
+        val min = udf((array: Seq[Seq[String]]) => BPEditDistanceV2Func.minDistanceArray(array))
         df.na.fill("")
                 .withColumn(s"${column}_distance", min(array(checkColumns.map(x =>
                     checkUdf(col(s"in_$column"), col(s"check_$x"), lit(column))): _*)))
     }
 
     private def replaceWithDistance(columnName: String, df: DataFrame): DataFrame = {
-        val replaceUdf = udf((distance: Seq[String], replaceSize: Int) => BPEditDistanceV2.replaceFunc(distance, replaceSize))
+        val replaceUdf = udf((distance: Seq[String], replaceSize: Int) => BPEditDistanceV2Func.replaceFunc(distance, replaceSize))
         val replaceSizeCol = if(canReplaceList.contains(columnName)) col(s"replace_size") else lit(100)
         df.withColumn(s"$columnName", replaceUdf(col(s"${columnName}_distance"), replaceSizeCol))
     }
@@ -236,7 +236,7 @@ class BPEditDistanceV2(jobContainer: BPSJobContainer, override val componentProp
         withHumanReplaceDf.unpersist(true)
         inDfWithDistance.write.mode("overwrite").option("path", "s3a://ph-stream/test/inDfWithDistance").saveAsTable("inDfWithDistance")
         val replaceLogDf = createReplaceLog(inDfWithDistance, inDf.columns, mapping)
-        val tableName = strategy.getJobConfig.getString(BPEditDistanceV2.TABLE_NAME_CONFIG_KEY)
+        val tableName = strategy.getJobConfig.getString(BPEditDistanceV2Func.TABLE_NAME_CONFIG_KEY)
         val mode = "overwrite"
         val saveHandler = new TableSaveHandler(inDf, checkDf, tableName)
         saveHandler.saveReplaceTable(replaceLogDf, mode)
@@ -298,7 +298,7 @@ class BPEditDistanceV2(jobContainer: BPSJobContainer, override val componentProp
 
 }
 
-object BPEditDistanceV2 extends Serializable {
+object BPEditDistanceV2Func extends Serializable {
     final val TABLE_NAME_CONFIG_KEY = "tableName"
     final val TABLE_NAME_CONFIG_DOC = "need check table name"
     //    final val DATA_SETS_CONFIG_KEY = "dataSets"
@@ -321,16 +321,23 @@ object BPEditDistanceV2 extends Serializable {
     def getCheckRes(inputWord: String, targetWord: String, colName: String): Array[String] ={
         def replaceAndContains(s1: String, s2: String): Boolean ={
             val list = List(
-                "股份", "有限", "公司", "集团", "制药", "厂", "药业", "责任", "健康", "科技", "生物", "工业", "保健", "医药", "总厂", "(", ")", "（", "）"
+                "股份", "有限","总公司", "公司", "集团", "制药", "总厂", "厂", "药业", "责任", "健康", "科技", "生物", "工业", "保健", "医药", "\\(", "\\)", "（", "）"
             )
-            //中文分词匹配，待测试
+            //中文分词匹配，匹配率和错误率都会增加。单纯去掉地理词语会导致不够精确
 //            import com.huaban.analysis.jieba.JiebaSegmenter
+//            import org.ansj.recognition.impl.NatureRecognition
 //            import collection.JavaConverters._
+//
+//            val natureRecognition = new NatureRecognition()
 //            val segment = new JiebaSegmenter
-//            val manufacturer1 = segment.sentenceProcess(list.foldLeft(s1)((s, r) => s.replaceAll(r, ""))).asScala
-//            val manufacturer2 = segment.sentenceProcess(list.foldLeft(s2)((s, r) => s.replaceAll(r, ""))).asScala
+//            val manufacturer1 = natureRecognition.recognition(segment.sentenceProcess(list.foldLeft(s1)((s, r) => s.replaceAll(r, ""))))
+//                    .asScala
+//                    .flatMap(x => if(x.getNatureStr != "ns") List(x.getName) else Nil)
+//            val manufacturer2 = natureRecognition.recognition(segment.sentenceProcess(list.foldLeft(s2)((s, r) => s.replaceAll(r, ""))))
+//                    .asScala
+//                    .flatMap(x => if(x.getNatureStr != "ns") List(x.getName) else Nil)
 //            val checkCount = manufacturer1.intersect(manufacturer2).length
-//            checkCount >= manufacturer1.length || checkCount >= manufacturer2.length
+//            (checkCount >= manufacturer1.length || checkCount >= manufacturer2.length) && checkCount > 0
 
             val manufacturer1 = list.foldLeft(s1)((s, r) => s.replaceAll(r, ""))
             val manufacturer2 = list.foldLeft(s2)((s, r) => s.replaceAll(r, ""))

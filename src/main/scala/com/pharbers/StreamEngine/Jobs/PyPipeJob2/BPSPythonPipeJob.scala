@@ -101,7 +101,8 @@ class BPSPythonPipeJob(override val jobId: String,
                 val schema = StructType(StructField("tag", IntegerType) ::
                         StructField("data", StringType) ::
                         StructField("errMsg", StringType) ::
-                        StructField("metadata", StringType) :: Nil
+                        StructField("metadata", StringType) ::
+                        StructField("raw_data", StringType) ::Nil
                 )
                 BPSConcertEntry.queryComponentWithId("s3a").get.asInstanceOf[BPS3aFile].appendLine(metadataPath, mapper.writeValueAsString(lastMetadata))
                 val query = is
@@ -125,7 +126,7 @@ class BPSPythonPipeJob(override val jobId: String,
                                     .mode("append")
                                     .text(successPath)
                             pythonDf.filter("tag != 1")
-                                    .select("errMsg", "data")
+                                    .select("errMsg", "data", "raw_data")
                                     .write
                                     .mode("append")
                                     .json(errPath)
