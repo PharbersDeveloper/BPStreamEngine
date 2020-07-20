@@ -2,6 +2,7 @@ package dcs.test
 
 import com.pharbers.StreamEngine.Jobs.DataCleanJob.EditDistanceJob.BPEditDistance
 import com.pharbers.StreamEngine.Utils.Component2.{BPSComponentConfig, BPSConcertEntry}
+import com.pharbers.StreamEngine.Utils.Strategy.Schema.SchemaConverter
 import com.pharbers.StreamEngine.Utils.Strategy.Session.Spark.BPSparkSession
 import dcs.test.SpecUnitTransform.spark
 import org.apache.hadoop.conf.Configuration
@@ -45,19 +46,33 @@ object SparkSqlTest extends App {
 }
 
 object SparkSql extends App {
-    val conf = new Configuration
-    conf.set("fs.defaultFS", "hdfs://192.168.100.14:8020")
-    val hdfs = FileSystem.newInstance(conf)
-    hdfs.delete(new Path("hdfs://192.168.100.14:8020/test/testBPStream/sandBoxRes/metadata"), true)
-    val spark = SparkSession.builder().config(new SparkConf().setMaster("local[2]")).enableHiveSupport().getOrCreate()
-    spark.sparkContext.hadoopConfiguration.set("fs.s3a.access.key", sys.env("S3_ACCESS_KEY"))
-    spark.sparkContext.hadoopConfiguration.set("fs.s3a.secret.key", sys.env("S3_SECRET_KEY"))
+//    val conf = new Configuration
+//    conf.set("fs.defaultFS", "hdfs://192.168.100.14:8020")
+//    val hdfs = FileSystem.newInstance(conf)
+//    hdfs.delete(new Path("hdfs://192.168.100.14:8020/test/testBPStream/sandBoxRes/metadata"), true)
+val sc = BPSConcertEntry.queryComponentWithId("schema convert").get.asInstanceOf[SchemaConverter]
+    val spark = SparkSession.builder().config(new SparkConf().setMaster("local[*]")).enableHiveSupport().getOrCreate()
+    spark.sparkContext.hadoopConfiguration.set("fs.s3a.access.key", sys.env("AWS_ACCESS_KEY_ID"))
+    spark.sparkContext.hadoopConfiguration.set("fs.s3a.secret.key", sys.env("AWS_SECRET_ACCESS_KEY_ID"))
     spark.sparkContext.hadoopConfiguration.set("fs.s3a.endpoint", "s3.cn-northwest-1.amazonaws.com.cn")
     //    val spark = BPSConcertEntry.queryComponentWithId("spark").get.asInstanceOf[BPSparkSession]
-    spark.sparkContext.setLogLevel("WARN")
-    val df: RDD[String] = spark.sparkContext.textFile("s3a://ph-stream/jobs/runId_5ebd213c4e81e22052f713dd/BPSSandBoxConvertSchemaJob/jobId_010d813b-31e7-4167-ba17-9fa557a4b8bb/metadata")
+//    spark.conf.set("spark.sql.files.maxPartitionBytes", "8388608")
+//    spark.conf.set("spark.sql.files.openCostInBytes", "1048576")
+    spark.sparkContext.setLogLevel("INFO")
+    spark.sparkContext.addJar("./jars/mysql-connector-java-5.1.44.jar")
 
-    df.saveAsTextFile("hdfs://192.168.100.14:8020/test/testBPStream/sandBoxRes/metadata")
+    spark.read.parquet("s3a://ph-stream/common/public/human_replace/0.0.14")
+            .filter("min != '硝普钠硝普钠50mg注射剂1湖南恒生制药有限公司'")
+            .withColumn("version", lit("0.0.15"))
+            .write
+            .mode("overwrite")
+            .option("path", "s3a://ph-stream/common/public/human_replace/0.0.15")
+            .saveAsTable("human_replace")
+
+
+
+
+
     //    val schemaDf = spark.read.parquet("/test/testBPStream/ossJobRes/400wDfsTest")
     //    schemaDf.write.mode("overwrite").parquet("/test/testBPStream/ossJobRes/800wDfs2")
     //    val df = spark.readStream
@@ -72,13 +87,13 @@ object SparkSql extends App {
     //            .partitionBy("jobId")
     //            .option("checkpointLocation", "/test/testBPStream/ossJobRes/checkpoint")
     //            .start("/test/testBPStream/ossJobRes/400wContents")
-    //    Thread.sleep(1000 * 60 * 30)
+        Thread.sleep(1000 * 60 * 30)
 }
 
 object SpecUnitTransform extends App {
     //    val spark = BPSConcertEntry.queryComponentWithId("spark").get.asInstanceOf[BPSparkSession]
 
-    val spark = SparkSession.builder().config(new SparkConf().setMaster("local[8]")).enableHiveSupport().getOrCreate()
+    val spark = BPSConcertEntry.queryComponentWithId("spark").get.asInstanceOf[BPSparkSession].spark
     spark.sparkContext.setLogLevel("WARN")
 
     import spark.implicits._
@@ -90,7 +105,7 @@ object SpecUnitTransform extends App {
             .withColumn("can_replace", checkFun($"ORIGIN", $"CANDIDATE" (0)))
 
 
-    df.write.mode("overwrite").option("path", "/user/dcs/test/spec_unit_transform").saveAsTable("spec_unit_transform")
+    df.write.mode("overwrite").option("path", "s3a://ph-stream/common/public/spec_unit_transform").saveAsTable("spec_unit_transform")
 
     def check(s1: String, s2: String): Boolean = {
         checkSep(s1, s2)
@@ -120,7 +135,7 @@ object saveNoReplaceDf extends App {
     val minColumns = List("MOLE_NAME", "PRODUCT_NAME", "SPEC", "DOSAGE", "PACK_QTY", "MANUFACTURER_NAME")
     //    val spark = BPSConcertEntry.queryComponentWithId("spark").get.asInstanceOf[BPSparkSession]
 
-    val spark = SparkSession.builder().config(new SparkConf().setMaster("local[8]")).enableHiveSupport().getOrCreate()
+    val spark =  BPSConcertEntry.queryComponentWithId("spark").get.asInstanceOf[BPSparkSession].spark
     spark.sparkContext.setLogLevel("WARN")
 
     import spark.implicits._
@@ -156,7 +171,7 @@ object createAutoHumanReplaceDf extends App {
         "MANUFACTURER_NAME" -> "MNF_NAME_CH"
     )
 
-    val spark = SparkSession.builder().config(new SparkConf().setMaster("local[8]")).enableHiveSupport().getOrCreate()
+    val spark = BPSConcertEntry.queryComponentWithId("spark").get.asInstanceOf[BPSparkSession].spark
     spark.sparkContext.setLogLevel("WARN")
 
     import spark.implicits._

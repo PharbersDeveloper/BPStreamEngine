@@ -61,6 +61,7 @@ class BPSOssPartitionJobContainer(override val componentProperty: Component2.BPC
 //                .option("kafka.ssl.truststore.location", "./kafka.broker1.truststore.jks")
                 .option("kafka.ssl.truststore.password", "pharbers")
                 .option("kafka.ssl.endpoint.identification.algorithm", " ")
+                //在kafka接收比spark消费快时可以限制每个job数据量的大小，用已控制每个job的时间
                 .option("maxOffsetsPerTrigger", strategy.getJobConfig.getLong(MAX_OFFSETS_TRIGGER_KEY))
                 .option("startingOffsets", strategy.jobConfig.getString(STARTING_OFFSETS_KEY))
                 .option("subscribe", s"${kafkaSession.getDataTopic}, ${kafkaSession.getMsgTopic}")

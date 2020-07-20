@@ -15,7 +15,7 @@ import com.pharbers.StreamEngine.Utils.Strategy.Blood.BPSSetBloodStrategy
 import com.pharbers.StreamEngine.Utils.Strategy.Session.Spark.msgMode.SparkQueryEvent
 import com.pharbers.StreamEngine.Utils.Strategy.s3a.BPS3aFile
 import org.apache.kafka.common.config.ConfigDef
-import org.apache.spark.sql
+import org.apache.spark.{SparkFiles, sql}
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.{IntegerType, StringType, StructField, StructType}
@@ -45,7 +45,7 @@ object BPSPythonPipeJob {
   *            resultPath = "./jobs/runId/containerId/" // Job 执行后的结果的存放位置, 会自动添加 jobId
   *            lastMetadata = Map("jobId" -> "a", "fileName" -> "b") // 上一步的元数据信息
   *
-  *            fileSuffix = "csv" // 存放文件的后缀名
+  *            pyName = "phcli-$pythonBranch" // 文件名
   *            partition = "4" //表示每个 Job 可使用的 spark 分区数，也是可用 Python 的线程数
   *            retryCount = "3" // Job 失败的重试次数
   *       }}}
@@ -76,7 +76,7 @@ class BPSPythonPipeJob(override val jobId: String,
     val lastMetadata: Map[String, Any] = jobConf("lastMetadata").asInstanceOf[Map[String, Any]]
     val data_length: Long = lastMetadata("length").asInstanceOf[Double].toLong
 
-    val fileSuffix: String = jobConf("fileSuffix").toString
+    val pyName: String = jobConf("pyName").toString
     val partition: Int = jobConf("partition").asInstanceOf[String].toInt
     val retryCount: String = jobConf("retryCount").toString
 
@@ -101,7 +101,8 @@ class BPSPythonPipeJob(override val jobId: String,
                 val schema = StructType(StructField("tag", IntegerType) ::
                         StructField("data", StringType) ::
                         StructField("errMsg", StringType) ::
-                        StructField("metadata", StringType) :: Nil
+                        StructField("metadata", StringType) ::
+                        StructField("raw_data", StringType) ::Nil
                 )
                 BPSConcertEntry.queryComponentWithId("s3a").get.asInstanceOf[BPS3aFile].appendLine(metadataPath, mapper.writeValueAsString(lastMetadata))
                 val query = is
@@ -109,10 +110,12 @@ class BPSPythonPipeJob(override val jobId: String,
                         .option("checkpointLocation", checkpointPath)
                         .foreachBatch((batchDF, _) => {
                             batchDF.persist()
+                            //本地测试用
+//                            val pyPath = SparkFiles.get("main.py").replace("/main.py", "")
                             val pythonDf = batchDF.select(to_json(struct($"*")).as("data"),
                                 lit(mapper.writeValueAsString(lastMetadata)).as("metadata"))
                                     .select(to_json(struct($"data".as("data"), $"metadata".as("metadata"))))
-                                    .rdd.pipe("python3 ./main.py")
+                                    .rdd.pipe(s"python3.8 ./main.py ./$pyName.zip/$pyName ./")
                                     .toDF("data")
                                     .select(from_json($"data", schema) as "data")
                                     .select("data.*")
@@ -123,10 +126,10 @@ class BPSPythonPipeJob(override val jobId: String,
                                     .mode("append")
                                     .text(successPath)
                             pythonDf.filter("tag != 1")
-                                    .select("errMsg")
+                                    .select("errMsg", "data", "raw_data")
                                     .write
                                     .mode("append")
-                                    .text(errPath)
+                                    .json(errPath)
                             pythonDf.unpersist()
                             batchDF.unpersist()
                         })

@@ -2,7 +2,7 @@ package com.pharbers.StreamEngine.Jobs.DataCleanJob
 
 import java.util.UUID
 
-import com.pharbers.StreamEngine.Jobs.DataCleanJob.EditDistanceJob.{BPEditDistance, BPEditDistanceV2}
+import com.pharbers.StreamEngine.Jobs.DataCleanJob.EditDistanceJob.{BPEditDistance, BPEditDistanceV2, BPEditDistanceV2Func}
 import com.pharbers.StreamEngine.Utils.Annotation.Component
 import com.pharbers.StreamEngine.Utils.Component2
 import com.pharbers.StreamEngine.Utils.Component2.BPSComponentConfig
@@ -49,7 +49,7 @@ class BPDataCleanJobContainer(override val componentProperty: Component2.BPCompo
 
     protected def startJob(msg: BPSTypeEvents[DataCleanTask]): Unit ={
         inputStream = Some(spark.sql(s"select * from ${msg.data.tableName}"))
-        val config = Map("jobId" -> msg.jobId, BPEditDistanceV2.TABLE_NAME_CONFIG_KEY -> msg.data.tableName)
+        val config = Map("jobId" -> msg.jobId, BPEditDistanceV2Func.TABLE_NAME_CONFIG_KEY -> msg.data.tableName)
         val editDistanceId = UUID.randomUUID().toString
         val editDistanceJob = new BPEditDistanceV2(this, BPSComponentConfig(editDistanceId, s"BPEditDistance_$editDistanceId", Nil, config))
         editDistanceJob.open()
