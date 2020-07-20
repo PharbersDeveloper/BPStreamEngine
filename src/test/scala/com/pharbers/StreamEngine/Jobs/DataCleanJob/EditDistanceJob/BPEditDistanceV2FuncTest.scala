@@ -177,7 +177,7 @@ object RunBPEditDistanceV2 extends App{
          override def createConfigDef(): ConfigDef = new ConfigDef()
      }
      jobContainer.inputStream = Some(spark.sql("select * from pfizer_check").drop("id"))
-     val bPEditDistance = new BPEditDistanceV2Func(jobContainer, BPSComponentConfig(id, "", Nil, config))
+     val bPEditDistance = new BPEditDistanceV2(jobContainer, BPSComponentConfig(id, "", Nil, config))
      bPEditDistance.open()
      bPEditDistance.exec()
      spark.spark.stop()

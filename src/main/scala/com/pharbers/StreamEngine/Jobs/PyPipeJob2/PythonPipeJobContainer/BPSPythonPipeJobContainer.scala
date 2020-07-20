@@ -152,7 +152,7 @@ class BPSPythonPipeJobContainer(override val componentProperty: Component2.BPCom
         val reading = spark.readStream
                 .schema(loadSchema)
                 .option("startingOffsets", startingOffsets)
-                //TODO: 设置触发的文件数，以控制内存 效果待测试
+                //已经改为通过spark配置项解决，每个分区不会有太大差异
 //                .option("maxFilesPerTrigger", partition.toInt)
                 .parquet(filesPath)
 //                .repartition(partition.toInt)

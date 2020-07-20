@@ -14,6 +14,7 @@ import com.pharbers.StreamEngine.sql.spark
   * @note 一些值得注意的地方
   */
 object MysqlWriteJob extends App {
+    //todo： 需要传入账号密码
     if(args.length < 1) throw new Exception("need table name")
     val tableName = args.head
     val spark = BPSConcertEntry.queryComponentWithId("spark").get.asInstanceOf[BPSparkSession]

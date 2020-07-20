@@ -14,11 +14,13 @@ import org.apache.spark.sql.catalyst.expressions.GenericRowWithSchema
 import org.apache.spark.storage.StorageLevel
 
 /** 功能描述
-  *
+  * 对传入表的PRODUCT_NAME SPEC DOSAGE PACK_QTY MANUFACTURER_NAME进行标准化替换，并匹配PACK_ID
   * @author dcs
   * @version 0.0
   * @since 2020/02/04 13:38
-  * @note 一些值得注意的地方
+  * @note
+  *       componentProperty中传入需要清洗的表，表必须有MOLE_NAME, PRODUCT_NAME SPEC DOSAGE PACK_QTY MANUFACTURER_NAME。
+  *       不能有id
   */
 class BPEditDistanceV2(jobContainer: BPSJobContainer, override val componentProperty: Component2.BPComponentConfig)
         extends BPStreamJob {
@@ -35,7 +37,7 @@ class BPEditDistanceV2(jobContainer: BPSJobContainer, override val componentProp
 
     import spark.implicits._
 
-    //todo: 配置传入
+    //列与prod表中列的对应关系，可以1对多
     val mappingConfig: Map[String, List[String]] = Map(
         "PRODUCT_NAME" -> List("PROD_NAME_CH"),
         "SPEC" -> List("SPEC"),
@@ -44,8 +46,10 @@ class BPEditDistanceV2(jobContainer: BPSJobContainer, override val componentProp
         "MANUFACTURER_NAME" -> List("MNF_NAME_CH", "MNF_NAME_EN")
     )
 
+    //与prod表join的主键
     val joinKey: (String, String) = "MOLE_NAME" -> "MOLE_NAME_CH"
 
+    //生成最小产品单位的字段和顺序
     val minKeys = List("MOLE_NAME", "PRODUCT_NAME", "SPEC", "DOSAGE", "PACK_QTY", "MANUFACTURER_NAME")
 
     val canReplaceList = List()
@@ -298,6 +302,14 @@ class BPEditDistanceV2(jobContainer: BPSJobContainer, override val componentProp
 
 }
 
+/** 功能描述
+  * BPEditDistanceV2的一些udf方法
+  * @author EDZ
+  * @version 0.0
+  * @since 2020/7/17 16:03
+  * @note 一些值得注意的地方
+  * @example {{{这是一个例子}}}
+  */
 object BPEditDistanceV2Func extends Serializable {
     final val TABLE_NAME_CONFIG_KEY = "tableName"
     final val TABLE_NAME_CONFIG_DOC = "need check table name"
