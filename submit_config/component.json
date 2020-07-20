@@ -26,8 +26,8 @@
       "config": {
         "data.topic": "oss_source",
         "msg.topic": "oss_msg",
-        "url": "http://123.56.179.133:9092",
-        "schema": "http://123.56.179.133:8081"
+        "url": "http://broker-svc.message:9092",
+        "schema": "http://schema.message:8081"
       }
     },
     {
@@ -126,7 +126,7 @@
         "defaultPartition": "2",
         "defaultRetryCount": "3",
         "pythonUri": "https://github.com/PharbersDeveloper/bp-data-clean.git",
-        "pythonBranch": "v0.0.2"
+        "pythonBranch": "v0.0.3"
       }
     },
     {
@@ -145,11 +145,21 @@
         "listens": "GenCube-Start",
         "GenCube.timer.hours": 1
       }
+    },
+    {
+      "id": "BPDataCleanJobContainer",
+      "name": "BPDataCleanJobContainer",
+      "args": [],
+      "config": {
+        "listens": "Hive-Clean"
+      }
     }
   ],
   "starts": [
     "OssJobContainer",
     "SandBoxJobContainer",
-    "BPSPythonPipeJobContainer"
+    "BPSPythonPipeJobContainer",
+    "SqlTableJobContainer",
+    "BPDataCleanJobContainer"
   ]
 }

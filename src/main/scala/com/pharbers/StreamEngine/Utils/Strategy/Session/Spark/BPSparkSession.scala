@@ -50,16 +50,14 @@ class BPSparkSession(override val componentProperty: BPComponentConfig) extends 
             .getOrCreate()
     spark.sparkContext.setLogLevel(sparkConfigs.getString(LOG_LEVEL_KEY))
     spark.sparkContext.setLocalProperty("host", InetAddress.getLocalHost.getHostAddress)
-    spark.sparkContext.hadoopConfiguration.set("fs.s3a.access.key", sys.env("S3_ACCESS_KEY"))
-    spark.sparkContext.hadoopConfiguration.set("fs.s3a.secret.key", sys.env("S3_SECRET_KEY"))
+    spark.sparkContext.hadoopConfiguration.set("fs.s3a.access.key", sys.env("AWS_ACCESS_KEY_ID"))
+    spark.sparkContext.hadoopConfiguration.set("fs.s3a.secret.key", sys.env("AWS_SECRET_ACCESS_KEY"))
     spark.sparkContext.hadoopConfiguration.set("fs.s3a.endpoint", "s3.cn-northwest-1.amazonaws.com.cn")
     logger.info("添加SparkQueryListener")
     spark.streams.addListener(new SparkQueryListener)
     // 初始环境设置
     sparkConfigs.getString(RUN_MODEL_KEY) match {
         case "client" =>
-            spark.sparkContext.addFile("./kafka.broker1.keystore.jks")
-            spark.sparkContext.addFile("./kafka.broker1.truststore.jks")
             spark.sparkContext.addJar("./target/BP-Stream-Engine-1.0-SNAPSHOT.jar")
 
             spark.sparkContext.addJar("./jars/common-config-5.2.1.jar")

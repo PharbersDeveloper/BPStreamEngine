@@ -1,4 +1,4 @@
-package com.pharbers.StreamEngine.Jobs.EditDistanceJob
+package com.pharbers.StreamEngine.Jobs.DataCleanJob.EditDistanceJob
 
 import com.pharbers.StreamEngine.Utils.Component2.{BPSComponentConfig, BPSConcertEntry}
 import com.pharbers.StreamEngine.Utils.Strategy.Session.Spark.BPSparkSession

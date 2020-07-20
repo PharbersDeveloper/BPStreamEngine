@@ -78,7 +78,7 @@ class BPSGenCubeJobContainer(override val componentProperty: Component2.BPCompon
 
     def startJob(event: BPSTypeEvents[Map[String, String]]): Unit = {
         logger.info(s"gen-cube job container listener be triggered by traceId(${event.traceId}).")
-        val job = BPSGenCubeJob(event.jobId, spark, this, event.date)
+        val job = BPSGenCubeJob(event.jobId, spark, this, event.data)
         jobs += job.id -> job
         job.open()
         job.exec()

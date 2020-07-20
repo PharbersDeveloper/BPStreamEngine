@@ -1,4 +1,4 @@
-package com.pharbers.StreamEngine.Jobs.EditDistanceJob
+package com.pharbers.StreamEngine.Jobs.DataCleanJob.EditDistanceJob
 
 
 import java.util.UUID

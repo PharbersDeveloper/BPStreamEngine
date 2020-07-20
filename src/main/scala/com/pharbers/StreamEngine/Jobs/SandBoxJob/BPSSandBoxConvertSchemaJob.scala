@@ -1,12 +1,12 @@
 package com.pharbers.StreamEngine.Jobs.SandBoxJob
 
-import java.util.Collections
-
 import com.pharbers.StreamEngine.Utils.Component2
 import com.pharbers.StreamEngine.Utils.Component2.BPSConcertEntry
 import com.pharbers.StreamEngine.Utils.Event.BPSEvents
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPJobLocalListener
+import com.pharbers.StreamEngine.Utils.Job.Status.BPSJobStatus
 import com.pharbers.StreamEngine.Utils.Job.{BPSJobContainer, BPStreamJob}
+import com.pharbers.StreamEngine.Utils.Module.bloodModules.{BloodModel, BloodModel2, DataMartTagModel }
 import com.pharbers.StreamEngine.Utils.Strategy.Blood.BPSSetBloodStrategy
 import com.pharbers.StreamEngine.Utils.Strategy.JobStrategy.BPSCommonJobStrategy
 import com.pharbers.StreamEngine.Utils.Strategy.Schema.{BPSMetaData2Map, SchemaConverter}
@@ -17,25 +17,21 @@ import org.apache.kafka.common.config.ConfigDef
 import org.apache.spark.sql.functions.from_json
 import org.apache.spark.sql.streaming.StreamingQuery
 import org.apache.spark.sql.{DataFrame, SparkSession}
-import com.pharbers.kafka.schema.{DataSet, UploadEnd}
 import org.apache.spark.sql
 import org.json4s.DefaultFormats
 import org.json4s.jackson.Serialization.write
 import org.mongodb.scala.bson.ObjectId
 
-import collection.JavaConverters._
-
 case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer, input: Option[DataFrame],
                                       componentProperty: Component2.BPComponentConfig) extends BPStreamJob {
-
+	
 	type T = BPSCommonJobStrategy
 	override val strategy: BPSCommonJobStrategy = BPSCommonJobStrategy(componentProperty.config, configDef)
 	val bloodStrategy: BPSSetBloodStrategy = new BPSSetBloodStrategy(componentProperty.config)
 	override val id: String = componentProperty.id // 本身Job的id
-	val jobId: String = strategy.getJobId // componentProperty config中的job Id
+	override val jobId: String = strategy.getJobId // componentProperty config中的job Id
 	val runnerId: String = BPSConcertEntry.runner_id // Runner Id
-	val s3aFile: BPS3aFile =
-		BPSConcertEntry.queryComponentWithId("s3a").get.asInstanceOf[BPS3aFile]
+	val s3aFile: BPS3aFile = strategy.getS3aFile
 	val traceId: String = componentProperty.args.head
 	val msgType: String = componentProperty.args.last
 	val spark: SparkSession = strategy.getSpark
@@ -45,21 +41,21 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer, input: Option[
 	val mongoId: String = new ObjectId().toString
 	var metaData: Option[MetaData] = None
 	implicit val formats: DefaultFormats.type = DefaultFormats
-
+	
 	import spark.implicits._
-
+	
 	override def open(): Unit = {
 		inputStream = setInputStream(input)
 	}
-
+	
 	override def exec(): Unit = inputStream match {
 		case Some(is) => {
 			val query = startProcessParquet(is)
 			outputStream = outputStream :+ query
-
+			
 			val rowNumListener =
 				BPJobLocalListener[SparkQueryEvent](null, List(s"spark-${query.id.toString}-progress"))(x => {
-					logger.info(s"listener hit query ${x.date.id}")
+					logger.info(s"listener hit query ${x.data.id}")
 					checkQuery()
 				})
 			rowNumListener.active(null)
@@ -68,24 +64,31 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer, input: Option[
 		}
 		case None => ???
 	}
-
+	
 	override def close(): Unit = {
 		logger.info("Job =====> Closed")
+		
+		metaData match {
+			case Some(md) =>
+				pushBloodMsg(BPSJobStatus.End.toString, md)
+				bloodStrategy.setMartTags(DataMartTagModel(md.label("assetId").toString, md.label("tag").toString), id, traceId)
+			case _ =>
+		}
 		val bpsEvents = BPSEvents("", "", s"SandBoxJobEnd", "")
 		strategy.pushMsg(bpsEvents, isLocal = false)
 		super.close()
 		container.finishJobWithId(id)
 	}
-
+	
 	def startProcessParquet(df: DataFrame): StreamingQuery = {
-		val partitionNum = math.ceil(totalNum / 100000D).toInt
-//		df.filter($"jobId" === jobId and $"type" === "SandBox")
+//		val partitionNum = math.ceil(totalNum / 100000D).toInt
 		df.filter($"type" === "SandBox")
 			//todo: 这儿直接repartition为了控制储存的每个文件的数据量，但是一个批次读入的数据可能不是全部数据。而计算分片是按照总数据量计算的，所以可能会导致文件过小
-			.repartition(partitionNum)
+//			.repartition(partitionNum)
 			.writeStream
 			.outputMode("append")
 			.format("parquet")
+        	.option("maxRecordsPerFile", 100000)
 			.option("checkpointLocation", getCheckpointPath)
 			.option("path", getOutputPath)
 			.start()
@@ -94,14 +97,15 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer, input: Option[
 	def setInputStream(df: Option[DataFrame]): Option[sql.DataFrame] = {
 		// 解析MetaData
 		val mdPath = componentProperty.config("metaDataPath")
-		metaData = startProcessMetaData(s"$mdPath/$jobId")
+		metaData = startProcessMetaData(s"$mdPath/$id")
+		
 		metaData match {
 			case Some(md) =>
 				totalNum = md.length("length").toString.toLong
 				// 将规范过后的MetaData重新写入
 				writeMetaData(getMetadataPath, md)
 				// 告诉pyjob有数据了
-				pushPyJob()
+//				pushPyJob(md)
 				// 规范化的Schema设置Stream
 				df match {
 					case Some(is) => Some(
@@ -114,7 +118,7 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer, input: Option[
 			case None => throw new Exception("MetaData Is Null")
 		}
 	}
-
+	
 	def startProcessMetaData(path: String): Option[MetaData] = {
 		try {
 			val content = spark.sparkContext.textFile(path)
@@ -127,65 +131,62 @@ case class BPSSandBoxConvertSchemaJob(container: BPSJobContainer, input: Option[
 			Some(MetaData(schema, label, Map("length" -> convertContent("length").toString.toLong)))
 		} catch {
 			case e: Exception =>
-				logger.error( s"${e.getMessage} jobId ===> $id, upper job meta data path ====> $path", e); None
+				logger.error(s"${e.getMessage} jobId ===> $id, upper job meta data path ====> $path", e); None
 		}
 	}
-
+	
 	def writeMetaData(path: String, md: MetaData): Unit = {
 		s3aFile.appendLine(path, write(md.schemaData))
 		s3aFile.appendLine(path, write(md.label))
 		s3aFile.appendLine(path, write(md.length))
 	}
-
-	def pushBloodMsg(): Unit = {
-		metaData match {
-			case Some(md) =>
-				val dataSet = new DataSet(Collections.emptyList(),
-					mongoId,
-					id,
-					md.schemaData.map(_ ("key").toString).asInstanceOf[List[CharSequence]].asJava,
-					md.label("sheetName").toString,
-					totalNum,
-					getOutputPath,
-					"SampleData")
-				val uploadEnd = new UploadEnd(mongoId, md.label("assetId").toString)
-				val tag = DataMartTag(md.label("assetId").toString, md.label("tag").toString)
-				// 血缘
-				bloodStrategy.pushBloodInfo(dataSet, id, traceId)
-				bloodStrategy.uploadEndPoint(uploadEnd, id, traceId)
-				bloodStrategy.setMartTags(tag, id, traceId)
-			case _ =>
-		}
+	
+	def pushBloodMsg(status: String, metaData: MetaData): Unit = {
+		val bloodModel = BloodModel2(
+			jobId = jobId,
+			columnNames = metaData.schemaData.map(_ ("key").toString),
+			tabName = metaData.label("sheetName").toString,
+			length = totalNum,
+			url = getOutputPath,
+			description = "schemaJob",
+			status = status)
+		
+		// 血缘
+		bloodStrategy.pushBloodInfo(bloodModel, id, traceId, "PushDs")
 	}
-
-	def pushPyJob(): Unit = {
-		val pythonMetaData = PythonMetaData(mongoId, "HiveTaskNone", getMetadataPath, getOutputPath,  "s3a://ph-stream/jobs/" + s"runId_${BPSConcertEntry.runner_id}")
-		// 给PythonCleanJob发送消息
-		strategy.pushMsg(BPSEvents(id, traceId, msgType, pythonMetaData), isLocal = false)
-	}
-
+	
+//	def pushPyJob(metaData: MetaData): Unit = {
+//		val pythonMetaData = PythonMetaData(mongoId, "HiveTaskNone", getMetadataPath, getOutputPath)
+//		// 给PythonCleanJob发送消息
+//		strategy.pushMsg(BPSEvents(id, traceId, msgType, pythonMetaData), isLocal = false)
+//	}
+	
 	def checkQuery(): Unit = {
 		val query = outputStream.head
 		val cumulative = query.recentProgress.map(_.numInputRows).sum
 		logger.info(s"cumulative num $cumulative, id: $id, query: ${query.id.toString}")
 		if (cumulative >= totalNum) {
-			pushBloodMsg()
 			this.close()
 		}
 	}
-
+	
 	override def createConfigDef(): ConfigDef = new ConfigDef()
-
+	
 	override val description: String = "BPSSandBoxConvertSchemaJob"
-
+	
 	case class MetaData(schemaData: List[Map[String, Any]], label: Map[String, Any], length: Map[String, Any])
 	
-	case class DataMartTag(assetId: String, tag: String)
-	
-	case class PythonMetaData(mongoId: String,
-							  noticeTopic: String,
-							  metadataPath: String,
-							  filesPath: String,
-							  resultPath: String)
+//	case class PythonMetaData(mongoId: String,
+//	                          assetId: String,
+//	                          noticeTopic: String,
+//	                          metadataPath: String,
+//	                          filesPath: String,
+//	                          resultPath: String)
+//
+//
+//	case class PythonMetaData2(jobId: String,
+//	                          noticeTopic: String,
+//	                          metadataPath: String,
+//	                          filesPath: String)
 	
 }

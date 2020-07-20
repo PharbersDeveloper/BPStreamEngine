@@ -1,4 +1,4 @@
-package com.pharbers.StreamEngine.Jobs.EditDistanceJob
+package com.pharbers.StreamEngine.Jobs.DataCleanJob.EditDistanceJob
 
 import com.pharbers.StreamEngine.Utils.Component2
 import com.pharbers.StreamEngine.Utils.Component2.{BPSComponentConfig, BPSConcertEntry}
@@ -28,7 +28,7 @@ class HumanReplaceJob(override val componentProperty: Component2.BPComponentConf
 
     override type T = BPSCommonJobStrategy
     override val strategy: BPSCommonJobStrategy = BPSCommonJobStrategy(componentProperty, configDef)
-    val jobId: String = strategy.getJobId
+    override val jobId: String = strategy.getJobId
     val runId: String = strategy.getRunId
     override val id: String = jobId
     override val description: String = "human_replace_job"
@@ -58,7 +58,7 @@ class HumanReplaceJob(override val componentProperty: Component2.BPComponentConf
     }
 
     //针对CPA_no_replace 第8次提数0417之前的
-    def createHumanReplaceDfV2(df: DataFrame): Unit = {
+    def createHumanReplaceDfV2(df: DataFrame): DataFrame = {
         //todo:配置传入
         val mode = "append"
         val mappingConfig = List("MOLE_NAME", "PRODUCT_NAME", "SPEC", "DOSAGE", "PACK_QTY", "MANUFACTURER_NAME")
@@ -86,14 +86,10 @@ class HumanReplaceJob(override val componentProperty: Component2.BPComponentConf
         res.select(col("min") +: mappingConfig.zipWithIndex.map(x => expr(s"cols[${x._2}] as ${x._1}")): _*)
                 .withColumn("version", lit(version))
                 .distinct()
-                .write
-                .mode(mode)
-                .option("path", s"/common/public/human_replace/$version")
-                .saveAsTable("human_replace")
 
     }
 
-    def createHumanReplaceDfV3(df: DataFrame): Unit = {
+    def createHumanReplaceDfV3(df: DataFrame): DataFrame = {
         val minColumns = List("MOLE_NAME", "PRODUCT_NAME", "SPEC", "DOSAGE", "PACK_QTY", "MANUFACTURER_NAME")
 
         val minDf = df.na.fill("")
@@ -122,21 +118,36 @@ class HumanReplaceJob(override val componentProperty: Component2.BPComponentConf
         val oldTable = margeMinColumns(getOldTable)
 
         val humanReplaceTable = margeTable(humanReplaceDf, oldTable)
-        saveTable(humanReplaceTable)
+        humanReplaceTable
+    }
+
+    def createHumanReplaceDfV4(df: DataFrame): DataFrame = {
+        val prod = spark.sql("select cast(PACK_ID as int) as PACK_ID, MOLE_NAME_CH, PROD_NAME_CH, MNF_NAME_CH, DOSAGE, SPEC, PACK from prod")
+        val humanReplaceDf = df.filter("PACK_ID_HUMAN != 0")
+                .na.fill("")
+                .withColumn("ORIGIN_PRODUCT_NAME", when(col("ORIGIN_PRODUCT_NAME").isNotNull, col("ORIGIN_PRODUCT_NAME")).otherwise(lit("")))
+                .withColumn("min", concat(col("ORIGIN_MOLE_NAME"), col("ORIGIN_PRODUCT_NAME"), col("ORIGIN_SPEC"), col("ORIGIN_DOSAGE"), col("ORIGIN_PACK_QTY"), col("ORIGIN_MANUFACTURER_NAME")))
+                .select("min", "PACK_ID_HUMAN")
+                .join(prod, $"PACK_ID_HUMAN" === $"PACK_ID")
+                .selectExpr("min", "MOLE_NAME_CH as MOLE_NAME", "PROD_NAME_CH as PRODUCT_NAME", "SPEC as SPEC", "DOSAGE as DOSAGE", "PACK as PACK_QTY", "MNF_NAME_CH as MANUFACTURER_NAME")
+                .distinct()
+
+        val oldTable = margeMinColumns(getOldTable)
+        margeTable(margeMinColumns(humanReplaceDf), oldTable)
     }
 
     def saveTable(humanReplaceTable: DataFrame): Unit ={
         val mode = "overwrite"
         val version = getVersion(tableName, mode)
         humanReplaceTable.withColumn("version", lit(version)).write
-                .option("path", s"/common/public/human_replace/$version")
+                .option("path", s"s3a://ph-stream/common/public/human_replace/$version")
                 .mode(mode)
                 .saveAsTable(tableName)
     }
 
     def getOldTable: DataFrame = {
         val tableVersion = getVersion(tableName)
-        spark.read.parquet(s"/common/public/human_replace/$tableVersion")
+        spark.read.parquet(s"s3a://ph-stream/common/public/human_replace/$tableVersion")
     }
 
     def margeMinColumns(df: DataFrame): DataFrame = {

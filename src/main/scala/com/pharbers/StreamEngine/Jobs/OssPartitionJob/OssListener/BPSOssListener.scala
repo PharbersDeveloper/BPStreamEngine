@@ -3,8 +3,9 @@ package com.pharbers.StreamEngine.Jobs.OssPartitionJob.OssListener
 import com.pharbers.StreamEngine.Utils.Channel.Driver.BPSDriverChannel
 import com.pharbers.StreamEngine.Utils.Component2.BPSConcertEntry
 import com.pharbers.StreamEngine.Utils.Job.BPStreamJob
-import com.pharbers.StreamEngine.Utils.Event.BPSEvents
+import com.pharbers.StreamEngine.Utils.Event.{BPSEvents, BPSTypeEvents}
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamRemoteListener
+import com.pharbers.StreamEngine.Utils.Event.msgMode.FileMetaData
 import com.pharbers.StreamEngine.Utils.Strategy.Session.Kafka.BPKafkaSession
 import com.pharbers.StreamEngine.Utils.Strategy.s3a.BPS3aFile
 import org.apache.spark.sql.DataFrame
@@ -21,6 +22,7 @@ import org.apache.spark.sql.DataFrame
   */
 case class BPSOssListener(job: BPStreamJob, msgType: String) extends BPStreamRemoteListener {
     def event2JobId(e: BPSEvents): String = e.jobId
+    def map2Id(map: Map[String, String]): String = map.getOrElse("id", throw new Exception("not found key of id"))
     lazy val s3aFile: BPS3aFile =
         BPSConcertEntry.queryComponentWithId("s3a").get.asInstanceOf[BPS3aFile]
 
@@ -29,17 +31,18 @@ case class BPSOssListener(job: BPStreamJob, msgType: String) extends BPStreamRem
     override def trigger(e: BPSEvents): Unit = {
 	    val metaDataPath = job.getMetadataPath
         val sampleDataPath = job.getOutputPath
+        val event = BPSTypeEvents[Map[String, String]](e)
 
         e.`type` match {
             case "SandBox-Schema" => {
-                s3aFile.appendLine(s"$metaDataPath/${event2JobId(e)}", e.data)
+                s3aFile.appendLine(s"$metaDataPath/${map2Id(event.data)}", event.data.getOrElse("data", ""))
             }
             case "SandBox-Labels" => {
-                s3aFile.appendLine(s"$metaDataPath/${event2JobId(e)}", e.data)
+                s3aFile.appendLine(s"$metaDataPath/${map2Id(event.data)}", event.data.getOrElse("data", ""))
             }
             case "SandBox-Length" => {
-                s3aFile.appendLine(s"$metaDataPath/${event2JobId(e)}", e.data)
-                val fileMetaData = FileMetaData(event2JobId(e), metaDataPath, s"$sampleDataPath/jobId=${event2JobId(e)}", "")
+                s3aFile.appendLine(s"$metaDataPath/${map2Id(event.data)}", event.data.getOrElse("data", ""))
+                val fileMetaData = FileMetaData(event2JobId(e), map2Id(event.data), metaDataPath, s"$sampleDataPath/jobId=${event2JobId(e)}/id=${map2Id(event.data)}", "")
                 kafka.callKafka(BPSEvents(event2JobId(e), e.traceId , msgType, fileMetaData))
             }
         }
@@ -55,6 +58,4 @@ case class BPSOssListener(job: BPStreamJob, msgType: String) extends BPStreamRem
     override def deActive(): Unit = {
         BPSDriverChannel.unRegisterListener(this)
     }
-
-    case class FileMetaData(jobId: String, metaDataPath: String, sampleDataPath: String, convertType: String)
 }

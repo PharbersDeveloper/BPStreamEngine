@@ -36,14 +36,14 @@ class TestSparkQueryListener extends FunSuite with BeforeAndAfterAll {
                 .option("checkpointLocation", check)
                 .start(out)
         val startListener = BPJobLocalListener[SparkQueryEvent](null, List(s"spark-${query.id.toString}-start"))(x =>
-            assert(x.date.id == query.id.toString && x.date.status == "start"))
+            assert(x.data.id == query.id.toString && x.data.status == "start"))
         startListener.active(null)
         val progressListener = BPJobLocalListener[SparkQueryEvent](null, List(s"spark-${query.id.toString}-progress"))(x =>
-            assert(x.date.id == query.id.toString && x.date.status == "progress"))
+            assert(x.data.id == query.id.toString && x.data.status == "progress"))
         progressListener.active(null)
 
         val terminatedListener = BPJobLocalListener[SparkQueryEvent](null, List(s"spark-${query.id.toString}-terminated"))(x =>
-            assert(x.date.id == query.id.toString && x.date.status == "terminated"))
+            assert(x.data.id == query.id.toString && x.data.status == "terminated"))
         terminatedListener.active(null)
 
         //listen rowNum的例子

@@ -17,7 +17,7 @@ class NewStartGenCube extends FunSuite {
 		val inputDataType = BPSGenCubeJob.HIVE_DATA_TYPE
 		val inputPath = "SELECT * FROM result"
 		val outputDataType = "es"
-		val outputPath = "newcube"
+		val outputPath = "cube"
 		val strategy = BPSGenCubeJob.STRATEGY_CMD_HANDLE_HIVE_RESULT
 
 		workerChannel.pushMessage(write(BPSEvents("testJobId", "testTraceId", "GenCube-Start", Map(

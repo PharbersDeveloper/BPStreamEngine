@@ -1,5 +1,7 @@
 package com.pharbers.StreamEngine.Utils.Job
 
+import java.util.UUID
+
 import com.pharbers.StreamEngine.Utils.Component2.{BPComponent, BPSConcertEntry}
 import com.pharbers.StreamEngine.Utils.Event.EventHandler.BPSEventHandler
 import com.pharbers.StreamEngine.Utils.Event.StreamListener.BPStreamListener
@@ -18,7 +20,8 @@ trait BPStreamJob extends PhLogable with BPComponent {
     @transient
     //id是BPStreamJob实例唯一标识
     val id: String
-    //todo：这儿感觉需要有个jobId
+//    系统一个逻辑上job的id
+    val jobId: String = UUID.randomUUID().toString
     @transient
     val description: String
     @deprecated
@@ -48,9 +51,9 @@ trait BPStreamJob extends PhLogable with BPComponent {
     // TODO: 这里应该是一个output的strategy, 为了快速重构，偷懒
     //不同job的这儿生成的目录会不同，所以目录还是需要消息传输
     def getCheckpointPath: String =
-        "s3a://ph-stream/jobs/" + s"runId_${BPSConcertEntry.runner_id}" + "/" + description + "/" + s"jobId_$id" + "/checkpoint"
+        "/jobs/" + s"runId_${BPSConcertEntry.runner_id}" + "/" + description + "/" + s"jobId_$jobId" + "/" + s"id_$id" + "/checkpoint"
     def getMetadataPath: String =
-        "s3a://ph-stream/jobs/" + s"runId_${BPSConcertEntry.runner_id}" + "/" + description + "/" + s"jobId_$id" + "/metadata"
+        "s3a://ph-stream/jobs/" + s"runId_${BPSConcertEntry.runner_id}" + "/" + description + "/" + s"jobId_$jobId" + "/" + s"id_$id" + "/metadata"
     def getOutputPath: String =
-        "s3a://ph-stream/jobs/" + s"runId_${BPSConcertEntry.runner_id}" + "/" + description + "/" + s"jobId_$id" + "/contents"
+        "s3a://ph-stream/jobs/" + s"runId_${BPSConcertEntry.runner_id}" + "/" + description + "/" + s"jobId_$jobId" + "/" + s"id_$id" + "/contents"
 }

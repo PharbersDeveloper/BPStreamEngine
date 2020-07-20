@@ -125,13 +125,13 @@ class BPSPythonPipeJobContainer(override val componentProperty: Component2.BPCom
      * }}}
      */
     def starJob(event: BPSTypeEvents[Map[String, String]]): Unit = {
-        val jobMsg = event.date
+        val jobMsg = event.data
 
         // 获得 PyJob 参数信息
         val jobId: String = jobMsg.getOrElse("jobId", UUID.randomUUID()).toString
         val parentsId: List[CharSequence] = jobMsg.getOrElse("mongoId", "").toString.split(",").toList.map(_.asInstanceOf[CharSequence])
         val datasetId: String = jobMsg.getOrElse("datasetId", new ObjectId()).toString
-
+        val assetId: String = jobMsg.getOrElse("assetId", "").toString
         val noticeTopic: String = jobMsg.getOrElse("noticeTopic", fileMsgType).toString
         val partition: String = jobMsg.getOrElse("partition", defaultPartition).toString
         val retryCount: String = jobMsg.getOrElse("retryCount", defaultRetryCount).toString
@@ -152,14 +152,15 @@ class BPSPythonPipeJobContainer(override val componentProperty: Component2.BPCom
                 .schema(loadSchema)
                 .option("startingOffsets", startingOffsets)
                 //TODO: 设置触发的文件数，以控制内存 效果待测试
-                .option("maxFilesPerTrigger", partition.toInt)
+//                .option("maxFilesPerTrigger", partition.toInt)
                 .parquet(filesPath)
-                .repartition(partition.toInt)
+//                .repartition(partition.toInt)
 
         // 真正执行 Job
         val job = BPSPythonPipeJob(jobId, spark, Some(reading), noticeFunc, finishJobWithId, Map(
             "noticeTopic" -> noticeTopic,
             "datasetId" -> datasetId,
+            "assetId" -> assetId,
             "parentsId" -> parentsId,
             "resultPath" -> resultPath,
             "lastMetadata" -> metadata,

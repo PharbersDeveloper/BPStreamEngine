@@ -13,7 +13,7 @@
             "args": [],
             "config": {
                 "app.name": "alfredtest-bp-stream-engine",
-                "master": "local[2]",
+                "master": "yarn",
                 "spark.configs.path": "src/main/resources/sparkConfig.properties",
                 "log.level": "ERROR",
                 "run.model": "client"
@@ -25,9 +25,9 @@
             "args": [],
             "config": {
                 "data.topic": "oss_source",
-                "msg.topic": "oss_msg_1",
-                "url": "http://123.56.179.133:9092",
-                "schema": "http://123.56.179.133:8081"
+                "msg.topic": "oss_msg",
+                "url": "http://broker-svc.message:9092",
+                "schema": "http://schema.message:8081"
             }
         },
         {
@@ -126,7 +126,7 @@
                 "defaultPartition": "4",
                 "defaultRetryCount": "3",
                 "pythonUri": "https://github.com/PharbersDeveloper/bp-data-clean.git",
-                "pythonBranch": "v0.0.2"
+                "pythonBranch": "v0.0.3"
             }
         },
         {
@@ -143,13 +143,23 @@
             "args": [],
             "config": {
                 "listens": "GenCube-Start",
-                "GenCube.timer.hours": 1
+                "GenCube.timer.hours": 3
+            }
+        },
+        {
+            "id": "BPDataCleanJobContainer",
+            "name": "BPDataCleanJobContainer",
+            "args": [],
+            "config": {
+                "listens": "Hive-Clean"
             }
         }
     ],
     "starts": [
         "OssJobContainer",
         "SandBoxJobContainer",
-        "BPSPythonPipeJobContainer"
+        "BPSPythonPipeJobContainer",
+        "SqlTableJobContainer",
+        "BPDataCleanJobContainer"
     ]
 }
