@@ -45,6 +45,7 @@ case class BPSqlTableJob(container: BPSJobContainer, override val componentPrope
 
     override def open(): Unit = {
         logger.info(s"open job $id")
+
         inputStream = Some(spark.read
 //                .format("csv")
 //                .option("header", value = true)
@@ -57,6 +58,7 @@ case class BPSqlTableJob(container: BPSJobContainer, override val componentPrope
         val tableName = jobConfig.getString(TABLE_NAME_CONFIG_KEY)
         val tables = spark.sql("show tables").select("tableName").collect().map(x => x.getString(0))
         val version = if (tables.contains(tableName)) {
+            spark.sql(s"REFRESH table $tableName")
             val old = spark.sql(s"select version from $tableName limit 1").take(1).head.getString(0).split("\\.")
             saveMode match {
                 case "append" => old.mkString(".")

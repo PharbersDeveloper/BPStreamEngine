@@ -14,11 +14,13 @@ import org.apache.spark.sql.catalyst.expressions.GenericRowWithSchema
 import org.apache.spark.storage.StorageLevel
 
 /** 功能描述
-  *
+  * 对传入表的PRODUCT_NAME SPEC DOSAGE PACK_QTY MANUFACTURER_NAME进行标准化替换，并匹配PACK_ID
   * @author dcs
   * @version 0.0
   * @since 2020/02/04 13:38
-  * @note 一些值得注意的地方
+  * @note
+  *       componentProperty中传入需要清洗的表，表必须有MOLE_NAME, PRODUCT_NAME SPEC DOSAGE PACK_QTY MANUFACTURER_NAME。
+  *       不能有id
   */
 class BPEditDistanceV2(jobContainer: BPSJobContainer, override val componentProperty: Component2.BPComponentConfig)
         extends BPStreamJob {
@@ -35,7 +37,7 @@ class BPEditDistanceV2(jobContainer: BPSJobContainer, override val componentProp
 
     import spark.implicits._
 
-    //todo: 配置传入
+    //列与prod表中列的对应关系，可以1对多
     val mappingConfig: Map[String, List[String]] = Map(
         "PRODUCT_NAME" -> List("PROD_NAME_CH"),
         "SPEC" -> List("SPEC"),
@@ -44,8 +46,10 @@ class BPEditDistanceV2(jobContainer: BPSJobContainer, override val componentProp
         "MANUFACTURER_NAME" -> List("MNF_NAME_CH", "MNF_NAME_EN")
     )
 
+    //与prod表join的主键
     val joinKey: (String, String) = "MOLE_NAME" -> "MOLE_NAME_CH"
 
+    //生成最小产品单位的字段和顺序
     val minKeys = List("MOLE_NAME", "PRODUCT_NAME", "SPEC", "DOSAGE", "PACK_QTY", "MANUFACTURER_NAME")
 
     val canReplaceList = List()
@@ -155,6 +159,14 @@ class BPEditDistanceV2(jobContainer: BPSJobContainer, override val componentProp
     def humanReplace(filterMinDistanceDf: DataFrame, mapping: Map[String, List[String]]): DataFrame = {
         val keys = minKeys
         val humanDf = spark.sql("select * from human_replace")
+                .join(spark.sql("select PACK_ID, MOLE_NAME_CH, PROD_NAME_CH, SPEC as SPEC_PROD, DOSAGE as DOSAGE_PROD, PACK, MNF_NAME_CH from prod"),
+            $"MOLE_NAME" === $"MOLE_NAME_CH"
+                    and $"PRODUCT_NAME" === $"PROD_NAME_CH"
+                    and $"SPEC" === $"SPEC_PROD"
+                    and $"DOSAGE" === $"DOSAGE_PROD"
+                    and $"PACK_QTY" === $"PACK"
+                    and $"MANUFACTURER_NAME" === $"MNF_NAME_CH", "left")
+                .drop("MOLE_NAME_CH", "PROD_NAME_CH", "SPEC_PROD", "DOSAGE_PROD", "PACK", "MNF_NAME_CH")
 
         val joinDf = filterMinDistanceDf
                 .withColumn("in_min", concat(keys.map(x => col(s"in_$x")): _*))
@@ -169,6 +181,7 @@ class BPEditDistanceV2(jobContainer: BPSJobContainer, override val componentProp
                     )
             )
         })
+                .withColumn("check_PACK_ID", when($"PACK_ID".isNull, $"check_PACK_ID").otherwise($"PACK_ID"))
                 .drop(humanDf.columns: _*)
                 .persist(StorageLevel.MEMORY_AND_DISK_SER)
         filterMinDistanceDf.unpersist(true)
@@ -178,15 +191,15 @@ class BPEditDistanceV2(jobContainer: BPSJobContainer, override val componentProp
     }
 
     private def getColumnDistance(df: DataFrame, column: String, checkColumns: List[String]): DataFrame = {
-        val checkUdf = udf((x: String, y: String, col: String) => BPEditDistanceV2.getCheckRes(x, y, col))
-        val min = udf((array: Seq[Seq[String]]) => BPEditDistanceV2.minDistanceArray(array))
+        val checkUdf = udf((x: String, y: String, col: String) => BPEditDistanceV2Func.getCheckRes(x, y, col))
+        val min = udf((array: Seq[Seq[String]]) => BPEditDistanceV2Func.minDistanceArray(array))
         df.na.fill("")
                 .withColumn(s"${column}_distance", min(array(checkColumns.map(x =>
                     checkUdf(col(s"in_$column"), col(s"check_$x"), lit(column))): _*)))
     }
 
     private def replaceWithDistance(columnName: String, df: DataFrame): DataFrame = {
-        val replaceUdf = udf((distance: Seq[String], replaceSize: Int) => BPEditDistanceV2.replaceFunc(distance, replaceSize))
+        val replaceUdf = udf((distance: Seq[String], replaceSize: Int) => BPEditDistanceV2Func.replaceFunc(distance, replaceSize))
         val replaceSizeCol = if(canReplaceList.contains(columnName)) col(s"replace_size") else lit(100)
         df.withColumn(s"$columnName", replaceUdf(col(s"${columnName}_distance"), replaceSizeCol))
     }
@@ -224,11 +237,10 @@ class BPEditDistanceV2(jobContainer: BPSJobContainer, override val componentProp
                 .join(withHumanReplaceDf, $"min" === $"in_min")
                 .withColumn("id", monotonically_increasing_id()) //之前创建的id是一个产品一个，现在是一条记录一个
                 .persist(StorageLevel.MEMORY_AND_DISK_SER)
-//        withHumanReplaceDf.write.option("path", "s3a://ph-stream/test/withHumanReplaceDf").saveAsTable("withHumanReplace")
         withHumanReplaceDf.unpersist(true)
-//        inDfWithDistance.write.option("path", "s3a://ph-stream/test/inDfWithDistance").saveAsTable("inDfWithDistance")
+        inDfWithDistance.write.mode("overwrite").option("path", "s3a://ph-stream/test/inDfWithDistance").saveAsTable("inDfWithDistance")
         val replaceLogDf = createReplaceLog(inDfWithDistance, inDf.columns, mapping)
-        val tableName = strategy.getJobConfig.getString(BPEditDistanceV2.TABLE_NAME_CONFIG_KEY)
+        val tableName = strategy.getJobConfig.getString(BPEditDistanceV2Func.TABLE_NAME_CONFIG_KEY)
         val mode = "overwrite"
         val saveHandler = new TableSaveHandler(inDf, checkDf, tableName)
         saveHandler.saveReplaceTable(replaceLogDf, mode)
@@ -262,9 +274,8 @@ class BPEditDistanceV2(jobContainer: BPSJobContainer, override val componentProp
             val replaceTableName = s"${tableName}_replace"
             val version = getVersion(replaceTableName, mode)
             val url = getTableSavePath(replaceTableName, inVersion, checkVersion, version)
-            df.filter("canReplace = true and distance != 0")
+            df.filter("canReplace = true and ORIGIN != check")
                     .selectExpr(List("ID", "COL_NAME", "ORIGIN", "check as DEST") ++ inDf.columns.zipWithIndex.map(x => s"cols[${x._2}] as ORIGIN_${x._1}").toList: _*)
-                    .filter("ORIGIN != DEST")
                     .withColumn("version", lit(version))
                     .write
                     .mode(mode)
@@ -291,7 +302,15 @@ class BPEditDistanceV2(jobContainer: BPSJobContainer, override val componentProp
 
 }
 
-object BPEditDistanceV2 extends Serializable {
+/** 功能描述
+  * BPEditDistanceV2的一些udf方法
+  * @author EDZ
+  * @version 0.0
+  * @since 2020/7/17 16:03
+  * @note 一些值得注意的地方
+  * @example {{{这是一个例子}}}
+  */
+object BPEditDistanceV2Func extends Serializable {
     final val TABLE_NAME_CONFIG_KEY = "tableName"
     final val TABLE_NAME_CONFIG_DOC = "need check table name"
     //    final val DATA_SETS_CONFIG_KEY = "dataSets"
@@ -312,34 +331,158 @@ object BPEditDistanceV2 extends Serializable {
     }
 
     def getCheckRes(inputWord: String, targetWord: String, colName: String): Array[String] ={
-        val s1 = inputWord.replaceAll(" ", "").toUpperCase
-        val s2 = targetWord.toUpperCase
         def replaceAndContains(s1: String, s2: String): Boolean ={
             val list = List(
-                "股份", "有限", "公司", "集团", "制药", "厂", "药业", "责任", "健康", "科技", "生物", "工业"
+                "股份", "有限","总公司", "公司", "集团", "制药", "总厂", "厂", "药业", "责任", "健康", "科技", "生物", "工业", "保健", "医药", "\\(", "\\)", "（", "）"
             )
+            //中文分词匹配，匹配率和错误率都会增加。单纯去掉地理词语会导致不够精确
+//            import com.huaban.analysis.jieba.JiebaSegmenter
+//            import org.ansj.recognition.impl.NatureRecognition
+//            import collection.JavaConverters._
+//
+//            val natureRecognition = new NatureRecognition()
+//            val segment = new JiebaSegmenter
+//            val manufacturer1 = natureRecognition.recognition(segment.sentenceProcess(list.foldLeft(s1)((s, r) => s.replaceAll(r, ""))))
+//                    .asScala
+//                    .flatMap(x => if(x.getNatureStr != "ns") List(x.getName) else Nil)
+//            val manufacturer2 = natureRecognition.recognition(segment.sentenceProcess(list.foldLeft(s2)((s, r) => s.replaceAll(r, ""))))
+//                    .asScala
+//                    .flatMap(x => if(x.getNatureStr != "ns") List(x.getName) else Nil)
+//            val checkCount = manufacturer1.intersect(manufacturer2).length
+//            (checkCount >= manufacturer1.length || checkCount >= manufacturer2.length) && checkCount > 0
+
             val manufacturer1 = list.foldLeft(s1)((s, r) => s.replaceAll(r, ""))
             val manufacturer2 = list.foldLeft(s2)((s, r) => s.replaceAll(r, ""))
             manufacturer1.contains(manufacturer2) || manufacturer2.contains(manufacturer1)
         }
         def checkSep(s1: String, s2: String): Boolean = {
-            val list1 = s1.toUpperCase().split("[^A-Za-z0-9_.\\u4e00-\\u9fa5]", -1).map(unitTransform).filter(x => x != "")
-            val list2 = s2.toUpperCase().split("[^A-Za-z0-9_.\\u4e00-\\u9fa5]", -1).map(unitTransform).filter(x => x != "")
-            val length = list1.intersect(list2).length
-            length >= list2.length || length >= list1.length
-        }
-        def unitTransform(s: String): String = {
-            try {
-                //todo: 会匹配出.156xxx这样的
-                val num = "[0-9.]".r.findAllIn(s).mkString("")
-                val unit = s.substring(s.indexOf(num)).replaceAll("[0-9.]", "")
-                unit match {
-                    case "G" => (num.toDouble * 1000).toString + "MG"
-                    case _ => num.toDouble.toString + unit
+            case class SpecNum(unit: String, value: String, `type`: String){
+                override def equals(obj: Any): Boolean = {
+                    if(!obj.isInstanceOf[SpecNum]) return super.equals(obj)
+                    val specNumObj = obj.asInstanceOf[SpecNum]
+                    if(`type` == specNumObj.`type`){
+                        if(unit != specNumObj.unit || `type` != "other"){
+                            `type` match {
+                                case "g" =>
+                                    val transform: (String, String) => Double = (s, unit) => unit match {
+                                        case "G" => s.toDouble * 1000 * 1000
+                                        case "GM" => s.toDouble * 1000 * 1000
+                                        case "MG" => s.toDouble * 1000
+                                        case "UG" => s.toDouble
+                                        case "ΜG" => s.toDouble
+                                        case _ => s.toDouble
+                                    }
+                                    transform(value, unit) == transform(specNumObj.value, specNumObj.unit)
+                                case "u" =>
+                                    val transform: (String, String) => Double = (s, unit) => unit match {
+                                        case "万U" => s.toDouble * 10000
+                                        case "MU" => s.toDouble * 1000 * 1000
+                                        case "MIU" => s.toDouble * 1000 * 1000
+                                        case _ => s.toDouble
+                                    }
+                                    transform(value, unit) == transform(specNumObj.value, specNumObj.unit)
+                                case "l" => value.toDouble == specNumObj.value.toDouble
+                                case "%" => value.toDouble == specNumObj.value.toDouble
+                                case _ => value == specNumObj.value
+                            }
+                        } else {
+                            value == specNumObj.value
+                        }
+                    } else {
+                        false
+                    }
                 }
-            } catch {
-                case _: Exception => s
+                def transform(): SpecNum ={
+                    val transformValue = `type` match {
+                        case "g" =>
+                            unit match {
+                                case "G" => value.toDouble * 1000 * 1000
+                                case "GM" => value.toDouble * 1000 * 1000
+                                case "MG" => value.toDouble * 1000
+                                case "UG" => value.toDouble
+                                case "ΜG" => value.toDouble
+                                case "_" => value.toDouble
+                            }
+                        case _ => value
+                    }
+                    val transformUnit = `type` match {
+                        case "g" => "UG"
+                        case _ => unit
+                    }
+                    SpecNum(transformUnit, transformValue.toString, `type`)
+                }
             }
+            def unitTransform(s: String): SpecNum = {
+                try {
+                    //todo: 会匹配出.156xxx这样的
+                    val num = "[0-9.]".r.findAllIn(s).mkString("")
+                    val unit = s.substring(s.indexOf(num)).replaceAll("[0-9.]", "")
+                    val `type` = unit match {
+                        case "G" => "g"
+                        case "GM" => "g"
+                        case "MG" => "g"
+                        case "UG" => "g"
+                        case "ΜG" => "g"
+                        case "ML" => "l"
+                        case "%" => "%"
+                        case "U" => "u"
+                        case "AXAU" => "u"
+                        case "AXAIU" => "u"
+                        case "IU" => "u"
+                        case "万U" => "u"
+                        case "MU" => "u"
+                        case "MIU" => "u"
+                        case _ => "other"
+                    }
+                    SpecNum(unit, num.toDouble.toString, `type`)
+                } catch {
+                    case _: Exception => SpecNum("", s, "other")
+                }
+            }
+            def transForm2Percent(array: Array[SpecNum]): Array[SpecNum] ={
+                val input = array.filter(x => x.`type` != "other")
+                if(input.length < 2) return array
+                val sort = if(input.groupBy(x => x.`type`).size == 1){
+                    input.filterNot(x => x.`type` == "other").map(x => x.transform()).sortBy(x =>
+                            try {
+                                x.value.toDouble
+                            } catch {
+                                case e: java.lang.NumberFormatException => throw new Exception(s"${x.value}, ${x.`type`}, ${x.unit}", e)
+                            }
+                        )
+                } else {
+                    input.map(x => {
+                        if(x.`type` == "g"){
+                            val transform = x.transform()
+                            SpecNum("G", (transform.value.toDouble / 1000 / 1000).toString, x.`type`)
+                        } else {
+                            x
+                        }
+                    }).sortBy(x => x.value.toDouble)
+                }
+                val percent = (sort.head.value.toDouble / sort.last.value.toDouble * 100).toString
+                array :+ SpecNum("%", percent, "%")
+            }
+            val regex = """[0-9]*\.?[0-9]+[A-Za-zΜ%\u4e00-\u9fa5]*""".r
+            val list1 = regex.findAllIn(s1.toUpperCase()).toArray.filter(x => x != "").map(unitTransform)
+            val percentRegex = """([0-9]*\.?[0-9]+:[0-9]*.?[0-9]+)""".r
+            val list2 = percentRegex.replaceAllIn(s2.toUpperCase(), "").split("[^A-Za-z0-9_\\.%\\u4e00-\\u9fa5]", -1).filter(x => x != "")
+                    .flatMap(x => regex.findAllIn(x).map(unitTransform)) ++
+                    percentRegex.findAllIn(s2.toUpperCase()).map(x => {
+                        val nums = x.replaceAll("[()]", "").split(":").sortBy(x => x.toInt)
+                        SpecNum("%", (nums.head.toDouble /(nums.head.toDouble + nums.tail.head.toDouble) * 100).toString, "%")
+                    })
+            val length = if(list2.exists(x => x.`type` == "%") && !list1.exists(x => x.`type` == "%")){
+                try{
+                    transForm2Percent(list1).count(x => list2.contains(x))
+                } catch {
+                    case e: Exception => throw new Exception(s"$s1, $s2", e)
+                }
+
+            } else {
+                list1.count(x => list2.contains(x))
+            }
+            length >= list2.length || length >= list1.length
         }
         val default:(String,String) => Boolean = (_, _) =>  false
         val map: Map[String, (String, String) => Boolean] = Map(
@@ -348,7 +491,8 @@ object BPEditDistanceV2 extends Serializable {
             "MANUFACTURER_NAME" -> ((s1: String, s2: String) => replaceAndContains(s1, s2)),
             "SPEC" -> ((s1: String, s2: String) => checkSep(s1, s2))
         )
-        if(map.getOrElse(colName, default)(s1, s2)){
+
+        if(map.getOrElse(colName, default)(inputWord.replaceAll(" ", "").toUpperCase, targetWord.toUpperCase)){
             Array(inputWord, targetWord, "0")
         } else {
             getDistance(inputWord, targetWord, colName)
@@ -371,8 +515,8 @@ object BPEditDistanceV2 extends Serializable {
     }
 
     private def checkSep(s1: String, s2: String): Boolean = {
-        val list1 = s1.toUpperCase().split("[^A-Za-z0-9_.\\u4e00-\\u9fa5]", -1).sorted
-        val list2 = s2.toUpperCase().split("[^A-Za-z0-9_.\\u4e00-\\u9fa5]", -1).sorted
+        val list1 = s1.toUpperCase().replaceAll("\"", "").split("[^A-Za-z0-9_.\\u4e00-\\u9fa5]", -1).sorted
+        val list2 = s2.toUpperCase().replaceAll("\"", "").split("[^A-Za-z0-9_.\\u4e00-\\u9fa5]", -1).sorted
         list1.sameElements(list2)
     }
 

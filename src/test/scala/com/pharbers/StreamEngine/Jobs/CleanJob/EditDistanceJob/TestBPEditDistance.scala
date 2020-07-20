@@ -1,8 +1,9 @@
-package com.pharbers.StreamEngine.Jobs.DataCleanJob.EditDistanceJob
+package com.pharbers.StreamEngine.Jobs.CleanJob.EditDistanceJob
 
 
-import java.io.File
-import java.util.{Collection, Scanner, UUID}
+import java.util.UUID
+
+import com.pharbers.StreamEngine.Jobs.DataCleanJob.EditDistanceJob.BPEditDistance
 import com.pharbers.StreamEngine.Utils.Component2
 import com.pharbers.StreamEngine.Utils.Component2.{BPSComponentConfig, BPSConcertEntry}
 import com.pharbers.StreamEngine.Utils.Job.BPSJobContainer

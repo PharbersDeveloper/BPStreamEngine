@@ -125,8 +125,8 @@
         "FileMetaData.msgType": "HiveTask-FileMetaData",
         "defaultPartition": "2",
         "defaultRetryCount": "3",
-        "pythonUri": "https://github.com/PharbersDeveloper/bp-data-clean.git",
-        "pythonBranch": "v0.0.3"
+        "pythonUri": "s3a://ph-stream/files/pyclean",
+        "pythonBranch": "0.1.0"
       }
     },
     {
