@@ -41,8 +41,8 @@ class WriteToMongoJob(jobId: String, uri: String, dbName: String, collName: Stri
             sys.exit()
         }
 
-        logger.info("GenCubeJob start.")
-        logger.info(s"GenCubeJob uri=($uri) dbName=($dbName) collName=($collName).")
+        logger.info("WriteToMongoJob start.")
+        logger.info(s"WriteToMongoJob uri=($uri) dbName=($dbName) collName=($collName).")
 
         val reading = sparkSession.read.load(getJobStoragePath)
 
@@ -54,7 +54,7 @@ class WriteToMongoJob(jobId: String, uri: String, dbName: String, collName: Stri
 
         WriteStrategy(MONGO_SOURCE_TYPE).writeDF(df = reading, path = collName, options = options)
 
-        logger.info("GenCubeJob done.")
+        logger.info("WriteToMongoJob done.")
 
     }
 

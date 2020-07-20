@@ -28,7 +28,6 @@ class DataCleanStrategy(spark: SparkSession) extends PhLogable {
 
         //缩小数据范围，需求中最小维度是分子，先计算出分子级别在单个公司年月市场、省&城市级别、产品&分子维度的聚合数据
         //补齐所需列 QUARTER COUNTRY MKT
-        //删除不需列 DATE
         val moleLevelDF = formatDF.groupBy("COMPANY", "DATE", "PROVINCE", "CITY", "PRODUCT_NAME", "MOLE_NAME")
                 .agg(expr("SUM(SALES_VALUE) as SALES_VALUE"), expr("SUM(SALES_QTY) as SALES_QTY"))
                 .withColumn("YEAR", col("DATE").substr(0, 4).cast(DataTypes.IntegerType))
@@ -38,7 +37,6 @@ class DataCleanStrategy(spark: SparkSession) extends PhLogable {
                 .withColumn("QUARTER", col("QUARTER").cast(DataTypes.IntegerType))
                 .withColumn("COUNTRY", lit("CHINA"))
                 .withColumn("APEX", lit("PHARBERS"))
-                .drop("DATE")
 
         //TODO:临时处理信立泰
         val moleLevelDF1 = moleLevelDF.filter(col("COMPANY") === "信立泰")
@@ -59,7 +57,18 @@ class DataCleanStrategy(spark: SparkSession) extends PhLogable {
                 .drop(cpa("PRODUCT_NAME"))
                 .drop(cpa("MOLE_NAME"))
 
-        mergeDF1 union mergeDF2
+        val mergeDF = mergeDF1 union mergeDF2
+
+        //TODO:因不同公司数据的数据时间维度不一样，所以分别要对每个公司的数据进行计算最新一年的数据
+        val companyList = mergeDF.select("COMPANY").distinct().collect().map(_ (0)).toList.asInstanceOf[List[String]]
+
+        companyList.map(company => {
+            val companyDF = mergeDF.filter(col("COMPANY") === company)
+            //TODO:得保证数据源中包含两年的数据
+            val current2YearYmList = companyDF.select("DATE").distinct().sort("DATE").collect().map(_ (0)).toList.takeRight(24).asInstanceOf[List[Int]]
+            companyDF
+                .filter(col("DATE") >= current2YearYmList.min.toString.toInt && col("DATE") <= current2YearYmList.max.toString.toInt)
+        }).reduce((x, y) => x union y).na.fill(0.0)
 
     }
 
