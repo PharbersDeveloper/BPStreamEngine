@@ -1,0 +1,68 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.pharbers</groupId>
+        <artifactId>micro-service-libs</artifactId>
+        <version>1.0</version>
+    </parent>
+    <artifactId>gatling</artifactId>
+    <version>1.0</version>
+
+    <profiles>
+        <profile>
+            <id>scala-2.11</id>
+
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+
+            <properties>
+                <scalaVersion>2.12.8</scalaVersion>
+                <gatling.version>3.0.3</gatling.version>
+                <gatling-plugin.version>3.0.1</gatling-plugin.version>
+            </properties>
+
+            <dependencies>
+                <!-- Gatling Module -->
+                <dependency>
+                    <groupId>io.gatling.highcharts</groupId>
+                    <artifactId>gatling-charts-highcharts</artifactId>
+                    <version>${gatling.version}</version>
+                </dependency>
+            </dependencies>
+        </profile>
+    </profiles>
+
+    <build>
+        <sourceDirectory>src/test/scala</sourceDirectory>
+        <testSourceDirectory>src/test/scala</testSourceDirectory>
+        <plugins>
+            <!-- Gatling Maven plugin that runs the load-simulation. -->
+            <!-- mvn gatling:test -->
+            <plugin>
+                <groupId>io.gatling</groupId>
+                <artifactId>gatling-maven-plugin</artifactId>
+                <version>${gatling-plugin.version}</version>
+                <configuration>
+                    <runMultipleSimulations>true</runMultipleSimulations>
+                    <simulationClass>simulation.TestOAuth</simulationClass>
+                    <includes>                                                               <!-- include filters, see dedicated section below -->
+                        <include></include>
+                    </includes>
+                    <excludes>                                                               <!-- exclude filters, see dedicated section below -->
+                        <exclude></exclude>
+                    </excludes>
+                    <simulationsFolder>${project.basedir}/src/test/scala
+                    </simulationsFolder> <!-- where the simulations to be compiled are located -->
+                    <resultsFolder>${project.basedir}/target/gatling
+                    </resultsFolder>         <!-- where the simulation log and the HTML reports will be generated -->
+                    <configFolder>src/test/resources</configFolder>
+                    <resourcesFolder>${project.basedir}/src/test/resources/data
+                    </resourcesFolder> <!-- where the test resources are located -->
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
