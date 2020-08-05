@@ -120,12 +120,12 @@ class BPSPythonPipeJob(override val jobId: String,
                                     .select(from_json($"data", schema) as "data")
                                     .select("data.*")
                                     .cache()
-                            pythonDf.filter("tag == 1")
+                            pythonDf.filter("tag > 0")
                                     .select("data")
                                     .write
                                     .mode("append")
                                     .text(successPath)
-                            pythonDf.filter("tag != 1")
+                            pythonDf.filter("tag <= 0")
                                     .select("errMsg", "data", "raw_data")
                                     .write
                                     .mode("append")

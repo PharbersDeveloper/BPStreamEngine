@@ -54,7 +54,8 @@ class BPSqlTableJobContainer(override val componentProperty: Component2.BPCompon
         "CPA" -> "cpa",
         "CHC" -> "chc",
         "RESULT" -> "result",
-        "PROD" -> "prod",
+        "product" -> "prod",
+        "universe" -> "universe",
         "TEST" -> "test"
     )
 
@@ -103,34 +104,37 @@ class BPSqlTableJobContainer(override val componentProperty: Component2.BPCompon
 //        if (checkCount >= 20) {
 //            logger.warn(s"有check job未完成就开始了聚合hive， jos：${tasks.values.map(x => x.toString).mkString(",")}")
 //        }
-        val configs = jobConfigs.filter(x => x._1.jobId == endTask.jobId)
-        jobConfigs = jobConfigs.filterNot(x => x._1.jobId == endTask.jobId)
-        val sqlId = UUID.randomUUID().toString
-        configs.foreach { case (taskKey, task) =>
-            val (urls, taskType, errPaths, dataSets) = task.map(x => (x.url, x.taskType, x.errPath, x.datasetId)).reduce((l, r) => {
-                ( s"${l._1},${r._1}", l._2, s"${l._3},${r._3}", s"${l._4},${r._4}")
-            })
+        val container = this
+        //todo: 等这儿不是chanel线程中运行时就不需要加入线程池了
+        ThreadExecutor().execute(new Runnable {
+            override def run(): Unit = {
+                //todo：driver channel会变成无序的，end并不一定是最后来的
+                Thread.sleep(1000 * 10)
+                val configs = jobConfigs.filter(x => x._1.jobId == endTask.jobId)
+                jobConfigs = jobConfigs.filterNot(x => x._1.jobId == endTask.jobId)
+                configs.foreach { case (taskKey, task) =>
+                    val sqlId = UUID.randomUUID().toString
+                    val (urls, taskType, errPaths, dataSets) = task.map(x => (x.url, x.taskType, x.errPath, x.datasetId)).reduce((l, r) => {
+                        ( s"${l._1},${r._1}", l._2, s"${l._3},${r._3}", s"${l._4},${r._4}")
+                    })
 
-            val jobConfig = Map(
-                BPSqlTableJob.URLS_CONFIG_KEY -> urls,
-                BPSqlTableJob.TASK_TYPE_CONFIG_KEY -> taskType,
-                BPSqlTableJob.TABLE_NAME_CONFIG_KEY -> taskKey.tableName,
-                BPSqlTableJob.ERROR_PATH_CONFIG_KEY -> errPaths,
-                BPSqlTableJob.DATA_SETS_CONFIG_KEY -> dataSets,
-                strategy.jobIdConfigStrategy.TRACE_ID_CONFIG_KEY -> endTask.traceId,
-                strategy.jobIdConfigStrategy.JOB_ID_CONFIG_KEY -> endTask.jobId
-            )
+                    val jobConfig = Map(
+                        BPSqlTableJob.URLS_CONFIG_KEY -> urls,
+                        BPSqlTableJob.TASK_TYPE_CONFIG_KEY -> taskType,
+                        BPSqlTableJob.TABLE_NAME_CONFIG_KEY -> taskKey.tableName,
+                        BPSqlTableJob.ERROR_PATH_CONFIG_KEY -> errPaths,
+                        BPSqlTableJob.DATA_SETS_CONFIG_KEY -> dataSets,
+                        strategy.jobIdConfigStrategy.TRACE_ID_CONFIG_KEY -> endTask.traceId,
+                        strategy.jobIdConfigStrategy.JOB_ID_CONFIG_KEY -> endTask.jobId
+                    )
 
-            val sqlJob = new BPSqlTableJob(this, BPSComponentConfig(sqlId, s"sqlJob-$sqlId", Nil, jobConfig))
-            //todo: 等这儿不是chanel线程中运行时就不需要加入线程池了
-            ThreadExecutor().execute(new Runnable {
-                override def run(): Unit = {
+                    val sqlJob = new BPSqlTableJob(container, BPSComponentConfig(sqlId, s"sqlJob-$sqlId", Nil, jobConfig))
                     sqlJob.open()
                     sqlJob.exec()
+                    jobs += sqlId -> sqlJob
                 }
-            })
-            jobs += sqlId -> sqlJob
-        }
+            }
+        })
     }
 
     private def addJobConfig(task: BPSTypeEvents[HiveTask], providers: List[String]): Unit = {
@@ -146,20 +150,6 @@ class BPSqlTableJobContainer(override val componentProperty: Component2.BPCompon
         data.taskType match {
             case "end" => runJob(msg)
             case _ =>
-//                val checkJobId = UUID.randomUUID().toString
-//                val jobConfig = Map(
-//                    BPStreamOverCheckJob.LENGTH_CONFIG_KEY -> data.length.toString,
-//                    BPStreamOverCheckJob.ROW_RECORD_PATH_CONFIG_KEY -> data.rowRecordPath,
-//                    BPStreamOverCheckJob.METADATA_PATH_CONFIG_KEY -> data.metaDataPath,
-//                    strategy.jobIdConfigStrategy.TRACE_ID_CONFIG_KEY -> msg.traceId,
-//                    BPStreamOverCheckJob.PUSH_KEY -> CHECK_EVENT_TYPE,
-//                    strategy.jobIdConfigStrategy.JOB_ID_CONFIG_KEY -> checkJobId
-//                )
-//                val checkJob = new BPStreamOverCheckJob(this, BPSComponentConfig(checkJobId, s"hiveCheck-$checkJobId", Nil, jobConfig))
-//                jobs += checkJobId -> checkJob
-//                tasks += checkJobId -> data
-//                checkJob.open()
-//                checkJob.exec()
                 val ps = BPSConcertEntry.queryComponentWithId("parse schema").get.asInstanceOf[BPSParseSchema]
                 val metadata = ps.parseMetadata(data.metaDataPath)(spark)
                 val providers = metadata.getOrElse("providers", List("")).asInstanceOf[List[String]]
