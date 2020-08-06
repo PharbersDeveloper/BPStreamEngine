@@ -1,7 +1,6 @@
 package com.pharbers.StreamEngine.BatchJobs.GenCubeJob.Strategies
 
 import com.pharbers.StreamEngine.Utils.Log.PhLogable
-import org.apache.spark.sql.expressions.{Window, WindowSpec}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.DataTypes
 import org.apache.spark.sql.{DataFrame, SparkSession}
