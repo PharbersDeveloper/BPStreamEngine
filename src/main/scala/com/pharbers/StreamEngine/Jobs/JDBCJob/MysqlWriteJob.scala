@@ -2,7 +2,6 @@ package com.pharbers.StreamEngine.Jobs.JDBCJob
 
 import com.pharbers.StreamEngine.Utils.Component2.BPSConcertEntry
 import com.pharbers.StreamEngine.Utils.Strategy.Session.Spark.BPSparkSession
-import com.pharbers.StreamEngine.sql.spark
 
 /** 功能描述
   *

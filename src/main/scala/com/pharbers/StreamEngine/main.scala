@@ -35,6 +35,5 @@ object main_write_mongo {
 object main_write_mysql {
     def main(args: Array[String]): Unit = {
         WriteToMysqlJob(jobId = args(0), uri = args(1), dbName = args(2), collName = args(3), username = args(4), password = args(5)).start()
-//        WriteToMysqlJob("test", "127.0.0.1:3306", "max", "max_result", "root", "pharbers").start()
     }
 }

@@ -11,7 +11,34 @@ class DataCleanStrategy(spark: SparkSession) extends PhLogable {
     //补齐所需列 QUARTER COUNTRY MKT
     def clean(df: DataFrame): DataFrame = {
 
-        val keys: List[String] = "COMPANY" :: "SOURCE" :: "DATE" :: "PROVINCE" :: "CITY" :: "PRODUCT_NAME" :: "MOLE_NAME" :: "SALES_VALUE" :: "SALES_QTY" :: Nil
+        //TODO: company
+        /**
+          * |-- PHA: string (nullable = true)
+            |-- Province: string (nullable = true)
+            |-- City: string (nullable = true)
+            |-- Date: double (nullable = true)
+            |-- Molecule: string (nullable = true)
+            |-- Prod_Name: string (nullable = true)
+            |-- BEDSIZE: double (nullable = true)
+            |-- PANEL: double (nullable = true)
+            |-- Seg: double (nullable = true)
+            |-- Predict_Sales: double (nullable = true)
+            |-- Predict_Unit: double (nullable = true)
+            |-- version: string (nullable = true)
+          */
+
+        //TODO: COMPANY
+        val renamedDF = df
+            .withColumnRenamed("PHA", "PHAID")
+            .withColumnRenamed("Province", "PROVINCE")
+            .withColumnRenamed("City", "CITY")
+            .withColumnRenamed("Date", "DATE")
+            .withColumnRenamed("Molecule", "MOLE_NAME")
+            .withColumnRenamed("Prod_Name", "PRODUCT_NAME")
+            .withColumnRenamed("Predict_Sales", "SALES_VALUE")
+            .withColumnRenamed("Predict_Unit", "SALES_QTY")
+
+        val keys: List[String] = "COMPANY" :: "DATE" :: "PROVINCE" :: "CITY" :: "PRODUCT_NAME" :: "MOLE_NAME" :: "SALES_VALUE" :: "SALES_QTY" :: Nil
         //Check that the keys used in the aggregation are in the columns
         keys.foreach(k => {
             if (!df.columns.contains(k)) {
@@ -21,8 +48,9 @@ class DataCleanStrategy(spark: SparkSession) extends PhLogable {
         })
 
         //去除脏数据，例如DATE=月份或年份的，DATE应为年月的6位数
-        val formatDF = df.selectExpr(keys: _*)
-                .filter(col("DATE") > 99999 and col("DATE") < 1000000 and col("COMPANY").isNotNull and col("SOURCE") === "RESULT" and col("PROVINCE").isNotNull and col("CITY").isNotNull and col("PROVINCE").isNotNull and col("PHAID").isNull and col("PRODUCT_NAME").isNotNull and col("MOLE_NAME").isNotNull)
+        val formatDF = renamedDF
+                .selectExpr(keys: _*)
+                .filter(col("DATE") > 99999 and col("DATE") < 1000000 and col("COMPANY").isNotNull and col("PROVINCE").isNotNull and col("CITY").isNotNull and col("PROVINCE").isNotNull and col("PHAID").isNull and col("PRODUCT_NAME").isNotNull and col("MOLE_NAME").isNotNull)
                 .withColumn("SALES_VALUE", col("SALES_VALUE").cast(DataTypes.DoubleType))
                 .withColumn("SALES_QTY", col("SALES_QTY").cast(DataTypes.DoubleType))
 
