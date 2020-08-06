@@ -1,11 +1,14 @@
 package com.pharbers.StreamEngine.Utils.Strategy.Blood
 
+import java.util.UUID
+
 import com.amazonaws.services.sqs.model.{MessageAttributeValue, SendMessageRequest}
 import com.amazonaws.services.sqs.{AmazonSQS, AmazonSQSClientBuilder}
 import com.pharbers.StreamEngine.Utils.Component2.BPSConcertEntry
 import com.pharbers.StreamEngine.Utils.Event.BPSEvents
 import com.pharbers.StreamEngine.Utils.Strategy.Session.Kafka.BPKafkaSession
 import org.apache.kafka.common.config.ConfigDef
+
 import collection.JavaConverters._
 
 class BPSSetBloodStrategy (config: Map[String, String], @transient inoutConfigDef: ConfigDef = new ConfigDef()) {
@@ -32,14 +35,17 @@ class BPSSetBloodStrategy (config: Map[String, String], @transient inoutConfigDe
 
 	def pushMessage(events: BPSEvents): Unit ={
 		val attributes = Map(
-			"jobId" -> new MessageAttributeValue().withStringValue(events.jobId),
-			"traceId" -> new MessageAttributeValue().withStringValue(events.traceId),
-			"type" -> new MessageAttributeValue().withStringValue(events.`type`)
+			"jobId" -> new MessageAttributeValue().withDataType("String").withStringValue(events.jobId),
+			"traceId" -> new MessageAttributeValue().withDataType("String").withStringValue(events.traceId),
+			"type" -> new MessageAttributeValue().withDataType("String").withStringValue(events.`type`)
 		)
+		val id = UUID.randomUUID().toString
 		val msg = new SendMessageRequest()
 				.withQueueUrl(url)
         		.withMessageBody(events.data)
         		.withMessageAttributes(attributes.asJava)
+				.withMessageGroupId(id)
+				.withMessageDeduplicationId(id)
 		sqs.sendMessage(msg)
 	}
 }

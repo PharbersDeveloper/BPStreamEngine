@@ -174,7 +174,7 @@ class BPSPythonPipeJob(override val jobId: String,
             status = status
         )
         // TODO 齐 弄出traceId
-        bloodStrategy.pushBloodInfo(dfs, jobId, "", "PushDs")
+        bloodStrategy.pushBloodInfo(dfs, jobId, " ", "PushDs")
     }
 
     override def close(): Unit = {
