@@ -35,7 +35,8 @@ class GenCubeStrategy(spark: SparkSession) extends GenCubeStrategyTrait with PhL
         Map(
             "time" -> List("YEAR", "QUARTER", "MONTH"), // "YEAR", "QUARTER", "MONTH" 是 result 原数据中没有的, 由DATE(YM)转变
             "geo" -> List("COUNTRY", "PROVINCE", "CITY"), // COUNTRY 是 result 原数据中没有的
-            "prod" -> List("COMPANY", "MKT", "MOLE_NAME", "PRODUCT_NAME") // MKT 是 result 原数据中没有的
+            "prod" -> List("COMPANY", "MOLE_NAME", "PRODUCT_NAME")
+//            "prod" -> List("COMPANY", "MKT", "MOLE_NAME", "PRODUCT_NAME") // MKT 是 result 原数据中没有的
         )
     }
 

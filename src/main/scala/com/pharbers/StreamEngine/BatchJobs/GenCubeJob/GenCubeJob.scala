@@ -45,11 +45,12 @@ class GenCubeJob(jobId: String, sql: String, sparkSession: SparkSession) extends
 //        logger.info("GenCubeJob origin length =  ========>" + reading.count())
 
         val cleanDF = new DataCleanStrategy(sparkSession).clean(reading)
-        logger.info("GenCubeJob cleanDF length =  ========>" + cleanDF.count())
+//        logger.info("GenCubeJob cleanDF length =  ========>" + cleanDF.count())
 
         val cubeDF = new GenCubeStrategy(sparkSession).convert(cleanDF)
 
-        val top = sys.env.getOrElse("TOP_CUBE_NUM", "not set")
+//        val top = sys.env.getOrElse("TOP_CUBE_NUM", "not set")
+        val top = "20"
         if (top == "not set") {
             WriteStrategy(PARQUET_SOURCE_TYPE).writeListDF(cubeDF, getJobStoragePath)
         } else {

@@ -26,10 +26,12 @@ class GenTopCubeStrategy(spark: SparkSession) extends GenCubeStrategyTrait with 
                 val prod = arr(2)
 
                 val geoFaGroup = getFatherHierarchiesByDiKey("geo", geo, Map("geo" -> List("COUNTRY", "PROVINCE", "CITY")))
-                val prodFaGroup = getFatherHierarchiesByDiKey("prod", prod, Map("prod" -> List("COMPANY", "MKT", "MOLE_NAME", "PRODUCT_NAME")))
+                val prodFaGroup = getFatherHierarchiesByDiKey("prod", prod, Map("prod" -> List("COMPANY", "MOLE_NAME", "PRODUCT_NAME")))
+//                val prodFaGroup = getFatherHierarchiesByDiKey("prod", prod, Map("prod" -> List("COMPANY", "MKT", "MOLE_NAME", "PRODUCT_NAME")))
                 val prodRankWindow: WindowSpec = currTimeWindow(time, Window.partitionBy("DIMENSION_VALUE", (geoFaGroup :+ geo) ::: prodFaGroup:_*)).orderBy(col("SALES_VALUE").desc)
                 if (prod == "PRODUCT_NAME") {
-                    val mktWindow: WindowSpec = Window.partitionBy("DIMENSION_VALUE", (geoFaGroup :+ geo) ::: List("COMPANY", "MKT"): _*)
+                    val mktWindow: WindowSpec = Window.partitionBy("DIMENSION_VALUE", (geoFaGroup :+ geo) ::: List("COMPANY"): _*)
+//                    val mktWindow: WindowSpec = Window.partitionBy("DIMENSION_VALUE", (geoFaGroup :+ geo) ::: List("COMPANY", "MKT"): _*)
                     get3DTopDF(addProdInMktColumn(cube, mktWindow, time), prodRankWindow, top)
                 } else {
                     get3DTopDF(cube, prodRankWindow, top)
