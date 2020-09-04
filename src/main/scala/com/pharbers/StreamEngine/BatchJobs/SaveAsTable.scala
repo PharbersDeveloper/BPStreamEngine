@@ -22,21 +22,30 @@ $SPARK_HOME/bin/spark-submit \
 --conf spark.hadoop.fs.s3a.endpoint=s3.cn-northwest-1.amazonaws.com.cn \
 --class com.pharbers.StreamEngine.BatchJobs.SaveAsTable \
 s3a://ph-platform/2020-08-10/functions/scala/BPStream/SaveAsTable-20200904.jar \
-s3a://ph-stream/common/public/prod/16 \
-s3a://ph-stream/common/public/prod/17 \
-prod20
+parquet s3a://ph-stream/common/public/prod/16 \
+parquet s3a://ph-stream/common/public/prod/17 \
+overwrite prod20
  * }}}
  */
 object SaveAsTable {
     def main(args: Array[String]): Unit = {
-        val input_path = args(0).toString
-        val output_path = args(1).toString
-        val table_name = args(2).toString
-        val save_mode = if(args.length >= 4) args(3).toString else "overwrite"
+        val input_file_format = args(0).toString
+        val input_path = args(1).toString
+        val output_file_format = args(2).toString
+        val output_path = args(3).toString
+        val save_mode = args(4).toString
+        val table_name = args(5).toString
 
         val spark: SparkSession = SparkSession.builder().enableHiveSupport().getOrCreate()
-        val input_df = spark.read.parquet(input_path)
-        input_df.coalesce(4).write.mode(save_mode).option("path", output_path).saveAsTable(table_name)
+        val input_df = input_file_format match {
+            case "json" => spark.read.json(input_path)
+            case _ => spark.read.parquet(input_path)
+        }
+        input_df.coalesce(4).write
+                .mode(save_mode)
+                .format(output_file_format)
+                .option("path", output_path)
+                .saveAsTable(table_name)
     }
 }
 
