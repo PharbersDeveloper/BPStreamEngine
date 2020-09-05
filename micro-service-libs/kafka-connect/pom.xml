@@ -79,6 +79,10 @@
                     <artifactId>s3</artifactId>
                 </dependency>
                 <dependency>
+                    <groupId>software.amazon.awssdk</groupId>
+                    <artifactId>sqs</artifactId>
+                </dependency>
+                <dependency>
                     <groupId>org.apache.httpcomponents</groupId>
                     <artifactId>httpcore</artifactId>
                     <version>4.4.11</version>

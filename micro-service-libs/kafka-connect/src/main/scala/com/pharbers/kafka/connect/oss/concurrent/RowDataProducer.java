@@ -91,7 +91,7 @@ public class RowDataProducer implements Runnable {
             } catch (POIXMLException e) {
                 log.info("poi异常", e);
 
-                Producer.getIns().pushErr(new TypeErrorMsg(task.getTraceId().toString(), task.getAssetId().toString(), e.getMessage()));
+                Producer.getIns().pushErr(new TypeErrorMsg(task.getTraceId().toString(), task.getAssetId().toString(), task.getOssKey().toString(), e.getMessage()));
             } catch (Exception e) {
                 log.error(e.getMessage(), e);
             }
@@ -166,7 +166,7 @@ public class RowDataProducer implements Runnable {
                 break;
             default:
                 log.error("不支持的类型" + fileType);
-                Producer.getIns().pushErr(new TypeErrorMsg(task.getTraceId().toString(), task.getAssetId().toString(), fileType));
+                Producer.getIns().pushErr(new TypeErrorMsg(task.getTraceId().toString(), task.getAssetId().toString(), task.getOssKey().toString(), fileType));
                 throw new Exception("不支持的类型" + fileType);
         }
         return reader;
