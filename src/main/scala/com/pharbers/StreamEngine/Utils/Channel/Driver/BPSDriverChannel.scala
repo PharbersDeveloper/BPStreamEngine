@@ -84,6 +84,7 @@ class BPSDriverChannel(override val componentProperty: Component2.BPComponentCon
         val ops: Int = driverSocket.validOps
         val selectKy: SelectionKey = driverSocket.register(selector, ops, null)
         logger.info("Driver Channel Server")
+        //todo: 读取的时候，msg变成了无序的。
         while (true) {
             // Selects a set of keys whose corresponding channels are ready for I/O operations
             selector.select()

@@ -29,17 +29,28 @@ private[kafka] class Producer {
             .credentialsProvider(SystemPropertyCredentialsProvider.create).build()
 
     def pushErr(msg: TypeErrorMsg): Unit = {
-        val pkp = new PharbersKafkaProducer[String, EventMsg]
+//        val pkp = new PharbersKafkaProducer[String, EventMsg]
         val msgType = "parsingError"
-        val event = new EventMsg(msg.getAssetId, msg.getTraceId, msgType, JsonUtil.MAPPER.writeValueAsString(msg))
-        val fu = pkp.produce(TOPIC,"", event)
-        try
-            println(fu.get(10, TimeUnit.SECONDS))
-        catch {
-            case e@(_: InterruptedException | _: ExecutionException | _: TimeoutException) =>
-                e.printStackTrace()
-        }
-        pkp.producer.close()
+        val attributes = Map(
+            "jobId" -> MessageAttributeValue.builder().dataType("String").stringValue(msg.getAssetId).build(),
+            "traceId" -> MessageAttributeValue.builder().dataType("String").stringValue(msg.getTraceId).build(),
+            "type" -> MessageAttributeValue.builder().dataType("String").stringValue(msgType).build()
+        )
+        sqsClient.sendMessage(SendMessageRequest.builder()
+                .queueUrl(url)
+                .messageBody(JsonUtil.MAPPER.writeValueAsString(msg))
+                .messageAttributes(attributes.asJava)
+                .messageGroupId(msg.getAssetId)
+                .build())
+//        val event = new EventMsg(msg.getAssetId, msg.getTraceId, msgType, JsonUtil.MAPPER.writeValueAsString(msg))
+//        val fu = pkp.produce(TOPIC,"", event)
+//        try
+//            println(fu.get(10, TimeUnit.SECONDS))
+//        catch {
+//            case e@(_: InterruptedException | _: ExecutionException | _: TimeoutException) =>
+//                e.printStackTrace()
+//        }
+//        pkp.producer.close()
     }
 
     def pushStatus(msg: BloodMsg, traceId: String): Unit ={
